@@ -1,0 +1,104 @@
+# ci/templates/steps/install-uv.yml
+# Reusable step template: install uv (and optionally restore cache + sync).
+#
+# When sync is true (default) the template also restores the uv package
+# cache and runs `uv sync --locked` with Azure Artifacts authentication.
+#
+# Security model:
+#   uv is installed by downloading the pinned binary from GitHub Releases and
+#   verifying it against the published per-file .sha256 checksum. Verification
+#   is fail-closed; a mismatch aborts the step with a pipeline error.
+#
+# Parameters:
+#   sync          — whether to restore cache and sync dependencies (default: true)
+#   uvVersion     — pinned uv version to install (required, semver X.Y.Z)
+#   pythonVersion — Python version for cache key segmentation (required)
+#   feedName      — Azure Artifacts feed name (must match [[tool.uv.index]] in pyproject.toml).
+#                   Required when sync is true; ignored when sync is false.
+#
+# Usage:
+#   - template: templates/steps/install-uv.yml            # build (sync)
+#     parameters: { feedName: my-feed }
+#   - template: templates/steps/install-uv.yml            # publish (no sync)
+#     parameters: { sync: false, feedName: my-feed }
+
+parameters:
+  - name: sync
+    type: boolean
+    default: true
+  - name: uvVersion
+    type: string
+  - name: pythonVersion
+    type: string
+  - name: feedName
+    type: string
+    default: ""
+    # Required when sync is true. Validated at runtime below.
+
+steps:
+  - ${{ if parameters.sync }}:
+      - task: Cache@2
+        displayName: Restore uv cache
+        inputs:
+          key: '"uv" | "$(Agent.OS)" | "$(Agent.OSArchitecture)" | "${{ parameters.pythonVersion }}" | "${{ parameters.uvVersion }}" | uv.lock'
+          restoreKeys: |
+            "uv" | "$(Agent.OS)" | "$(Agent.OSArchitecture)" | "${{ parameters.pythonVersion }}" | "${{ parameters.uvVersion }}"
+            "uv" | "$(Agent.OS)" | "$(Agent.OSArchitecture)" | "${{ parameters.pythonVersion }}"
+            "uv" | "$(Agent.OS)" | "$(Agent.OSArchitecture)"
+          path: $(Pipeline.Workspace)/.uv-cache
+
+  - script: |
+      set -euo pipefail
+      if ! echo "${{ parameters.uvVersion }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "##vso[task.logissue type=error]Invalid uvVersion format: '${{ parameters.uvVersion }}'"
+        echo "Expected format: major.minor.patch (e.g., 0.10.4)"
+        exit 1
+      fi
+
+      UV_VERSION="${{ parameters.uvVersion }}"
+      ARCHIVE="uv-x86_64-unknown-linux-gnu.tar.gz"
+      RELEASE_BASE="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}"
+      TMPDIR="$(mktemp -d)"
+      trap 'rm -rf "${TMPDIR}"' EXIT
+
+      echo "--- Downloading uv ${UV_VERSION} ---"
+      curl -fsSL "${RELEASE_BASE}/${ARCHIVE}" -o "${TMPDIR}/${ARCHIVE}"
+      curl -fsSL "${RELEASE_BASE}/${ARCHIVE}.sha256" -o "${TMPDIR}/${ARCHIVE}.sha256"
+
+      echo "--- Verifying SHA256 checksum ---"
+      (cd "${TMPDIR}" && sha256sum --check "${ARCHIVE}.sha256")
+
+      echo "--- Installing uv and uvx ---"
+      tar -xzf "${TMPDIR}/${ARCHIVE}" -C "${TMPDIR}"
+      mkdir -p "$HOME/.local/bin"
+      cp "${TMPDIR}/uv-x86_64-unknown-linux-gnu/uv" "$HOME/.local/bin/uv"
+      cp "${TMPDIR}/uv-x86_64-unknown-linux-gnu/uvx" "$HOME/.local/bin/uvx"
+      chmod 0755 "$HOME/.local/bin/uv" "$HOME/.local/bin/uvx"
+      echo "##vso[task.prependpath]$HOME/.local/bin"
+
+      if ! uv --version | grep -q "^uv ${UV_VERSION}\b"; then
+        echo "##vso[task.logissue type=error]Installed uv version does not match requested version"
+        exit 1
+      fi
+    displayName: Install uv ${{ parameters.uvVersion }}
+  - ${{ if parameters.sync }}:
+      - script: |
+          if [ -z "${{ parameters.feedName }}" ]; then
+            echo "##vso[task.logissue type=error]install-uv: feedName is required when sync is true"
+            exit 1
+          fi
+        displayName: Validate feedName
+
+      - template: uv-run-authenticated.yml
+        parameters:
+          feedName: ${{ parameters.feedName }}
+          command: uv sync --locked
+          displayName: Sync dependencies (locked)
+          useUvCache: true
+
+      - script: |
+          set -euo pipefail
+          uv cache prune --ci
+        displayName: Prune uv cache
+        env:
+          UV_CACHE_DIR: $(Pipeline.Workspace)/.uv-cache

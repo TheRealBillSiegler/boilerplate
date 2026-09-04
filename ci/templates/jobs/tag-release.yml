@@ -1,0 +1,68 @@
+# ci/templates/jobs/tag-release.yml
+# Job template: annotated git tag, push, credential cleanup.
+#
+# Covers:
+#   - Tag-exists guard (skip if tag already exists)
+#   - Annotated git tag creation
+#   - Push tag to origin
+#   - Credential cleanup (always runs)
+#
+# Parameters:
+#   version — the version string to tag (e.g. 0.2.0)
+
+parameters:
+  - name: version
+    type: string
+  - name: timeout
+    type: number
+    default: 5
+
+jobs:
+  - job: TagRelease
+    displayName: Tag release
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: ${{ parameters.timeout }}
+    steps:
+      - checkout: self
+        persistCredentials: true
+        fetchDepth: 1
+        fetchTags: true
+
+      - script: |
+          VERSION="${{ parameters.version }}"
+          if [ -z "$VERSION" ] || ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "##vso[task.logissue type=error]Invalid version: '$VERSION'"
+            exit 1
+          fi
+          TAG="v${VERSION}"
+          EXISTING=$(git tag -l "$TAG")
+          if [ -n "$EXISTING" ]; then
+            echo "##vso[task.logissue type=warning]Tag $TAG already exists. Skipping."
+            echo "##vso[task.setvariable variable=TAG_EXISTS]true"
+          else
+            echo "Tag $TAG does not exist. Proceeding."
+            echo "##vso[task.setvariable variable=TAG_EXISTS]false"
+          fi
+        displayName: Validate version and check tag
+
+      - script: |
+          TAG="v${{ parameters.version }}"
+          git config user.name "ci-release"
+          git config user.email "ci-release@users.noreply.local"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Pushed tag $TAG"
+        displayName: Create and push annotated tag
+        condition: and(succeeded(), ne(variables.TAG_EXISTS, 'true'))
+
+      - script: |
+          set -euo pipefail
+          # Remove any extra headers injected by the checkout step for the
+          # origin remote URL. Works regardless of whether the org URL uses
+          # the dev.azure.com or visualstudio.com hostname form.
+          ORIGIN_URL=$(git remote get-url origin)
+          git config --unset-all "http.${ORIGIN_URL}.extraheader" || true
+          echo "Cleaned credentials for $ORIGIN_URL"
+        displayName: Clean up credentials
+        condition: always()

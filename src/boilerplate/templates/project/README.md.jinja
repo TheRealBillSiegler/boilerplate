@@ -1,0 +1,181 @@
+# {{ project_name }}
+
+{{ description }}
+
+---
+
+## Table of Contents
+
+1. [Getting Started](#getting-started)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+   - [Using UV](#using-uv)
+   - [Using Python and Pip](#using-python-and-pip)
+4. [Usage](#usage)
+5. [Development Workflow](#development-workflow)
+6. [VS Code Configuration](#vs-code-configuration)
+7. [Contributing](#contributing)
+
+---
+
+## Getting Started
+
+This section provides instructions for setting up and using the `{{ project_slug }}` package.
+
+---
+
+## Requirements
+
+- **Python {{ python_version_major }}.{{ python_version_minor }}** or later
+- (Optional) [**UV**](https://docs.astral.sh/uv) for advanced dependency and environment management
+
+---
+
+## Installation
+
+### Using UV
+
+1. Install UV by following the instructions on the [UV website](https://docs.astral.sh/uv).
+
+2. Install the package:
+   ```bash
+   uv add {{ package_name }}
+   ```
+
+3. Verify the setup:
+   ```bash
+   uv run python -c "import {{ package_name }}; print({{ package_name }}.__version__)"
+   ```
+
+---
+
+### Using Python and Pip
+
+1. Create a virtual environment:
+
+   - **Windows (Command Prompt):**
+     ```cmd
+     python -m venv .venv
+     .venv\Scripts\activate
+     ```
+   
+   - **Linux/MacOS:**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
+
+2. Install the package:
+   ```bash
+   pip install {{ package_name }}
+   ```
+
+3. Verify the installation:
+   ```bash
+   python -c "import {{ package_name }}; print({{ package_name }}.__version__)"
+   ```
+
+---
+
+## Usage
+
+### Activating the Environment
+
+- **If using UV:**
+  ```bash
+  uv shell
+  ```
+
+- **If using Python and Pip:**
+
+   - **Windows (Command Prompt):**
+     ```cmd
+     .venv\Scripts\activate
+     ```
+   
+   - **Linux/MacOS:**
+     ```bash
+     source .venv/bin/activate
+     ```
+
+### Running the Application
+
+Once the environment is active, you can use the package in your Python scripts:
+```python
+import {{ package_name }}
+```
+
+See the project documentation for additional usage examples.
+
+---
+
+## Development Workflow
+
+This section is for contributors who are developing or modifying {{ project_slug }}.
+
+### Requirements for Development
+
+- **Git**: To clone and work with repositories.
+- **Visual Studio Code (VS Code)**: As the primary IDE.
+- **UV**: To manage Python environments and dependencies.
+
+---
+
+### Setting Up for Development
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd {{ package_name }}
+   ```
+
+2. Sync the environment:
+   ```bash
+   uv sync
+   ```
+
+---
+
+## VS Code Configuration
+
+### Extensions
+
+The following VS Code extensions are recommended for this project:
+
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+- [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)
+
+### Pre-configured Settings
+
+The project includes pre-configured VS Code settings in `.vscode/settings.json` to streamline development:
+
+1. **Python Analysis:**
+   - Auto-import completions are enabled.
+   - Diagnostic mode is set to "workspace" for detailed type-checking within the workspace.
+
+2. **Code Formatting:**
+   - Ruff is the default formatter for Python files.
+   - Code is automatically formatted on save.
+
+3. **Testing:**
+   - pytest is enabled as the default test framework.
+
+4. **Notebooks:**
+   - Ruff is the formatter for Jupyter notebooks.
+   - Automatic formatting is enabled on save for notebooks.
+
+The Python interpreter isn't pinned in settings — VS Code's Python extension auto-detects `.venv` in the workspace root once it exists (run `uv sync` if it hasn't been created yet).
+
+Refer to `.vscode/settings.json` for the full configuration.
+
+---
+
+##Contributing
+
+Contributions are welcome! Please send inquires or pull requests to {{ author_name }} for review.
+
+
+---

@@ -1,0 +1,44 @@
+intention:
+  id: "INT-002"
+  product: "PROD-001"
+  statement: >
+    Users can discover and select templates from a federated catalog
+    with trust tiers.
+  rationale: >
+    A scaffolding tool is only as useful as its template ecosystem. Users
+    need to find the right template without leaving the CLI. Trust tiers
+    (Official, Verified, Community, Local) provide signal about template
+    provenance and quality, which is essential for both individual developers
+    and organizations adopting Boilerplate at scale. This Intention directly
+    supports the "template ecosystem growth" success metric.
+  priority: "critical"
+  dependencies: []
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can browse, search, and filter templates from multiple catalog
+    sources (GitHub, GitLab, Azure DevOps, local directories). Each template
+    displays its trust tier and license metadata. Users can select a template
+    and proceed to scaffolding. Catalog sources are configurable and
+    federated. A pre-configured default catalog source enables zero-config
+    first run.
+
+  acceptance_criteria:
+    # Security (distributed from PROD-001 security posture)
+    - "Catalog listings display the trust tier and provenance metadata for every template"
+    - "Catalog fetch validates the integrity checksum before the listing is consumed"
+    - "Catalog source configuration is parsed with a YAML-injection-safe loader"
+    - "Catalog source URLs are validated against an allow-list scheme; credentials are never written to logs or error output"
+    - "Every template operation routes through the trust-policy evaluator; the evaluator has no documented bypass"
+    - "Community/Local-tier template task execution is gated on a consent prompt; non-interactive contexts MUST set the corresponding `--allow-*` flag"
+    # Catalog providers
+    - "GitHub and GitLab are documented as primary catalog providers"
+    - "Azure DevOps is documented as an additional supported catalog provider"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Scaffolding a project from a selected template (see INT-001)"
+    - "Template authoring or publishing to the catalog (see INT-006)"
+    - "Package index or artifact feed management (organization-specific concern)"

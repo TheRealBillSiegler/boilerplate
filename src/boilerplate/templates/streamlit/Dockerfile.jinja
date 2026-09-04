@@ -1,0 +1,92 @@
+# syntax=docker/dockerfile:1
+
+##############################
+# Base stage: common user
+##############################
+FROM debian:bookworm-slim AS base
+
+ARG APP_UID=10000
+ARG APP_GID=10000
+
+# Create a non-root user with fixed UID/GID for both builder and runtime
+RUN groupadd --gid ${APP_GID} appuser \
+ && useradd --uid ${APP_UID} \
+      --gid ${APP_GID} \
+      --create-home \
+      --home-dir /home/appuser \
+      --shell /bin/bash \
+      appuser
+
+##############################
+# Stage 1: Builder
+##############################
+FROM base AS builder
+
+# Install uv from the official static image. Pinned to a minor tag: patch
+# releases float within it, giving update tooling a stable value to bump.
+COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /uvx /bin/
+
+# Pre-create directories with proper permissions
+RUN mkdir -p /home/appuser/.cache/uv && chown -R appuser:appuser /home/appuser
+
+# Switch to the non‑root user so uv uses /home/appuser naturally
+USER appuser
+
+# Set working directory
+WORKDIR /app
+
+# Set environment variables for proper behavior of uv and Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
+
+# Copy dependency files (for layer caching)
+COPY --chown=appuser:appuser pyproject.toml uv.lock /app/
+
+# Install runtime dependencies (uv will automatically create the venv in /app/.venv)
+RUN --mount=type=secret,id=index,env=INDEX \
+    uv sync --frozen --no-install-project --no-dev \
+    --default-index "$INDEX" \
+    --keyring-provider subprocess
+
+# Copy full project source and install project dependencies (scripts go into the venv)
+COPY --chown=appuser:appuser . /app/
+RUN --mount=type=secret,id=index,env=INDEX \
+    uv sync --frozen --no-dev \
+    --default-index "$INDEX" \
+    --keyring-provider subprocess
+
+##############################
+# Stage 2: Runtime
+##############################
+FROM base as runtime
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install --no-install-recommends -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy built app and venv
+COPY --from=builder /app /app
+COPY --from=builder /home/appuser/.local /home/appuser/.local
+
+# Switch to non-root user for runtime
+USER appuser
+
+# Activate venv and set runtime env vars
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    STREAMLIT_SERVER_PORT=8501 \
+    STREAMLIT_SERVER_HEADLESS=true \
+    STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+EXPOSE 8501
+
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+
+ENTRYPOINT ["streamlit", "run", "/app/src/{{ package_name }}/app.py"]

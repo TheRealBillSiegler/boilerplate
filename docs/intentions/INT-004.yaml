@@ -1,0 +1,42 @@
+intention:
+  id: "INT-004"
+  product: "PROD-001"
+  statement: >
+    Users can provision and manage versioned development environments
+    with drift detection.
+  rationale: >
+    Environment drift is a primary cause of "works on my machine" failures.
+    Boilerplate's value extends beyond initial scaffolding into ongoing
+    environment management — ensuring that the tools, versions, and
+    configurations a project depends on remain consistent across
+    contributors and over time. Drift detection closes the feedback loop
+    by alerting users when their environment diverges from the declared
+    state.
+  priority: "high"
+  dependencies:
+    - "INT-001"  # Environment profiles reference scaffolded project state
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can declare development environment profiles specifying tool
+    versions and configuration. Boilerplate provisions the declared
+    environment and detects when the actual environment drifts from the
+    declared state. Versioned tools have tested compatibility for specific
+    template version ranges. The environment provenance record
+    (.boilerplate/environment.yml) companions the project lock file; tool-version
+    pinning is delegated to proto's .protolock.
+
+  acceptance_criteria:
+    # Distribution
+    - "First-party environment profiles ship as YAML files inside the Boilerplate wheel"
+    - "First-party profiles auto-register in the default profile catalog without requiring a Git source"
+    # Scope
+    - "Environment provenance verification (.boilerplate/environment.yml, including proto_lock_hash) is owned by this Intention (not INT-011)"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Runtime dependency resolution (delegated to uv)"
+    - "Container or VM-based environment isolation"
+    - "CI/CD environment provisioning (template-dependent concern)"

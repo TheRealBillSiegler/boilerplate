@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ==============================================================================
+# build-container.sh
+#
+# Description:
+#   Builds a Docker image using a short-lived Azure DevOps token (AAD-based).
+#
+# Requirements:
+#   - Docker and Azure CLI must be installed.
+#   - The user must be logged into Azure CLI.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Terminal colors
+# ------------------------------------------------------------------------------
+RESET="\033[0m"
+BOLD="\033[1m"
+BLUE="\033[1;34m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+RED="\033[0;31m"
+
+# ------------------------------------------------------------------------------
+# Usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [-i|--image-name <name:tag>] [-h|--help]
+
+Options:
+  -i, --image-name   Docker image name (e.g. "my-app:latest").
+                     If omitted, defaults to '<project-name>:local' from pyproject.toml.
+  -h, --help         Show this help message.
+EOF
+}
+
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
+get_project_name_from_pyproject() {
+    if [[ -f pyproject.toml ]]; then
+        awk -F '"' '/^\s*name\s*=\s*"/ { print $2; exit }' pyproject.toml | tr '_' '-'
+    else
+        return 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Parse arguments
+# ------------------------------------------------------------------------------
+IMAGE_NAME=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -i | --image-name)
+        IMAGE_NAME="$2"
+        shift 2
+        ;;
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}❌ Unknown option: $1${RESET}"
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+# ------------------------------------------------------------------------------
+# Check sudo access
+# ------------------------------------------------------------------------------
+if ! sudo -v >/dev/null 2>&1; then
+    echo -e "${RED}❌ This script requires sudo to build Docker images securely.${RESET}"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# Environment validation
+# ------------------------------------------------------------------------------
+if [ ! -f uv.lock ]; then
+    echo -e "${RED}❌ Required file 'uv.lock' not found.${RESET}"
+    exit 1
+fi
+
+for cmd in az docker; do
+    if ! command -v "$cmd" &>/dev/null; then
+        echo -e "${RED}❌ Required tool '$cmd' is not installed or not in PATH.${RESET}"
+        exit 1
+    fi
+done
+
+# ------------------------------------------------------------------------------
+# Resolve image name
+# ------------------------------------------------------------------------------
+if [[ -z "$IMAGE_NAME" ]]; then
+    PROJECT_NAME=$(get_project_name_from_pyproject) || {
+        echo -e "${RED}❌ No image name provided and pyproject.toml not found.${RESET}"
+        exit 1
+    }
+    IMAGE_NAME="${PROJECT_NAME}:local"
+    echo -e "${YELLOW}ℹ️  Using default image name: ${IMAGE_NAME}${RESET}"
+fi
+
+# ------------------------------------------------------------------------------
+# Azure DevOps AAD authentication
+# ------------------------------------------------------------------------------
+DEVOPS_RESOURCE="499b84ac-1321-427f-aa17-267ca6975798"
+echo -e "${BLUE}${BOLD}🔐 Verifying Azure session for Azure DevOps access...${RESET}"
+if ! az account get-access-token --resource "$DEVOPS_RESOURCE" --query accessToken -o tsv &>/dev/null; then
+    echo -e "${YELLOW}🔑 Session expired or not authenticated. Logging in...${RESET}"
+    az login --scope "$DEVOPS_RESOURCE//.default" || {
+        echo -e "${RED}❌ Azure login failed. Unable to proceed.${RESET}"
+        exit 1
+    }
+fi
+
+# ------------------------------------------------------------------------------
+# Get token and build
+# ------------------------------------------------------------------------------
+TOKEN=$(az account get-access-token \
+    --resource "$DEVOPS_RESOURCE" \
+    --query accessToken -o tsv | tr -d '\r\n')
+
+if [[ -z "$TOKEN" ]]; then
+    echo -e "${RED}❌ Failed to obtain Azure DevOps token.${RESET}"
+    exit 1
+fi
+
+echo -e "${BLUE}${BOLD}🐳 Building Docker image '$IMAGE_NAME'...${RESET}"
+sudo env \
+    INDEX="https://AzureDevOps:$TOKEN@{{ (package_index_url or 'https://pypi.org/simple/') | replace('https://', '') | replace('http://', '') }}" \
+    docker buildx build \
+    --secret id=index,env=INDEX \
+    --tag "$IMAGE_NAME" \
+    --load .
+
+echo -e "${GREEN}✅ Docker image built successfully: ${IMAGE_NAME}${RESET}"
+
+echo -e "${BLUE}${BOLD}ℹ️  To run your container locally:${RESET}"
+echo -e "${YELLOW}   sudo docker run -p 8501:8501 ${IMAGE_NAME}${RESET}"
+echo -e "${BLUE}${BOLD}📣  Note:${RESET} ${YELLOW}If your app runs on a different port, update the -p flag accordingly.${RESET}"

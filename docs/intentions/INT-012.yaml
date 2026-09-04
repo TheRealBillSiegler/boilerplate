@@ -1,0 +1,40 @@
+intention:
+  id: "INT-012"
+  product: "PROD-001"
+  statement: >
+    Users can compose multiple templates into a single project with
+    deterministic merge order.
+  rationale: >
+    Template composition extends INT-001's single-template scaffolding to
+    multi-layer projects. Layering multiple templates (e.g., base project +
+    API layer + CI config) with Git submodule dependencies and YAML !include
+    configuration merging enables DRY template ecosystems.
+  priority: "high"
+  dependencies:
+    - "INT-001"  # Single-template scaffolding must work first
+    - "INT-002"   # Composition needs catalog-aware resolution for multi-source templates
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can specify a composition of multiple templates. Boilerplate
+    resolves the dependency graph (topological order with lexicographic
+    tie-breaking), presents a merged questionnaire (single prompting
+    session up front across all layers), then invokes Copier per-layer in
+    topological order. Composition is file-level: last-layer-wins for file
+    collisions. Each layer writes its own `.copier-answers.<layer>.yml` via
+    Copier's `_answers_file` directive. The lock file captures the full
+    composition graph with per-node provenance. Composed output is
+    validated for consistency (e.g., no conflicting requires-python values).
+
+  acceptance_criteria:
+    # Security (distributed from PROD-001 security posture)
+    - "Trust-tier evaluation runs for every template in the composition graph, not just the root"
+    - "Cross-tier composition is rejected when it would violate the documented trust-ceiling rules for the resolved source types"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Single-template scaffolding (see INT-001)"
+    - "Content-level extensibility within template-owned files (file-level composition only)"
+    - "Automatic conflict resolution in composed output"

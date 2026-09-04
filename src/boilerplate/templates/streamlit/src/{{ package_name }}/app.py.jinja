@@ -1,0 +1,50 @@
+"""Streamlit entry point for {{ project_name }}.
+
+This module defines a minimal interactive UI built with Streamlit.
+It is scaffolded using Boilerplate and intended as a reproducible,
+testable starting point for productizing UI logic in Python.
+
+Run this module locally via:
+
+    streamlit run src/{{ package_name }}/app.py
+
+Or press F5 to launch in VS Code using the preconfigured debugger.
+
+This app is suitable for local development, containerized execution,
+and automated testing environments.
+"""
+
+import streamlit as st
+
+from {{ package_name }}.models.greeter import GreeterInput
+from {{ package_name }}.services.greeter import GreeterService
+
+
+def main() -> None:
+    """Renders the Streamlit UI.
+
+    This function configures the Streamlit page and displays a minimal
+    interactive interface. It demonstrates separation between user-facing
+    behavior and domain logic, and supports local or container-based usage.
+    """
+    st.set_page_config(page_title="{{ project_name }} App", page_icon="🧱")
+
+    st.title("Hello, Streamlit 👋")
+    st.caption("Scaffolded using Boilerplate.")
+
+    st.markdown(
+        """
+        This app demonstrates a minimal Streamlit user interface with decoupled logic.
+        You can extend the service and model layers as your product evolves.
+        """
+    )
+
+    name = st.text_input("Your name:")
+    if name:
+        service = GreeterService()
+        greeting = service.greet(GreeterInput(name=name))
+        st.success(greeting)
+
+
+if __name__ == "__main__":
+    main()

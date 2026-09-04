@@ -1,0 +1,134 @@
+# ci/templates/jobs/build-test.yml
+# Job template: build, test, publish pipeline artifact.
+#
+# Covers:
+#   - uv install and cache (via install-uv step template)
+#   - Version extraction (via extract-version step template)
+#   - Dev version patching on develop branch
+#   - Quality gates: ruff check, ruff format --check, pyright
+#   - pytest with JUnit + coverage publishing
+#   - uv build + SHA256SUMS computation
+#   - Pipeline artifact publishing
+#
+# Parameters:
+#   isDevelop    — whether this is a develop branch build (enables dev version patch)
+#   feedName     — Azure Artifacts feed name (passed to install-uv)
+#   pythonVersion — Python version to use
+#
+# Outputs:
+#   version.BASE_VERSION — the base version from pyproject.toml
+#
+# Requirements:
+#   No job-level token setting is required.
+
+parameters:
+  - name: isDevelop
+    type: boolean
+    default: false
+  - name: feedName
+    type: string
+  - name: pythonVersion
+    type: string
+  - name: uvVersion
+    type: string
+  - name: timeout
+    type: number
+    default: 15
+
+jobs:
+  - job: BuildTest
+    displayName: Build & Test
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: ${{ parameters.timeout }}
+    variables:
+      UV_CACHE_DIR: $(Pipeline.Workspace)/.uv-cache
+    steps:
+      - checkout: self
+        fetchDepth: 1
+        fetchTags: false  # Tags only needed in TagRelease stage
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "${{ parameters.pythonVersion }}"
+        displayName: Use Python ${{ parameters.pythonVersion }}
+
+      - script: |
+          if ! echo "${{ parameters.pythonVersion }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            echo "##vso[task.logissue type=error]Invalid pythonVersion format: '${{ parameters.pythonVersion }}'"
+            echo "Expected format: major.minor (e.g., 3.13)"
+            exit 1
+          fi
+        displayName: Validate pythonVersion parameter
+
+      - template: ../steps/install-uv.yml
+        parameters:
+          feedName: ${{ parameters.feedName }}
+          pythonVersion: ${{ parameters.pythonVersion }}
+          uvVersion: ${{ parameters.uvVersion }}
+
+      - template: ../steps/extract-version.yml
+
+      # --no-fix: pyproject sets fix = true for local dev; in CI, auto-fixes
+      # would land on the ephemeral checkout and let violations pass green.
+      - script: uv run --locked ruff check --no-fix
+        displayName: Lint (ruff check)
+
+      - script: uv run --locked ruff format --check
+        displayName: Format check (ruff format)
+
+      - script: uv run --locked pyright
+        displayName: Type check (pyright)
+
+      - script: |
+          uv run --locked pytest \
+            --junitxml=junit.xml \
+            --cov \
+            --cov-report=xml
+        displayName: Run tests with coverage
+
+      - task: PublishCodeCoverageResults@2
+        displayName: Publish code coverage
+        condition: succeededOrFailed()
+        inputs:
+          summaryFileLocation: coverage.xml
+
+      - task: PublishTestResults@2
+        displayName: Publish test results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFiles: junit.xml
+          mergeTestResults: true
+          failTaskOnFailedTests: true
+
+      - ${{ if parameters.isDevelop }}:
+          - script: |
+              DEV_VERSION="$(version.BASE_VERSION).dev$(Build.BuildId)"
+              echo "Patching version to $DEV_VERSION"
+              sed -i "s/^version = \".*\"/version = \"$DEV_VERSION\"/" pyproject.toml
+              echo "##vso[task.setvariable variable=PACKAGE_VERSION]$DEV_VERSION"
+            displayName: Patch dev version
+
+      - ${{ else }}:
+          - script: |
+              echo "##vso[task.setvariable variable=PACKAGE_VERSION]$(version.BASE_VERSION)"
+            displayName: Set release version
+
+      - template: ../steps/uv-run-authenticated.yml
+        parameters:
+          feedName: ${{ parameters.feedName }}
+          command: uv build
+          displayName: Build package
+
+      - script: |
+          cd dist
+          sha256sum * > SHA256SUMS
+          echo "--- SHA256SUMS ---"
+          cat SHA256SUMS
+        displayName: Compute SHA256SUMS
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish dist artifact
+        inputs:
+          targetPath: dist
+          artifact: dist

@@ -1,0 +1,13 @@
+"""Models for greeting logic."""
+
+from pydantic import BaseModel
+
+
+class GreeterInput(BaseModel):
+    """Input model for the greeting service.
+
+    Attributes:
+        name: The name of the user to greet.
+    """
+
+    name: str

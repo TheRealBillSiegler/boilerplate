@@ -1,0 +1,12 @@
+# Shell scripts must check out with LF line endings: they run on Linux/WSL (and
+# the *.sh.jinja templates render into generated projects), where a CRLF shebang
+# (`#!/usr/bin/env bash\r`) and trailing carriage returns on every line break the
+# script. eol=lf overrides core.autocrlf=true on Windows checkouts.
+*.sh        text eol=lf
+*.bash      text eol=lf
+*.sh.jinja  text eol=lf
+
+# The vendored Mermaid bundle is redistributed byte-for-byte as upstream
+# publishes it; any line-ending conversion breaks that claim (and bloats it by
+# one byte per line). binary = -text -diff -merge.
+docs/assets/mermaid.min.js  binary

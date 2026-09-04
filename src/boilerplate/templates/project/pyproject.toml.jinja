@@ -1,0 +1,132 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = "{{ description }}"
+authors = [{ name = "{{ author_name }}", email = "{{ author_email }}" }]
+readme = "README.md"
+requires-python = ">= {{ python_version_major }}.{{ python_version_minor }}.{{ python_version_micro }}"
+license = { text = "None" }
+classifiers = [
+    "Programming Language :: Python :: {{ python_version_major }}.{{ python_version_minor }}",
+    "Operating System :: OS Independent",
+    "Private :: Do Not Upload",
+]
+dependencies = [
+{% for dep in dependencies %}
+    "{{ dep }}",
+{% endfor %}
+]
+
+[dependency-groups]
+dev = [
+{% for dep in dev_dependencies %}
+    "{{ dep }}",
+{% endfor %}
+]
+
+{% if package_index_url %}
+
+[[tool.uv.index]]
+url = "{{ package_index_url }}"
+default = true
+{% endif %}
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ package_name }}"]
+
+[tool.coverage.run]
+source = ["src.{{ package_name }}"]
+
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+# For more information visit https://docs.astral.sh/ruff/rules/.
+select = [
+    "F",    # Pyflakes: logical issues
+    "E",    # pycodestyle error: PEP 8 violations
+    "W",    # pycodestyle warning: style warnings
+    "I",    # isort: import order
+    "D",    # pydocstyle: docstring conventions
+    "N",    # pep8-naming: consistent naming
+    "ANN",  # flake8-annotations: type annotations
+    "B",    # flake8-bugbear: potential bugs
+    "COM",  # flake8-commas: trailing commas
+    "C4",   # flake8-comprehensions: comprehension simplifications
+    "DTZ",  # flake8-datetimez: time-zone issues
+    "T10",  # flake8-debugger: debugger statements
+    "ISC",  # flake8-implicit-str-concat: implicit string concatenation
+    "ICN",  # flake8-import-conventions: import conventions
+    "LOG",  # flake8-logging: logging "best" practices
+    "G",    # flake8-logging-format: logging format strings
+    "RET",  # flake8-return: consistent return statements
+    "SIM",  # flake8-simplify: code simplifications
+    "ARG",  # flake8-unused-arguments: unused arguments
+    "PTH",  # flake8-use-pathlib: pathlib over os.path
+    "PD",   # pandas-vet: pandas "best" practices
+    "PL",   # Pylint: additional linting
+    "TID",  # flake8-tidy-imports: import rules including relative imports
+    "UP",   # pyupgrade: syntax modernization
+    "FURB", # refurb: general code improvements
+    "RUF",  # Ruff-specific rules
+]
+
+ignore = [
+    # Ruff formatter will fix these rules.
+    "W191",   # Indentation using tabs
+    "D206",   # Docstrings indented with tabs
+    "COM812", # Missing trailing commas
+    "COM819", # Prohibited trailing commas
+    "ISC001", # Implicitly concatenated strings
+    "E501",   # Line length
+
+    # These rules are disabled because they are deprecated and will be removed in a future release.
+    "ANN003", # Deprecated type annotations for **kwargs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"] # Allow unused imports in __init__.py files
+"tests/*" = [
+    "ANN201",  # Tests don't need public function return type annotations.
+    "ANN202",  # Tests don't need private function return type annotations.
+    "PLR2004", # Allow magic numbers in tests.
+    "D100",    # Tests don't need docstrings.
+    "D101",    # Tests don't need docstrings.
+    "D102",    # Tests don't need docstrings.
+    "D103",    # Tests don't need docstrings.
+    "D104",    # Tests don't need docstrings.
+    "D105",    # Tests don't need docstrings.
+    "D106",    # Tests don't need docstrings.
+    "D107",    # Tests don't need docstrings.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+log_cli = true
+
+[tool.pyright]
+typeCheckingMode = "strict"
+ignore = ["**/__init__.py"]
+include = ["src"]
+exclude = ["tests/*", ".venv/*", "**/__pycache__"]
+useLibraryCodeForTypes = true
+reportMissingTypeStubs = "warning"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+executionEnvironments = [
+    { root = "src"},
+    { root = "tests", reportUnknownLambdaType = "none", reportMissingParameterType = "none", reportUnknownParameterType = "none"}
+]

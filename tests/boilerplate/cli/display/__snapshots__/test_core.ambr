@@ -1,0 +1,57 @@
+# serializer version: 1
+# name: test_message_methods_output_snapshot[error-Error message]
+  '''
+  Error message
+  
+  '''
+# ---
+# name: test_message_methods_output_snapshot[info-Information message]
+  '''
+  Information message
+  
+  '''
+# ---
+# name: test_message_methods_output_snapshot[success-Success message]
+  '''
+  Success message
+  
+  '''
+# ---
+# name: test_message_methods_output_snapshot[warning-Warning message]
+  '''
+  Warning message
+  
+  '''
+# ---
+# name: test_table_empty_data_snapshot
+  '''
+                       
+    Header1   Header2  
+   ━━━━━━━━━━━━━━━━━━━ 
+                       
+  
+  '''
+# ---
+# name: test_table_mismatched_columns_snapshot
+  '''
+                                   
+    A          B     C             
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+    1          2                   
+    x          y     z      extra  
+    complete   row   here          
+                                   
+  
+  '''
+# ---
+# name: test_table_unicode_content_snapshot
+  '''
+                 
+    名前     値  
+   ━━━━━━━━━━━━━ 
+    测试     🚀  
+    データ   ✅  
+                 
+  
+  '''
+# ---

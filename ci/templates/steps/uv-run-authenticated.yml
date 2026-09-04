@@ -1,0 +1,48 @@
+# ci/templates/steps/uv-run-authenticated.yml
+# Reusable step template: run a uv command with Azure Artifacts auth exported.
+#
+# Requirements:
+#   - System.AccessToken must be available for scripts.
+#
+# Parameters:
+#   feedName     — Azure Artifacts feed name (must match [[tool.uv.index]].name)
+#   command      — uv command to execute (e.g., `uv sync --locked`, `uv build`)
+#   displayName  — step display name
+#   useUvCache   — whether to map UV_CACHE_DIR for this step
+
+parameters:
+  - name: feedName
+    type: string
+  - name: command
+    type: string
+  - name: displayName
+    type: string
+  - name: useUvCache
+    type: boolean
+    default: false
+
+steps:
+  - script: |
+      set -euo pipefail
+
+      if [ -z "${{ parameters.feedName }}" ]; then
+        echo "##vso[task.logissue type=error]feedName is required"
+        exit 1
+      fi
+
+      if [ -z "${SYSTEM_ACCESSTOKEN:-}" ]; then
+        echo "##vso[task.logissue type=error]System.AccessToken is empty."
+        exit 1
+      fi
+
+      ENV_NAME="$(printf "%s" "${{ parameters.feedName }}" | tr '[:lower:]' '[:upper:]' | sed -E 's/[^A-Z0-9]+/_/g')"
+
+      export "UV_INDEX_${ENV_NAME}_USERNAME=VssSessionToken"
+      export "UV_INDEX_${ENV_NAME}_PASSWORD=${SYSTEM_ACCESSTOKEN}"
+
+      ${{ parameters.command }}
+    displayName: ${{ parameters.displayName }}
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      ${{ if parameters.useUvCache }}:
+        UV_CACHE_DIR: $(Pipeline.Workspace)/.uv-cache

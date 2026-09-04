@@ -1,0 +1,10 @@
+{
+  "MD013": false,
+  "MD007": { "indent": 4 },
+  "MD046": { "style": "fenced" },
+  "MD024": { "siblings_only": true },
+  "MD041": false,
+  "MD025": { "front_matter_title": "" },
+  "MD033": false,
+  "MD003": { "style": "atx" }
+}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{#
+  Helpful 404 — replaces Material's bare "404 - Not found".
+  A doc-site 404 is a high-traffic dead end (stale links, typo'd .html paths),
+  so turn a wrong URL into a recovery moment. Material's header already
+  provides search. Links are absolute root-relative so they work from any path.
+#}
+
+{% block content %}
+<div class="md-content__inner md-typeset">
+  <h1>That page moved or never existed.</h1>
+  <p>
+    A trailing slash or an old URL can land you here. Use the search box in the
+    header, or jump to one of the common destinations below.
+  </p>
+
+  <div class="grid cards" markdown="0">
+    <ul>
+      <li><a href="/"><strong>Home</strong> — what Boilerplate is and why use it</a></li>
+      <li><a href="/quickstart.html"><strong>Quickstart</strong> — install, first project, tests</a></li>
+      <li><a href="/install.html"><strong>Install</strong> — Windows, macOS &amp; Linux setup</a></li>
+      <li><a href="/cli.html"><strong>CLI Reference</strong> — every command and flag</a></li>
+      <li><a href="/troubleshooting.html"><strong>Troubleshooting</strong> — when the first run fails</a></li>
+      <li><a href="/status.html"><strong>Status</strong> — what works today vs. roadmap</a></li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

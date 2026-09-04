@@ -1,0 +1,120 @@
+# ci/templates/jobs/publish.yml
+# Job template: download artifact, verify hash, publish to Azure Artifacts.
+#
+# Covers:
+#   - Download pipeline artifact from Build & Test
+#   - SHA-256 hash verification
+#   - Authenticate via service connection (TwineAuthenticate@1)
+#   - uv publish to Azure Artifacts feed
+#
+# Parameters:
+#   environment       — deployment environment name (e.g. develop, production)
+#   serviceConnection — name of the Azure Artifacts twine service connection
+#   publishUrl        — Azure Artifacts PyPI upload URL
+#   checkUrl          — Azure Artifacts PyPI simple URL for duplicate check
+#   feedName          — Azure Artifacts feed name (passed to install-uv)
+
+parameters:
+  - name: environment
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: publishUrl
+    type: string
+  - name: checkUrl
+    type: string
+  - name: feedName
+    type: string
+  - name: pythonVersion
+    type: string
+  - name: uvVersion
+    type: string
+  - name: timeout
+    type: number
+    default: 10
+
+jobs:
+  - deployment: Publish
+    displayName: Publish package
+    pool:
+      vmImage: ubuntu-22.04
+    timeoutInMinutes: ${{ parameters.timeout }}
+    environment: ${{ parameters.environment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - task: UsePythonVersion@0
+              inputs:
+                versionSpec: "${{ parameters.pythonVersion }}"
+              displayName: Use Python ${{ parameters.pythonVersion }}
+
+            - script: |
+                if ! echo "${{ parameters.pythonVersion }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+                  echo "##vso[task.logissue type=error]Invalid pythonVersion format: '${{ parameters.pythonVersion }}'"
+                  echo "Expected format: major.minor (e.g., 3.13)"
+                  exit 1
+                fi
+              displayName: Validate pythonVersion parameter
+
+            - download: current
+              artifact: dist
+              displayName: Download dist artifact
+
+            - script: |
+                cd $(Pipeline.Workspace)/dist
+                echo "--- Verifying SHA256SUMS format ---"
+                if ! grep -qE '^[0-9a-f]{64}  ' SHA256SUMS; then
+                  echo "##vso[task.logissue type=error]SHA256SUMS file has invalid format"
+                  exit 1
+                fi
+                echo "--- Verifying artifact hashes ---"
+                sha256sum -c SHA256SUMS
+              displayName: Verify artifact hashes
+
+            - template: ../steps/install-uv.yml
+              parameters:
+                sync: false
+                feedName: ${{ parameters.feedName }}
+                pythonVersion: ${{ parameters.pythonVersion }}
+                uvVersion: ${{ parameters.uvVersion }}
+
+            - task: TwineAuthenticate@1
+              displayName: Authenticate to feed
+              inputs:
+                pythonUploadServiceConnection: ${{ parameters.serviceConnection }}
+
+            - script: |
+                PUBLISH_TOKEN=$(uv run --no-project python3 -c "
+                import configparser, os, sys
+                c = configparser.ConfigParser()
+                c.read(os.environ['PYPIRC_PATH'])
+                sections = [s for s in c.sections() if s != 'distutils']
+                if len(sections) != 1:
+                    print(f'Expected 1 feed section, found {len(sections)}', file=sys.stderr)
+                    sys.exit(1)
+                pwd = c[sections[0]].get('password', '')
+                if not pwd:
+                    print('Token is empty or missing in PYPIRC', file=sys.stderr)
+                    sys.exit(1)
+                print(pwd)
+                ")
+                if [ -z "$PUBLISH_TOKEN" ]; then
+                  echo "##vso[task.logissue type=error]Failed to extract publish token from PYPIRC"
+                  exit 1
+                fi
+                echo "##vso[task.setvariable variable=UV_PUBLISH_TOKEN;issecret=true]$PUBLISH_TOKEN"
+              displayName: Extract publish token
+              env:
+                PYPIRC_PATH: $(PYPIRC_PATH)
+
+            - script: |
+                uv publish \
+                  --publish-url "$PUBLISH_URL" \
+                  $(Pipeline.Workspace)/dist/*.whl \
+                  $(Pipeline.Workspace)/dist/*.tar.gz
+              displayName: Publish to Azure Artifacts
+              env:
+                PUBLISH_URL: ${{ parameters.publishUrl }}
+                UV_PUBLISH_TOKEN: $(UV_PUBLISH_TOKEN)
+                UV_PUBLISH_CHECK_URL: ${{ parameters.checkUrl }}

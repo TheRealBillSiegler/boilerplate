@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ==============================================================================
+# push-container.sh
+#
+# Description:
+#   Re-tags and pushes a local Docker image to Azure Container Registry (ACR)
+#   using Azure CLI and AAD-based authentication.
+#
+# Requirements:
+#   - Docker and Azure CLI installed.
+#   - User logged into Azure CLI with AcrPush access.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Terminal colors
+# ------------------------------------------------------------------------------
+RESET="\033[0m"
+BOLD="\033[1m"
+BLUE="\033[1;34m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+RED="\033[0;31m"
+
+# ------------------------------------------------------------------------------
+# Usage
+# ------------------------------------------------------------------------------
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [-i <image:tag>] [-a <acr-login-server>] [-t <remote-tag>] [-h]
+
+Options:
+  -i, --image-name   Local Docker image (default: <project-name>:local)
+  -a, --acr-name     ACR login server (default: {{ container_registry }})
+  -t, --tag          Remote image tag (default: latest)
+  -h, --help         Show this help message
+EOF
+}
+
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
+get_project_name_from_pyproject() {
+    if [[ -f pyproject.toml ]]; then
+        awk -F '"' '/^\s*name\s*=\s*"/ { print $2; exit }' pyproject.toml | tr '_' '-'
+    else
+        return 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# Check sudo access
+# ------------------------------------------------------------------------------
+if ! sudo -v >/dev/null 2>&1; then
+    echo -e "${RED}❌ This script requires sudo to access Docker.${RESET}"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# Parse arguments
+# ------------------------------------------------------------------------------
+ACR_NAME="{{ container_registry }}"
+REMOTE_TAG="latest"
+LOCAL_IMAGE=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -i | --image-name)
+        LOCAL_IMAGE="$2"
+        shift 2
+        ;;
+    -a | --acr-name)
+        ACR_NAME="$2"
+        shift 2
+        ;;
+    -t | --tag)
+        REMOTE_TAG="$2"
+        shift 2
+        ;;
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}❌ Unknown option: $1${RESET}"
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+# ------------------------------------------------------------------------------
+# Validate tools
+# ------------------------------------------------------------------------------
+for cmd in az docker; do
+    if ! command -v "$cmd" &>/dev/null; then
+        echo -e "${RED}❌ Required tool '$cmd' is not installed.${RESET}"
+        exit 1
+    fi
+done
+
+# ------------------------------------------------------------------------------
+# Infer image name
+# ------------------------------------------------------------------------------
+if [[ -z "$LOCAL_IMAGE" ]]; then
+    PROJECT_NAME=$(get_project_name_from_pyproject) || {
+        echo -e "${RED}❌ Image name not provided and pyproject.toml missing.${RESET}"
+        exit 1
+    }
+    LOCAL_IMAGE="${PROJECT_NAME}:local"
+    echo -e "${YELLOW}ℹ️  Using default image name: ${LOCAL_IMAGE}${RESET}"
+fi
+
+# ------------------------------------------------------------------------------
+# Check local Docker image exists
+# ------------------------------------------------------------------------------
+if ! sudo docker image inspect "$LOCAL_IMAGE" &>/dev/null; then
+    echo -e "${RED}❌ Local image '$LOCAL_IMAGE' not found. Run 'docker build'?${RESET}"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# Azure authentication
+# ------------------------------------------------------------------------------
+if ! az account show &>/dev/null; then
+    echo -e "${YELLOW}🔐 Not logged into Azure CLI. Logging in...${RESET}"
+    az login || {
+        echo -e "${RED}❌ Azure login failed.${RESET}"
+        exit 1
+    }
+fi
+
+# ------------------------------------------------------------------------------
+# Acquire ACR token
+# ------------------------------------------------------------------------------
+ACR_REGISTRY_NAME="${ACR_NAME%%.azurecr.io}"
+echo -e "${BLUE}${BOLD}🔐 Acquiring AAD token for '$ACR_REGISTRY_NAME'...${RESET}"
+
+TOKEN=$(az acr login \
+    --name "$ACR_REGISTRY_NAME" \
+    --expose-token \
+    --query accessToken \
+    -o tsv 2> >(grep -v "manual login" >&2)) || {
+    echo -e "${RED}❌ Failed to obtain ACR token.${RESET}"
+    exit 1
+}
+
+# ------------------------------------------------------------------------------
+# Docker login to ACR
+# ------------------------------------------------------------------------------
+echo -e "${BLUE}${BOLD}🔐 Logging Docker into '$ACR_NAME'...${RESET}"
+echo "$TOKEN" | sudo docker login "$ACR_NAME" \
+    --username 00000000-0000-0000-0000-000000000000 \
+    --password-stdin
+
+# ------------------------------------------------------------------------------
+# Tag and push image
+# ------------------------------------------------------------------------------
+REPO_NAME="${LOCAL_IMAGE%%:*}"
+REMOTE_IMAGE="${ACR_NAME}/${REPO_NAME}:${REMOTE_TAG}"
+
+echo -e "${BLUE}${BOLD}🔄 Tagging '$LOCAL_IMAGE' → '$REMOTE_IMAGE'...${RESET}"
+sudo docker tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
+
+echo -e "${BLUE}${BOLD}🚀 Pushing to ACR: $REMOTE_IMAGE...${RESET}"
+sudo docker push "$REMOTE_IMAGE"
+
+echo -e "${GREEN}${BOLD}✅ Image pushed successfully: $REMOTE_IMAGE${RESET}"

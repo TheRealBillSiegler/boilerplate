@@ -1,0 +1,48 @@
+_answers_file: .copier-answers.streamlit.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus Boilerplate's own authoring metadata.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+
+_jinja_extensions:
+  - boilerplate.templates._jinja_extensions.slugify:SlugifyExtension
+  - copier_template_extensions.TemplateExtensionLoader
+
+# Every answer this layer's files and paths use is declared here, including
+# the ones `project` also asks. `extends` merges questions at compose time
+# only; a per-layer `copier update` renders from this file alone (see
+# docs/design/adr-015-idiomatic-artifacts.md, point 4).
+project_name:
+  type: str
+  help: "What is the (human-readable) name of the project? (e.g. My Project)"
+  default: "{{ _folder_name }}"
+
+project_slug:
+  default: "{{ project_name | slugify }}"
+  when: false
+
+package_name:
+  default: "{{ project_slug | replace('-', '_') }}"
+  when: false
+
+package_index_url:
+  type: str
+  help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)."
+  default: ""
+
+dependencies:
+  default: ["streamlit", "pydantic"]
+
+container_registry:
+  type: str
+  help: "Container registry hostname for image pushes (e.g. ghcr.io or registry.example.com)."
+  default: "ghcr.io"

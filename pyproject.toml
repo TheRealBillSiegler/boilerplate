@@ -1,0 +1,205 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "boilerplate"
+version = "0.3.0"
+description = "Composable project scaffolder with template layering on top of Copier."
+authors = [{ name = "Boilerplate Contributors" }]
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Code Generators",
+]
+dependencies = [
+    # boilerplate builds on copier's internal Template/Worker classes (see
+    # src/boilerplate/integrations/copier_types.py). These are private, so the
+    # range is bounded to versions whose internal module layout we have tested.
+    "copier>=9.15,<10",
+    "copier-template-extensions>=0.3.3",
+    # click is typer's engine, but cli.py subclasses TyperGroup and codes
+    # against click's command-resolution API directly, so pin our own floor.
+    "click>=8.1",
+    "jinja2>=3.1",
+    "packaging>=24",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.8.1",
+    "python-slugify>=8.0.4",
+    "pyyaml>=6.0",
+    "rich>=13.9.4",
+    "typer>=0.15.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/TheRealBillSiegler/boilerplate"
+Repository = "https://github.com/TheRealBillSiegler/boilerplate"
+Issues = "https://github.com/TheRealBillSiegler/boilerplate/issues"
+Documentation = "https://github.com/TheRealBillSiegler/boilerplate/tree/main/docs"
+Changelog = "https://github.com/TheRealBillSiegler/boilerplate/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest>=8.3.4",
+    "pytest-xdist>=3.6.0",
+    "ruff>=0.8.1",
+    "mkdocs-material>=9.6.4",
+    "mkdocs-autorefs>=1.2.0",
+    "mkdocs-redirects>=1.2.1",
+    "mkdocs>=1.6.1",
+    "ipykernel>=6.29.5",
+    "mkdocstrings-python>=1.16.10",
+    "pyright>=1.1.403",
+    "syrupy>=4.9.1",
+    "mkdocs-typer>=0.0.3",
+    "mkdocs-panzoom-plugin>=0.4.2",
+    "mike>=2.2.0",
+]
+
+[project.scripts]
+boilerplate = "boilerplate.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/boilerplate"]
+
+[tool.hatch.build.targets.sdist]
+# Hatchling's sdist default packs every tracked file (docs, tests, repo CI,
+# agent config). Restrict the source distribution to what installing needs.
+only-include = ["src", "README.md", "LICENSE", "NOTICE", "CHANGELOG.md"]
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.paths]
+source = [
+    "src/",
+    "*/site-packages/",
+]
+
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+# For more information visit https://docs.astral.sh/ruff/rules/.
+select = [
+    "F",    # Pyflakes: logical issues
+    "E",    # pycodestyle error: PEP 8 violations
+    "W",    # pycodestyle warning: style warnings
+    "I",    # isort: import order
+    "D",    # pydocstyle: docstring conventions
+    "N",    # pep8-naming: consistent naming
+    "ANN",  # flake8-annotations: type annotations
+    "B",    # flake8-bugbear: potential bugs
+    "COM",  # flake8-commas: trailing commas
+    "C4",   # flake8-comprehensions: comprehension simplifications
+    "DTZ",  # flake8-datetimez: time-zone issues
+    "T10",  # flake8-debugger: debugger statements
+    "ISC",  # flake8-implicit-str-concat: implicit string concatenation
+    "ICN",  # flake8-import-conventions: import conventions
+    "LOG",  # flake8-logging: logging "best" practices
+    "G",    # flake8-logging-format: logging format strings
+    "RET",  # flake8-return: consistent return statements
+    "SIM",  # flake8-simplify: code simplifications
+    "ARG",  # flake8-unused-arguments: unused arguments
+    "PTH",  # flake8-use-pathlib: pathlib over os.path
+    "PD",   # pandas-vet: pandas "best" practices
+    "PL",   # Pylint: additional linting
+    "TID",  # flake8-tidy-imports: import rules including relative imports
+    "UP",   # pyupgrade: syntax modernization
+    "FURB", # refurb: general code improvements
+    "RUF",  # Ruff-specific rules
+]
+
+ignore = [
+    # Ruff formatter will fix these rules.
+    "W191",   # Indentation using tabs
+    "D206",   # Docstrings indented with tabs
+    "COM812", # Missing trailing commas
+    "COM819", # Prohibited trailing commas
+    "ISC001", # Implicitly concatenated strings
+    "E501",   # Line length
+
+    # These rules are disabled because they are deprecated and will be removed in a future release.
+    "ANN003", # Deprecated type annotations for **kwargs
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"unittest".msg = "Prefer `pytest` to `unittest`."
+"unittest.mock".msg = "Prefer `pytest_mock` to `unittest.mock`."
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"] # Allow unused imports in __init__.py files
+"src/boilerplate/cli/utils.py" = ["ANN001", "ANN201", "ANN202", "ANN002"] # Dynamic decorator pattern
+"src/boilerplate/cli/commands/*" = ["PLR0913"] # Typer commands: one function parameter per CLI option; only Typer calls them, by name
+"tests/*" = [
+    "ANN201",  # Tests don't need public function return type annotations.
+    "ANN202",  # Tests don't need private function return type annotations.
+    "PLR2004", # Allow magic numbers in tests
+    "PLR0913", # Fixture + parametrize arity is structural to pytest
+    "D100",    # Tests don't need docstrings.
+    "D101",    # Tests don't need docstrings.
+    "D102",    # Tests don't need docstrings.
+    "D103",    # Tests don't need docstrings.
+    "D104",    # Tests don't need docstrings.
+    "D105",    # Tests don't need docstrings.
+    "D106",    # Tests don't need docstrings.
+    "D107",    # Tests don't need docstrings.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+log_cli = true
+log_cli_level = "WARNING"
+# --cov=src --cov-report term 
+addopts = "-v --import-mode=importlib --doctest-modules -n auto --dist loadgroup"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "snapshot: marks tests as snapshot tests",
+]
+filterwarnings = ["ignore:.*Importing .* from `copier` is deprecated.*:DeprecationWarning"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+# ignore = ["**/__init__.py"]
+include = ["src"]
+exclude = ["tests/*", ".venv/*", "**/__pycache__"]
+useLibraryCodeForTypes = true
+reportMissingTypeStubs = "warning"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+executionEnvironments = [
+    { root = "src" },
+    { root = "tests", reportUnknownLambdaType = "none", reportMissingParameterType = "none", reportUnknownParameterType = "none" },
+]

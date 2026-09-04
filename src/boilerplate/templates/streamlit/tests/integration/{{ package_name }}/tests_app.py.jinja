@@ -1,0 +1,29 @@
+"""Smoke test for the Streamlit app."""
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+def test_app_launches() -> None:
+    """Verifies the Streamlit app runs without crashing."""
+    app_path = Path("src") / "{{ package_name }}" / "app.py"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(app_path),
+            "--server.headless",
+            "true",
+            "--server.port",
+            "9999",
+        ],
+        capture_output=True,
+        timeout=10,
+        check=False,
+    )
+
+    assert result.returncode == 0, f"Streamlit app failed: {result.stderr.decode()}"

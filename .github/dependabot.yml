@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Keep SHA-pinned GitHub Actions current via reviewed PRs.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  # Python dependencies (uv.lock + pyproject constraints).
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+      include: scope
+    ignore:
+      # copier is intentionally capped <10: its private API backs the adr-002
+      # shim, so a major must be a deliberate, human-reviewed change. Routine
+      # in-range (9.x) bumps still flow through as PRs.
+      - dependency-name: "copier"
+        update-types: ["version-update:semver-major"]

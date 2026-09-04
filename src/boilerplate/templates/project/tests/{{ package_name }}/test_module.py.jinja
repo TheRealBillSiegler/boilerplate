@@ -1,0 +1,19 @@
+"""Tests for {{ project_name }}."""
+
+import pytest
+
+from {{ package_name }}.module import add
+
+
+@pytest.mark.parametrize(
+    ("a", "b", "expected"),
+    [
+        (1, 2, 3),
+        (-1, -1, -2),
+        (0, 0, 0),
+    ],
+    ids=["positive-numbers", "negative-numbers", "zeros"],
+)
+def test_add(a: int, b: int, expected: int) -> None:
+    """Tests the add function."""
+    assert add(a, b) == expected, f"add({a}, {b}) should equal {expected}"

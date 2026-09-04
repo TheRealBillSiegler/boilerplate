@@ -1,0 +1,51 @@
+intention:
+  id: "INT-001"
+  product: "PROD-001"
+  statement: >
+    Users can scaffold a new project from a single template with a
+    reproducible lock file.
+  rationale: >
+    Single-template scaffolding is the core value proposition of Boilerplate
+    and the minimum viable experience. A user should be able to install
+    Boilerplate, pick a template, scaffold a project, and have it build/lint/
+    test on first run — all within 5 minutes. The lock file captures exact
+    template version, commit SHA, and integrity checksums for reproducibility.
+    This Intention delivers the "time-to-first-project under 5 minutes"
+    success metric.
+  priority: "critical"
+  dependencies: []
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    A user runs a single command and receives a fully rendered project that
+    builds, lints, and tests on first run. The project includes a
+    boilerplate.lock file capturing exact template version, dependency graph,
+    and integrity checksums. Rendering is atomic (temp directory with
+    move-on-success — no partial state on failure).
+
+  acceptance_criteria:
+    # Functional
+    - "Scaffolded project passes ruff check, pyright, and pytest on first run"
+    - "boilerplate.lock contains template version, commit SHA, and integrity checksums"
+    - "Rendering is atomic: no partial output on failure (temp directory with move-on-success)"
+    - "Rendered pyproject.toml is PEP 621 compliant"
+    # Distribution and answers files
+    - "First-party templates are authored in a monorepo and published at release time as separate, deterministically-extracted per-template Git repositories with `vX.Y.Z` tags (see ADR-006)"
+    - "`new` and `compose` render first-party layers from the published per-template repository (or a local clone), recording its URL as `_src_path` and a real tag as `_commit`"
+    - "Each template declares `_answers_file: .copier-answers.<layer>.yml` in its `copier.yml`"
+    - "A composed project contains exactly one `.copier-answers.<layer>.yml` file per layer"
+    # Security (distributed from PROD-001 security posture)
+    - "Code execution from untrusted templates is denied by default; Community/Local task execution requires explicit user consent"
+    - "Jinja2 extensions are rejected for Community/Local templates unless --allow-extensions is passed"
+    - "Every task invocation log entry includes the template provenance record"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Multi-template composition and layering (see INT-012)"
+    - "Template authoring and validation (see INT-006)"
+    - "Template discovery and catalog browsing (see INT-002)"
+    - "Updating previously scaffolded projects (see INT-003)"
+    - "Lock file verification after scaffolding (see INT-011)"
+    - "Environment provisioning beyond what templates render (see INT-004)"

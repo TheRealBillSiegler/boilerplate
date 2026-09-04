@@ -1,0 +1,20 @@
+"""{{ package_name }}.services — modular business logic.
+
+This package defines core behaviors and orchestrations that drive the application.
+Services are structured units of meaning: reusable, testable, and aligned to
+domain logic — not UI, infrastructure, or external state.
+
+Each service encapsulates what the system *does*, based on what the models *are*.
+
+They should remain:
+
+- Deterministic: given the same inputs, always produce the same outputs
+- Isolated: don't depend on global state, I/O, or frameworks
+- Intentional: expose clear, coherent methods that reflect the domain
+
+What does it mean to "encapsulate behavior"?
+A service draws a boundary around meaningful system actions — the kind
+you can name, test, and reason about. It turns values into effects.
+
+Think of it as an engine: models go in, decisions and results come out.
+"""

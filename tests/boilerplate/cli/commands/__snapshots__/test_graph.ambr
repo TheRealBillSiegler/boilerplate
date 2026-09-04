@@ -1,0 +1,20 @@
+# serializer version: 1
+# name: test_render_graph_list_output_snapshot
+  '''
+                                                                                  
+    #   Layer   Version   Path                                                    
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+    1   base    1.0.0     templates/base                                          
+    2   addon   2.0.0     templates/addon                                         
+                                                                                  
+  
+  '''
+# ---
+# name: test_render_graph_tree_output_snapshot
+  '''
+  - base@1.0.0
+    - addon@2.0.0
+      - custom@1.2.3
+  
+  '''
+# ---

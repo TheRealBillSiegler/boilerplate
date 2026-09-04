@@ -1,0 +1,13 @@
+"""
+{{ project_name }}.
+
+{{ description }}
+"""
+
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as get_version
+
+try:
+    __version__ = get_version("{{ package_name }}")
+except PackageNotFoundError:
+    __version__ = "Unknown"

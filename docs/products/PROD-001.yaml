@@ -1,0 +1,405 @@
+# SCHEMA NOTE
+#
+# Term definitions ("substrate" — the enforced/preconfigured split,
+# "first-party gating scaffolding", "PEP discipline") are canonical in
+# docs/design/01-overview.md §Glossary.
+# Per-Intention concerns belong in INT-XXX.yaml, not here.
+
+product:
+  id: "PROD-001"
+  name: "Boilerplate"
+  status: "active"
+  owner: "Bill Siegler"
+
+  # PROBLEM STATEMENT — what business problem does this solve?
+  problem_statement: >
+    Python teams suffer from environment drift, configuration sprawl, onboarding
+    friction, and inconsistent toolchains. Every new project requires re-solving
+    the same setup problems — choosing tools, wiring linters, configuring CI,
+    aligning environments across contributors. The cost of the status quo is
+    compounding: slower onboarding, divergent practices across teams, and
+    reproducibility failures that erode trust in development workflows.
+
+  # TARGET AUDIENCE — who benefits from this product?
+  target_audience: >
+    Everyone. Boilerplate is enterprise-born but designed for any Python
+    developer — from individuals scaffolding a side project to platform
+    engineers standardizing toolchains across an organization. AI-native
+    workflows are a first-class consideration. Python-focused today with
+    broader language aspirations.
+
+  # VALUE PROPOSITION — why does this product matter?
+  value_proposition: >
+    The right thing is the default; the wrong thing requires explicit
+    opt-in. Software engineering first principles (DRY, KISS, zero-trust,
+    least-privilege, PEP compliance, reproducibility) become
+    machine-checkable through the linters, type checkers, and security
+    rules templates ship by default; the managed dev environment pins
+    those tools to verified-compatible versions so the checks run
+    identically across machines. Boilerplate enforces in its own runtime
+    and preconfigures elsewhere — the per-layer mechanism is specified
+    below in `enforcement_layers`, and the user-runnable gating
+    scaffolding shipped beside templates is specified in
+    `shipped_gating_scaffolding`. Outcome targets are recorded in
+    `adoption_metrics` below.
+
+  # ENFORCEMENT LAYERS — how the ethos is applied per layer
+  #
+  # Each layer carries one of two substrates:
+  #   - enforced substrate: Boilerplate's runtime gates / rejects on violation
+  #   - preconfigured substrate: Boilerplate ships the rule as default;
+  #     user-runnable gates (CI, pre-commit, IDE) execute the check; user
+  #     can opt out
+  #
+  # The substrate split is permanent: Boilerplate enforces in its own
+  # runtime and preconfigures elsewhere. The shipped_gating_scaffolding
+  # section below records what first-party gating scaffolding ships today
+  # vs what is planned for layers where Boilerplate ships scaffolding the
+  # user runs.
+  enforcement_layers:
+    product:
+      substrate: enforced
+      state: shipping
+      description: >
+        Boilerplate's own runtime enforces atomic operations, lock file
+        integrity, deterministic resolution, structured error codes, safety-
+        first confirmation gates, trust-tier consent gates, and audit trail
+        emission for every state-mutating CLI command. Violations fail with
+        BP_* error codes; there is no opt-out for built-in safety controls.
+    templates:
+      substrate: preconfigured
+      state: shipping (ruff/pyright/pytest configs); CI / pre-commit not yet shipped
+      description: >
+        First-party templates conform to relevant PEPs (440, 508, 517/518,
+        621, 660, 723) and encode current best practices. Templates ship
+        ruff, pyright, and pytest configurations as defaults in
+        pyproject.toml. The current first-party templates do NOT ship
+        .github/workflows/ or .pre-commit-config.yaml; CI gating and
+        pre-commit gating are user-authored today. See
+        shipped_gating_scaffolding.ci_workflows and
+        shipped_gating_scaffolding.bundled_env_profiles for what ships today
+        vs what is planned. Pre-commit is parked; see parked_scope.pre_commit.
+    tool_configurations:
+      substrate: preconfigured
+      state: shipping (rule sets); no validate-on-render
+      description: >
+        Tool configurations within templates declare quality-gate rules:
+        ruff rule sets, pyright strict mode, security policies, linting
+        standards. These are SUGGESTIONS in the rendered project — once a
+        project is rendered, a user MAY edit pyproject.toml to weaken or
+        disable any rule, and Boilerplate has no mechanism to detect or
+        prevent this. Boilerplate ships configs as the default; validating
+        the rendered configuration against declared first principles is
+        post-render validation and is out of scope per scope_boundaries.
+    environments:
+      substrate: preconfigured
+      state: spec exists; first-party templates do not yet declare requires_profile
+      description: >
+        Boilerplate's environment-provisioning spec defines declarative
+        profiles, proto-managed tool installation, and .protolock for
+        version pinning. The current first-party templates do NOT declare a
+        requires_profile and do NOT ship boilerplate-env.yml; toolchain
+        pinning is user-authored today. See
+        shipped_gating_scaffolding.bundled_env_profiles for what ships today
+        vs what is planned.
+    scaffolded_projects:
+      substrate: preconfigured (inherits)
+      state: configs inherit; first-party gating scaffolding ships separately
+      description: >
+        Every scaffolded project inherits the configurations the templates
+        ship: PEP-compliant pyproject.toml, ruff/pyright/pytest defaults,
+        .gitignore, lock file. The first-party gating scaffolding (CI
+        workflows, env profile pin) that turns these configurations into
+        automated verdicts is shipped as separate first-party templates the
+        user opts into; see shipped_gating_scaffolding for what ships today
+        vs what is planned. The output IS principle-aligned by default;
+        gating runs in third-party tools' native venues (CI runners, hook
+        runners) when those tools execute.
+
+  # SHIPPED GATING SCAFFOLDING — what first-party gating scaffolding ships today vs what is planned
+  #
+  # For layers where Boilerplate doesn't own the runtime, gating runs in
+  # third-party tools' native venues (CI runners, hook runners) when those
+  # tools execute.
+  shipped_gating_scaffolding:
+    ci_workflows:
+      shipped: "First-party project and streamlit templates ship no CI workflow files."
+      planned: >
+        First-party ci-azure-pipelines component shipped as a thin
+        template extended by project/streamlit. Component runs ruff
+        check, pyright, and pytest as required gates. GitHub Actions
+        support added later by extending the answer-value enum (no
+        breaking change to project/streamlit metadata).
+    bundled_env_profiles:
+      shipped: "First-party boilerplate.yml files do not declare requires_profile; no boilerplate-env.yml exists in templates/."
+      planned: >
+        First-party environment profiles ship as YAML files in the
+        Boilerplate wheel and auto-register in the default profile
+        catalog. First-party templates declare requires_profile.
+        Profiles are consumed by env apply; not Copier templates,
+        so no Git source needed.
+
+  # PARKED SCOPE — items deliberately not pursued, with reasons and revisit triggers
+  parked_scope:
+    pre_commit:
+      reason: >
+        File-level composition (per docs/design/04-composition-engine.md)
+        fights pre-commit's expected inline addition to pyproject.toml
+        (e.g., a [tool.pre-commit] section). Closure would require
+        either a single-owner pyproject.toml pattern across layers
+        (rejected because project/streamlit already own pyproject.toml)
+        or content-level merging (rejected by INT-003 not_included).
+        Revisit if pyproject.toml ownership pattern changes or if
+        empirical adoption demand emerges from default-on CI users.
+
+  # STRATEGIC ALIGNMENT — which organizational priorities does this serve?
+  strategic_alignment: >
+    Open source release under Apache-2.0, advancing developer experience and
+    platform engineering practices. Aligns with reducing onboarding friction,
+    enforcing engineering standards through tooling rather than documentation,
+    and enabling AI-native development workflows. Work streams span environment
+    management, template composition, CLI, documentation, CI publishing, and
+    package sharing. Work is tracked in GitHub Issues.
+
+  # CAPABILITIES — themed groupings of product behavior
+  #
+  # Each capability is realized by one or more Intentions in docs/intentions/.
+  # The Intention statements are the source of truth for behavior; capabilities
+  # exist here to surface cross-Intention themes (security, AI-native posture)
+  # at the product level.
+  capabilities:
+    template_composition:
+      summary: >
+        Composable templates built on Copier with Git submodule dependencies
+        and YAML !include configuration merging. Templates are versioned,
+        vendor-lock-free, and designed for specific toolchains while
+        Boilerplate itself remains agnostic.
+      realizes_intentions: ["INT-001", "INT-012"]
+    federated_catalog:
+      summary: >
+        User-facing discovery and registry across multiple sources. Trust is
+        binary: a source is trusted or untrusted (the richer multi-tier
+        taxonomy is reserved for Phase 4). Browse, search, filter, and select
+        templates. Multi-provider Git support (GitHub, GitLab, Azure DevOps).
+      realizes_intentions: ["INT-002"]
+    environment_management:
+      summary: >
+        Manages the ongoing state of a developer's toolchain and configuration,
+        not just initial scaffolding. Versioned tools with certified compatibility
+        for specific template version ranges. Thin core: declarative profiles
+        applied via `env apply`, current state reported via `env status`, and an
+        EnvironmentProvisionRecord provenance file (`.boilerplate/environment.yml`)
+        written after a successful apply. Boilerplate keeps no environment lock
+        file of its own (version pinning is proto's `.protolock`).
+      realizes_intentions: ["INT-004"]
+    reproducibility:
+      summary: >
+        boilerplate.lock captures exact template versions, dependency graph,
+        and integrity checksums. The .boilerplate/environment.yml provenance
+        record companions it (tool-version pinning is proto's .protolock).
+        Deterministic resolution from flexible version constraints to exact
+        pinned state.
+      realizes_intentions: ["INT-001", "INT-011"]
+    safe_updates:
+      summary: >
+        Projects stay connected to their templates over time. Three-way merge
+        for conflict detection and resolution, rollback capabilities,
+        Atomic Staged Write Pattern for transactions (temp directory with
+        move-on-success — no partial state on failure). Template lifecycle
+        stages (Active, Deprecated, Sunset) with structured migration
+        records.
+      realizes_intentions: ["INT-003", "INT-013"]
+    ai_native:
+      summary: >
+        Boilerplate is designed for AI-agent-assisted development. The CLI
+        supports structured JSON output, stable output schemas, semantic exit
+        codes, answer presets for non-interactive scaffolding, and template
+        introspection — enabling AI agents to discover, scaffold, and manage
+        projects programmatically. Templates may emit AI-agent configuration
+        (e.g., Copilot instructions, CLAUDE.md) subject to the source's binary
+        trust level (trusted/untrusted; the richer multi-tier taxonomy is
+        reserved for Phase 4).
+      realizes_intentions: ["INT-005", "INT-008"]
+    cli:
+      summary: >
+        Primary interaction surface. Commands for discovery (list, search),
+        composition (compose), authoring (template create, validate,
+        update-deps), and the project lifecycle (new, update, adopt, eject).
+        Designed for discoverability, safety gates, and both interactive and
+        non-interactive use.
+      realizes_intentions: ["INT-005"]
+    security_and_trust:
+      summary: >
+        Zero-trust and least-privilege are foundational posture applied at every
+        layer, not a per-feature decision. Templates can execute shell commands
+        and load Jinja2 extensions during scaffolding — this is the primary
+        attack surface and is managed through a binary trust model (trusted /
+        untrusted) with behavioral enforcement: a template is trusted only when
+        its source is a first-party `git` source — the published per-template
+        repositories (ADR-006) — or a `git` source explicitly configured
+        `trust_level: trusted`; local filesystem and archive sources are
+        untrusted by default. Trust level determines what a template may do
+        (execute tasks, load extensions, install plugins), not just how it is
+        labeled. The richer multi-tier taxonomy is reserved for Phase 4. Default
+        posture is deny — untrusted templates require explicit user consent for
+        code execution. Template provenance tracking, integrity checksums, commit
+        SHA verification, extension allowlists, and YAML injection prevention
+        provide defense in depth.
+      realizes_intentions: ["INT-002", "INT-006"]
+      note: >
+        Security is cross-cutting — relevant Intentions distribute security
+        acceptance criteria from this product-level posture rather than
+        defining it from scratch.
+    documentation:
+      summary: >
+        Documentation site covering user guides, API reference, tutorials,
+        and template authoring guides.
+      realizes_intentions: ["INT-009"]
+
+  # DEPENDENCIES AND RISKS
+  dependencies_and_risks:
+    copier: >
+      Copier is the template renderer — Boilerplate's most critical
+      dependency. Copier does not provide a stable programmatic Python API;
+      major version upgrades have broken programmatic consumers. Boilerplate
+      maintains an abstraction boundary (orchestration layer) and integration
+      tests against supported Copier versions. This coupling is acknowledged
+      and actively managed, not hidden behind "agnostic" claims.
+    pep_compliance: >
+      First-party templates conform to relevant PEPs: 440 (versioning), 508
+      (dependency specifiers), 517/518 (build system), 621 (project metadata),
+      660 (editable installs), 723 (inline script metadata). When a PEP
+      defines the canonical way, the template uses it — no custom conventions
+      that duplicate or contradict a PEP.
+
+  # CONTEXT — inherited by all child Specs (IDD-prescribed sub-fields)
+  context:
+    stack: >
+      Python 3.12+, Copier (template engine), uv (package/environment manager),
+      ruff (linter/formatter), pyright strict mode (type checker), pytest (tests).
+      Templates may target specific build backends (e.g., hatchling, flit) but
+      Boilerplate itself is agnostic to build backend choice. Apache-2.0
+      license. Cross-platform by design; development environment must work
+      on Ubuntu, macOS, and Windows.
+    patterns: >
+      Boilerplate orchestrates and composes; it delegates runtime concerns
+      (dependency resolution, CI/CD execution, hosting) to the tools and
+      templates it manages. Organized as bounded contexts: Template, Catalog,
+      Dependency, Project, and Environment. Copier owns rendering and
+      .copier-answers.yml; Boilerplate owns composition, lock files, catalog,
+      and lifecycle.
+    conventions:
+      - "When a PEP defines the canonical way, use it — no custom conventions that duplicate or contradict a PEP"
+      - "Composition over inheritance for code; composition over forking for templates"
+      - "Atomic operations: stage-then-move, no partial state on failure"
+      - "Structured error codes (BP_*) for every machine-actionable failure path"
+      - "Audit emission for every state-mutating CLI command"
+    auth: >
+      Boilerplate itself does not authenticate with anything. Authentication
+      is delegated to underlying tools (e.g., git for repository access, uv
+      for package indexes). Access control for catalog sources is handled by
+      the tools that fetch them.
+
+  # ADOPTION METRICS — product-level outcome measurements
+  #
+  # Per-Intention measurable criteria (e.g., "100% trust-enforcement coverage",
+  # ">99% lock integrity") live in each Intention's acceptance_criteria,
+  # consistent with IDD's Expectation.validation_criteria pattern. PROD-001
+  # carries only the cross-cutting product-level outcomes.
+  adoption_metrics:
+    - metric: "Time-to-first-project"
+      target: "Under 5 minutes from install to working project"
+    - metric: "Template ecosystem growth"
+      target: "Expanding catalog of composable, community-contributed templates"
+    - metric: "Reproducibility rate"
+      target: "Scaffolded projects build, lint, and test on first run"
+    - metric: "Adoption velocity"
+      target: "PyPI downloads, GitHub stars, monthly active CLI users"
+    - metric: "Open-source readiness"
+      target: "Installable and functional from public sources alone"
+
+  # GOVERNANCE — pointer; decision authority is recorded in CODEOWNERS, contribution terms in CONTRIBUTING.md
+  governance:
+    document: "CONTRIBUTING.md"
+    summary: >
+      Decision authority rests with the maintainers listed in CODEOWNERS at the
+      repo root. Contribution terms and the branch/PR model are in
+      CONTRIBUTING.md; the release process is in RELEASING.md.
+
+  # INTENTIONS INDEX — snapshot of all Intentions that decompose the target product
+  #
+  # Source of truth: docs/intentions/INT-XXX.yaml (each Intention's full statement,
+  # acceptance criteria, dependencies, and not_included list lives in its own file).
+  # The index may drift; the directory is canonical.
+  # Release timing — which intentions ship in which version — is tracked in GitHub
+  # issues, not here. PROD-001 captures what the product IS at completion, not when
+  # subsets land.
+  intentions_index:
+    - "INT-001 — Single-template scaffolding with lock file"
+    - "INT-002 — Federated catalog (local + remote sources; multi-provider)"
+    - "INT-003 — Safe updates with conflict detection and rollback"
+    - "INT-004 — Environment management"
+    - "INT-005 — CLI with structured output"
+    - "INT-006 — Template authoring and validation"
+    - "INT-007 — Public-source portability"
+    - "INT-008 — AI-native configuration"
+    - "INT-009 — Documentation"
+    - "INT-010 — CI/publishing"
+    - "INT-011 — Lock file verification"
+    - "INT-012 — Multi-template composition"
+    - "INT-013 — Adopt existing projects into Boilerplate management"
+
+  # CANDIDATE SCOPE — being explored; not yet committed to the target product
+  candidate_scope:
+    - id: "template_type_classification"
+      summary: >
+        Future expansion of the template_type taxonomy beyond the minimum
+        viable set (project + component, committed via INT-006). Whether
+        finer-grained types (layer, addon, profile, iac, ...) become
+        first-class taxonomy entries vs. remain authorship conventions
+        within "component" is the open question.
+      shape: >
+        NOT a new artifact type. The minimum viable taxonomy (project +
+        component) is committed; ci-azure-pipelines is the first first-
+        party component. This candidate is specifically about whether to
+        expand the taxonomy further, not whether to have components at
+        all. Any expansion would still be metadata on boilerplate.yml,
+        surfaced through catalog UX. Decision deferred until empirical
+        signal from first-party component authoring emerges.
+      open_questions:
+        - "Whether finer-grained types (layer, addon, profile, iac, ...) earn first-class taxonomy entries or remain authorship conventions within 'component'"
+        - "Empirical signal needed: which authoring patterns recur often enough to justify a distinct type"
+
+    - id: "boilerplate_add_command"
+      summary: >
+        A new CLI surface to apply a composable template (e.g., a component)
+        to an already-rendered project, distinct from boilerplate update.
+        The post-scaffold variant of composition; parked-as-candidate
+        awaiting empirical retrofit demand from default-on first-party
+        templates (CI) users.
+      shape: >
+        Post-scaffolding addition is the load-bearing new mechanism. extends-
+        based composition handles scaffold-time; boilerplate update handles
+        version migration of an existing layer set; neither handles "add a new
+        layer to an existing project." Retrofit of ci_workflows and
+        bundled_env_profiles into existing projects depends on either (a)
+        templates extending first-party components by default (covers new
+        projects only), (b) users opting into composition at scaffold time, or
+        (c) this command for retrofitting existing projects.
+      open_questions:
+        - "Empirical demand from users of default-on first-party templates (post-CI release)."
+
+    - id: "organizational_policy"
+      summary: >
+        Centralized trust tier defaults, mandated template sources, update
+        compliance enforcement for organizations standardizing Boilerplate
+        usage across teams.
+
+  # SCOPE BOUNDARIES — what Boilerplate does NOT own
+  scope_boundaries:
+    - "Runtime dependency resolution is delegated to uv; template dependency resolution (which templates to compose) is owned by Boilerplate"
+    - "CI/CD execution belongs to templates, not Boilerplate core"
+    - "Hosting and deployment are template-dependent concerns"
+    - "Copier owns template rendering and .copier-answers.yml; Boilerplate owns composition, lock files, catalog, and lifecycle"
+    - "Templates provide content; Boilerplate provides the composition engine and enforcement model"
+    - "Organization-specific content must be separated for open-source release"

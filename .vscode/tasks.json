@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "uv run python -m ruff check",
+      "isBackground": false,
+      "group": "build"
+    },
+    {
+      "label": "Format Codebase",
+      "type": "shell",
+      "command": "uv run python -m ruff format",
+      "isBackground": false,
+      "group": "build"
+    },
+    {
+      "label": "Type Checking",
+      "type": "shell",
+      "command": "uv run python -m pyright",
+      "isBackground": false,
+      "group": "build"
+    },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "uv run python -m pytest",
+      "isBackground": false,
+      "group": "build"
+    }
+  ]
+}

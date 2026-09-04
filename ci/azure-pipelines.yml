@@ -1,0 +1,128 @@
+# ci/azure-pipelines.yml
+# Multi-stage CI pipeline for Python packages.
+#
+# Project-specific values (feed name, org URL, service connection, publish
+# and check URLs, Python version) are defined in
+# ci/settings.yml.  Edit that single file to adapt this pipeline for a new
+# project.  No project-specific values appear below.
+#
+# Stages:
+#   1. Build & Test  — runs on both develop and main.
+#      Installs uv, syncs dependencies, runs pytest with JUnit and coverage
+#      reporting, builds the package, computes SHA-256 checksums, and
+#      publishes a `dist` pipeline artifact.  On develop the version is
+#      patched to X.Y.Z.dev<BuildId>.  Outputs BASE_VERSION for downstream.
+#
+#   2. Publish       — two conditional stages gated by branch:
+#      PublishDev     — develop only, targets the `develop` environment
+#                       (no approval gate, runs automatically).
+#      PublishRelease — main only, targets the `production` environment
+#                       (requires manual approval via environment checks).
+#      Both download the dist artifact, verify SHA-256 hashes, authenticate
+#      via a twine service connection, and publish with `uv publish`.
+#      Duplicate detection is enabled via checkUrl.
+#
+#   3. Tag Release   — main only, after PublishRelease succeeds.
+#      Creates and pushes an annotated v<version> git tag.  Includes a
+#      tag-exists guard (skip with warning) and credential cleanup.
+#
+
+# Import project settings as compile-time variables.
+variables:
+  - template: settings.yml
+
+# Trigger on pushes to main and develop.
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - src/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+      - ci/**
+
+# PR validation for Azure Repos Git is configured via branch policies
+# (Build Validation), not YAML pr: triggers.  See ci/SETUP.md.
+pr: none
+
+# ---------------------------------------------------------------------------
+# Stage 1: Build & Test
+# Runs on every push.  The build-test template handles uv install, pytest,
+# coverage, package build, SHA-256 checksums, and artifact publishing.
+# isDevelop controls whether the version is patched with a .dev suffix.
+# ---------------------------------------------------------------------------
+stages:
+  - stage: BuildTest
+    displayName: Build & Test
+    jobs:
+      - template: templates/jobs/build-test.yml
+        parameters:
+          isDevelop: ${{ eq(variables['Build.SourceBranchName'], 'develop') }}
+          feedName: ${{ variables.feedName }}
+          pythonVersion: ${{ variables.pythonVersion }}
+          uvVersion: ${{ variables.uvVersion }}
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: Publish
+  # Two stages split by branch so each can target a different environment
+  # (and therefore different approval gates).
+  #
+  # The publish template downloads the dist artifact, verifies SHA-256
+  # hashes, authenticates via TwineAuthenticate, and runs uv publish.
+  # checkUrl enables skip-if-exists duplicate detection.
+  #
+  # For per-environment feed overrides see ci/SETUP.md.
+  # ---------------------------------------------------------------------------
+  - stage: PublishDev
+    displayName: Publish (develop)
+    dependsOn: BuildTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'develop'))
+    jobs:
+      - template: templates/jobs/publish.yml
+        parameters:
+          environment: develop
+          serviceConnection: ${{ variables.serviceConnection }}
+          publishUrl: ${{ variables.publishUrl }}
+          checkUrl: ${{ variables.checkUrl }}
+          feedName: ${{ variables.feedName }}
+          pythonVersion: ${{ variables.pythonVersion }}
+          uvVersion: ${{ variables.uvVersion }}
+
+  - stage: PublishRelease
+    displayName: Publish (release)
+    dependsOn: BuildTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+    jobs:
+      - template: templates/jobs/publish.yml
+        parameters:
+          environment: production
+          serviceConnection: ${{ variables.serviceConnection }}
+          publishUrl: ${{ variables.publishUrl }}
+          checkUrl: ${{ variables.checkUrl }}
+          feedName: ${{ variables.feedName }}
+          pythonVersion: ${{ variables.pythonVersion }}
+          uvVersion: ${{ variables.uvVersion }}
+
+  # ---------------------------------------------------------------------------
+  # Stage 3: Tag Release (main only)
+  # Runs after a successful release publish.  Reads the base version
+  # extracted during Build & Test and creates an annotated v<version> tag.
+  # If the tag already exists the stage warns and skips.
+  # Credential cleanup runs unconditionally.
+  # ---------------------------------------------------------------------------
+  - stage: TagRelease
+    displayName: Tag Release
+    dependsOn:
+      - BuildTest
+      - PublishRelease
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+    variables:
+      BASE_VERSION: $[ stageDependencies.BuildTest.BuildTest.outputs['version.BASE_VERSION'] ]
+    jobs:
+      - template: templates/jobs/tag-release.yml
+        parameters:
+          version: $(BASE_VERSION)

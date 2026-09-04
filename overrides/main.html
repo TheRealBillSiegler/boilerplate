@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  {% if page.meta.status == "planned" %}
+    <div class="admonition info">
+      <p class="admonition-title">Planned</p>
+      <p>This page describes the target design, not current behavior. Inline markers note what already ships.</p>
+    </div>
+  {% elif page.url.startswith("design/") and "dev-environment-landscape" not in page.url %}
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page describes the target application — what Boilerplate is being built toward — not necessarily what ships today. The Status page records current behavior.</p>
+    </div>
+  {% endif %}
+  {{ super() }}
+{% endblock %}

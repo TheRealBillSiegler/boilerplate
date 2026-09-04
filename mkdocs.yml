@@ -1,0 +1,207 @@
+site_name: "Boilerplate Python Development Environment"
+site_description: "An ethos made executable - developer guidance, project scaffolding, and best-practice reference for Python 3.12+."
+# Required by mike (versioned deploys) and the docs version selector.
+site_url: "https://therealbillsiegler.github.io/boilerplate/"
+repo_url: "https://github.com/TheRealBillSiegler/boilerplate"
+repo_name: boilerplate
+docs_dir: docs
+
+# Internal working docs (agent configuration) — not part of the public site.
+exclude_docs: |
+  agents/
+
+# Built and linkable, but deliberately outside the nav: the intentions register
+# is reached from the design corpus, and the container pages are a sequential
+# journey entered via their section index.
+not_in_nav: |
+  intentions/README.md
+  governance/migration-guide-template.md
+  templates-hub/streamlit/deployment/containers/building-container-images.md
+  templates-hub/streamlit/deployment/containers/environment-setup.md
+  templates-hub/streamlit/deployment/containers/pushing-container-images.md
+
+validation:
+  anchors: warn
+
+extra_css:
+  - stylesheets/extra.css
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.tabs
+    - navigation.tracking
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - navigation.path
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - search.highlight
+    - search.suggest
+  logo: assets/boilerplate.svg
+  favicon: assets/boilerplate.svg
+  icon:
+    repo: fontawesome/brands/github
+    status:
+      planned: material/progress-clock
+
+extra:
+  # Hide the default "Made with Material for MkDocs" footer line
+  generator: false
+  # Versioned docs via mike (one entry per MAJOR.MINOR; see RELEASING.md).
+  # The header selector renders only where mike's versions.json is served —
+  # deployed Pages, or `mike serve`. Plain builds and the offline bundle get
+  # no selector (the file:// fetch fails silently), so both stay valid.
+  version:
+    provider: mike
+    default: latest
+    alias: true
+  status:
+    planned: Describes the target design; not yet implemented
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      # Resolve includes from repo root (e.g. LICENSE, SECURITY.md) and docs/
+      base_path: [".", "docs"]
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - mkdocs-typer
+
+extra_javascript:
+  # Mermaid 10.9.1, vendored locally — byte-for-byte upstream's published
+  # build, with upstream's LICENSE beside it: no external fetch at view time,
+  # and the offline bundle renders diagrams. When upgrading, replace the file
+  # byte-for-byte and refresh docs/assets/mermaid.LICENSE from the upstream
+  # tag in the same change.
+  - assets/mermaid.min.js
+  # Zero trust theme integration (author-controlled diagrams only)
+  - assets/mermaid-theme.js
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            docstring_style: google
+            show_root_full_path: false
+            members_order: source
+            filters: ["!^_"]
+            # Trim the right-rail symbol TOC (was an overwhelming wall of names)
+            show_root_toc_entry: false
+            show_symbol_type_toc: false
+  # Only for the downloadable release bundle (file:// support); off for the
+  # online site so navigation.instant can be adopted once the site deploys to
+  # Pages (the two are mutually exclusive). CI builds both configs.
+  - offline:
+      enabled: !ENV [DOCS_OFFLINE, false]
+  - panzoom:
+      full_screen: true
+
+nav:
+  - Get Started:
+    - index.md
+    - Why Boilerplate: why.md
+    - Install: install.md
+    - Quickstart: quickstart.md
+    - Status: status.md
+  - Templates:
+    - templates-hub/index.md
+    - Project Template: templates-hub/project.md
+    - Streamlit Template: templates-hub/streamlit/streamlit.md
+    - Container Deployment: templates-hub/streamlit/deployment/containers/index.md
+    - Template Authoring: templates-hub/authoring.md
+    - Template Composition: templates-hub/composition.md
+  - CLI:
+    - cli-overview.md
+    - Examples: cli-examples.md
+    - Customization: customization.md
+  - Environment:
+    - environment/index.md
+    - VS Code: environment/vscode.md
+  - Reference:
+    - reference/index.md
+    - Commands: cli.md
+    - Platform: reference/platform/index.md
+    - Merging: reference/merging.md
+  - Help:
+    - help.md
+    - Troubleshooting: troubleshooting.md
+    - FAQ: faq.md
+  - Design:
+    - design/README.md
+    - Specifications:
+      - Overview: design/01-overview.md
+      - Data Models: design/02-data-models.md
+      - Template System: design/03-template-system.md
+      - Composition Engine: design/04-composition-engine.md
+      - CLI Reference: design/05-cli-reference.md
+      - Project Lifecycle: design/06-project-lifecycle.md
+      - Operational Quality: design/07-operational-quality.md
+      - Environment Provisioning: design/08-environment-provisioning.md
+      - Settings & Configuration: design/09-settings-and-configuration.md
+      - Security: design/10-security.md
+      - Development Environment Landscape: design/dev-environment-landscape.md
+    - Decisions:
+      - ADR-001 Build vs Adopt: design/adr-001-build-vs-adopt.md
+      - ADR-002 Copier Internals Shim: design/adr-002-copier-internals-shim.md
+      - ADR-003 Permissive Execution: design/adr-003-permissive-execution.md
+      - ADR-004 Exit Code Taxonomy: design/adr-004-exit-code-taxonomy.md
+      - ADR-005 Integrity Model: design/adr-005-integrity-model.md
+      - ADR-006 Template Distribution: design/adr-006-template-distribution.md
+      - ADR-007 Update Model: design/adr-007-update-model.md
+      - ADR-008 Distribution Name: design/adr-008-distribution-name.md
+      - ADR-009 Environment Provider Protocol: design/adr-009-environment-provider-protocol.md
+      - ADR-010 Profile: design/adr-010-profile.md
+      - ADR-011 Structured Overlay Merge: design/adr-011-structured-overlay-merge.md
+      - ADR-012 Positioning: design/adr-012-positioning.md
+      - ADR-013 Interactivity Contract: design/adr-013-interactivity-contract.md
+      - ADR-014 Deferred Task Execution: design/adr-014-deferred-task-execution.md
+      - ADR-015 Idiomatic Artifacts: design/adr-015-idiomatic-artifacts.md
+  - Contribute:
+    - contribute.md
+    - Contributing: governance/contributing.md
+    - Roadmap: roadmap.md
+    - CI Pipeline: governance/ci.md
+    - Versioning & Compatibility: governance/versioning.md
+    - Template Versioning: governance/template-versioning.md
+    - Security Policy: governance/security.md
+    - License: about/license.md

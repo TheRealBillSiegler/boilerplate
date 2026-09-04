@@ -1,0 +1,32 @@
+# ci/templates/steps/extract-version.yml
+# Reusable step template: parse version from pyproject.toml, set output variable.
+#
+# Outputs:
+#   BASE_VERSION — the version string from pyproject.toml (e.g. 0.2.0)
+#
+# Usage:
+#   - template: templates/steps/extract-version.yml
+
+steps:
+  - script: |
+      BASE_VERSION=$(python - <<'PY'
+      from pathlib import Path
+      import sys
+
+      try:
+          import tomllib
+      except ModuleNotFoundError:  # pragma: no cover - fallback for older Python
+          import tomli as tomllib
+
+      data = tomllib.loads(Path("pyproject.toml").read_text())
+      version = data.get("project", {}).get("version")
+      if not version or not isinstance(version, str):
+          print("Missing static project.version in pyproject.toml", file=sys.stderr)
+          sys.exit(1)
+      print(version)
+      PY
+      )
+      echo "Extracted version: $BASE_VERSION"
+      echo "##vso[task.setvariable variable=BASE_VERSION;isOutput=true]$BASE_VERSION"
+    name: version
+    displayName: Extract version from pyproject.toml

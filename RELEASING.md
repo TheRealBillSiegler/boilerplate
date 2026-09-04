@@ -1,0 +1,72 @@
+# Release Checklist
+
+The source of truth for "is this safe and complete to release / go public."
+
+To verify: run every gate's command against the current tree — never assert a gate passes without running its check. Report each gate PASS/FAIL with its evidence, and a verdict: **NO-GO** if any Blocker fails; **GO with caveats** if only Quality/Advisory items remain; **GO** if all clear.
+
+Gates are tiered. A **Blocker** failing is a hard no-go (legal / exposure /
+irreversible-once-public). A **Quality** failure blocks a *credible* release. An
+**Advisory** item is logged, not gating.
+
+## Blockers — legal & no-leak (irreversible once public)
+
+- [ ] `LICENSE` contains the full Apache-2.0 text — `grep -c "Apache License" LICENSE` ≥ 1
+- [ ] `NOTICE` present and current
+- [ ] No non-public identifier (hosts, feeds, registries, people) in the tree or in any tracked **filename** — run the maintainer's identifier scan (its pattern list is kept outside this repository) → zero hits after eyeballing false positives
+- [ ] Zip-container assets scanned with the same list — `git grep -I` skips binaries, and formats like `.xmind` are zip archives whose entries (titles, rendered thumbnails) can carry names the text grep never sees. Unzip and grep each one.
+- [ ] No secrets committed (tree + history); `uv.lock` resolves only against public PyPI
+- [ ] Open-source permission on file for any content seeded from elsewhere
+
+## Quality
+
+- [ ] CI green on the OS matrix (ubuntu / macos / windows × 3.12 / 3.13)
+- [ ] `uv run pytest` passes from the repo root; `uv run ruff check .` clean; pyright strict clean
+
+## Packaging metadata (before the first PyPI publish/tag)
+
+- [ ] `pyproject.toml` `name` is the intended PyPI distribution name — see
+      [adr-008](docs/design/adr-008-distribution-name.md): `boilerplate-cli` unless the
+      `boilerplate` name is acquired
+- [ ] When the dist name changes, update `get_version("...")` in
+      `src/boilerplate/__init__.py` to match the new dist name — otherwise `__version__`
+      reports `Unknown`
+- [ ] `description`, `license`, `classifiers` (incl. a License + Development Status), and a
+      `[project.urls]` table are complete
+- [ ] OIDC trusted publisher configured against the **final** PyPI project name (do not
+      configure until the name is final)
+
+## Versioning & changelog (automated by release-please)
+
+- [ ] The release-please PR is open with the right next version — under SemVer `0.x`,
+      breaking → minor and feat → patch (per `release-please-config.json`)
+- [ ] The generated `CHANGELOG.md` entry is accurate (edit the prose if needed)
+- [ ] `.release-please-manifest.json` baseline version is correct
+
+## Release mechanics
+
+Releases are cut from `main`: release-please only watches `main`, so merging
+`develop` into `main` **is** the release step.
+
+- [ ] Merging the release-please PR cuts the tag + GitHub release
+- [ ] The offline-docs bundle is attached to the release. Caveat: releases created by the
+      default `GITHUB_TOKEN` do not trigger downstream `release:`-event workflows, so
+      `docs-offline-bundle.yml` never fires on its own — run it via `workflow_dispatch`
+      against the tag (or re-publish the release with a user token)
+- [ ] (Once a PyPI publish workflow exists — deferred until the distribution name is
+      final, see [adr-008](docs/design/adr-008-distribution-name.md)) the same
+      `GITHUB_TOKEN` caveat applies to it
+- [ ] Versioned docs deployed from the release tag:
+      `uv run mike deploy --push --update-aliases X.Y latest`. One docs version per
+      MAJOR.MINOR; patch releases redeploy the same `X.Y`. The version selector and
+      root redirect are driven entirely by the `gh-pages` branch mike maintains
+
+Milestone versions (`0.3.0`, `1.0.0`) are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with an empty commit on `main`: `git commit --allow-empty -m "chore: release 0.3.0" -m "Release-As: 0.3.0"`.
+
+At 1.0, delete `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from `release-please-config.json` (dead config above 1.0). From then on a single `feat!:` cuts a major with **no deprecation window** — ship the deprecating minor first.
+
+Dependency licenses: all **direct** dependencies are permissive, so distributing boilerplate's own code under Apache-2.0 is fine. The one vendored third-party work is the Mermaid bundle (MIT), served by the docs site and the offline docs bundle — self-hosted deliberately, so rendering diagrams triggers no third-party fetch — and nothing ships inside the Python package. (Raw Unicode emoji in docs prose still render via Material's twemoji CDN images; icon shortcodes don't. The docs tenets already prefer shortcodes.) The compliance posture is **unmodified redistribution**: the vendored file is byte-for-byte what the Mermaid project publishes (enforced by a `.gitattributes` `binary` entry — line-ending conversion would silently break the claim), upstream's LICENSE is copied verbatim from the pinned tag to `docs/assets/mermaid.LICENSE`, and the license banners inside the file stay intact — never re-minify or post-process it, since those banners are the embedded components' attribution. The bundle does embed an EPL-2.0 component (elkjs); redistributing it unmodified with upstream's source pointer is the same posture Mermaid itself and every CDN takes, and the EPL does not reach boilerplate's own code. Upgrading Mermaid means replacing the vendored file byte-for-byte with upstream's published build and re-copying the LICENSE from the new tag — nothing more. There is no recurring automated license-scan gate, by design. The **transitive** tree is not all-permissive — `jinja2-ansible-filters` (GPL-3.0, via copier) and `text-unidecode` (Artistic, via python-slugify) — which is acceptable while dependencies are installed separately from PyPI, but must be revisited before ever shipping a bundled/frozen artifact (PyInstaller and similar). Re-check (`uvx pip-licenses`) when the dependency tree changes.
+
+---
+
+During `0.x`, only the distribution name is a stable commitment (see
+[Versioning & Compatibility Policy](docs/governance/versioning.md)); other CLI/exit-code/output surfaces may change.

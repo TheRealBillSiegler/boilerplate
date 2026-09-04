@@ -1,0 +1,206 @@
+name: CI
+
+# PUBLICATION LOCKDOWN: this workflow MUST NOT publish anything anywhere
+# (no `uv publish`, no PyPI upload, no docker push, no release/tag creation,
+# no GitHub Release, no artifact upload to external registries). It runs
+# read-only validation only (lint + typecheck + test + docs build). The
+# `permissions:` block below pins least-privilege `contents: read`; do not
+# raise it without explicit maintainer approval.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    # ready_for_review is not a default activity type; without it a draft
+    # flipped to ready would never get a CI run.
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Superseded runs waste runner time and delay fresh results: cancel them.
+# PRs group per-PR ref; pushes to develop/main group per branch, so batched
+# merges collapse to the final run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Draft PRs skip CI entirely (no runner time spent on drafts); flipping to ready triggers the one real run. The
+# guard must pass push events through: they have no pull_request context.
+jobs:
+  changes:
+    name: Detect changed areas
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    # Every job sets timeout-minutes: the GitHub default is 360, so a single
+    # hung job on a 2x (Windows) or 10x (macOS) runner could burn a large
+    # slice of the monthly included minutes.
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.f.outputs.code }}
+      docs: ${{ steps.f.outputs.docs }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+      - id: f
+        env:
+          # PRs diff against the base branch; pushes against the pre-push tip.
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Fall back to validating everything when BASE is unusable: absent,
+          # the zero SHA (branch creation), or unreachable (force-push evicted
+          # the old tip).
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            { echo "code=true"; echo "docs=true"; } >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          code=false; docs=false
+          while read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              docs/*|*.md|mkdocs.yml|mkdocs.yaml) docs=true ;;
+              *) code=true ;;
+            esac
+          done < <(git diff --name-only "$BASE" "$HEAD")
+          { echo "code=$code"; echo "docs=$docs"; } >> "$GITHUB_OUTPUT"
+          echo "Detected: code=$code docs=$docs"
+
+  lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen
+      # --no-fix: pyproject sets fix = true for local dev; in CI, auto-fixes
+      # would land on the ephemeral checkout and let violations pass green.
+      - run: uv run ruff check --no-fix .
+      - run: uv run ruff format --check .
+
+  shellcheck:
+    name: ShellCheck
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Lint tracked shell scripts (ubuntu-latest ships shellcheck)
+        run: |
+          # *.sh.jinja are Copier templates, not valid shell — excluded by the glob.
+          mapfile -t scripts < <(git ls-files '*.sh' '*.bash')
+          if [ "${#scripts[@]}" -eq 0 ]; then echo "no shell scripts to lint"; exit 0; fi
+          printf 'linting %d script(s):\n' "${#scripts[@]}"; printf '  %s\n' "${scripts[@]}"
+          shellcheck "${scripts[@]}"
+
+  typecheck:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen
+      - run: uv run pyright
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      # PRs run ubuntu-only on the latest Python: development and the local
+      # gate (scripts/check.py) already cover Windows, so CI's marginal PR
+      # signal is the POSIX leg. Pushes to develop/main run the diagonal —
+      # every OS on the latest Python, plus ubuntu on the oldest — because OS
+      # bugs are Python-version-independent and version bugs are
+      # OS-independent; the full cross product doubles the billed minutes
+      # (Windows 2x, macOS 10x) for no added coverage.
+      matrix: >-
+        ${{ fromJSON(github.event_name == 'pull_request'
+        && '{"os": ["ubuntu-latest"], "python-version": ["3.13"]}'
+        || '{"os": ["ubuntu-latest", "windows-latest", "macos-latest"],
+             "python-version": ["3.13"],
+             "include": [{"os": "ubuntu-latest", "python-version": "3.12"}]}') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --frozen
+      - name: Test suite (repo root — testpaths gates the full suite)
+        run: uv run pytest
+      - name: Doctests (serial; root runs do not collect src/ doctests)
+        run: uv run pytest --doctest-modules src -n0
+
+  package:
+    name: Package smoke test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - name: Build the wheel and install it into an empty venv
+        # Installing the wheel resolves from published metadata, not uv.lock —
+        # the only gate that catches undeclared runtime dependencies the
+        # lockfile hides (a missing dep here crashes the CLI for every user
+        # installing from the git URL).
+        run: |
+          uv build
+          uv venv smoke
+          VIRTUAL_ENV="$PWD/smoke" uv pip install dist/*.whl
+          smoke/bin/boilerplate version
+          smoke/bin/boilerplate --help > /dev/null
+
+  docs:
+    name: Docs build (strict)
+    # Runs on every non-draft event: code changes can break API references
+    # (mkdocstrings / autorefs), not just docs edits. Cheap single runner.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen
+      - name: Strict build (warnings = errors; catches broken links/refs)
+        run: uv run mkdocs build --strict
+      - name: Strict build, offline config (what the release bundle ships)
+        env:
+          DOCS_OFFLINE: "true"
+        run: uv run mkdocs build --strict --site-dir site-offline
+
+  gate:
+    name: CI gate
+    # Single required status check. Passes when no needed job failed or was
+    # cancelled; skipped code jobs (on docs-only PRs) are fine. Configure branch
+    # protection to require ONLY this "gate" check. Skipped on drafts so a
+    # draft never shows a vacuously green gate.
+    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    needs: [changes, lint, shellcheck, typecheck, test, package, docs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all jobs to have passed or been skipped
+        run: |
+          for r in \
+            "${{ needs.changes.result }}" \
+            "${{ needs.lint.result }}" \
+            "${{ needs.shellcheck.result }}" \
+            "${{ needs.typecheck.result }}" \
+            "${{ needs.test.result }}" \
+            "${{ needs.package.result }}" \
+            "${{ needs.docs.result }}"; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::A required job did not pass (result: $r)"; exit 1
+            fi
+          done
+          echo "All jobs passed or were skipped."

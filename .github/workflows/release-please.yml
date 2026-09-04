@@ -1,0 +1,26 @@
+name: release-please
+
+# Maintains a release PR (version bump + CHANGELOG) from conventional commits,
+# and cuts the GitHub release + tag on merge. Config + manifest are auto-detected
+# at the repo root (release-please-config.json, .release-please-manifest.json).
+#
+# NOTE: target branch is `main`. If releases are cut from `develop` instead,
+# change `branches:` below to match.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to a full commit SHA (supply-chain hardening / zero-trust posture).
+      # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

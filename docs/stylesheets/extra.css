@@ -1,0 +1,42 @@
+/*
+ * Boilerplate docs — contrast, page-title, and brand-accent overrides.
+ *
+ * Scope: primarily the slate (dark) scheme, which is the default. We only
+ * override what the UX review flagged; everything else stays Material default.
+ */
+
+/* Brand accent (both schemes) — a deliberate mark so the site does not read
+   as stock-indigo. Used for the H1 rule and Material's accent role. */
+:root {
+  --md-accent-fg-color: #7c8cff;
+}
+
+[data-md-color-scheme="slate"] {
+  /* Lift body text from Material's default toward AA-comfortable on slate. */
+  --md-typeset-color: #dfe3ea;
+  /* Raise the muted/secondary foreground so it clears WCAG AA (>= ~5:1).
+     Both tiers intentionally share the same value on slate — the lighter tier
+     still needs lifting, and going lower would fail AA. */
+  --md-default-fg-color--light: #aeb4c0;
+  --md-default-fg-color--lighter: #aeb4c0;
+}
+
+/* Page H1: Material defaults to the de-emphasised --light grey, so titles
+   look washed out. Promote to full foreground + heavier weight so a title
+   reads as a title. */
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: #f3f5f9;
+  font-weight: 700;
+}
+
+/* Short brand rule under the H1 — a brand mark, not stock Material. */
+[data-md-color-scheme="slate"] .md-typeset h1::after {
+  content: "";
+  display: block;
+  width: 54px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: var(--md-accent-fg-color);
+}
+

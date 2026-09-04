@@ -1,0 +1,13 @@
+# Boilerplate template metadata
+# This file defines how Boilerplate discovers, versions, and composes templates.
+# The corresponding copier.yml defines questions and rendering behavior for Copier.
+
+schema_version: "1"       # Boilerplate metadata schema version
+
+name: project              # Template identifier (used in `boilerplate new project`)
+version: 0.2.0             # SemVer — bump when template content changes
+description: A suitable base for any Python project.
+
+# extends: []              # No parent template — this is a base layer.
+#                          # Child templates (e.g., streamlit) use `extends: [project]`
+#                          # to inherit and override this template's configuration.

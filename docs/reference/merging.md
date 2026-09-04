@@ -1,0 +1,59 @@
+# Merging and precedence rules
+
+!!! note "Authoritative specification"
+    The authoritative design specification for merge strategies and composition is [04-composition-engine.md](../design/04-composition-engine.md). This page provides supplementary implementation-level reference. For the file-level three-way merge, conflict-pause, and safe-orphan semantics designed for the future `update` command, see [ADR-007](../design/adr-007-update-model.md).
+
+How configuration values are combined across template layers, with clear rules and deterministic outcomes.
+
+## A two-layer merge
+
+A base template and an app template that extends it, each with its own `copier.yml`:
+
+```yaml
+# base template — copier.yml
+python_version:
+    default: "3.12"
+license:
+    default: "Apache-2.0"
+_tasks:
+    - "uv sync"
+```
+
+```yaml
+# app template — copier.yml (its boilerplate.yml declares extends: [base])
+python_version:
+    default: "3.13"
+_tasks:
+    - "git init"
+```
+
+Composing the app template produces a single questionnaire: `python_version` defaults to `3.13` (the later layer overrides), `license` survives from the base, and `_tasks` accumulates to `["uv sync", "git init"]`. The rules below generalize this.
+
+## What gets merged
+
+Each layer renders through its own Copier `Worker` invocation, applied in composition order. Layers are not isolated: every layer's Worker receives the merged `_jinja_extensions` union and the answers collected so far, so a later layer renders with earlier layers' answers and filters available.
+
+- Non-underscore keys (questions): merged across layers to form a single questionnaire.
+    - dicts: later layer keys override earlier ones (shallow override).
+    - lists: de-duplicated concat in order (first-seen wins).
+    - scalars: later value overrides earlier value.
+
+- Underscore-prefixed keys (directives): not merged, except a small allowlist below. All other underscore keys are treated as layer-local and skipped.
+
+## Allowlisted directive keys and strategies
+
+- `_min_copier_version`: highest PEP 440 version (intersection by max).
+- `_tasks`: accumulate in order (lists concatenate, scalars append).
+- `_secret_questions`: accumulate in order.
+- `_jinja_extensions`: union with original order preserved (dedupe).
+
+Everything else starting with `_` is layer-local. These are discovered dynamically from `copier.Template` attributes at runtime and excluded from merging.
+
+## Determinism and conflict handling
+
+- Key order: keys are processed in first-seen order across layers.
+- Type safety: incompatible types for the same question raise a merge conflict.
+
+## Debugging merges
+
+Run `boilerplate compose <template> --sections layers,deltas` to see each layer's contribution and what changed between them.

@@ -1,0 +1,47 @@
+intention:
+  id: "INT-006"
+  product: "PROD-001"
+  statement: >
+    Template authors can create, validate, and test templates with clear
+    authoring guides.
+  rationale: >
+    Template authors need authoring guides, local validation tooling, and
+    a way to test rendering before publishing. Without these, the template
+    ecosystem cannot grow.
+  priority: "high"
+  dependencies:
+    - "INT-001"  # Authors need to understand the scaffolding model they target
+    - "INT-002"   # Authors need to understand discovery and trust tier requirements
+    - "INT-005"   # Authoring commands are part of the CLI
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Template authors have CLI commands to create template scaffolds, validate
+    template structure and configuration, and test template rendering.
+    Authoring guides document best practices, composition patterns, and
+    trust tier requirements. Templates can be validated locally before
+    publishing. Validation includes rendered output checks (PEP 621
+    compliance, PEP 517 buildability) executed against the template's own
+    test rendering — not against user-rendered projects.
+
+  acceptance_criteria:
+    # Security (distributed from PROD-001 security posture)
+    - "The Jinja2 extension allowlist is documented; `template validate` warns on any non-allowlisted extension"
+    - "Per-capability trust-tier requirements are documented (e.g., templates that use extensions require Verified or higher)"
+    - "`template validate` scans rendered output for common secret patterns and reports matches"
+    - "Authoring docs include AI-config guidance and identify AI config as a trust surface"
+    # Validation
+    - "`template validate` checks PEP 621 compliance of the rendered pyproject.toml"
+    - "`template validate` verifies the rendered project builds with the declared PEP 517 backend"
+    # CI components
+    - "`ci-azure-pipelines` ships as a first-party CI component implemented as a thin template extended by `project` and `streamlit`"
+    - "A GitHub Actions CI component can be added later under the same plural-shape architecture (authoring shape that admits future siblings by extending the answer-value enum, not by introducing a breaking schema change) without a breaking change to existing first-party templates"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Template hosting or registry infrastructure"
+    - "Trust tier certification or promotion workflows"
+    - "User-facing template discovery (see INT-002)"
+    - "Post-render validation of rendered project's runtime tool configurations. Drift between shipped defaults and user-rendered config is surfaced at update time via Copier's three-way merge, not at validate time."

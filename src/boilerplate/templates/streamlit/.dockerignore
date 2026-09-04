@@ -1,0 +1,42 @@
+# Exclude Docker stuffs
+scripts/
+
+# Exclude Git metadata and ignore files
+.git
+.gitignore
+
+# Exclude editor and IDE settings
+.vscode
+*.sublime-*
+.idea
+
+# Exclude Python cache files and bytecode
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude virtual environment directories (built inside the container)
+.venv
+env
+venv
+
+# Exclude environment variable files
+.env
+
+# Exclude Jupyter notebooks (if not needed in production)
+notebooks
+
+# Exclude test directories
+tests
+
+# Exclude log and temporary files
+*.log
+*.tmp
+
+# Exclude CI/CD and build configuration files that are not needed at runtime
+azure-pipelines.yaml
+.copier-answers.*
+
+# Exclude system files
+.DS_Store

@@ -1,0 +1,42 @@
+intention:
+  id: "INT-005"
+  product: "PROD-001"
+  statement: >
+    Users can interact with Boilerplate through a discoverable CLI that
+    works in both interactive and non-interactive modes.
+  rationale: >
+    The CLI is the primary interaction surface. CI, automation, and AI-agent
+    workflows require the CLI to be discoverable and fully usable in
+    non-interactive mode.
+  priority: "critical"
+  dependencies: []
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users have a CLI with commands for scaffolding (new), discovery (list,
+    search), composition (compose), authoring (template create, validate,
+    update-deps), and lifecycle (update). Commands are discoverable through
+    help text, tab completion, and consistent conventions. All commands work
+    in non-interactive mode for scripting and CI. Safety gates protect
+    destructive operations. Error messages provide actionable recovery
+    guidance.
+
+  acceptance_criteria:
+    # Machine interface (agent-friendliness)
+    - "Every command accepts `--format json` and emits a versioned, documented output schema"
+    - "Every command exits with a documented semantic exit code"
+    - "Scaffolding commands accept `--answers` for fully non-interactive runs"
+    - "A template-introspection command emits questions, types, and defaults as JSON"
+    - "A `--ci` convenience flag is recognised by all commands intended for CI use"
+    # Security (distributed from PROD-001 security posture)
+    - "Destructive operations refuse to proceed without an explicit confirmation flag"
+    - "BP_* error messages contain no file contents, secrets, or internal hostnames"
+    - "Non-interactive mode does not bypass consent gates for untrusted-template execution"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "GUI or web-based interfaces"
+    - "IDE/editor integrations or plugins"
+    - "The underlying domain logic behind each command (covered by respective Intentions)"

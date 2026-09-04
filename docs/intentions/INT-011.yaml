@@ -1,0 +1,47 @@
+intention:
+  id: "INT-011"
+  product: "PROD-001"
+  statement: >
+    Users can verify project integrity against the lock file to ensure
+    reproducibility holds.
+  rationale: >
+    A lock file is only valuable if it can be verified. Without an explicit
+    verification step, users have no way to confirm that their project state
+    matches the locked state — silent drift undermines the reproducibility
+    guarantee. This Intention closes the trust loop: INT-001 creates the
+    lock file, INT-003 updates it, and INT-011 verifies it still holds.
+    Verification is both a standalone command and integrated into the
+    scaffold and update critical paths.
+  priority: "high"
+  dependencies:
+    - "INT-001"  # Lock file must exist before it can be verified
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can run a verification command that compares the current project
+    state against boilerplate.lock. The command reports whether the project
+    is consistent, identifies specific files or dependencies that have
+    drifted, and provides actionable guidance for remediation. Verification
+    works in both interactive and CI contexts (exit codes for automation).
+    Verification is also integrated into the scaffold (INT-001) and update
+    (INT-003) workflows as a default step, not just an opt-in command.
+
+  acceptance_criteria:
+    # Security (distributed from PROD-001 security posture)
+    - "Checksum verification uses SHA-256 or stronger"
+    - "Verification re-checks the template commit SHA recorded in the lock file"
+    - "The lock-file integrity model is documented and identifies Git history as the trust anchor"
+    - "A freshly scaffolded project verifies clean immediately after `boilerplate new` returns success"
+    - "After a successful `boilerplate update`, verification either reports clean or exits non-zero with a structured drift report identifying the drifted path and lock-entry; verification MUST NOT exit zero on drift"
+    - "Every resolved template node in the lock file carries tier, source, commit SHA, and checksum"
+    # Integration
+    - "Verification runs as part of scaffold completion (INT-001)"
+    - "Verification runs before safe update (INT-003)"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Automatic remediation or self-healing (user decides next step)"
+    - "Environment provenance verification (see INT-004)"
+    - "Lock file creation or update (see INT-001 and INT-003)"

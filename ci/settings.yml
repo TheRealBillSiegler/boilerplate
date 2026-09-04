@@ -1,0 +1,14 @@
+# ci/settings.yml
+# ┌─────────────────────────────────────────────────────────┐
+# │  PROJECT SETTINGS — edit these for your project         │
+# │                                                         │
+# │  feedName must match the [[tool.uv.index]] name in      │
+# │  pyproject.toml so uv can map auth env vars correctly.  │
+# └─────────────────────────────────────────────────────────┘
+variables:
+  feedName:          "<YOUR_FEED>"                  # e.g. acme-pypi
+  serviceConnection: "<YOUR_SERVICE_CONNECTION>"    # e.g. acme-pypi-publish
+  publishUrl:        "https://<YOUR_ORG>.pkgs.visualstudio.com/_packaging/<YOUR_FEED>/pypi/upload/"   # e.g. https://acme.pkgs.visualstudio.com/_packaging/acme-pypi/pypi/upload/
+  checkUrl:          "https://<YOUR_ORG>.pkgs.visualstudio.com/_packaging/<YOUR_FEED>/pypi/simple/"   # e.g. https://acme.pkgs.visualstudio.com/_packaging/acme-pypi/pypi/simple/
+  pythonVersion:     "3.13"
+  uvVersion:         "0.10.4"
