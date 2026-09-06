@@ -35,7 +35,7 @@ Four opinions the tool executes rather than recommends:
 A development environment is a set of slots — shell, runtime and package manager, linter, type checker, test runner, editor — and most teams fill them by accretion. Boilerplate fills each slot with one opinionated, overridable pick, at three layers:
 
 - **Machine** — the [installer](install.md) bootstraps the baseline itself: PowerShell 7 (installed first when missing), Git, VS Code with extensions, uv, and the boilerplate CLI. There is no prerequisites section that quietly assumes an hour of setup.
-- **Project** — every generated project arrives with a uv-managed, locked environment and Ruff, Pyright (strict), and pytest preconfigured in `pyproject.toml`, passing its own lint, format, type, and test gates from the first commit.
+- **Project** — every generated project arrives with a uv-managed, locked environment and Ruff, Pyright strict, and pytest configured in `pyproject.toml`; its example module and test pass those checks on the first run.
 - **Editor** — templates ship `.vscode/` settings and extension recommendations, so the editor and the toolchain agree on interpreter, linting, and formatting.
 
 The [environment overview](environment/index.md) walks the full toolchain and how the pieces fit. Environment validation is deliberately thin today; the deeper environment-management model is designed, not built ([Implementation Status](status.md)).
