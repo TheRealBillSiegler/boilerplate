@@ -107,10 +107,10 @@ Independent of the feature phases, sequenced against the go-public decision:
 
 - **Day-one distribution:** the bootstrap installer — `scripts/install.ps1` on Windows installs uv + boilerplate from git, needs no PyPI name.
 - **Cross-platform bootstrap:** a macOS/Linux equivalent of `install.ps1` (e.g. `install.sh`), so the bootstrap-first install is canonical on every platform.
-- **Publish pipeline (fallback / parallel, non-gating):** a GitHub Actions release pipeline — PyPI via OIDC trusted publisher, tag-driven — per [INT-010](intentions/INT-010.yaml); deferred until the PyPI distribution name (`boilerplate-cli`, adr-008) is final.
+- **Publish pipeline (fallback / parallel, non-gating):** a GitHub Actions release pipeline — PyPI via OIDC trusted publisher, tag-driven — per INT-010 in the [intentions register](intentions/README.md); deferred until the PyPI distribution name (`boilerplate-cli`, adr-008) is final.
 - **Template publishing:** deterministic per-template extraction (`git subtree split`) from the authoring monorepo, publishing the resulting repositories with tags kept in sync with each template's `boilerplate.yml` version — the canonical first-party distribution channel per [ADR-006](design/adr-006-template-distribution.md). The wheel-bundled seed cache is an optional, deferred item, built only on demonstrated demand.
 - **Version checkpoints:** wired to the release checklist in `RELEASING.md`. Proposal: `0.3.0` = Phase 0 complete, cut at go-public; one minor version per completed phase after that.
-- **Dormant `ci/` content:** the Azure Pipelines templates under `ci/` are first-party template substrate per [PROD-001](products/PROD-001.yaml) — shipped product material, not this repository's own CI. Standing decision: relocate them into template material when the catalog work lands; never delete them, and exclude them from the repo's own CI concerns.
+- **Dormant `ci/` content:** the Azure Pipelines templates under `ci/` are first-party template substrate per PROD-001 — shipped product material, not this repository's own CI. Standing decision: relocate them into template material when the catalog work lands; never delete them, and exclude them from the repo's own CI concerns.
 
 ## Parallelism contract
 
@@ -129,7 +129,7 @@ If any condition fails, the affected tracks serialize.
 - **`area:*` labels** per component, doubling as a spec-coverage map.
 - Optionally a **GitHub Projects v2 board** with Status / Area / Size / Priority fields and Board / Table / Roadmap views.
 
-All tracker scaffolding is created once the repository is public (see [INT-007](intentions/INT-007.yaml)).
+All tracker scaffolding is created once the repository is public (see INT-007 in the [intentions register](intentions/README.md)).
 
 ## Where next
 
