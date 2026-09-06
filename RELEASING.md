@@ -59,6 +59,7 @@ Releases are cut from `main`: release-please only watches `main`, so merging
       `uv run mike deploy --push --update-aliases X.Y latest`. One docs version per
       MAJOR.MINOR; patch releases redeploy the same `X.Y`. The version selector and
       root redirect are driven entirely by the `gh-pages` branch mike maintains
+- [ ] First release only (redo if `overrides/404.html` changes): publish the built 404 page to the `gh-pages` branch root — GitHub Pages serves exactly one site-wide 404.html there, and `mike deploy` never writes to the branch root (only version and alias directories): `git worktree add ../gh-pages-404 gh-pages && cp ../gh-pages-404/X.Y/404.html ../gh-pages-404/404.html && git -C ../gh-pages-404 add 404.html && git -C ../gh-pages-404 commit -m "chore: sync root 404 page" && git -C ../gh-pages-404 push; git worktree remove ../gh-pages-404` (replace `X.Y` with the version just deployed)
 
 Milestone versions (`0.3.0`, `1.0.0`) are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with an empty commit on `main`: `git commit --allow-empty -m "chore: release 0.3.0" -m "Release-As: 0.3.0"`.
 
