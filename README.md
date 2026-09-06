@@ -30,7 +30,7 @@ boilerplate new project my-app # scaffold a new project
 
 ## Customizing for your organization
 
-Boilerplate ships with PyPI / GHCR defaults. To stamp your own values (a private package index, a container registry) into generated projects, drop a `profile.toml` in the boilerplate config directory — no forking required. See the [Customization guide](docs/customization.md) for profiles, layers, and the org-adoption pattern.
+Boilerplate ships with PyPI / GHCR defaults. To stamp your own values (a private package index, a container registry) into generated projects, drop a `profile.toml` in the boilerplate config directory — no forking required. Note: the generated `push-container.sh` authenticates via Azure Container Registry today regardless of the registry value you set — pushing anywhere else (including the `ghcr.io` default) needs your own login step. See the [Customization guide](docs/customization.md) for profiles, layers, and the org-adoption pattern.
 
 ## Features
 
