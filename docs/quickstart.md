@@ -89,7 +89,7 @@ Need a web front‑end? Use the Streamlit template:
 boilerplate new streamlit my-streamlit-app
 ```
 
-Pin to an exact template version when needed (the bundled `project` template is currently at `0.2.1`):
+Pin to an exact template version when needed (check the current version with `boilerplate list`; the bundled `project` template is currently at `0.2.1`):
 
 ```bash
 boilerplate new project@0.2.1 my-versioned-project
