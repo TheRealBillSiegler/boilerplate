@@ -9,7 +9,7 @@
   {% elif page.url.startswith("design/") and "dev-environment-landscape" not in page.url %}
     <div class="admonition info">
       <p class="admonition-title">Design specification</p>
-      <p>This page describes the target application — what Boilerplate is being built toward — not necessarily what ships today. The Status page records current behavior.</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="{{ base_url }}/status{{ '/' if config.use_directory_urls else '.html' }}">the Status page</a> for what's built project-wide.</p>
     </div>
   {% endif %}
   {{ super() }}
