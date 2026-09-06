@@ -23,7 +23,8 @@ Templates use semantic versioning (`MAJOR.MINOR.PATCH`), independent from the CL
 # boilerplate.yml
 version: "0.1.0"  # Template version (independent from CLI)
 name: project
-extends: base@^0.1.0  # Composition constraint on base template
+extends:
+  - base@0.1.0  # Exact-pin dependency on the base template
 ```
 
 **Key**: Each template versions itself, not tied to Boilerplate CLI versions.
@@ -182,7 +183,8 @@ version: "1.0.1"  # Patch bump
 ```yaml
 # boilerplate.yml (v1.1.0)
 version: "1.1.0"  # Minor bump
-extends: base@^1.0  # Base template constraint unchanged
+extends:
+  - base@1.0.0  # Base template pin unchanged
 ```
 
 **When to bump MINOR:**
@@ -198,7 +200,8 @@ extends: base@^1.0  # Base template constraint unchanged
 ```yaml
 # boilerplate.yml (v2.0.0)
 version: "2.0.0"  # Major bump
-extends: base@^2.0  # Major bump in composition constraint
+extends:
+  - base@2.0.0  # Major bump in composition pin
 ```
 
 **When to bump MAJOR:**
@@ -286,22 +289,28 @@ Conflicts do not stop migrations, and Copier's exit code stays 0 through a confl
 Templates declare dependencies via `extends`:
 
 ```yaml
-# boilerplate.yml (streamlit template)
-version: "0.2.0"
-name: streamlit
-extends: project@^0.1.0  # Requires project v0.1.x or compatible
+# boilerplate.yml
+version: "1.1.0"
+name: child
+extends:
+  - base@1.0.0  # Exact pin on the base layer
 ```
 
 ### Version constraints
 
-Use semantic versioning constraints:
+`extends` entries are either a bare template name, which resolves to that template's latest registered version, or an exact `name@X.Y.Z` pin — the version must match precisely:
 
 ```yaml
-extends: base@^1.0    # Compatible with 1.x, allow 1.0, 1.1, 1.2...
-extends: base@~1.2.0  # Compatible with 1.2.x only
-extends: base@1.0.0   # Exact version match
-extends: base@>=1.0,<2.0  # Complex constraint
+extends:
+  - base       # Latest registered version of base
 ```
+
+```yaml
+extends:
+  - base@1.0.0 # Exact version match only
+```
+
+Range and compatibility operators (`^1.0`, `~1.2.0`, `>=1.0,<2.0`) are not implemented — `TemplateSpecifier` parses only an exact PEP 440 version after `@` (`src/boilerplate/types/template_specifier.py`). See [Template composition § Limitations](../templates-hub/composition.md#limitations-current-state) for this and the rest of the composition engine's current constraints.
 
 ### Composition implications
 
@@ -318,10 +327,10 @@ When a base template has breaking changes:
 
 ```yaml
 # OLD: project@1.0.0
-# streamlit v0.2.0 extends project@^1.0.0
+# streamlit v0.2.0 extends project@1.0.0
 
 # NEW: project@2.0.0 (breaking changes)
-# streamlit v1.0.0 extends project@^2.0.0 (major bump needed)
+# streamlit v1.0.0 extends project@2.0.0 (re-pinned for the major bump)
 
 # Existing project on streamlit v0.2.0 + project v1.0.0:
 # User runs: copier update
@@ -502,7 +511,7 @@ Key terms used in template versioning:
 
 **Copier Migration**: Custom Python script (in `migrations/` directory) that transforms generated projects during template updates.
 
-**Extends**: Template composition constraint specifying dependency on a base template with version constraint (e.g., `project@^1.0`).
+**Extends**: Template composition dependency on a base template, by name or by exact version pin (e.g., `project@1.0.0`).
 
 **Migration-First**: Principle that breaking changes are acceptable IF automated migration via Copier handles them.
 
