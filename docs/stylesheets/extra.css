@@ -190,16 +190,21 @@
   margin: 0;
 }
 
-/* Page H1: Material defaults to the de-emphasised --light grey, so titles
-   look washed out. Promote to full foreground + heavier weight so a title
-   reads as a title. */
-[data-md-color-scheme="slate"] .md-typeset h1 {
-  color: #f3f5f9;
+/* Page H1: Material defaults to the de-emphasised --light grey in both
+   schemes, so titles look washed out. Promote to full foreground + heavier
+   weight so a title reads as a title; slate gets a brighter white than its
+   body text. */
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
   font-weight: 700;
 }
 
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: #f3f5f9;
+}
+
 /* Short brand rule under the H1 — a brand mark, not stock Material. */
-[data-md-color-scheme="slate"] .md-typeset h1::after {
+.md-typeset h1::after {
   content: "";
   display: block;
   width: 54px;
