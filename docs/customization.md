@@ -18,7 +18,7 @@ author_name = "Jane Dev"
 package_index_url = "https://pkgs.example.com/org/_packaging/feed/pypi/simple/"
 
 [templates.streamlit]           # only for this template; overrides [defaults]
-container_registry = "registry.example.com"
+container_registry = "myregistry.azurecr.io"
 ```
 
 - Keys are **template question names** (see each template's `copier.yml`). The only reserved names are the two table headers; a key matching no question is ignored.
@@ -29,7 +29,7 @@ container_registry = "registry.example.com"
 | Question | Templates | Effect |
 | --- | --- | --- |
 | `package_index_url` | `project` and everything extending it | emits a default `[[tool.uv.index]]` block in the generated `pyproject.toml` (empty = public PyPI, no block) |
-| `container_registry` | `streamlit` | registry used by the generated `push-container.sh` |
+| `container_registry` | `streamlit` | registry used by the generated `push-container.sh`, which authenticates via Azure CLI (ACR) today regardless of this value — pushing to a different registry (including the `ghcr.io` default) needs your own login step |
 | `author_name` / `author_email` | `project` and everything extending it | project metadata |
 
 ## Layers (structure)
