@@ -10,3 +10,7 @@
 # publishes it; any line-ending conversion breaks that claim (and bloats it by
 # one byte per line). binary = -text -diff -merge.
 docs/assets/mermaid.min.js  binary
+
+# Vendored woff2 font files are binary; without this, a checkout that treats
+# them as text can corrupt them via line-ending conversion.
+*.woff2  binary
