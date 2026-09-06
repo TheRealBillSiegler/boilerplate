@@ -2,7 +2,7 @@
 
 **Status**: Accepted (target architecture; not yet implemented) **Date**: 2026-06-20 **Deciders**: Project team **Rewritten**: 2026-07-28 — the decision below supersedes the original wheel-bundled form; see [Superseded positions](#superseded-positions).
 
-> **Scope note.** This ADR records a *target* decision. The distribution mechanism it describes is not yet built; for current state see [status.md](../status.md). It **commits** `first_party_template_distribution` (previously a [PROD-001](../products/PROD-001.yaml) `candidate_scope` item) — the `update` spine depends on it.
+> **Scope note.** This ADR records a *target* decision. The distribution mechanism it describes is not yet built; for current state see [status.md](../status.md). It **commits** `first_party_template_distribution` (previously a PROD-001 `candidate_scope` item) — the `update` spine depends on it.
 
 ## Context
 
@@ -34,7 +34,7 @@ Templates are **authored in a monorepo** (templates as subdirectories — good a
 
 ## Consequences
 
-- A new build-pipeline responsibility: deterministic per-template extraction plus publishing, with tags kept in sync with each template's `boilerplate.yml` version — the release-pipeline half of that is [INT-010](../intentions/INT-010.yaml). Publishing the extracted repositories falls outside INT-010 as currently scoped: its `not_included` excludes template publishing and registry hosting, so no intention owns the canonical channel today. Either INT-010 widens or a new intention takes it; that ownership question is open, and this ADR does not settle it.
+- A new build-pipeline responsibility: deterministic per-template extraction plus publishing, with tags kept in sync with each template's `boilerplate.yml` version — the release-pipeline half of that is INT-010 (see the [intentions register](../intentions/README.md)). Publishing the extracted repositories falls outside INT-010 as currently scoped: its `not_included` excludes template publishing and registry hosting, so no intention owns the canonical channel today. Either INT-010 widens or a new intention takes it; that ownership question is open, and this ADR does not settle it.
 - First-party templates become ordinary remote `git` sources, which meets [ADR-003](adr-003-permissive-execution.md)'s own stated trigger for tightening: its permissive render posture is acceptable only while sources are **local** and deliberately chosen, and its rationale — that an unsafe render executes code the user already has on disk — does not hold for a template fetched over the network. Whether that trip-wire re-scopes (to third-party or otherwise untrusted provenance) or fires as written (consent gating lands with the git source) is an open question ADR-003 owns and must resolve before the git source ships. This ADR does not decide it.
 - A default install needs network access on first use: first-party layers render from the published repositories, so scaffolding no longer works from the wheel alone. That interacts with the designed `--offline` semantics ([design 05](05-cli-reference.md)) — an offline run depends on an org-local clone or mirror already being present — and it is what the deferred seed cache would address.
 - `update` dogfoods against the published repositories, or against local clones during development — Copier treats the two identically.
