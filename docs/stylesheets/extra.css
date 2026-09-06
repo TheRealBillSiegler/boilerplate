@@ -121,6 +121,36 @@
   color: var(--md-accent-fg-color);
 }
 
+/* Header legibility. Two problems with a charcoal header: (1) Material paints
+   the slate page at #1e2129, within a few values of the #1f2124 header, so in
+   the dark scheme the header, tab bar, and page merge into one surface; (2) at
+   desktop widths Material draws the idle search field as a 26% black overlay
+   on the header — a visible well on stock indigo, invisible on near-black.
+   In slate the header steps up to a lighter charcoal and the tab bar takes a
+   hairline, so the chrome reads as chrome; in both schemes the search field
+   gets a light-on-dark surface with a hairline ring. Material's active-search
+   rule (white field, dropdown) has higher specificity and still wins. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #282c33;
+  --md-primary-fg-color--light: #363b43;
+  --md-primary-fg-color--dark: #1f2124;
+}
+
+.md-tabs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media screen and (min-width: 60em) {
+  .md-search__form {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  .md-search__form:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
 /* Implementation-status legend (docs/status.md) — colors that hold their
    meaning (shipped/in-progress/design-only) in both schemes. */
 .md-typeset .status-shipped {
