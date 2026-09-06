@@ -53,7 +53,7 @@ Output (abridged):
 
 ```text
 #   Layer       Version   Path
-1   project     0.1.0     .../templates/project
+1   project     0.2.0     .../templates/project
 2   streamlit   0.1.0     .../templates/streamlit
 ```
 
@@ -64,14 +64,14 @@ JSON graph payload (shape used by tools when `--format json`):
 ```json
 {
   "sequence": [
-    "project@0.1.0",
+    "project@0.2.0",
     "streamlit@0.1.0"
   ],
   "layers": [
     {
-      "specifier": "project@0.1.0",
+      "specifier": "project@0.2.0",
       "name": "project",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": ".../templates/project",
       "deps": []
     },
@@ -80,7 +80,7 @@ JSON graph payload (shape used by tools when `--format json`):
       "name": "streamlit",
       "version": "0.1.0",
       "path": ".../templates/streamlit",
-      "deps": ["project@0.1.0"]
+      "deps": ["project@0.2.0"]
     }
   ]
 }

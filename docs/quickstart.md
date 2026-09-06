@@ -89,10 +89,10 @@ Need a web front‑end? Use the Streamlit template:
 boilerplate new streamlit my-streamlit-app
 ```
 
-Pin to an exact template version when needed (the bundled `project` template is currently at `0.1.0`):
+Pin to an exact template version when needed (check the current version with `boilerplate list`; the bundled `project` template is currently at `0.2.0`):
 
 ```bash
-boilerplate new project@0.1.0 my-versioned-project
+boilerplate new project@0.2.0 my-versioned-project
 ```
 
 > **Note:** Upgrading a generated project to a newer template version (`boilerplate update`) is currently design-only — see [design/adr-007-update-model.md](design/adr-007-update-model.md) for the planned approach.
