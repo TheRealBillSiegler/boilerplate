@@ -4,7 +4,7 @@
 
 ## Agent skills
 
-Configuration the engineering skills (`to-issues`, `triage`, `to-prd`, `qa`, `improve-codebase-architecture`, `diagnose`, `tdd`) read. Edit `docs/agents/*.md` to change.
+The engineering skills that `docs/agents/*.md` configure (`to-issues`, `triage`, `to-prd`, `qa`, `improve-codebase-architecture`, `diagnose`, `tdd`) are the maintainer's personal Claude Code plugins, not part of this repository; a contributor without them can still follow the same conventions by hand from `docs/agents/*.md`. Edit `docs/agents/*.md` to change the conventions.
 
 ### Issue tracker
 
