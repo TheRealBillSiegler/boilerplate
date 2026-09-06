@@ -67,6 +67,14 @@ theme:
 extra:
   # Hide the default "Made with Material for MkDocs" footer line
   generator: false
+  # Un-versioned site root, for links that must survive a `mike deploy` build.
+  # mike's injected mkdocs plugin rewrites config.site_url on every deploying
+  # build to config.site_url + "<version>" (no trailing slash -- see
+  # mike.mkdocs_plugin.MikePlugin.on_config), so a template that builds a
+  # link from site_url renders "<site_url><version>latest/..." with the
+  # version and "latest" run together. This key is never touched by mike;
+  # always ends in a trailing slash. Used by overrides/404.html.
+  site_root: "https://therealbillsiegler.github.io/boilerplate/"
   # Versioned docs via mike (one entry per MAJOR.MINOR; see RELEASING.md).
   # The header selector renders only where mike's versions.json is served —
   # deployed Pages, or `mike serve`. Plain builds and the offline bundle get

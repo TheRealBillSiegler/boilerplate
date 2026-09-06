@@ -4,7 +4,19 @@
   Helpful 404 — replaces Material's bare "404 - Not found".
   A doc-site 404 is a high-traffic dead end (stale links, typo'd .html paths),
   so turn a wrong URL into a recovery moment. Material's header already
-  provides search. Links are absolute root-relative so they work from any path.
+  provides search. The site is deployed with mike under a versioned path, so
+  a root-relative link would 404 again -- but config.site_url is the wrong
+  base to build one from: mike's injected plugin rewrites it on every
+  deploying build to include the version being deployed, with no trailing
+  slash (config.site_url + "<version>"), so a link built as
+  config.site_url ~ "latest/" would render as ".../boilerplate/0.3latest/"
+  instead of ".../boilerplate/0.3/latest/".
+  Every link below is instead built from extra.site_root, an un-versioned
+  root mike never touches, and pinned to the "latest" alias mike maintains,
+  using the directory-style paths the rest of the site renders. This file
+  is also published to the gh-pages branch root (see RELEASING.md) --
+  GitHub Pages serves only one site-wide 404.html, and mike deploys
+  exclusively under versioned and alias directories, never the branch root.
 #}
 
 {% block content %}
@@ -17,12 +29,12 @@
 
   <div class="grid cards" markdown="0">
     <ul>
-      <li><a href="/"><strong>Home</strong> — what Boilerplate is and why use it</a></li>
-      <li><a href="/quickstart.html"><strong>Quickstart</strong> — install, first project, tests</a></li>
-      <li><a href="/install.html"><strong>Install</strong> — Windows, macOS &amp; Linux setup</a></li>
-      <li><a href="/cli.html"><strong>CLI Reference</strong> — every command and flag</a></li>
-      <li><a href="/troubleshooting.html"><strong>Troubleshooting</strong> — when the first run fails</a></li>
-      <li><a href="/status.html"><strong>Status</strong> — what works today vs. roadmap</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/"><strong>Home</strong> — what Boilerplate is and why use it</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/quickstart/"><strong>Quickstart</strong> — install, first project, tests</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/install/"><strong>Install</strong> — Windows, macOS &amp; Linux setup</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/cli/"><strong>CLI Reference</strong> — every command and flag</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/troubleshooting/"><strong>Troubleshooting</strong> — when the first run fails</a></li>
+      <li><a href="{{ config.extra.site_root }}latest/status/"><strong>Status</strong> — what works today vs. roadmap</a></li>
     </ul>
   </div>
 </div>
