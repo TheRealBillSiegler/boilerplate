@@ -53,7 +53,7 @@ Recorded version is a **floor** honored on re-apply: declaration > recorded floo
 
 **Signing.** Local executable-bearing profiles → note + filesystem-permission expectation (the same ADR-005 posture as `boilerplate.lock`); signing stays deferred (a writable-FS attacker who can edit the profile can edit PATH/binaries directly, and local verification is only as strong as a trust root the attacker can't touch). Remote/third-party provenance → signing belongs in the **catalog trust model** ([03 §Trust](03-template-system.md), [10-security.md](10-security.md)), not here.
 
-**Naming.** The OS-host axis is **`platform`** (`windows`/`wsl2`/`linux`/`macos`, the existing `packages` key) — **not** `substrate`, which is locked to the enforcement-mode meaning (`enforced`/`preconfigured`, [PROD-001](../products/PROD-001.yaml), [glossary](01-overview.md)).
+**Naming.** The OS-host axis is **`platform`** (`windows`/`wsl2`/`linux`/`macos`, the existing `packages` key) — **not** `substrate`, which is locked to the enforcement-mode meaning (`enforced`/`preconfigured`, PROD-001, [glossary](01-overview.md)).
 
 ## Options considered
 

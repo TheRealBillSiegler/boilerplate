@@ -4,7 +4,7 @@
 
 **Date**: 2026-06-22 **Deciders**: Project team (Bill Siegler)
 
-> **Scope note.** This is a packaging / go-public decision, not an architecture one. It gates [INT-007](../intentions/INT-007.yaml) (PyPI installability) and [INT-010](../intentions/INT-010.yaml) (publish pipeline) — the PyPI path only; it does **not** gate the git-URL-first launch, which consumes no PyPI distribution name. It does not touch the import package, the CLI surface, or any persisted schema.
+> **Scope note.** This is a packaging / go-public decision, not an architecture one. It gates INT-007 (PyPI installability) and INT-010 (publish pipeline), both in the [intentions register](../intentions/README.md) — the PyPI path only; it does **not** gate the git-URL-first launch, which consumes no PyPI distribution name. It does not touch the import package, the CLI surface, or any persisted schema.
 
 ## Context
 
@@ -38,5 +38,7 @@ The primary install path is the bootstrap installer (`scripts/install.ps1` on Wi
 
 ## Relationship to other ADRs and intentions
 
-- [INT-007](../intentions/INT-007.yaml) — org-independence / PyPI-installability gate; this decision is a prerequisite of "installable from PyPI."
-- [INT-010](../intentions/INT-010.yaml) — publish pipeline / OIDC trusted publisher; binds to the name chosen here.
+See the [intentions register](../intentions/README.md) for the full definitions of both:
+
+- INT-007 — org-independence / PyPI-installability gate; this decision is a prerequisite of "installable from PyPI."
+- INT-010 — publish pipeline / OIDC trusted publisher; binds to the name chosen here.
