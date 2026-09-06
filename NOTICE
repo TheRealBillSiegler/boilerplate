@@ -24,6 +24,24 @@ which must never be stripped, and complete corresponding source for the bundle
 and everything in it is published by the Mermaid project at the repository
 above. Boilerplate makes no modifications.
 
+The repository also vendors four woff2 font files serving the documentation
+site's self-hosted type, so the site fetches no font from Google at view time
+and the offline bundle keeps working from file://:
+
+  docs/assets/fonts/ibm-plex-sans-latin-400-normal.woff2
+  docs/assets/fonts/ibm-plex-sans-latin-400-italic.woff2
+  docs/assets/fonts/ibm-plex-sans-latin-600-normal.woff2 — IBM Plex Sans,
+  SIL Open Font License 1.1, from the @fontsource/ibm-plex-sans npm package
+  (https://github.com/fontsource/fontsource), redistributed byte-for-byte as
+  published. License text: docs/assets/fonts/ibm-plex-sans.LICENSE.
+
+  docs/assets/fonts/jetbrains-mono-latin-400-normal.woff2 — JetBrains Mono,
+  SIL Open Font License 1.1, from the @fontsource/jetbrains-mono npm package
+  (https://github.com/fontsource/fontsource), redistributed byte-for-byte as
+  published. License text: docs/assets/fonts/jetbrains-mono.LICENSE.
+
+Boilerplate makes no modifications to either font.
+
 Any future vendored asset must be added to this file, with its upstream
 license, in the same change that vendors it.
 
