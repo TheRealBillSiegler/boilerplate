@@ -143,6 +143,23 @@
   color: var(--md-default-fg-color--light);
 }
 
+/* Brand marks (docs/assets/boilerplate_less_yak.svg,
+   boilerplate_found_reproducibility.svg) render their wordmark in white,
+   fixed regardless of scheme — they are sticker art for a dark surface, not
+   a page background. Give them one, so they read in both schemes. */
+.md-typeset .brand-mark {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #1f2124;
+  border-radius: 8px;
+}
+
+.md-typeset .brand-mark img {
+  margin: 0;
+}
+
 /* Page H1: Material defaults to the de-emphasised --light grey, so titles
    look washed out. Promote to full foreground + heavier weight so a title
    reads as a title. */
