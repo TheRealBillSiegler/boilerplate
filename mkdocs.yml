@@ -29,18 +29,34 @@ extra_css:
 theme:
   name: material
   custom_dir: overrides
+  # Self-hosted type (docs/assets/fonts/, wired via extra.css @font-face) —
+  # no Google Fonts fetch at view time, and the offline bundle keeps working.
+  font: false
   palette:
+    # This entry has no `scheme:` — it's the auto/system toggle, not a
+    # rendered scheme — but Material's base.html still reads `primary`/
+    # `accent` off `palette | first` (this entry) to stamp the server-
+    # rendered <body data-md-color-primary/accent> before any JS runs, so
+    # they're set here too. Left unset, that first paint defaults to
+    # Material's stock indigo and only snaps to custom once the inline
+    # bootstrap script replays the saved scheme from localStorage.
     - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
