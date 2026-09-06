@@ -8,6 +8,12 @@ FROM debian:bookworm-slim AS base
 ARG APP_UID=10000
 ARG APP_GID=10000
 
+# uv installs its managed Python interpreter here (under the user running
+# uv, i.e. appuser's home once the builder switches user below); pinning it
+# explicitly makes the runtime stage's dependency on this path visible
+# instead of leaving it as an implicit default.
+ENV UV_PYTHON_INSTALL_DIR=/home/appuser/.local/share/uv/python
+
 # Create a non-root user with fixed UID/GID for both builder and runtime
 RUN groupadd --gid ${APP_GID} appuser \
  && useradd --uid ${APP_UID} \
@@ -69,7 +75,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y curl && rm -rf 
 # Set working directory
 WORKDIR /app
 
-# Copy built app and venv
+# Copy the built app and its venv, plus the managed Python interpreter that
+# venv is bound to: uv does not vendor a copy of the interpreter into
+# /app/.venv, it points into UV_PYTHON_INSTALL_DIR (set above), so the venv
+# is unusable without this second copy.
 COPY --from=builder /app /app
 COPY --from=builder /home/appuser/.local /home/appuser/.local
 
