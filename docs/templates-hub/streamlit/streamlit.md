@@ -39,7 +39,7 @@ my-streamlit-app/
 └── tests/
     └── integration/        # Integration tests
         └── my_streamlit_app/
-            └── tests_app.py
+            └── test_app.py
 ```
 
 The package name derives from the project name. The render also inherits the project template's files: `notebooks/`, `src/<package>/module.py`, unit tests, and `.gitignore`. Each layer records its own answers file — `.copier-answers.project.yml` and `.copier-answers.streamlit.yml` — rather than a single shared one.
