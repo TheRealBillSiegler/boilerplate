@@ -20,6 +20,8 @@ Every command exits with one of six codes (defined in `boilerplate.constants.Exi
 | 4 | ACTION_REQUIRED | Recoverable pause; user intervention needed. Defined in the taxonomy but not yet produced by any shipped command — its first producer will be the planned `update` conflict pause. |
 | 130 | USER_CANCELLED | Cancelled at a prompt (Ctrl+C). |
 
+`boilerplate validate <template_dir>` reports a template that fails its own checks (missing or malformed `boilerplate.yml`/`copier.yml`, duplicate keys, schema errors, or a `--strict` warning) on exit code 1 (FAILURE), not 3 — exit 3 there is reserved for a malformed invocation, namely a `template_dir` argument that isn't a directory at all.
+
 ## Where next
 
 - [Examples](cli-examples.md) — copy-pastable commands for common tasks.
