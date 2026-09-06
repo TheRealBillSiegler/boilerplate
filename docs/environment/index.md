@@ -12,6 +12,10 @@ Boilerplate fills the core of the everyday development loop — one curated, pre
 
 **Dependency & environment manager.** An extremely fast package and project manager (written in Rust) that installs and pins Python, manages your virtual environment, and keeps installs reproducible from `pyproject.toml` — day to day, `uv sync`, `uv add <pkg>`, `uv remove <pkg>`. [Official docs](https://docs.astral.sh/uv/)
 
+<div class="brand-mark" markdown>
+![I found reproducibility in Boilerplate.](../assets/boilerplate_found_reproducibility.svg){ width="420" }
+</div>
+
 ### ![Ruff Logo](../assets/ruff_bolt.svg){ style="height: 1em; vertical-align: middle;"} Ruff
 
 **Linter & formatter.** One fast tool (also Rust) for both jobs — enforces PEP 8, docstrings, and naming, auto-fixes what it can, and formats on save, so style stays out of your way. [Official docs](https://docs.astral.sh/ruff/)

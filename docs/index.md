@@ -146,4 +146,6 @@ Just want the CLI? `uv tool install git+https://github.com/TheRealBillSiegler/bo
 
 ---
 
+<div class="brand-mark" markdown>
 ![Strict typing saves lives. Less yak. More stack.](assets/boilerplate_less_yak.svg){ width="280" }
+</div>
