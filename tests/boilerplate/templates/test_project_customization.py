@@ -1,42 +1,11 @@
 """Tests for the project template's customization Questions."""
 
+from functools import partial
 from pathlib import Path
 
-from boilerplate.cli.utils import build_template_catalog
-from boilerplate.composition import Composer
-from boilerplate.composition.rendering.engine import RenderEngine
-from boilerplate.composition.rendering.models.execution_context import (
-    ExecutionContext,
-)
-from boilerplate.composition.resolution import Resolver
-from boilerplate.settings import Settings
+from tests.boilerplate.templates.conftest import render
 
-
-def _render_project(
-    tmp_path: Path,
-    *,
-    context_data: dict[str, object] | None = None,
-    profile: dict[str, object] | None = None,
-) -> Path:
-    """Renders the project template with the given answer channels; returns dest dir.
-
-    ``context_data`` is Copier's forced ``data`` channel; ``profile`` is the
-    overridable ``user_defaults`` channel.
-    """
-    registry = build_template_catalog(None, Settings())
-    resolution = Resolver().resolve("project", registry)
-    composition = Composer().compose(resolution)
-    dest = tmp_path / "out"
-    ctx = ExecutionContext(
-        destination=dest,
-        context_data=context_data or {},
-        profile=profile or {},
-        overwrite=True,
-        interactive=False,
-        skip_tasks=True,
-    )
-    RenderEngine().render(composition, ctx)
-    return dest
+_render_project = partial(render, "project")
 
 
 class TestPackageIndexUrl:

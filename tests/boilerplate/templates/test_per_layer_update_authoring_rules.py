@@ -15,11 +15,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-import boilerplate
 from boilerplate.integrations.copier_types import DEFAULT_EXCLUDE
+from tests.boilerplate.templates.conftest import LAYERS
 
-TEMPLATES = Path(boilerplate.__file__).parent / "templates"
-LAYERS = sorted(p.parent for p in TEMPLATES.glob("*/copier.yml"))
 AUTHORING_METADATA = "/boilerplate.yml"
 # Names Copier itself provides to every render.
 COPIER_BUILTINS = {"_copier_answers", "_copier_conf", "_copier_python", "_folder_name"}
