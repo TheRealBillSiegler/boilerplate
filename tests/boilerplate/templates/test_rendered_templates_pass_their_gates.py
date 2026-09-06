@@ -16,49 +16,14 @@ Two paths, deliberately different cost:
 """
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-import boilerplate
-from boilerplate.cli.utils import build_template_catalog
-from boilerplate.composition import Composer
-from boilerplate.composition.rendering.engine import RenderEngine
-from boilerplate.composition.rendering.models.execution_context import (
-    ExecutionContext,
-)
-from boilerplate.composition.resolution import Resolver
-from boilerplate.settings import Settings
-
-TEMPLATES = Path(boilerplate.__file__).parent / "templates"
-LAYERS = sorted(p.parent for p in TEMPLATES.glob("*/copier.yml"))
-
-
-def _render(name: str, destination: Path, *, skip_tasks: bool) -> Path:
-    """Renders the bundled layer `name` into `destination` with default answers.
-
-    Args:
-        name: Layer name, e.g. "project" or "streamlit".
-        destination: Directory to render into; must not already exist.
-        skip_tasks: Whether to skip post-generation tasks (``--no-tasks``).
-
-    Returns:
-        The destination directory, for chaining.
-    """
-    registry = build_template_catalog(None, Settings())
-    resolution = Resolver().resolve(name, registry)
-    composition = Composer().compose(resolution)
-    ctx = ExecutionContext(
-        destination=destination,
-        context_data={},
-        overwrite=True,
-        interactive=False,
-        skip_tasks=skip_tasks,
-    )
-    RenderEngine().render(composition, ctx)
-    return destination
+from tests.boilerplate.templates.conftest import LAYERS, render
 
 
 def _run(cmd: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> str:
@@ -91,12 +56,12 @@ class TestRenderedLayersPassRuffGates:
 
     @pytest.mark.parametrize("layer", LAYERS, ids=lambda p: p.name)
     def test_ruff_check_passes(self, layer: Path, tmp_path: Path) -> None:
-        dest = _render(layer.name, tmp_path / "out", skip_tasks=True)
+        dest = render(layer.name, tmp_path, skip_tasks=True)
         _run([sys.executable, "-m", "ruff", "check", "--no-fix", "."], cwd=dest)
 
     @pytest.mark.parametrize("layer", LAYERS, ids=lambda p: p.name)
     def test_ruff_format_check_passes(self, layer: Path, tmp_path: Path) -> None:
-        dest = _render(layer.name, tmp_path / "out", skip_tasks=True)
+        dest = render(layer.name, tmp_path, skip_tasks=True)
         _run([sys.executable, "-m", "ruff", "format", "--check", "."], cwd=dest)
 
 
@@ -108,7 +73,7 @@ class TestRenderedProjectPytestPasses:
     """
 
     def test_pytest_passes_over_pythonpath(self, tmp_path: Path) -> None:
-        dest = _render("project", tmp_path / "out", skip_tasks=True)
+        dest = render("project", tmp_path, skip_tasks=True)
         env = {**os.environ, "PYTHONPATH": str(dest / "src")}
         output = _run(
             [sys.executable, "-m", "pytest", str(dest / "tests"), "-v"],
@@ -128,10 +93,18 @@ class TestRenderedStreamlitPytestPassesUnderItsOwnToolchain:
     (not just a zero exit code) is deliberate: pytest silently skips a file
     whose name doesn't match `test_*.py` rather than failing, so a renamed
     smoke test could pass a bare exit-code check while never running.
+
+    Skipped when `uv` is not on `PATH`, since the post-generation `uv sync`
+    this path depends on cannot run without it. When `uv` is present, this
+    test still needs network access to resolve Streamlit and Pydantic; CI
+    provides that, but an offline local `uv run pytest` will see it fail
+    rather than skip.
     """
 
     def test_pytest_passes_after_uv_sync(self, tmp_path: Path) -> None:
-        dest = _render("streamlit", tmp_path / "out", skip_tasks=False)
+        if shutil.which("uv") is None:
+            pytest.skip("uv is not on PATH")
+        dest = render("streamlit", tmp_path, skip_tasks=False)
         output = _run(["uv", "run", "pytest", "-v"], cwd=dest)
         assert "test_app_runs_without_exception" in output
         assert "test_greeter_flow_renders_a_visible_greeting" in output

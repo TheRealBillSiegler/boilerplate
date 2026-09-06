@@ -18,27 +18,12 @@ from boilerplate.composition.rendering.models.execution_context import (
 )
 from boilerplate.composition.resolution import Resolver
 from boilerplate.settings import Settings
-
-
-def _render_streamlit(tmp_path: Path) -> Path:
-    registry = build_template_catalog(None, Settings())
-    resolution = Resolver().resolve("streamlit", registry)
-    composition = Composer().compose(resolution)
-    dest = tmp_path / "out"
-    ctx = ExecutionContext(
-        destination=dest,
-        context_data={},
-        overwrite=True,
-        interactive=False,
-        skip_tasks=True,
-    )
-    RenderEngine().render(composition, ctx)
-    return dest
+from tests.boilerplate.templates.conftest import render
 
 
 class TestAuthoringMetadataExcluded:
     def test_no_boilerplate_yml_or_copier_yml_at_root_of_output(self, tmp_path: Path):
-        dest = _render_streamlit(tmp_path)
+        dest = render("streamlit", tmp_path)
 
         assert not (dest / "boilerplate.yml").exists()
         assert not (dest / "copier.yml").exists()
@@ -49,7 +34,7 @@ class TestAuthoringMetadataExcluded:
         Injecting boilerplate.yml/copier.yml into the exclude set must union
         with a layer's own `_exclude`, never replace it.
         """
-        dest = _render_streamlit(tmp_path)
+        dest = render("streamlit", tmp_path)
 
         assert not (dest / "_extensions").exists()
 
