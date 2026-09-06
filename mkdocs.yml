@@ -128,13 +128,16 @@ markdown_extensions:
   - mkdocs-typer
 
 extra_javascript:
-  # Mermaid 10.9.1, vendored locally — byte-for-byte upstream's published
-  # build, with upstream's LICENSE beside it: no external fetch at view time,
-  # and the offline bundle renders diagrams. When upgrading, replace the file
-  # byte-for-byte and refresh docs/assets/mermaid.LICENSE from the upstream
-  # tag in the same change.
-  - assets/mermaid.min.js
-  # Zero trust theme integration (author-controlled diagrams only)
+  # Zero trust theme integration (author-controlled diagrams only). Loaded on
+  # every page, but it does nothing on one without a `.mermaid` element: only
+  # then does it inject assets/mermaid.min.js itself (Mermaid 10.9.1, vendored
+  # locally — byte-for-byte upstream's published build, with upstream's
+  # LICENSE beside it), resolving that script's URL from its own
+  # document.currentScript.src so it works at any page depth and from the
+  # offline bundle. No external fetch at view time either way, and the
+  # offline bundle still renders diagrams. When upgrading Mermaid, replace
+  # docs/assets/mermaid.min.js byte-for-byte and refresh
+  # docs/assets/mermaid.LICENSE from the upstream tag in the same change.
   - assets/mermaid-theme.js
 
 plugins:
