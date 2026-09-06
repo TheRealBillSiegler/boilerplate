@@ -54,7 +54,7 @@ Boilerplate standardizes a fast, type‑safe workflow with:
 
 - [uv](https://docs.astral.sh/uv/) — dependency, Python, and virtualenv management
 - [ruff](https://docs.astral.sh/ruff/) — formatter and linter
-- [pyright](https://github.com/microsoft/pyright) — static type checking
+- [pyright](https://github.com/microsoft/pyright) — a strict configuration ships; type-checked live in VS Code via Pylance
 - [pytest](https://docs.pytest.org/) — testing framework
 - [boilerplate](cli.md) CLI + Copier — template‑driven scaffolding
 - [git](https://git-scm.com/doc) — source control

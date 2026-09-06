@@ -6,7 +6,7 @@ description: An ethos made executable. Scaffold Python projects fast with uv, Ru
 
 **An ethos made executable** — Start fast. Stay consistent. Reproduce anywhere.
 
-A Python development environment and project scaffolder for teams. Preconfigured uv, Ruff, Pyright, and pytest give you a fast start, locked dependencies, and consistent workflows. Generate, sync, test, and ship — without wrestling with PATH, venvs, or lint configs.
+A Python development environment and project scaffolder for teams. Preconfigured uv and Ruff, a strict Pyright configuration, and pytest give you a fast start, locked dependencies, and consistent workflows. Generate, sync, test, and ship — without wrestling with PATH, venvs, or lint configs.
 
 **Less yak. More stack.**
 
@@ -29,7 +29,7 @@ A Python development environment and project scaffolder for teams. Preconfigured
 |---------|-----------------------|
 | :material-rocket-launch: **Instant productivity** | Scaffold fully configured projects with one command. |
 | :material-package-variant-closed: **Locked dependencies** | `uv.lock` pins the environment, so every machine resolves the same. |
-| :material-tools: **Curated toolchain** | Integrated tools (`uv`, `ruff`, `pyright`, `pytest`) arrive *preconfigured* and ready to go. |
+| :material-tools: **Curated toolchain** | `uv`, `ruff`, and `pytest` arrive *preconfigured* and ready to go, plus a strict `pyright` configuration checked live via Pylance. |
 | :material-earth: **Cross‑platform** | Windows 11 installs are automated; Linux/WSL2 and macOS follow the same steps manually. |
 | :material-cog: **Minimal configuration** | Sensible defaults out of the box—less setup before you write code. |
 | :material-puzzle: **[Template composition](templates-hub/composition.md)** | Layer templates with `extends` — one command, one merged question set, deterministic precedence when layers overlap. |
