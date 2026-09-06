@@ -121,6 +121,28 @@
   color: var(--md-accent-fg-color);
 }
 
+/* Implementation-status legend (docs/status.md) — colors that hold their
+   meaning (shipped/in-progress/design-only) in both schemes. */
+.md-typeset .status-shipped {
+  color: #2e8b57;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .status-shipped {
+  color: #4fd487;
+}
+
+.md-typeset .status-partial {
+  color: #b8860b;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .status-partial {
+  color: #e2c25f;
+}
+
+.md-typeset .status-design {
+  color: var(--md-default-fg-color--light);
+}
+
 /* Page H1: Material defaults to the de-emphasised --light grey, so titles
    look washed out. Promote to full foreground + heavier weight so a title
    reads as a title. */
