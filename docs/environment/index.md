@@ -18,7 +18,7 @@ Boilerplate fills the core of the everyday development loop — one curated, pre
 
 ### ![Pyright Logo](../assets/PyrightSmall_NoBackground.png){ style="height: 1em; vertical-align: middle;"} Pyright
 
-**Type checker.** Catches type errors as you type — live in VS Code via Pylance, matching what CI enforces — so mistakes surface early instead of at runtime. [On GitHub](https://github.com/microsoft/pyright)
+**Type checker.** Catches type errors as you type — live in VS Code via Pylance — so mistakes surface early instead of at runtime. [On GitHub](https://github.com/microsoft/pyright)
 
 ### ![Pytest Logo](../assets/pytest.png){ style="height: 1em; vertical-align: middle;"} Pytest
 
