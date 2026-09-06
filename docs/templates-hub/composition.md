@@ -8,7 +8,7 @@ Composition lets one template build on another through an `extends` list in its 
 
 ```yaml
 name: streamlit
-version: 0.1.0
+version: 0.1.1
 description: Streamlit boilerplate for data applications
 extends:
   - project
@@ -53,8 +53,8 @@ Output (abridged):
 
 ```text
 #   Layer       Version   Path
-1   project     0.1.0     .../templates/project
-2   streamlit   0.1.0     .../templates/streamlit
+1   project     0.2.1     .../templates/project
+2   streamlit   0.1.1     .../templates/streamlit
 ```
 
 Layers apply in this order: each layer's question schema and internal directives (`_jinja_extensions`, `_tasks`) merge into the accumulated result.
@@ -64,23 +64,23 @@ JSON graph payload (shape used by tools when `--format json`):
 ```json
 {
   "sequence": [
-    "project@0.1.0",
-    "streamlit@0.1.0"
+    "project@0.2.1",
+    "streamlit@0.1.1"
   ],
   "layers": [
     {
-      "specifier": "project@0.1.0",
+      "specifier": "project@0.2.1",
       "name": "project",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "path": ".../templates/project",
       "deps": []
     },
     {
-      "specifier": "streamlit@0.1.0",
+      "specifier": "streamlit@0.1.1",
       "name": "streamlit",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": ".../templates/streamlit",
-      "deps": ["project@0.1.0"]
+      "deps": ["project@0.2.1"]
     }
   ]
 }
