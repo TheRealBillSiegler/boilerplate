@@ -13,8 +13,8 @@ boilerplate list
 ```text
   Name        Version   Description
  ───────────────────────────────────────────────────────
-  project     0.1.0     A suitable base for any Python project.
-  streamlit   0.1.0     Streamlit boilerplate for data applications
+  project     0.2.1     A suitable base for any Python project.
+  streamlit   0.1.1     Streamlit boilerplate for data applications
 ```
 
 ## Create a new project
@@ -40,8 +40,8 @@ boilerplate graph streamlit --format tree
 ```
 
 ```text
-- streamlit@0.1.0
-  - project@0.1.0
+- streamlit@0.1.1
+  - project@0.2.1
 ```
 
 - JSON written to file:
@@ -71,7 +71,7 @@ boilerplate compose project --sections stats
 ```
 
 ```text
-Composing: project@0.1.0
+Composing: project@0.2.1
 STATS
 layers: 1
 layers_count: 1
