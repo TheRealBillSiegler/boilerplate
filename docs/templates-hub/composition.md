@@ -118,7 +118,7 @@ Observed example specifics for the Streamlit chain:
 | `dependencies` list | Default replaced with two entries | Base declares `dependencies` with an empty default; the child question dict shallow-overrides it, so `default` becomes the child's list while `type` and `help` are inherited |
 | Absent questions | Inherited unchanged | Values simply flow through cumulative state |
 | `_tasks` | Single task from base only | Child adds none; accumulation == base list |
-| `_jinja_extensions` | Three entries (all from base) | Child declares one, a duplicate of a base entry, so union == base list |
+| `_jinja_extensions` | Three entries (all from base) | Child declares two, both duplicates of base entries, so union == base list |
 
 Delta for `streamlit` layer (excerpt):
 
