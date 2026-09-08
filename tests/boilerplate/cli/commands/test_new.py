@@ -265,6 +265,27 @@ def test_new_flag_to_options_mapping(
 
 
 @pytest.mark.usefixtures("interactive_tty")
+def test_new_announces_render_only_when_non_interactive(
+    typer_cli_runner: CliRunner,
+    fake_template_dir: Path,
+    temp_project_dir: Path,
+    seams: Seams,
+) -> None:
+    """Print the render announcement only when nothing is asked first."""
+    common = [str(temp_project_dir), "--templates-dir", str(fake_template_dir)]
+
+    interactive = typer_cli_runner.invoke(app, ["new", "mytpl", *common], obj=seams)
+    assert interactive.exit_code == ExitCode.SUCCESS, interactive.output
+    assert "Rendering to" not in interactive.output
+
+    non_interactive = typer_cli_runner.invoke(
+        app, ["new", "mytpl", "--non-interactive", *common], obj=seams
+    )
+    assert non_interactive.exit_code == ExitCode.SUCCESS, non_interactive.output
+    assert "Rendering to" in non_interactive.output
+
+
+@pytest.mark.usefixtures("interactive_tty")
 def test_new_handles_render_failure_behavior(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
