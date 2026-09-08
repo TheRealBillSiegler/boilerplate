@@ -25,6 +25,10 @@ validation:
 
 extra_css:
   - stylesheets/extra.css
+  # The self-hosted asciinema-player (docs/assets/asciinema/, see NOTICE) is
+  # loaded from docs/index.md itself, not here: it's a home-page-only widget,
+  # and wiring it globally would ship it to all ~60 other pages that never
+  # use it.
 
 theme:
   name: material
@@ -128,6 +132,9 @@ markdown_extensions:
   - mkdocs-typer
 
 extra_javascript:
+  # The asciinema-player script, its cast data, and assets/demo.js that
+  # drives them are loaded from docs/index.md itself, not here — see the
+  # extra_css comment above for why.
   # Zero trust theme integration (author-controlled diagrams only). Loaded on
   # every page, but it does nothing on one without a `.mermaid` element: only
   # then does it inject assets/mermaid.min.js itself (Mermaid 10.9.1, vendored

@@ -7,6 +7,8 @@ Composable project scaffolding, built on [Copier](https://copier.readthedocs.io/
 
 **Less yak. More stack.**
 
+![Terminal recording: boilerplate new project walks through a few prompts, scaffolds a project, then uv run pytest passes.](docs/assets/demo/boilerplate-new.gif)
+
 Copier applies multiple independent templates [by hand, one answers file each](https://copier.readthedocs.io/en/stable/configuring/#applying-multiple-templates-to-the-same-subproject) — a pattern its maintainers note works easiest when templates stay disjoint; declared template hierarchies have [upstream design approval but are left to community contribution](https://github.com/copier-org/copier/issues/934). Boilerplate is that missing layer. Templates stay standard Copier templates — composition metadata lives in a separate `boilerplate.yml`, and your `copier.yml` is never modified. See [Why Boilerplate?](docs/why.md).
 
 ## Install
