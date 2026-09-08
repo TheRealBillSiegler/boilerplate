@@ -63,6 +63,8 @@ dev = [
     "mkdocs-typer>=0.0.3",
     "mkdocs-panzoom-plugin>=0.4.2",
     "mike>=2.2.0",
+    "pexpect>=4.9.0",
+    "pyte>=0.8.2",
 ]
 
 [project.scripts]
@@ -192,7 +194,10 @@ filterwarnings = ["ignore:.*Importing .* from `copier` is deprecated.*:Deprecati
 [tool.pyright]
 typeCheckingMode = "strict"
 # ignore = ["**/__init__.py"]
-include = ["src"]
+# scripts/ is checked alongside src/: the demo recorder lives there, and the
+# gate (scripts/check.py) should type-check it rather than leave scripts/*.py
+# to pass only when someone runs pyright on them by hand.
+include = ["src", "scripts"]
 exclude = ["tests/*", ".venv/*", "**/__pycache__"]
 useLibraryCodeForTypes = true
 reportMissingTypeStubs = "warning"
