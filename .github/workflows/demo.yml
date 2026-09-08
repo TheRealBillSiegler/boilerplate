@@ -1,0 +1,105 @@
+name: Demo recording
+
+# Re-records the scripted terminal demo with scripts/record_demo.py, renders
+# its gif with agg, and opens a pull request carrying the new files. The
+# develop branch is PR-only, so the workflow never pushes to it directly. Run
+# it by hand from the Actions tab, or it runs on its own when the recorder or
+# the bundled templates change on develop. On a pull request it only records
+# and uploads the files as an artifact, so a broken recorder fails the PR
+# instead of reaching develop.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/record_demo.py
+      - .github/workflows/demo.yml
+  push:
+    branches: [develop]
+    paths:
+      - scripts/record_demo.py
+      - src/boilerplate/templates/**
+      - .github/workflows/demo.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  record:
+    name: Record and render
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      # The demo records under a staged home directory so the paths it prints
+      # (git init, the tool's interpreter) read like a workstation, not a CI
+      # runner or /tmp. The recorder puts that home's tool shims on the
+      # recorded shell's PATH itself.
+      - name: Stage the home directory the demo records in
+        run: |
+          sudo mkdir -p /home/bill
+          sudo chown "$(id -u):$(id -g)" /home/bill
+      - name: Install the CLI the recorder drives
+        env:
+          HOME: /home/bill
+        run: uv tool install --from . boilerplate
+      - name: Install the font the gif is rendered in
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-jetbrains-mono
+      - name: Record the demo
+        env:
+          HOME: /home/bill
+        run: uv run python scripts/record_demo.py docs/assets/demo/boilerplate-new.cast
+      # Downloaded outside the checkout so the pull request below cannot pick
+      # the binary up. SHA-256 as published by GitHub's release-asset digest
+      # API and cross-checked against the downloaded file (recorded
+      # 2026-09-07); see NOTICE for the vendoring policy this mirrors.
+      - name: Download and verify agg 1.9.0
+        run: |
+          set -euo pipefail
+          curl -sSL -o "$RUNNER_TEMP/agg" "https://github.com/asciinema/agg/releases/download/v1.9.0/agg-x86_64-unknown-linux-gnu"
+          echo "f111e315cd71056b116302342553dd765b7297579ed511f111d0cedb442aeda6  $RUNNER_TEMP/agg" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/agg"
+      - name: Render the gif
+        run: |
+          "$RUNNER_TEMP/agg" \
+            --font-family "JetBrains Mono" \
+            --font-size 16 \
+            --last-frame-duration 1 \
+            docs/assets/demo/boilerplate-new.cast \
+            docs/assets/demo/boilerplate-new.gif
+      - name: Report the recording
+        run: |
+          ls -l docs/assets/demo/
+          echo "--- cast header ---"
+          head -n1 docs/assets/demo/boilerplate-new.cast
+      - name: Keep the recording as a build artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: demo-recording
+          path: |
+            docs/assets/demo/boilerplate-new.cast
+            docs/assets/demo/boilerplate-new-cast.js
+            docs/assets/demo/boilerplate-new.gif
+      - name: Open a pull request with the new recording
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: chore/demo-recording
+          base: develop
+          add-paths: docs/assets/demo/
+          commit-message: "docs: re-record the scripted terminal demo"
+          title: "docs: re-record the scripted terminal demo"
+          body: |
+            ## What
+
+            Re-recorded `docs/assets/demo/boilerplate-new.cast` (and its JavaScript wrapper) with `scripts/record_demo.py`, and re-rendered `boilerplate-new.gif` from it with agg.
+
+            ## Why
+
+            The demo is generated from source so it never drifts from the CLI; this run followed a change to the recorder or to the bundled templates.
+
+            *Generated with Claude Code on behalf of Bill Siegler*
+          delete-branch: true
