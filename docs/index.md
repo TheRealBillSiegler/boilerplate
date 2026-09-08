@@ -12,6 +12,17 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
 **Less yak. More stack.**
 
+<link rel="stylesheet" href="assets/asciinema/asciinema-player.css">
+
+<figure class="demo">
+  <div id="demo-cast" role="region" aria-label="Terminal recording: boilerplate new project walks through a few prompts, scaffolds a project, then uv run pytest passes."></div>
+  <figcaption>New project, dependencies installed, pytest passing.</figcaption>
+</figure>
+
+<script src="assets/asciinema/asciinema-player.min.js"></script>
+<script src="assets/demo/boilerplate-new-cast.js"></script>
+<script src="assets/demo.js"></script>
+
 [Quickstart](quickstart.md){ .md-button .md-button--primary } [Browse Templates Hub](templates-hub/index.md){ .md-button }
 
 !!! tip "Coming from Copier?"
