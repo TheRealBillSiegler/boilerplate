@@ -408,8 +408,10 @@ def new(
         skip_tasks=no_tasks,
     )
 
-    # Step 3: Apply templates
-    if not json_mode:
+    # Step 3: Apply templates. Interactively, Copier asks the template's
+    # questions first, so announcing the render here would come before
+    # anything is rendered; Copier reports the copy itself once it starts.
+    if not json_mode and non_interactive:
         display.info(f"Rendering to {dest_dir}...")
     template_info = cli_context.renderer.render(composition, execution_ctx)
     if dest_dir.exists() and force:
