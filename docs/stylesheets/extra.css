@@ -152,6 +152,31 @@
   }
 }
 
+/* Home-page scripted demo. Material sets figure { width: fit-content }, and
+   #demo-cast is an empty div until the player mounts into it, so without an
+   explicit width the figure collapses to whatever narrow size the player
+   happens to pick first — asciinema-player's fit: "width" then has no real
+   container to fit against. Fill the content column instead (capped below by
+   #demo-cast's own max-width), matching the <video width="1000"> this
+   replaced. */
+.md-typeset figure.demo {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.md-typeset figure.demo #demo-cast {
+  max-width: 1000px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.md-typeset figure.demo figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--md-default-fg-color--light);
+}
+
 /* Implementation-status legend (docs/status.md) — colors that hold their
    meaning (shipped/in-progress/design-only) in both schemes. */
 .md-typeset .status-shipped {
