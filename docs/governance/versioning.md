@@ -91,36 +91,7 @@ Every breaking change requires: (1) a proposal stating the rationale, (2) discus
 
 ## Compatibility test suite
 
-Every release should keep a backward-compatibility suite that pins the surfaces above, plus a CI check that flags accidental breaks on each pull request. **Not yet implemented — target shape:**
-
-```python
-# tests/compatibility/test_backward_compat.py
-def test_existing_profile_still_loads():
-    """A profile written for an earlier release still resolves."""
-    profile = resolve_profile()  # reads the active profile fixture
-    assert profile is not None   # auto-migrated if the format evolved
-
-
-def test_deprecated_command_still_runs_with_warning():
-    """A deprecated command keeps working during its deprecation window."""
-    result = run_cli(["<deprecated-command>"])
-    assert result.exit_code == 0
-    assert "deprecated" in result.stderr.lower()
-```
-
-```yaml
-# .github/workflows/compatibility.yml
-name: Backward Compatibility
-on: [pull_request]
-jobs:
-  check-compatibility:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # full history for comparison
-      - run: uv run pytest tests/compatibility/
-```
+Every release should keep a backward-compatibility suite that pins the surfaces above, plus a CI check that flags accidental breaks on each pull request. A compatibility suite is planned but not yet implemented — see [Roadmap § Backlog](../roadmap.md#backlog).
 
 ---
 
