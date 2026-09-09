@@ -73,7 +73,7 @@ Platform teams and template maintainers who own more than one template and want 
 
 ## Where next
 
-- **[Implementation status](status.md)** — what's shipped, what's designed, and the gaps between them.
+- **[Implementation status](status.md)** — what is implemented, partial, or planned.
 - **[Quickstart](quickstart.md)** — install and scaffold your first project.
 - **[Template composition](templates-hub/composition.md)** — the `extends` mechanics in depth.
 - **[Environment overview](environment/index.md)** — the toolchain, slot by slot.

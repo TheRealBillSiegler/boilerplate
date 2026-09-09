@@ -898,7 +898,7 @@ Pre-populate the local template cache from configured remote and archive sources
 
 ### `config`
 
-Surfaces the per-user profile — see [09-settings-and-configuration.md §Profile](09-settings-and-configuration.md#profile) for the specification.
+Reserved for surfacing the per-user profile ([09 §Profile](09-settings-and-configuration.md#profile)); no command surface is specified.
 
 ---
 

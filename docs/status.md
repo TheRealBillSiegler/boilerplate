@@ -41,7 +41,7 @@ The most mature area. The resolution → graph → merge → render pipeline wor
 - :material-circle-outline:{ .status-design } `CopierWorker` abstraction — Copier's `Worker` is invoked directly; the isolation interface design 04 specifies does not exist
 - :material-check-circle:{ .status-shipped } Per-layer answers files — each bundled template declares `_answers_file: .copier-answers.<layer>.yml` and ships the answers-file stub; Copier writes one per layer natively during that layer's render, and no canonical `.copier-answers.yml` is written (design 04's per-layer `_answers_file:` contract, the foundation for per-layer update)
 
-The merged `_jinja_extensions` union (see [What gets merged](reference/merging.md#what-gets-merged)) is what lets a question default or task use a sibling layer's filter instead of crashing, and design 04 now documents it as the target behavior, matching the shipped code.
+The merged `_jinja_extensions` union (see [What gets merged](reference/merging.md#what-gets-merged)) lets a question default or task use a sibling layer's filter instead of crashing.
 
 ### 09 — Settings & configuration :material-progress-clock:{ .status-partial }
 
@@ -77,7 +77,7 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 See the [command table](#cli-specified-vs-implemented) below for the specified-vs-implemented command areas.
 
 - :material-check-circle:{ .status-shipped } Global options (`--verbose/--quiet/--color/--ci/--version`) and a "did-you-mean" typo helper (`cli/cli.py`)
-- See [Roadmap](roadmap.md#backlog) for design 05's confirmation contracts (plan-then-prompt for mutating commands).
+- :material-circle-outline:{ .status-design } Design 05's confirmation contracts (plan-then-prompt for mutating commands) — no code; sequencing in the [backlog](roadmap.md#backlog)
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
 
