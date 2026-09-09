@@ -108,11 +108,7 @@ All external inputs MUST be validated at trust boundaries before processing. A t
 
 Catalog sources beyond the default filesystem directories are configured in a `boilerplate-sources.yml` file. This file defines catalog sources with their type, location, priority, and trust classification. The full schema, validation rules, and read protocol are specified in [09-settings-and-configuration.md §Catalog Source Configuration File](09-settings-and-configuration.md#catalog-source-configuration-file).
 
-**Security constraints**:
-
-- Any credential reference MUST be given by environment variable name or vault path, never as a literal value.
-- The configuration file MUST be protected with owner-only permissions.
-- Sources are classified as trusted or untrusted; a multi-tier ceiling is not enforced. Richer source tiers are reserved for Phase 4 (remote / third-party sources).
+Credential references, file permissions, and trusted/untrusted source classification for these sources follow the validation rules in [09-settings-and-configuration.md §Catalog Source Configuration File](09-settings-and-configuration.md#catalog-source-configuration-file).
 
 ---
 

@@ -71,9 +71,12 @@ This is what the [Environment guide](../../environment/index.md) calls the **Too
 | **Testing frameworks** | pytest + pytest-cov | Fixture-based testing with a large plugin ecosystem; coverage via `pytest --cov` |
 | **Build tools** | uv build (hatchling backend) | Standards-compliant (PEP 517/660), pure-Python backend |
 | **Version control** | Git | Branching and merging underpin template composition and CI workflows |
-| **CI/CD** | GitHub Actions (recommended) | Boilerplate's own gate runs on it; generated projects don't ship CI config yet — bring your provider's workflow |
+| **CI/CD** | GitHub Actions (recommended) | Boilerplate's own gate runs on it |
 | **Documentation generators** | MkDocs Material | Markdown-native authoring, built-in navigation and search |
 | **IDEs & editors** | VS Code | Extension ecosystem (Pylance, Ruff, pytest), remote development support |
+
+!!! note "Planned"
+    Generated projects don't scaffold CI config or a deploy-time and runtime guardrail layer: wire the three quality-check commands into your own CI provider's workflow. See the [backlog](../../roadmap.md#backlog).
 
 Templates scaffold the interpreter, dependency-management, lint/format, type-checking, testing, and build rows. The CI/CD and documentation rows are recommended picks you wire yourself.
 
@@ -123,7 +126,7 @@ flowchart TD
 | **Code quality** | ruff check, ruff format | — | ✓ Config locked in pyproject.toml | [Ruff guide](https://docs.astral.sh/ruff/) |
 | **Testing** | pytest, pytest-cov | — | ✓ Test skeleton | [pytest guide](https://docs.pytest.org/) |
 | **Build** | uv build | — | ✓ pyproject.toml build config | [Environment](../../environment/index.md) |
-| **Operate** | Logs, metrics, error tracking | — | — | (Operational guides TBD) |
+| **Operate** | Logs, metrics, error tracking | — | — | — |
 
 ### The path in practice
 
@@ -134,7 +137,7 @@ flowchart TD
 | Code quality | `uv run ruff check` · `uv run ruff format --check` · `uv run pyright` | Lint, formatting, and strict type checks |
 | Testing | `uv run pytest` | Auto-discovery under `tests/`; coverage available via `pytest --cov` |
 
-Running the three quality checks plus tests on every push is the recommended CI setup — today's templates don't scaffold CI config, so wire these same commands into your provider's workflow.
+Running the three quality checks plus tests on every push is the recommended CI setup.
 
 ## Starter templates
 
@@ -142,12 +145,12 @@ Starter templates are project scaffolds that encode platform decisions so develo
 
 ### Boilerplate reference implementation: Templates
 
-| Template | Status | Use Case | Key Features |
-| --- | --- | --- | --- |
-| [project](../../templates-hub/project.md) | Stable | General Python libraries/packages | Complete pyproject.toml, test suite |
-| [streamlit](../../templates-hub/streamlit/index.md) | Stable | Interactive data/ML applications | Streamlit app scaffold, container deployment configs |
+| Template | Use Case | Key Features |
+| --- | --- | --- |
+| [project](../../templates-hub/project.md) | General Python libraries/packages | Complete pyproject.toml, test suite |
+| [streamlit](../../templates-hub/streamlit/index.md) | Interactive data/ML applications | Streamlit app scaffold, container deployment configs |
 
-Templates use [Copier](https://copier.readthedocs.io/) for scaffolding. Complex projects can compose multiple templates; see [Template composition](../../templates-hub/composition.md).
+See [Choose a template](../../templates-hub/index.md#choose-a-template) for the full catalog. Templates use [Copier](https://copier.readthedocs.io/) for scaffolding. Complex projects can compose multiple templates; see [Template composition](../../templates-hub/composition.md).
 
 ## Guardrails
 
@@ -162,13 +165,9 @@ Guardrails are automated policies that convert platform standards from documenta
 | **Type safety** | Dev (live) | `pyright --strict` | Add type hints; see [Pyright guide](https://github.com/microsoft/pyright) |
 | **Test passage** | Dev (on-demand) | `pytest` + coverage | Fix failing tests; add tests for uncovered code |
 
-These four are what's active today: lint, format, type, and test checks. There is no deploy-time or runtime guardrail layer yet.
+These four are what's active today: lint, format, type, and test checks.
 
-**Configuration locations:**
-
-- Ruff: `pyproject.toml` (sections: `[tool.ruff]`, `[tool.ruff.lint]`)
-- Pyright: `pyproject.toml` (section: `[tool.pyright]`)
-- pytest: `pyproject.toml` (section: `[tool.pytest.ini_options]`)
+Ruff, Pyright, and pytest are all configured in `pyproject.toml`; see [Configuration](../../environment/index.md#configuration) for the exact section names.
 
 ## Where next
 

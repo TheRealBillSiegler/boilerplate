@@ -898,7 +898,7 @@ Pre-populate the local template cache from configured remote and archive sources
 
 ### `config`
 
-Not shipped. The typed Profile model, its resolution chain, and the `config` command group (`show`, `use`, `validate`) were retired in the template-customization redesign — see [09-settings-and-configuration.md](09-settings-and-configuration.md#profile). A repurposed `config` command surfacing the profile is designed but deferred.
+Surfaces the per-user profile — see [09-settings-and-configuration.md §Profile](09-settings-and-configuration.md#profile) for the specification.
 
 ---
 

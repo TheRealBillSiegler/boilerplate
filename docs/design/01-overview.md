@@ -115,7 +115,7 @@ Boilerplate supports Windows, macOS, and Linux. See [07-operational-quality.md �
 
 ---
 
-> **Precedence policies**: Boilerplate uses two distinct precedence rules in different contexts. *Catalog registration* uses first-wins: the first source to register a template name+version owns it. *Composition merging* uses last-wins: later layers override earlier layers' values.
+> **Precedence policies**: Boilerplate uses two distinct precedence rules in different contexts. *Catalog registration* uses first-wins: the first source to register a template name+version owns it — see [02-data-models.md §TemplateCatalog](02-data-models.md#templatecatalog). *Composition merging* uses last-wins: later layers override earlier layers' values — see [04-composition-engine.md §Merge Rules](04-composition-engine.md#merge-rules).
 
 Persisted artifacts (data models, the lock schema, merge and checksum semantics) are specified most carefully because they outlive any single implementation.
 
