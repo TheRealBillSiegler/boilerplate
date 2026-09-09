@@ -4,8 +4,6 @@
 
 `boilerplate env apply` and `boilerplate env status`: resolving the `EnvironmentProfile` `extends` chain, merging tool versions and packages across profile layers, generating `.prototools` in proto's native format, invoking proto for tool installation, and writing the `.boilerplate/environment.yml` provenance record.
 
-> **Status: Target design** — no implementation exists yet. See [Implementation status](../status.md).
-
 ---
 
 ## State Files

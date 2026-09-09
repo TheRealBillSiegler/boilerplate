@@ -41,7 +41,7 @@ The most mature area. The resolution → graph → merge → render pipeline wor
 - :material-circle-outline:{ .status-design } `CopierWorker` abstraction — Copier's `Worker` is invoked directly; the isolation interface design 04 specifies does not exist
 - :material-check-circle:{ .status-shipped } Per-layer answers files — each bundled template declares `_answers_file: .copier-answers.<layer>.yml` and ships the answers-file stub; Copier writes one per layer natively during that layer's render, and no canonical `.copier-answers.yml` is written (design 04's per-layer `_answers_file:` contract, the foundation for per-layer update)
 
-The merged `_jinja_extensions` union is injected into every layer's Copier `Worker` at render time, so a layer that declares no extensions still runs under Copier's `unsafe` grant whenever a sibling layer declares one. The injection is what lets a question default or task use a sibling layer's filter instead of crashing, and design 04 now documents this merge as the target behavior, matching the shipped code.
+The merged `_jinja_extensions` union (see [What gets merged](reference/merging.md#what-gets-merged)) is what lets a question default or task use a sibling layer's filter instead of crashing, and design 04 now documents it as the target behavior, matching the shipped code.
 
 ### 09 — Settings & configuration :material-progress-clock:{ .status-partial }
 
@@ -74,10 +74,10 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 
 ### 05 — CLI reference :material-progress-clock:{ .status-partial }
 
-5 of the ~18 specified command areas exist (and `new` is partial); the CLI also ships a `version` subcommand, which design 05 specifies only as the `--version` global flag. See the [command table](#cli-specified-vs-implemented) below.
+See the [command table](#cli-specified-vs-implemented) below for the specified-vs-implemented command areas.
 
 - :material-check-circle:{ .status-shipped } Global options (`--verbose/--quiet/--color/--ci/--version`) and a "did-you-mean" typo helper (`cli/cli.py`)
-- :material-circle-outline:{ .status-design } Design 05's confirmation contracts (plan-then-prompt for mutating commands) — no code; their first consumers (`update`, `env apply`, `eject`) are themselves unimplemented
+- See [Roadmap](roadmap.md#backlog) for design 05's confirmation contracts (plan-then-prompt for mutating commands).
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
 
