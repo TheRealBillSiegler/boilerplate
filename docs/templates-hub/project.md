@@ -74,4 +74,4 @@ Edit `pyproject.toml` to customize:
 
 ## Where next
 
-Need a Streamlit UI on top of this? See the [Streamlit template](streamlit/streamlit.md). Building your own template? Start with [Template authoring](authoring.md). Return to the [Templates Hub](index.md).
+Need a Streamlit UI on top of this? See the [Streamlit template](streamlit/index.md). Building your own template? Start with [Template authoring](authoring.md). Return to the [Templates Hub](index.md).

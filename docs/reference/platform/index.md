@@ -145,7 +145,7 @@ Starter templates are project scaffolds that encode platform decisions so develo
 | Template | Status | Use Case | Key Features |
 | --- | --- | --- | --- |
 | [project](../../templates-hub/project.md) | Stable | General Python libraries/packages | Complete pyproject.toml, test suite |
-| [streamlit](../../templates-hub/streamlit/streamlit.md) | Stable | Interactive data/ML applications | Streamlit app scaffold, container deployment configs |
+| [streamlit](../../templates-hub/streamlit/index.md) | Stable | Interactive data/ML applications | Streamlit app scaffold, container deployment configs |
 
 Templates use [Copier](https://copier.readthedocs.io/) for scaffolding. Complex projects can compose multiple templates; see [Template composition](../../templates-hub/composition.md).
 

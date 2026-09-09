@@ -109,7 +109,7 @@ boilerplate new project -n -f my-first-project
 ### Available templates
 
 - `project` — standard Python application/library/project ([Guide](templates-hub/project.md) · [Hub](templates-hub/index.md))
-- `streamlit` — data apps & dashboards ([Guide](templates-hub/streamlit/streamlit.md) · [Hub](templates-hub/index.md) · [Containers](templates-hub/streamlit/deployment/containers/index.md))
+- `streamlit` — data apps & dashboards ([Guide](templates-hub/streamlit/index.md) · [Hub](templates-hub/index.md) · [Containers](templates-hub/streamlit/deployment/containers/index.md))
 
 ---
 
