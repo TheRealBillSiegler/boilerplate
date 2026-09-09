@@ -54,13 +54,13 @@ Check VS Code settings include:
 ```
 
 !!! tip
-    Sometimes, simply closing and reopening VS Code can resolve many glitches.
+    Still not formatting? Command Palette → **Developer: Reload Window**.
 
 ## Troubleshooting: tests not discovered
 
 - **Cause:** The test framework is not enabled or the environment is not activated.
 - **Solution:**
-    1. Ensure you have run `uv sync` and activated the environment.
+    1. Run `uv sync` so `.venv` exists, then select it (**Python: Select Interpreter**).
     2. In VS Code, open the Command Palette and run "Python: Discover Tests".
     3. Select `pytest` as the test framework.
 - **Verify:**

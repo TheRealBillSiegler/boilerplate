@@ -4,9 +4,7 @@ Boilerplate projects include a complete, modern Python development environment. 
 
 ## Toolchain
 
-Boilerplate fills the core of the everyday development loop — one curated, preconfigured tool for each part below.
-
-Boilerplate fills each inner-loop slot with one opinionated, overridable tool rather than offering options — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot) for the model.
+Boilerplate fills each inner-loop slot with one curated, preconfigured, overridable tool rather than a menu — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot) for the model; the [landscape](../design/dev-environment-landscape.md) holds the full taxonomy.
 
 ### ![uv Logo](../assets/uv.svg){ style="height: 1em; vertical-align: middle;" } uv
 
@@ -30,7 +28,7 @@ Boilerplate fills each inner-loop slot with one opinionated, overridable tool ra
 
 ### ![VS Code Logo](../assets/vscode.svg){ style="height: 1em; vertical-align: middle;"} VS Code
 
-**Editor.** Your workspace, pre-wired so the rest of the toolchain just works — format-on-save, live type hints, and test discovery out of the box. [Setup guide](vscode.md)
+**Editor.** Your workspace, pre-wired so the rest of the toolchain just works — format-on-save, live type hints, and test discovery out of the box. [Setup guide](vscode.md) [Official docs](https://code.visualstudio.com/docs)
 
 ### ![Git Logo](../assets/git.svg){ style="height: 1em; vertical-align: middle;" } Git
 
@@ -46,7 +44,7 @@ Boilerplate fills each inner-loop slot with one opinionated, overridable tool ra
 boilerplate new <template>
 ```
 
-Add dependencies as you go — see [Add a dependency](../quickstart.md#development-workflow) in the Quickstart.
+Add dependencies as you go — `uv add <pkg>`, or `uv add --dev <pkg>` for a development-only dependency.
 
 **Existing project**:
 
@@ -126,7 +124,7 @@ Generated projects arrive with the toolchain pre-wired. Beginners can ignore the
     - **pytest** (`[tool.pytest.ini_options]`) — `log_cli = true`, with `pytest-cov` and `pytest-mock` in the dev group.
     - **VS Code** (`.vscode/`) — Ruff as the default formatter for Python and notebooks, format-on-save, and pytest discovery enabled. The interpreter isn't pinned; the Python extension auto-detects `.venv` in the workspace root.
 
-    The authoritative configuration is the generated `pyproject.toml` and `.vscode/` — these summaries point you at it, not away from it.
+    The authoritative configuration is the generated `pyproject.toml` and `.vscode/` — these summaries point you at it, not away from it. The [`pyproject.toml` guide](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/) explains the file itself.
 
 ## Where next
 

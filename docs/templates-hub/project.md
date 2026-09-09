@@ -52,7 +52,7 @@ uv sync
 uv run pytest
 ```
 
-Add or configure dependencies from here — see [Development workflow](../quickstart.md#development-workflow) in the Quickstart and [Configuration](../environment/index.md#configuration).
+Add dependencies with `uv add <pkg>` (see [Add a dependency](../environment/index.md#1-start-or-clone-a-project)); `pyproject.toml` holds project metadata, entry points and scripts, and the tool configuration described under [Configuration](../environment/index.md#configuration).
 
 ## Where next
 

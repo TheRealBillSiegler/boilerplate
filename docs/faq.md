@@ -12,7 +12,7 @@ Only for two `winget` installs on Windows — see [Before you start](install.md#
 
 ### Is `-ExecutionPolicy Bypass` in the install command safe?
 
-Yes, it's scoped to that one process — see [Before you start](install.md#before-you-start) for why.
+Yes — it is scoped to that one process; see [Before you start](install.md#before-you-start).
 
 ## About Boilerplate
 
