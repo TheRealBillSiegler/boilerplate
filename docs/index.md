@@ -29,7 +29,7 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
     Start with [Why Boilerplate?](why.md) for the pitch, or go straight to [Template Composition](templates-hub/composition.md) for the `extends` mechanics.
 
 !!! tip "Evaluating for a team?"
-    [Why Boilerplate?](why.md) covers the ethos, the environment, and what is shipped versus designed.
+    [Why Boilerplate?](why.md) covers the ethos and the environment; [Implementation Status](status.md) shows what is implemented.
 
 ---
 
