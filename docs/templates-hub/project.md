@@ -52,25 +52,7 @@ uv sync
 uv run pytest
 ```
 
-## Customization
-
-### Adding dependencies
-
-```powershell
-# Add runtime dependency
-uv add requests
-
-# Add development dependency
-uv add --group dev pytest-cov
-```
-
-### Configuration
-
-Edit `pyproject.toml` to customize:
-
-- Project metadata
-- Tool configurations (Ruff, Pyright, Pytest)
-- Entry points and scripts
+Add or configure dependencies from here — see [Development workflow](../quickstart.md#development-workflow) in the Quickstart and [Configuration](../environment/index.md#configuration).
 
 ## Where next
 

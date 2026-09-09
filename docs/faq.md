@@ -4,15 +4,15 @@
 
 ### What do I need before installing Boilerplate?
 
-Nothing needs to be preinstalled to use Boilerplate itself — `uv` manages Python automatically. The Windows automated installer (`install.ps1`) also installs Git and VS Code via `winget` if they are not already present.
+Nothing — see [Before you start](install.md#before-you-start) for what `uv` provisions for you and what the Windows installer adds.
 
 ### Do I need administrator rights?
 
-Only for the `winget` steps that install Git and VS Code. The Boilerplate tool itself installs into your user profile (`%USERPROFILE%\.local\bin`) and requires no elevated permissions.
+Only for two `winget` installs on Windows — see [Before you start](install.md#before-you-start).
 
 ### Is `-ExecutionPolicy Bypass` in the install command safe?
 
-Yes. The `-ExecutionPolicy Bypass` flag applies only to that single PowerShell process — it does not change your machine's execution policy or any persistent setting. Once the installer exits, your normal policy is back in effect.
+Yes, it's scoped to that one process — see [Before you start](install.md#before-you-start) for why.
 
 ## About Boilerplate
 

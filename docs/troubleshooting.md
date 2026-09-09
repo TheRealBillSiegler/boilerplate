@@ -56,18 +56,11 @@ Symptoms include a missing interpreter right after cloning or generating a proje
 
 ### Ruff not formatting automatically
 
-Check VS Code settings include:
+Symptoms include Python files saving without Ruff's formatting or fixes applied. See [VS Code setup: Ruff not formatting automatically](environment/vscode.md#troubleshooting-ruff-not-formatting-automatically) for the fix.
 
-```json
-{
-  "[python]": {
-    "editor.defaultFormatter": "charliermarsh.ruff"
-  }
-}
-```
+### Tests not discovered or not running in VS Code
 
-!!! tip
-    Sometimes, simply closing and reopening VS Code can resolve many glitches.
+Symptoms include the Test Explorer showing no tests, or `uv run pytest` passing while VS Code reports none. See [VS Code setup: tests not discovered](environment/vscode.md#troubleshooting-tests-not-discovered) for the fix.
 
 ## Profile and render errors
 
