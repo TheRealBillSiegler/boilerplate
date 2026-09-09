@@ -401,7 +401,7 @@ For `filesystem` catalog sources, only the `boilerplate.yml` version is used —
 
 ### Composition rules quick reference
 
-See [04-composition-engine.md §Merge Rules](04-composition-engine.md#merge-rules) for the merge-strategy mapping, [§Topological Sort](04-composition-engine.md#topological-sort) for diamond-dependency file precedence, and [§Render Behavior](04-composition-engine.md#render-behavior) for file-overlay semantics.
+See [04-composition-engine.md §Merge Rules](04-composition-engine.md#merge-rules) for the merge-strategy mapping, [§Topological Sort](04-composition-engine.md#topological-sort) for diamond-dependency file precedence, [§Render Behavior](04-composition-engine.md#render-behavior) for file-overlay semantics, and [§Task Execution Order](04-composition-engine.md#task-execution-order) for deferred, once-only task execution.
 
 #### Shared File Authoring Guide
 

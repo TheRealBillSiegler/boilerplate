@@ -41,7 +41,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Draft PRs cost nothing
 
-`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes — draft discipline keeps iteration fast even though Actions minutes cost nothing on this public repository.
+`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
 
 ## Test matrix policy
 

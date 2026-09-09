@@ -2,7 +2,7 @@
 
 The [design specification suite](design/README.md) describes the target contract, [Implementation status](status.md) tracks what exists today, and this page sequences the path between them — phases ordered by dependency, not by design-document numbering, with effort labels that are scope-based (small / medium / large by blast radius and files touched), never clock time.
 
-**Last reviewed:** 2026-07-29
+**Last reviewed:** 2026-09-09
 
 !!! info "How to read this page"
     Each phase lists what ships, why it sits where it does, and which design documents govern it. The [CI pipeline reference](governance/ci.md) describes the repository's own CI, and phase completion is recorded by releases — one minor version per completed phase — in the changelog. When a sequencing decision here no longer reflects reality, update this page in the same PR and bump the review date above.
