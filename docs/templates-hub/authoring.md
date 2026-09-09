@@ -89,7 +89,7 @@ dependencies:
   default: ["streamlit", "pydantic"]
 ```
 
-Declare `_answers_file: .copier-answers.<layer>.yml` in `copier.yml` and ship an answers-file stub — a template file literally named `{{ _copier_conf.answers_file }}.jinja` rendering `_copier_answers` (see `project`'s stub for the reference pattern). Copier writes an answers file only by rendering that stub; the directive alone is inert, and `boilerplate validate` warns when a composition-intended template (one declaring `_answers_file` or `extends`) ships without it. Each layer's answers file records the full merged answer set available at that layer's render, not just the answers its own `copier.yml` declares, and Copier drops the foreign keys on that layer's first `copier update` — so every answer a layer's files or paths use must be declared in that layer's own `copier.yml`, inherited ones included (`streamlit` redeclares `project_name`, `project_slug`, `package_name`, and `package_index_url`), since a per-layer `copier update` only sees that layer's own schema.
+Declare `_answers_file: .copier-answers.<layer>.yml` in `copier.yml` and ship an answers-file stub — a template file literally named `{{ _copier_conf.answers_file }}.jinja` rendering `_copier_answers` (see `project`'s stub for the reference pattern). Copier writes an answers file only by rendering that stub; the directive alone is inert, and `boilerplate validate` warns when a composition-intended template (one declaring `_answers_file` or `extends`) ships without it. See the [Composition guide § Execution order](composition.md#execution-order) for why every layer must redeclare the inherited answers its own files or paths use.
 
 ## Template files
 

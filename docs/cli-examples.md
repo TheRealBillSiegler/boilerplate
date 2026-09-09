@@ -50,6 +50,33 @@ boilerplate graph streamlit --format tree
 boilerplate graph project --format json -o graph.json
 ```
 
+The JSON payload's shape (`streamlit` example — the `streamlit` template extends `project`):
+
+```json
+{
+  "sequence": [
+    "project@0.2.0",
+    "streamlit@0.1.0"
+  ],
+  "layers": [
+    {
+      "specifier": "project@0.2.0",
+      "name": "project",
+      "version": "0.2.0",
+      "path": ".../templates/project",
+      "deps": []
+    },
+    {
+      "specifier": "streamlit@0.1.0",
+      "name": "streamlit",
+      "version": "0.1.0",
+      "path": ".../templates/streamlit",
+      "deps": ["project@0.2.0"]
+    }
+  ]
+}
+```
+
 ## Compose and export artifacts
 
 - Show final merged questions and the per-layer contributions:
