@@ -27,7 +27,7 @@ Three opinions the tool executes rather than recommends:
 
 - **Opinionated defaults, visible overrides.** Every pick — uv, Ruff, Pyright strict, pytest — is a default rather than a mandate: template questions, [`profile.toml`](customization.md), and plain config edits are the sanctioned escape hatches.
 - **Automation over documentation.** When a practice matters, it is encoded — in the installer, the template, or the generated config — instead of written into instructions that drift.
-- **Legibility before trust.** You can inspect what generation will do before believing it: `boilerplate new --dry-run` previews the files, `boilerplate graph` shows the layers, `boilerplate compose` shows the merged configuration.
+- **Legibility before trust.** You can inspect what generation will do before believing it: `boilerplate new --dry-run` shows the render plan — layer order and destination — without writing anything, `boilerplate graph` shows the layers, `boilerplate compose` shows the merged configuration.
 
 ## A whole environment, one pick per slot
 
@@ -43,7 +43,7 @@ The [environment overview](environment/index.md) walks the full toolchain and ho
 
 Boilerplate started in 2024 inside a small enablement team, as a way to stop re-explaining the same project setup to every new project. It was research before it was software: a systematic pass over the landscape — package and environment managers, scaffolders, type checkers, test runners — judged against one brief, *the most modern and lightweight in each*, and against what current PEPs actually prescribe. The stack settled late that year, and the tool was built for colleagues from its first mention. The leverage is structural: the judgment gets absorbed once, upstream, and one maintained path replaces the recurring setup conversation.
 
-The tool holds itself to the standard it hands out: this repository runs the same gates in its own CI — Ruff, Pyright strict, pytest, strict docs builds — that generated projects run in theirs.
+The tool holds itself to the standard it hands out: this repository's own CI runs the same checks it configures in every generated project — Ruff, Pyright strict, pytest — plus a strict docs build.
 
 One early user described the before-and-after: "before, it was like having your laundry folded — but on the floor. After, it's like sliding the drawer into the dresser: the clothes go in, and it slides friction-free." Another summed up the install as ending in "a fully suped-up Python environment."
 
