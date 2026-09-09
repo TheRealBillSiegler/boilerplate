@@ -310,7 +310,7 @@ extends:
   - base@1.0.0 # Exact version match only
 ```
 
-Range and compatibility operators (`^1.0`, `~1.2.0`, `>=1.0,<2.0`) are not implemented — `TemplateSpecifier` parses only an exact PEP 440 version after `@` (`src/boilerplate/types/template_specifier.py`). See [Template composition § Limitations](../templates-hub/composition.md#limitations-current-state) for this and the rest of the composition engine's current constraints.
+Range and compatibility operators (`^1.0`, `~1.2.0`, `>=1.0,<2.0`) are not implemented — `TemplateSpecifier` parses only an exact PEP 440 version after `@` (`src/boilerplate/types/template_specifier.py`). Version specifiers in `extends` are planned; see the [roadmap backlog](../roadmap.md#backlog).
 
 ### Composition implications
 
