@@ -1,11 +1,11 @@
 # Build-out roadmap
 
-The [design specification suite](design/01-overview.md) is the target contract: it describes the full intended system and deliberately carries no implementation status. [Implementation status](status.md) records what exists in code today — including each component's principal gaps — and is the single owner of current-state facts; this page defers to it rather than restating them. This page is the third leg: the sequenced path from the current state to the contract. Phases are ordered by dependency, not by design-document numbering, and effort labels are scope-based (small / medium / large by blast radius and files touched), never clock time.
+The [design specification suite](design/README.md) describes the target contract, [Implementation status](status.md) tracks what exists today, and this page sequences the path between them — phases ordered by dependency, not by design-document numbering, with effort labels that are scope-based (small / medium / large by blast radius and files touched), never clock time.
 
 **Last reviewed:** 2026-07-29
 
 !!! info "How to read this page"
-    Each phase lists what ships, why it sits where it does, and which design documents govern it. For where the build stands, [Implementation status](status.md) owns the component-by-component map, the [CI pipeline reference](governance/ci.md) describes the repository's own CI, and phase completion is recorded by releases — one minor version per completed phase — in the changelog. When a sequencing decision here no longer reflects reality, update this page in the same PR and bump the review date above.
+    Each phase lists what ships, why it sits where it does, and which design documents govern it. The [CI pipeline reference](governance/ci.md) describes the repository's own CI, and phase completion is recorded by releases — one minor version per completed phase — in the changelog. When a sequencing decision here no longer reflects reality, update this page in the same PR and bump the review date above.
 
 ## Sequencing principle
 
@@ -80,9 +80,6 @@ Runs in parallel with Phase 3 after Phase 1, under the [parallelism contract](#p
 - **Owns artifact fetching** ([design 06](design/06-project-lifecycle.md) Part 3): the fetch layer lives here exclusively.
 - **Carries the ADR-003 expiry:** full trust-tier consent gating must land at Phase 4 entry, together with the superseding ADR that [ADR-003](design/adr-003-permissive-execution.md)'s supersession clause requires.
 
-!!! success "Resolved (2026-07-28) — wheel_bundle no longer gates any phase"
-    [ADR-006](design/adr-006-template-distribution.md) makes the published per-template repos the canonical first-party source, so `update` dogfoods against them directly (or against local clones during development — Copier treats the two identically). The `wheel_bundle` source is demoted to a deferred offline seed cache and leaves the critical path entirely.
-
 !!! question "Open sequencing question — the git source became a first-party dependency"
     The same amendment moves the git source out of "Phase 4 nicety" and into the update spine's prerequisites: a project is only updatable if its answers files record a resolvable git source, so `new` must render first-party layers from a published repo (or a local clone) rather than the wheel's plain directories. Implementing the Git-backed `TemplateRepository` therefore gates the *updatable-project* outcome, not just catalog federation. Resolve before Phase 3 begins: either move the git source into Phase 1/early Phase 3, or accept that projects created before it lands are copy-only and rehome via a one-line `_src_path` edit.
 
@@ -100,6 +97,20 @@ The genuinely cross-cutting work (medium): a single JSON-to-stderr structured lo
 
 !!! warning "What is *not* in this phase"
     Advisory locks and intent journals are **not** here — locks ship inside Phases 1–5 attached to each mutating operation, and the journal ships with Phase 3's in-place update commit, per design 07 and the sequencing principle above. Placing them in a trailing hardening phase would mean retrofitting every command shipped before it.
+
+## Backlog
+
+Unsequenced planned scope — an item leaves the backlog once a phase adopts it into the sequencing above.
+
+- **Merge strategy annotations** — per-field merge behavior (`append`, `unique`, `deep-merge`) instead of today's fixed strategy set.
+- **Conflict reporting** — `compose --conflicts` flags file-level composition conflicts instead of silent overwrites.
+- **Version specifiers in `extends`** — PEP 440 constraints (e.g. `parent@>=1.2`) pin a layer to a compatible parent version range instead of today's exact-version-only match.
+- **File overlay preview** — `graph --files` shows which files each layer would touch before rendering.
+- **Author lint** — fails the build when a layer's delta unnecessarily repeats a base default.
+- **Generated-project CI scaffolding** — templates ship CI configuration for the generated project itself, not just the three quality-check commands you wire into your own CI provider.
+- **A deploy-time and runtime guardrail layer** — checks that run after generation, not only at scaffold time.
+- **Design 05's confirmation contracts** — plan-then-prompt for mutating commands: `update`, `env apply`, and `eject` show their plan before acting.
+- **A backward-compatibility test suite** — pins the public surfaces (CLI, template contract, lock schema) and fails CI on an accidental break.
 
 ## Release workstream
 
@@ -135,7 +146,3 @@ All tracker scaffolding is created once the repository is public (see INT-007 in
 
 - [Implementation status](status.md) — what exists today, the ground truth under this sequencing.
 - [Contributing](governance/contributing.md) — how to pick up work aligned with the current phase.
-
----
-
-*This page records sequencing decisions, not implementation status — that lives in [Implementation status](status.md). Update this page whenever a phase completes or the sequencing changes, and bump the review date above.*

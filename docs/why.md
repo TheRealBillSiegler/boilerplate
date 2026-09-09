@@ -37,13 +37,13 @@ A development environment is a set of slots — shell, runtime and package manag
 - **Project** — every generated project arrives with a uv-managed, locked environment and Ruff, Pyright strict, and pytest configured in `pyproject.toml`; its example module and test pass those checks on the first run.
 - **Editor** — templates ship `.vscode/` settings and extension recommendations, so the editor and the toolchain agree on interpreter, linting, and formatting.
 
-The [environment overview](environment/index.md) walks the full toolchain and how the pieces fit. Environment validation is deliberately thin today; the deeper environment-management model is designed, not built ([Implementation Status](status.md)).
+The [environment overview](environment/index.md) walks the full toolchain and how the pieces fit. Environment validation is deliberately thin today ([Implementation Status](status.md)).
 
 ## One path, not a repeated conversation
 
 Boilerplate started in 2024 inside a small enablement team, as a way to stop re-explaining the same project setup to every new project. It was research before it was software: a systematic pass over the landscape — package and environment managers, scaffolders, type checkers, test runners — judged against one brief, *the most modern and lightweight in each*, and against what current PEPs actually prescribe. The stack settled late that year, and the tool was built for colleagues from its first mention. The leverage is structural: the judgment gets absorbed once, upstream, and one maintained path replaces the recurring setup conversation.
 
-The tool holds itself to the standard it hands out: this repository's own CI runs the same checks it configures in every generated project — Ruff, Pyright strict, pytest — plus a strict docs build.
+The tool holds itself to the standard it hands out: this repository's own CI runs the same checks it configures in every generated project — Ruff, Pyright strict, pytest — plus a strict docs build. See [the local gate](governance/ci.md#the-local-gate).
 
 One early user described the before-and-after: "before, it was like having your laundry folded — but on the floor. After, it's like sliding the drawer into the dresser: the clothes go in, and it slides friction-free." Another summed up the install as ending in "a fully suped-up Python environment."
 
@@ -67,16 +67,13 @@ Already using Copier? Your templates keep working unchanged; composition and the
 | One merged question set across layers | Boilerplate |
 | Org-wide default answers without forking templates | Boilerplate |
 
-## What's shipped, what's designed
-
-Composition, org profiles, and the curated environment are shipped and tested. Reproducible provenance (lock files) and non-destructive updates across a layer stack are designed but not built — there is no supported update path for a composed project today, and plain `copier update` doesn't know about layering or precedence. See [Known gaps](status.md#known-gaps-design-only) in [Implementation Status](status.md) and the [update model design](design/adr-007-update-model.md) for the intended approach.
-
 ## Who it's for
 
 Platform teams and template maintainers who own more than one template and want the common foundation defined once — and individuals who want an opinionated, preconfigured Python scaffold without assembling the toolchain themselves.
 
 ## Where next
 
+- **[Implementation status](status.md)** — what's shipped, what's designed, and the gaps between them.
 - **[Quickstart](quickstart.md)** — install and scaffold your first project.
 - **[Template composition](templates-hub/composition.md)** — the `extends` mechanics in depth.
 - **[Environment overview](environment/index.md)** — the toolchain, slot by slot.
