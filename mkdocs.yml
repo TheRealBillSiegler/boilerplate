@@ -170,6 +170,53 @@ plugins:
       enabled: !ENV [DOCS_OFFLINE, false]
   - panzoom:
       full_screen: true
+  # Agent readers: /llms.txt (an index of the site in the llmstxt.org shape),
+  # /llms-full.txt (every listed page expanded), and a plain-Markdown sibling
+  # of each listed page (page/index.md next to page/index.html). Links use
+  # site_url, which mike rewrites per deployed version.
+  - llmstxt:
+      markdown_description: >-
+        Boilerplate is a project scaffolder for Python. It composes Copier
+        templates into layers and generates projects preconfigured for uv,
+        Ruff, Pyright strict, and pytest, with the editor settings to match.
+        These pages describe the tool at its current version. The status page
+        maps what is implemented; the design section describes the target
+        state, not what exists.
+      full_output: llms-full.txt
+      sections:
+        Get started:
+          - index.md: What Boilerplate is, with a recorded demo
+          - why.md: The problem it removes and how it relates to Copier
+          - install.md: Installing the toolchain and the CLI
+          - quickstart.md: Scaffold a project and run its checks
+          - status.md: What is implemented, partial, and planned
+        Templates:
+          - templates-hub/*.md
+          - templates-hub/**/*.md
+        CLI:
+          - cli-overview.md: The command set
+          - cli-examples.md: Worked commands
+          - customization.md: Profiles and other overrides
+          - cli.md: Command reference
+        Environment:
+          - environment/*.md
+        Reference:
+          - reference/*.md
+          - reference/**/*.md
+        Help:
+          - help.md
+          - troubleshooting.md: Fixes by symptom and by error code
+          - faq.md
+        Contribute:
+          - contribute.md
+          - governance/contributing.md: How to contribute
+          - governance/ci.md: The CI pipeline
+          - governance/versioning.md: Versioning and compatibility
+          - governance/security.md: Security policy
+          - roadmap.md: Sequencing of planned work
+          - about/license.md
+        Optional:
+          - design/*.md: Target-state design, not implementation status
 
 nav:
   - Get Started:
