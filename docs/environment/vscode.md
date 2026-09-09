@@ -41,6 +41,32 @@ Most common right after generating or cloning a project, before the virtual envi
 
 If an extension doesn't activate, reload the window: Command Palette → **Developer: Reload Window**.
 
+## Troubleshooting: Ruff not formatting automatically
+
+Check VS Code settings include:
+
+```json
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  }
+}
+```
+
+!!! tip
+    Sometimes, simply closing and reopening VS Code can resolve many glitches.
+
+## Troubleshooting: tests not discovered
+
+- **Cause:** The test framework is not enabled or the environment is not activated.
+- **Solution:**
+    1. Ensure you have run `uv sync` and activated the environment.
+    2. In VS Code, open the Command Palette and run "Python: Discover Tests".
+    3. Select `pytest` as the test framework.
+- **Verify:**
+    - Tests appear in the VS Code Test Explorer.
+    - Running `uv run pytest` in the terminal should show all tests passing.
+
 ## Where next
 
 Other symptoms (lint errors, template rendering errors)? See [Troubleshooting](../troubleshooting.md). Back to the [Development Environment overview](index.md).

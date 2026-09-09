@@ -12,52 +12,19 @@ This guide shows you how to:
 
 ## Install Boilerplate
 
-=== "Windows 11 (Automated)"
-
-    ```powershell
-    powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
-    ```
-
-    Note: `-ExecutionPolicy Bypass` applies to this process only; it does not change your machine policy.
-
-    The script installs and configures:
-
-    - **Git** (if missing)
-    - **Visual Studio Code** (if missing), with recommended extensions (Ruff, Jupyter, etc.)
-    - **uv** for dependency and environment management
-    - The **boilerplate** package (installed from its public Git repository)
-
-    On Windows 10 (no `winget` by default)? Use the [manual setup path](install.md#setup-options) instead.
-
-=== "Linux, macOS, or WSL"
-
-    Manual setup — see the [Installation Guide](install.md#setup-options) for the steps.
+Install Boilerplate before you start this guide — see [Setup options](install.md#setup-options) for the steps on your platform.
 
 ---
 
 ### Verify installation
 
-```bash
-boilerplate version
-```
-
-Expected: prints a semantic version and exits 0.
-
-!!! tip
-    If verification fails, check [Troubleshooting](troubleshooting.md) or the [FAQ](faq.md).
+See [Verify installation](install.md#verify-installation).
 
 ---
 
 ### What's included
 
-Boilerplate standardizes a fast, type‑safe workflow with:
-
-- [uv](https://docs.astral.sh/uv/) — dependency, Python, and virtualenv management
-- [ruff](https://docs.astral.sh/ruff/) — formatter and linter
-- [pyright](https://github.com/microsoft/pyright) — a strict configuration ships; type-checked live in VS Code via Pylance
-- [pytest](https://docs.pytest.org/) — testing framework
-- [boilerplate](cli.md) CLI + Copier — template‑driven scaffolding
-- [git](https://git-scm.com/doc) — source control
+Boilerplate standardizes a fast, type-safe toolchain — see [Toolchain](environment/index.md#toolchain) for what's in it.
 
 ---
 
@@ -95,7 +62,7 @@ Pin to an exact template version when needed (check the current version with `bo
 boilerplate new project@0.2.0 my-versioned-project
 ```
 
-> **Note:** Upgrading a generated project to a newer template version (`boilerplate update`) is currently design-only — see [design/adr-007-update-model.md](design/adr-007-update-model.md) for the planned approach.
+> **Note:** Upgrading a generated project to a newer template version (`boilerplate update`) is currently design-only — see the [roadmap](roadmap.md) for the planned approach.
 
 Non‑interactive (accept defaults) and overwrite existing destination:
 
@@ -108,30 +75,7 @@ boilerplate new project -n -f my-first-project
 
 ### Available templates
 
-- `project` — standard Python application/library/project ([Guide](templates-hub/project.md) · [Hub](templates-hub/index.md))
-- `streamlit` — data apps & dashboards ([Guide](templates-hub/streamlit/index.md) · [Hub](templates-hub/index.md) · [Containers](templates-hub/streamlit/deployment/containers/index.md))
-
----
-
-## Work on an existing project
-
-Clone and synchronize dependencies:
-
-```bash
-git clone <repo-url>
-cd <repo-name>
-uv sync
-```
-
-Expected: dependencies installed, virtual environment created
-
-VS Code not detecting the interpreter? See [VS Code setup](environment/vscode.md).
-
-Update to latest compatible versions when needed:
-
-```bash
-uv sync --upgrade
-```
+Boilerplate ships two first-party templates today — see [Choose a template](templates-hub/index.md#choose-a-template) for what each one adds and when to reach for it.
 
 ---
 
@@ -143,30 +87,22 @@ uv sync --upgrade
     cd my-first-project
     ```
 
-1. **Open the project in VS Code**
+1. **Add a dependency**
+
+    ```bash
+    uv add pandas pydantic
+    ```
+
+    !!! tip
+        Add `--dev` for a development-only dependency.
+
+1. **Open the project in VS Code**
 
     ```bash
     code .
     ```
 
-    Or: VS Code → File → Open Folder → select my-first-project
-
-1. **Format & lint**
-
-    ```bash
-    uv run ruff format .
-    uv run ruff check .
-    ```
-
-    Or: format on save in VS Code
-
-1. **Type‑check**
-
-    ```bash
-    uv run pyright
-    ```
-
-    Or: check inline diagnostics in VS Code
+    Or: VS Code → File → Open Folder → select my-first-project
 
 1. **Run tests**
 
@@ -179,36 +115,11 @@ uv sync --upgrade
 
     Expected: tests run; all passed; exit 0.
 
-??? question "Tests not discovered or not running in VS Code?"
-    - **Cause:** The test framework is not enabled or the environment is not activated.
-    - **Solution:**
-        1. Ensure you have run `uv sync` and activated the environment.
-        2. In VS Code, open the Command Palette and run “Python: Discover Tests”.
-        3. Select `pytest` as the test framework.
-    - **Verify:**
-        - Tests appear in the VS Code Test Explorer.
-        - Running `uv run pytest` in the terminal should show all tests passing.
-
 ---
 
 ## Project layout at a glance
 
-```text
-root/
-├─ .vscode/
-├─ src/
-│  └─ your_package/
-├─ tests/
-│  └─ your_package/
-├─ notebooks/
-├─ .gitignore
-├─ pyproject.toml
-└─ README.md
-```
-
-- `src/` contains application code; `tests/` mirrors it for test coverage
-- `.vscode/` pins editor settings and recommendations
-- `pyproject.toml` centralizes metadata, dependencies, and tool configs (ruff, pyright, etc.); `uv` reads it to produce deterministic installs
+See [Project structure](templates-hub/project.md#project-structure) for the generated tree and what each part is for.
 
 ---
 

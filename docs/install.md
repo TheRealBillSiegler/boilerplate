@@ -11,29 +11,15 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 !!! warning "Do not run bare `pip install boilerplate`"
     That name is already taken on PyPI by an unrelated, same-niche package — `pip install boilerplate` silently installs *that* package, not this one. Boilerplate is not published to PyPI; use one of the install commands below. See [adr-008](design/adr-008-distribution-name.md) for the full mis-install hazard.
 
+## Before you start
+
+- **Python**: nothing to preinstall — `uv` provisions Python for you.
+- **Admin rights**: needed only for the `winget` installs of Git and VS Code, below.
+- **`-ExecutionPolicy Bypass`**: scoped to that one PowerShell process; it does not change your machine's execution policy.
+
 ## Setup options
 
 === "Windows"
-
-    !!! warning "PowerShell 7+ Required"
-        Boilerplate assumes you are using **PowerShell 7+**.
-
-        === "Verify Installation"
-            Verify your PowerShell installation:
-
-            ```powershell
-            $PSVersionTable.PSVersion
-            ```
-
-            The **Major** version should be **>= 7**.
-
-        === "Install PowerShell 7"
-
-            [Follow the official PowerShell docs](https://learn.microsoft.com/powershell/scripting/install/installing-powershell), or install via winget:
-
-            ```powershell
-            winget install --id Microsoft.PowerShell -e --source winget --accept-source-agreements
-            ```
 
     === "Automated Setup (Recommended)"
 
@@ -43,18 +29,10 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
         powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
         ```
 
-        !!! note "Per-process bypass, minimal elevation"
-            `-ExecutionPolicy Bypass` applies to this process only; it does not change your machine's execution policy. Admin rights are only needed for the winget installs of Git and VS Code.
-
         The script sets up the full Python development environment and installs the Boilerplate CLI. It:
 
         - Installs **Git** and **Visual Studio Code** using `winget`.  
-        - Installs **VS Code extensions** (the recommended set in `.vscode/extensions.json`):  
-            - `ms-python.python`
-            - `ms-toolsai.jupyter`
-            - `charliermarsh.ruff`
-            - `esbenp.prettier-vscode`
-            - `tamasfe.even-better-toml`
+        - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
         - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`.
 
@@ -67,6 +45,28 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
             ```
 
     === "Manual Setup"
+
+        0. Install **PowerShell 7+**
+
+            !!! warning "PowerShell 7+ required"
+                Boilerplate assumes you are using **PowerShell 7+**. The automated path above installs this for you — this step is only needed here, in Manual Setup.
+
+                === "Verify Installation"
+                    Verify your PowerShell installation:
+
+                    ```powershell
+                    $PSVersionTable.PSVersion
+                    ```
+
+                    The **Major** version should be **>= 7**.
+
+                === "Install PowerShell 7"
+
+                    [Follow the official PowerShell docs](https://learn.microsoft.com/powershell/scripting/install/installing-powershell), or install via winget:
+
+                    ```powershell
+                    winget install --id Microsoft.PowerShell -e --source winget --accept-source-agreements
+                    ```
 
         1. Install **Git** — [download for Windows](https://git-scm.com/download/win) and accept the defaults, or install via winget:
 
@@ -164,6 +164,8 @@ Test your boilerplate installation by getting the version.
 boilerplate version
 ```
 
+Expected: prints a semantic version and exits 0.
+
 Verify the PATH is correct.
 
 === "PowerShell"
@@ -182,7 +184,7 @@ Verify the PATH is correct.
 
     Prints a path (often `~/.local/bin/boilerplate`) if PATH is correct.
 
-Command not found? See [Troubleshooting](troubleshooting.md).
+Command not found? See [Troubleshooting](troubleshooting.md) or the [FAQ](faq.md).
 
 ---
 
