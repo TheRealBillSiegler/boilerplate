@@ -8,7 +8,7 @@ description: An ethos made executable. Scaffold Python projects fast with uv, Ru
 
 Almost every Python project starts with work that isn't the work: picking the tools again, copying the last project's config, getting the linter and the type checker to agree on the same rules. Boilerplate is a project scaffolder for teams that want those decisions made once — uv, Ruff, a strict Pyright configuration, and pytest already wired into `pyproject.toml` and `.vscode/` — and for template maintainers who want templates that stack instead of fork.
 
-Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment around it, and lets a base template carry your team's standards under every specialized one. Already on Copier? Your templates keep working unchanged; `extends` composition and org-wide default answers are what's new.
+Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment around it, and lets a base template carry your team's standards under every specialized one.
 
 **Less yak. More stack.**
 
@@ -75,8 +75,8 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
 </div>
 
-!!! note "Lifecycle & exit"
-    Reproducible lock files are planned for roadmap Phase 1; updating an already-generated project to a newer template version (`boilerplate update`, three-way merge) is planned for Phase 3 and consumes the Phase 1 lock. Both are design-only today. See the [update model design](design/adr-007-update-model.md) for the intended approach, and [Implementation Status](status.md) for the full design-vs-code map.
+!!! note "Planned"
+    Reproducible lock files, and `boilerplate update` (three-way merge, consuming the lock) for updating an already-generated project to a newer template version, are planned. See the [roadmap](roadmap.md) for sequencing, the [update model design](design/adr-007-update-model.md) for the intended approach, and [Implementation Status](status.md) for what exists today.
 
 ---
 
@@ -91,7 +91,7 @@ boilerplate new project my-first-project
 
 That's the loop: install once, scaffold, then `uv run pytest` inside the new project to watch it pass its own gates. The [Quickstart](quickstart.md) walks every step with expected output; [Installation](install.md#setup-options) covers macOS/Linux and manual setup.
 
-Just want the CLI? `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`
+Just want the CLI? See [Installation](install.md#setup-options).
 
 ---
 
