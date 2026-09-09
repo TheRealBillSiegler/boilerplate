@@ -40,6 +40,10 @@ Each layer renders through its own Copier `Worker` invocation, applied in compos
 
 - Underscore-prefixed keys (directives): not merged, except a small allowlist below. All other underscore keys are treated as layer-local and skipped.
 
+## File overlay
+
+Each layer renders into the same destination through its own Copier `Worker` invocation, in composition order. Only the first layer's write respects `--force`; every later layer always overwrites, so a file that two layers both ship at the same path ends up with the last layer's content — there is no three-way diff or per-line merge. A layer that adds files at new paths never touches an earlier layer's files.
+
 ## Allowlisted directive keys and strategies
 
 - `_min_copier_version`: highest PEP 440 version (intersection by max).

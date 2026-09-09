@@ -7,6 +7,21 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
      :command: app
      :prog_name: boilerplate
 
+## Environment variables
+
+Every environment variable the CLI reads. A boolean variable is on for any value except unset, empty, `0`, or `false` (case-insensitive).
+
+| Variable | Effect | Where it's read |
+| --- | --- | --- |
+| `BOILERPLATE_CI` | Same as the global `--ci` flag: forces CI mode (quiet, non-interactive, auto-yes, no post-render tasks). | `boilerplate.cli.cli` |
+| `BOILERPLATE_NON_INTERACTIVE` | Same as `boilerplate new --non-interactive`: renders without prompting. | `boilerplate.cli.commands.new` |
+| `BOILERPLATE_ACCESSIBLE` | Same as `--color never`: forces color-free output. | `boilerplate.cli.display.core` |
+| `NO_COLOR` | The standard color-disable convention; also forces color-free console and log output. | `boilerplate.cli.display.core`, `boilerplate.logging_config` |
+| `BOILERPLATE_DEBUG` | Same as `--verbose` when `--verbose` isn't passed: sets DEBUG-level logging. | `boilerplate.settings.Settings`, applied in `boilerplate.cli.cli` |
+| `BOILERPLATE_REQUEST_ID` | Correlation ID attached to every structured log line for the invocation; auto-generated once per run when unset. | `boilerplate.logging_config` |
+| `BOILERPLATE_DEFAULT_TEMPLATES_DIR` | Overrides the bundled templates directory searched first. | `boilerplate.settings.Settings` |
+| `BOILERPLATE_EXTRA_TEMPLATE_DIRS` | Adds directories searched for templates, after the default directory. | `boilerplate.settings.Settings` |
+
 ## Exit codes
 
 Every command exits with one of six codes (defined in `boilerplate.constants.ExitCode`):
@@ -21,6 +36,30 @@ Every command exits with one of six codes (defined in `boilerplate.constants.Exi
 | 130 | USER_CANCELLED | Cancelled at a prompt (Ctrl+C). |
 
 `boilerplate validate <template_dir>` reports a template that fails its own checks (missing or malformed `boilerplate.yml`/`copier.yml`, duplicate keys, schema errors, or a `--strict` warning) on exit code 1 (FAILURE), not 3 — exit 3 there is reserved for a malformed invocation, namely a `template_dir` argument that isn't a directory at all.
+
+## Error codes
+
+Every `BP_*` code the render and composition pipeline can produce. The code appears as a bracketed suffix on the `Error:` line (e.g. `[BP_INPUT_FORCE_REQUIRED]`), usually alongside a `Hint:` line giving the same fix.
+
+| Code | When it's raised | Fix |
+| --- | --- | --- |
+| `BP_CONFIG_DIR_INVALID` | A configured template directory (the bundled default, `--templates-dir`, or a `BOILERPLATE_EXTRA_TEMPLATE_DIRS` entry) doesn't exist, isn't a directory, or can't be read. | Point the option or environment variable at a directory that exists and is readable. |
+| `BP_RESOLVE_TEMPLATE_NOT_FOUND` | The requested template name isn't in any configured template directory. | Run `boilerplate list` to see available templates. |
+| `BP_VERSION_INVALID` | Reserved for a version string that fails PEP 440 validation. Defined in the registry but not yet produced by any shipped command — an invalid version inside a specifier currently surfaces as `BP_INPUT_SPECIFIER_INVALID` instead. | — |
+| `BP_RENDER_DEST_NOT_EMPTY` | `boilerplate new`'s destination directory exists and isn't empty, and `--force` wasn't passed. | Use `--force` to overwrite, or choose an empty destination. |
+| `BP_INPUT_FORCE_REQUIRED` | Non-interactive render requires `--force`: the destination directory exists and non-interactive mode can't safely overwrite without your explicit consent. | Re-run with `--force` (or pick an empty destination). |
+| `BP_INPUT_SPECIFIER_INVALID` | A `name@version` template specifier is malformed — an invalid name, or a version segment that isn't PEP 440 compliant. | Use the format `name` or `name@version`. |
+| `BP_RESOLVE_METADATA_INVALID` | A template's `boilerplate.yml`/`copier.yml` is invalid: schema errors, or a `name@version` tag that disagrees with the directory's declared metadata. | Fix the metadata file; `boilerplate validate <template_dir>` reports which check failed. |
+| `BP_INPUT_ANSWERS_MISSING` | Non-interactive render cannot proceed: a template question has no `default:` and you supplied no value for it. The error message names the specific fields. | In priority order: pass `--data key=value` or `--data-file <path>` (a YAML mapping) for the missing answers; or have the template author add a `default:` (ideally computed, e.g. `default: "{{ _folder_name }}"` — see [template authoring](templates-hub/authoring.md)); or drop `--ci`/`--non-interactive` and answer the prompts. |
+| `BP_INPUT_DATA_INVALID` | `--data`/`--data-file` failed to parse ahead of any render attempt: a `--data` entry with no `=`; an empty or whitespace-only key; a key starting with `_` (Copier's reserved namespace); a `--data-file` path that doesn't exist or isn't UTF-8; content that isn't valid YAML or isn't a mapping; or a data-file key that isn't a string (YAML reads unquoted `on`/`off`/`yes`/`no`/bare numbers as non-string values). | Fix the flag or file and re-run; nothing is rendered when this error fires. |
+| `BP_INPUT_TTY_REQUIRED` | `boilerplate new` was invoked in interactive mode (the default) but stdin isn't a terminal — typical in CI pipelines, piped input, scripted shells, and `< NUL` redirection on Windows. | Pass `--non-interactive`/`--yes` (or the global `--ci`), or set [`BOILERPLATE_NON_INTERACTIVE`/`BOILERPLATE_CI`](#environment-variables) once for a fleet of call sites; or run from an interactive terminal. `--dry-run` is exempt — it never prompts. |
+| `BP_RENDER_PROMPT_FAILED` | Copier's prompt machinery can't display in the current terminal: Git Bash pseudo-TTYs on Windows, Docker entrypoints without `-it`, editor-embedded shells, or Windows CI runners without a real console buffer. | Run from a real terminal (PowerShell, cmd.exe, a Linux tty, or Docker with `-it`), or pass `--ci` with values that satisfy every question. |
+| `BP_RENDER_USER_CANCELLED` | You pressed Ctrl+C while `boilerplate new` was showing an interactive prompt; exits `130`, the same code every Ctrl+C in the CLI produces. | Re-run `boilerplate new`, or pass `--yes`/`--non-interactive` with answers for every question to skip prompting entirely. |
+| `BP_RESOLVE_DEP_NOT_FOUND` | An `extends` reference (or a versioned template reference) names a template that can't be resolved in the catalog. | Run `boilerplate list` and correct the reference. |
+| `BP_GRAPH_CYCLE` | The dependency graph formed by `extends` references contains a cycle, including a template that extends itself. | Remove the cyclical `extends` reference. |
+| `BP_RESOLVE_VERSION_CONFLICT` | The same template name resolves to two different versions within one dependency graph. | Align all references to a single version, or use version ranges that resolve to a common version. |
+| `BP_RESOLVE_MERGE_CONFLICT` | Layers provide incompatible values for the same question during merge — mismatched types, or no value/version supplied at all. | Reconcile the conflicting question across the layers' `copier.yml` files. |
+| `BP_CONFIG_PROFILE_INVALID` | `profile.toml` exists but isn't valid TOML, or its `[defaults]`/`[templates.<name>]` section isn't a table. | Fix the file's TOML syntax or table structure; the error message names the specific section. |
 
 ## Where next
 
