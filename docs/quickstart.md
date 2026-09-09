@@ -4,27 +4,10 @@
 
 This guide shows you how to:
 
-1. Install Boilerplate
-2. Scaffold your first project
-3. Follow the standard development workflow
+1. Scaffold your first project
+2. Follow the standard development workflow
 
----
-
-## Install Boilerplate
-
-Install Boilerplate before you start this guide — see [Setup options](install.md#setup-options) for the steps on your platform.
-
----
-
-### Verify installation
-
-See [Verify installation](install.md#verify-installation).
-
----
-
-### What's included
-
-Boilerplate standardizes a fast, type-safe toolchain — see [Toolchain](environment/index.md#toolchain) for what's in it.
+This guide scaffolds your first project and runs its tests. Install Boilerplate first — [Setup options](install.md#setup-options) and [Verify installation](install.md#verify-installation) — and skim the [toolchain](environment/index.md#toolchain) it standardizes.
 
 ---
 
@@ -62,7 +45,7 @@ Pin to an exact template version when needed (check the current version with `bo
 boilerplate new project@0.2.1 my-versioned-project
 ```
 
-> **Note:** Upgrading a generated project to a newer template version (`boilerplate update`) is currently design-only — see the [roadmap](roadmap.md) for the planned approach.
+> **Note:** `boilerplate update` — moving a generated project to a newer template version — is planned; see the [roadmap](roadmap.md) for sequencing and the [update model design](design/adr-007-update-model.md) for the approach.
 
 Non‑interactive (accept defaults) and overwrite existing destination:
 
