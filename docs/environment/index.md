@@ -1,12 +1,12 @@
 # Development environment
 
-Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the everyday **Workflow**, the **Project Layout**, its **Configuration**, and the **Guardrails** that enforce quality.
+Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the everyday **Workflow**, the **Project Layout**, and its **Configuration**.
 
 ## Toolchain
 
 Boilerplate fills the core of the everyday development loop — one curated, preconfigured tool for each part below.
 
-**The slot model.** A development environment decomposes into recurring roles — slots — such as runtime, dependency management, lint/format, types, tests, and editor. Boilerplate's stance: fill each inner-loop slot with exactly one opinionated tool (uv, ruff, pyright, pytest, VS Code) rather than offering options. See [The Development Environment Landscape](../design/dev-environment-landscape.md) for the full taxonomy.
+Boilerplate fills each inner-loop slot with one opinionated, overridable tool rather than offering options — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot) for the model.
 
 ### ![uv Logo](../assets/uv.svg){ style="height: 1em; vertical-align: middle;" } uv
 
@@ -42,20 +42,11 @@ Boilerplate fills the core of the everyday development loop — one curated, pre
 
 **New project**:
 
-1. Plop down some project files using a template:
+```powershell
+boilerplate new <template>
+```
 
-    ```powershell
-    boilerplate new <template>
-    ```
-
-2. Add some dependencies:
-
-    ```powershell
-    uv add pandas pydantic
-    ```
-
-    !!! tip
-        Add `--dev` to add dev only dependencies.
+Add dependencies as you go — see [Add a dependency](../quickstart.md#development-workflow) in the Quickstart.
 
 **Existing project**:
 
@@ -92,49 +83,28 @@ Launch a fully configured editor with linting, auto-formatting, type checks, etc
 
 ### 3. Develop & test
 
-- **Ruff** handles styling and lint checks in real-time and formats on save
-- **Pyright** highlights type issues as you code
-- **Pytest** runs your automated tests (via the command line or the VS Code Test Explorer)
+- **Ruff** handles styling and lint checks in real time and formats on save — or run it yourself:
 
-### 4. Git workflow
+    ```powershell
+    uv run ruff format .
+    uv run ruff check .
+    ```
 
-```powershell
-git commit -m "Descriptive message"
-git push
-```
+- **Pyright** highlights type issues as you code — or run it yourself:
 
-Regular commits and pushes help maintain a well-versioned codebase.
+    ```powershell
+    uv run pyright
+    ```
 
-### 5. Build & publish (if applicable)
+- **Pytest** runs your automated tests, via the command line or the VS Code Test Explorer:
 
-```powershell
-uv build
-uv publish
-```
-
-Use these commands to distribute your package.
+    ```powershell
+    uv run pytest
+    ```
 
 ## Project layout
 
-A consistent project layout helps everyone understand the codebase at a glance. Here's our standard structure:
-
-```text
-root/
-├─ .vscode/
-│    ├─ extensions.json
-│    └─ settings.json
-├─ src/
-│  └─ your_package/
-│     ├─ __init__.py
-│     └─ module.py
-├─ tests/
-│    └─ your_package/
-│        └─ test_module.py
-├─ notebooks/
-├─ .gitignore
-├─ pyproject.toml
-└─ README.md
-```
+A consistent project layout helps everyone understand the codebase at a glance — see [Project structure](../templates-hub/project.md#project-structure) for the generated tree.
 
 - **`.vscode/`**: Local editor settings and recommended extensions ensure a consistent VS Code experience
 - **`src/`**: Houses production code. Separating it from tests and configuration files prevents naming conflicts and maintains clarity
@@ -157,12 +127,6 @@ Generated projects arrive with the toolchain pre-wired. Beginners can ignore the
     - **VS Code** (`.vscode/`) — Ruff as the default formatter for Python and notebooks, format-on-save, and pytest discovery enabled. The interpreter isn't pinned; the Python extension auto-detects `.venv` in the workspace root.
 
     The authoritative configuration is the generated `pyproject.toml` and `.vscode/` — these summaries point you at it, not away from it.
-
-## Guardrails: where quality is enforced
-
-The same checks run at every stage, so local development has full guardrails:
-
-- **Local gates** — the generated `pyproject.toml` configures `ruff`, `pyright` (strict mode over `src/`), and `pytest` so you can validate before committing.
 
 ## Where next
 
