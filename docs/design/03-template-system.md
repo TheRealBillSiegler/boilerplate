@@ -401,34 +401,11 @@ For `filesystem` catalog sources, only the `boilerplate.yml` version is used —
 
 ### Composition rules quick reference
 
-| Concept | Behavior |
-|---------|----------|
-| File overlay | Later layers completely replace earlier layers' files at the same path |
-| Question merge | Shallow merge: later layer's top-level keys override; nested dicts replaced wholesale |
-| `_exclude`, `_subdirectory` | Layer-local: each layer retains its own Copier directives |
-| Task accumulation | Tasks from all layers are collected and executed in dependency order after final render |
-| Diamond dependencies | Each template is rendered once. The template appearing latest in the topological render order wins file conflicts. Topological order follows `extends` declaration order (later entries rendered later). Use `boilerplate graph` to verify the render sequence. |
-
-> **Authoring tip**: Use `boilerplate compose <template> --section layers` to inspect per-layer contributions and identify unintentional file collisions before publishing.
+See [04-composition-engine.md §Merge Rules](04-composition-engine.md#merge-rules) for the merge-strategy mapping, [§Topological Sort](04-composition-engine.md#topological-sort) for diamond-dependency file precedence, and [§Render Behavior](04-composition-engine.md#render-behavior) for file-overlay semantics.
 
 #### Shared File Authoring Guide
 
-When multiple layers need to contribute to the same output file (e.g., `pyproject.toml`, `README.md`), use one of these patterns:
-
-**Pattern 1: Single Owner (Recommended)** Designate one layer as the sole owner of the file. Other layers declare their requirements as template questions that the owning layer's template incorporates.
-
-Example: The `project` base template owns `pyproject.toml`. A derived `streamlit` template adds a `streamlit_version` question. The base template's `pyproject.toml.jinja` includes:
-
-```jinja
-[project]
-dependencies = [
-    {% if streamlit_version is defined %}"streamlit>={{ streamlit_version }}",{% endif %}
-]
-```
-
-**Pattern 2: Post-Render Task** Use a `_tasks` entry to modify the file programmatically after rendering (e.g., `toml` or `json` manipulation scripts).
-
-**Avoid**: Having multiple layers each provide their own copy of the same file. The last layer in topological order silently replaces earlier layers' versions with no merge.
+See [04-composition-engine.md §Managing Shared Files Across Layers](04-composition-engine.md#managing-shared-files-across-layers) for the single-owner and post-render-task patterns for a file multiple layers need to contribute to.
 
 ---
 
