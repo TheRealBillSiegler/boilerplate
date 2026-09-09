@@ -91,7 +91,7 @@ Every breaking change requires: (1) a proposal stating the rationale, (2) discus
 
 ## Compatibility test suite
 
-Every release should keep a backward-compatibility suite that pins the surfaces above, plus a CI check that flags accidental breaks on each pull request. A compatibility suite is planned but not yet implemented — see [Roadmap § Backlog](../roadmap.md#backlog).
+Every release should keep a backward-compatibility suite that pins the surfaces above, plus a CI check that flags accidental breaks on each pull request. A compatibility suite is planned — see [Roadmap § Backlog](../roadmap.md#backlog).
 
 ---
 
