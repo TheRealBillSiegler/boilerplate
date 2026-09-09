@@ -89,7 +89,7 @@ The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
     ```
 
 5. **Create a pull request**:
-   - Use a descriptive title
+   - Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md)
    - Explain the changes
    - Reference any related issues
 
@@ -111,7 +111,11 @@ When contributing breaking changes, follow Boilerplate's versioning and deprecat
 
 ## Architecture
 
-See the [Reference](../reference/index.md) section for detailed architecture documentation.
+See the [Design specifications](../design/README.md) for the architecture.
+
+## Reporting bugs and requesting features
+
+Search [existing GitHub issues](https://github.com/TheRealBillSiegler/boilerplate/issues) first, then [open a new one](https://github.com/TheRealBillSiegler/boilerplate/issues/new) — for a bug, include a clear description, steps to reproduce, and expected vs. actual behavior; for a feature, describe the use case and motivation.
 
 ## Reporting a security vulnerability
 
