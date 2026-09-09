@@ -197,6 +197,7 @@ nav:
     - Commands: cli.md
     - Platform: reference/platform/index.md
     - Merging: reference/merging.md
+    - API: reference/api.md
   - Help:
     - help.md
     - Troubleshooting: troubleshooting.md

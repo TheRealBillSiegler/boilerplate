@@ -26,7 +26,7 @@ Copier can apply several independent templates to one project (one answers file 
 
 ### How do I get accessible, color-free output?
 
-Set `BOILERPLATE_ACCESSIBLE=1` to force color-free output — equivalent to `--color never`. The standard `NO_COLOR` environment variable is also respected.
+Set `BOILERPLATE_ACCESSIBLE=1` (or the standard `NO_COLOR`) — see [Environment variables](cli.md#environment-variables).
 
 ## Security
 
