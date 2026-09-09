@@ -41,7 +41,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Draft PRs cost nothing
 
-`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
+`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes — draft discipline keeps iteration fast even though Actions minutes cost nothing on this public repository.
 
 ## Test matrix policy
 
@@ -73,19 +73,5 @@ uv run python scripts/check.py
 ```
 
 It mirrors the billable gate exactly — ruff check `--no-fix`, `ruff format --check`, pyright, the full pytest suite plus doctests, and both strict docs builds. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
-
-## Cost model (private forks)
-
-In a private fork, Actions bills weighted minutes against a monthly pool: ubuntu ×1, windows ×2, macos ×10. Approximate cost per event as last measured — re-measure after significant suite growth:
-
-| Event | Weighted minutes |
-| --- | --- |
-| Push to a draft PR | 0 |
-| PR ready-flip or post-ready push (code) | ~3–4 |
-| PR run (docs-only) | ~1 |
-| Merge to develop (code) | ~27 |
-| Merge to develop (docs-only) | ~2 |
-
-The Windows test leg dominates code costs: the suite runs roughly seven times slower on GitHub's Windows runners than on ubuntu, before the 2× multiplier. On the public repository, Actions minutes are free and this section stops mattering; the local gate and draft discipline remain valuable for iteration speed.
 
 Next: [Versioning & Compatibility](versioning.md) — how releases are numbered and what compatibility they promise.

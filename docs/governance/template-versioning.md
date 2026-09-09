@@ -411,41 +411,7 @@ See [Versioning & Compatibility Policy § When to Choose Each Path](./versioning
 
 ## boilerplate.lock and dependency tracking
 
-**Planned behavior.** No lock file is written today; this section describes the target design (see the design specs and roadmap Phase 1).
-
-When a project updates:
-
-```yaml
-# boilerplate.lock (tracks full dependency graph)
-_boilerplate_version: "0.1.0"
-_template_tree:
-  streamlit:
-    version: "0.2.0"
-    source: "github://myorg/streamlit-template"
-    commit: "abc123"
-    dependencies:
-      - name: project
-        version: "0.1.0"
-        source: "github://myorg/project-template"
-        commit: "def456"
-```
-
-After `copier update`:
-
-```yaml
-# NEW: boilerplate.lock (updated dependencies)
-_boilerplate_version: "0.1.0"
-_template_tree:
-  streamlit:
-    version: "1.0.0"  # Updated
-    source: "github://myorg/streamlit-template"
-    commit: "xyz789"  # New commit with breaking changes
-    dependencies:
-      - name: project
-        version: "2.0.0"  # Updated (base template breaking change)
-        source: "github://myorg/project-template"
-        commit: "uvw012"
-```
+**Planned behavior.** No lock file is written today; this section describes the target design (see the design specs and roadmap Phase 1). See [Data models § Lock File Model](../design/02-data-models.md#lock-file-model) for the schema `boilerplate.lock` will use.
 
 ---
 
