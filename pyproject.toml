@@ -65,6 +65,7 @@ dev = [
     "mike>=2.2.0",
     "pexpect>=4.9.0",
     "pyte>=0.8.2",
+    "mkdocs-llmstxt>=0.5.0",
 ]
 
 [project.scripts]
