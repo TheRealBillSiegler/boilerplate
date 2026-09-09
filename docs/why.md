@@ -23,12 +23,11 @@ Python itself raises the stakes. The ecosystem ships no equivalent of `npm creat
 
 ## The ethos
 
-Four opinions the tool executes rather than recommends:
+Three opinions the tool executes rather than recommends:
 
 - **Opinionated defaults, visible overrides.** Every pick — uv, Ruff, Pyright strict, pytest — is a default rather than a mandate: template questions, [`profile.toml`](customization.md), and plain config edits are the sanctioned escape hatches.
 - **Automation over documentation.** When a practice matters, it is encoded — in the installer, the template, or the generated config — instead of written into instructions that drift.
 - **Legibility before trust.** You can inspect what generation will do before believing it: `boilerplate new --dry-run` previews the files, `boilerplate graph` shows the layers, `boilerplate compose` shows the merged configuration.
-- **Candor about what's real.** Shipped capability is stated as fact; designed-but-unbuilt capability is labeled as design. [Implementation Status](status.md) is the map.
 
 ## A whole environment, one pick per slot
 
@@ -46,7 +45,7 @@ Boilerplate started in 2024 inside a small enablement team, as a way to stop re-
 
 The tool holds itself to the standard it hands out: this repository runs the same gates in its own CI — Ruff, Pyright strict, pytest, strict docs builds — that generated projects run in theirs.
 
-Early users put it more vividly than the design docs do. One described the before-and-after: "before, it was like having your laundry folded — but on the floor. After, it's like sliding the drawer into the dresser: the clothes go in, and it slides friction-free." Another summed up the install as ending in "a fully suped-up Python environment."
+One early user described the before-and-after: "before, it was like having your laundry folded — but on the floor. After, it's like sliding the drawer into the dresser: the clothes go in, and it slides friction-free." Another summed up the install as ending in "a fully suped-up Python environment."
 
 ## Built on Copier
 
