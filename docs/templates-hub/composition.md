@@ -21,8 +21,8 @@ Rules:
 
 !!! warning "Before you extend"
     - Lists merge by union only — inherited entries can't be removed or reordered, so design list-type questions to be purely additive.
-    - Dict questions overlay shallowly — a child overriding one key inside a nested structure replaces the whole structure at that level, not just that key.
-    - File conflicts aren't diagnosed — if a child writes a path the parent also writes, the child's version wins silently, with no warning.
+    - Dict questions overlay shallowly — a child overriding one key inside a nested structure replaces the whole structure at that level, not just that key — keep nested config shallow or split it into flat keys.
+    - File conflicts aren't diagnosed — if a child writes a path the parent also writes, the child's version wins silently, with no warning — diff the output after generation.
 
 !!! info "Planned"
     Version-pinned `extends` constraints (`parent@>=1.2`) and file-conflict reporting (`compose --conflicts`) are tracked on the [roadmap backlog](../roadmap.md#backlog).
@@ -39,7 +39,7 @@ Rules:
 | Merged configuration | The merged configuration after all layers; a questions-only view is also available. |
 | Delta | Per-layer change set: subset of keys this layer adds or overrides relative to previous state. |
 
-The composition classes backing these concepts — `TemplateInfo`, `TemplateMeta`, `CompositionLayer`, `Composition`, `CompositionGraph` — are documented in the [API reference](../reference/api.md).
+Concept → class: a layer is `CompositionLayer` and its changes are `CompositionLayer.delta`; the sequence and graph are `Composition.sequence` and `CompositionGraph`; the merged configuration is `Composition.final`, with `Composition.merged_questions_schema` as the questions-only view; templates are `TemplateInfo` with parents in `TemplateMeta.extends`. Signatures: [API reference](../reference/api.md).
 
 ## Execution order
 
@@ -71,9 +71,7 @@ Query full composition:
 uv run boilerplate compose streamlit --all --format yaml
 ```
 
-Merge strategies per question type and per directive key are catalogued in [merging.md](../reference/merging.md#allowlisted-directive-keys-and-strategies); merge strategies are a fixed set, with no mechanism to declare a custom per-field strategy.
-
-Conflict handling and type-mismatch errors are covered in [merging.md](../reference/merging.md#determinism-and-conflict-handling).
+Merge strategies are a fixed set — per question type under [What gets merged](../reference/merging.md#what-gets-merged), per directive key under [Allowlisted directive keys](../reference/merging.md#allowlisted-directive-keys-and-strategies) — with no way to declare a per-field strategy. Incompatible types for the same question raise `BP_RESOLVE_MERGE_CONFLICT`; see [Determinism and conflict handling](../reference/merging.md#determinism-and-conflict-handling).
 
 ## Diagnostics toolkit
 

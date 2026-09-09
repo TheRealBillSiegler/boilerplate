@@ -14,7 +14,7 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 ## Before you start
 
 - **Python**: nothing to preinstall — `uv` provisions Python for you.
-- **Admin rights**: needed only for the `winget` installs of Git and VS Code, below.
+- **Admin rights**: needed only for the `winget` installs — PowerShell 7 when missing, Git, and VS Code.
 - **`-ExecutionPolicy Bypass`**: scoped to that one PowerShell process; it does not change your machine's execution policy.
 
 ## Setup options
@@ -31,7 +31,7 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
         The script sets up the full Python development environment and installs the Boilerplate CLI. It:
 
-        - Installs **Git** and **Visual Studio Code** using `winget`.  
+        - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed.  
         - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
         - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`.

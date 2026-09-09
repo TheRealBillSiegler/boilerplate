@@ -76,7 +76,7 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 </div>
 
 !!! note "Planned"
-    Reproducible lock files, and `boilerplate update` (three-way merge, consuming the lock) for updating an already-generated project to a newer template version, are planned. See the [roadmap](roadmap.md) for sequencing, the [update model design](design/adr-007-update-model.md) for the intended approach, and [Implementation Status](status.md) for what exists today.
+    Reproducible lock files and `boilerplate update` — a three-way merge that consumes the lock to move a generated project to a newer template version — are planned. See the [roadmap](roadmap.md) for sequencing, the [update model design](design/adr-007-update-model.md) for the approach, and [Implementation Status](status.md) for what exists today.
 
 ---
 
