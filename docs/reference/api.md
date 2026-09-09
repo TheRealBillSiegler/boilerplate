@@ -46,3 +46,8 @@ Auto-generated reference for every public class and function in the `boilerplate
       members_order: source
       filters:
         - "!^_"
+
+## Where next
+
+- [Merging and precedence rules](merging.md) — what the composition classes produce.
+- [Commands](../cli.md) — the CLI built on them.

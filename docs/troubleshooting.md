@@ -66,12 +66,12 @@ Symptoms include the Test Explorer showing no tests, or `uv run pytest` passing 
 
 Boilerplate's render pipeline emits phase-tagged error codes (`BP_RENDER_*`, `BP_INPUT_*`) for problems around destination state, required answers, and interactive-prompt failures. The code appears as a bracketed suffix on the `Error:` line alongside a remediation hint; see [Error codes](cli.md#error-codes) for the fix for each.
 
-- [`BP_INPUT_FORCE_REQUIRED`](cli.md#error-codes) — non-interactive render requires `--force`.
 - [`BP_INPUT_ANSWERS_MISSING`](cli.md#error-codes) — non-interactive render cannot proceed: a question has no default and no supplied value.
 - [`BP_INPUT_DATA_INVALID`](cli.md#error-codes) — `--data`/`--data-file` could not be parsed.
 - [`BP_INPUT_TTY_REQUIRED`](cli.md#error-codes) — interactive render without a terminal.
 - [`BP_RENDER_PROMPT_FAILED`](cli.md#error-codes) — environment cannot show interactive prompts.
 - [`BP_RENDER_USER_CANCELLED`](cli.md#error-codes) — cancelled at a prompt.
+- [`BP_CONFIG_PROFILE_INVALID`](cli.md#error-codes) — `profile.toml` isn't valid TOML or a section isn't a table.
 
 ## General troubleshooting
 
@@ -83,4 +83,4 @@ For persistent issues:
 4. **Review the logs** — re-run with `--verbose` (or set [`BOILERPLATE_DEBUG`](cli.md#environment-variables)) for debug-level output.
 5. **Check file permissions** for the project directory
 
-If problems persist, see the [FAQ](faq.md) or report an issue on GitHub.
+If problems persist, see the [FAQ](faq.md) or [report a bug](governance/contributing.md#reporting-bugs-and-requesting-features).
