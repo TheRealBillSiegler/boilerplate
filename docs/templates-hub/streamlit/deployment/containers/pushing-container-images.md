@@ -91,4 +91,4 @@ az acr repository show-tags \
 
 ## Where next
 
-Back to the [container deployment guide](index.md), or the [Streamlit template guide](../../streamlit.md).
+Back to the [container deployment guide](index.md), or the [Streamlit template guide](../../index.md).

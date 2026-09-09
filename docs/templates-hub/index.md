@@ -11,7 +11,7 @@ Choose a template. See what's available. Jump to deeper docs when you need them.
 | Template | Extends | Use when | Docs |
 |----------|---------|----------|------|
 | **`project`** | — | Standard Python project (library, service, internal tool). Balanced defaults: src layout, tests, toolchain. | [Guide](project.md) |
-| **`streamlit`** | `project` | Streamlit data or dashboard app. Project plus Streamlit UI & container assets. | [Guide](streamlit/streamlit.md) · [Containers](streamlit/deployment/containers/index.md) |
+| **`streamlit`** | `project` | Streamlit data or dashboard app. Project plus Streamlit UI & container assets. | [Guide](streamlit/index.md) · [Containers](streamlit/deployment/containers/index.md) |
 
 List locally: `boilerplate list`
 

@@ -155,7 +155,7 @@ nav:
     - templates-hub/index.md
     - Project Template: templates-hub/project.md
     - Streamlit Template:
-      - templates-hub/streamlit/streamlit.md
+      - templates-hub/streamlit/index.md
       - Container deployment: templates-hub/streamlit/deployment/containers/index.md
     - Template Authoring: templates-hub/authoring.md
     - Template Composition: templates-hub/composition.md
