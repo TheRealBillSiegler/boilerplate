@@ -234,6 +234,7 @@ nav:
       - ADR-013 Interactivity Contract: design/adr-013-interactivity-contract.md
       - ADR-014 Deferred Task Execution: design/adr-014-deferred-task-execution.md
       - ADR-015 Idiomatic Artifacts: design/adr-015-idiomatic-artifacts.md
+      - ADR-016 Generated Architecture Docs: design/adr-016-generated-architecture-docs.md
   - Contribute:
     - contribute.md
     - Contributing: governance/contributing.md

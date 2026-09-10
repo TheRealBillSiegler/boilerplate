@@ -23,6 +23,7 @@ The ancillary documents in this directory:
 - [`adr-013-interactivity-contract.md`](adr-013-interactivity-contract.md) — stdin-TTY-gated prompting, fail-closed with named substitute flags, two-layer enforcement, no CI-env-var input-mode switching.
 - [`adr-014-deferred-task-execution.md`](adr-014-deferred-task-execution.md) — `_tasks` accumulate across layers and run once on the final layer against the completed project, in Copier's native task shapes.
 - [`adr-015-idiomatic-artifacts.md`](adr-015-idiomatic-artifacts.md) — idiomatic artifacts, orchestrated engine: a composed project is plain Copier on disk (per-layer answers files, vanilla per-layer `update`); the unified prompt flow is the sanctioned compose-time exception.
+- [`adr-016-generated-architecture-docs.md`](adr-016-generated-architecture-docs.md) — generated architecture docs: a deterministic facts layer enforced on every pull request, an on-demand LLM prose layer with validated citations, and one check that reports what is stale.
 - [`dev-environment-landscape.md`](dev-environment-landscape.md) — the reference taxonomy of development-environment **slots**, and the inner-loop slots Boilerplate fills with one opinionated pick each.
 - [Intentions register](../intentions/README.md) — the tracked outcomes (INT-XXX) that design decisions and roadmap items cite by ID.
 
