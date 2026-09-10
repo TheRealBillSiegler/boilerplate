@@ -74,9 +74,9 @@ The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
     ```
 
 2. **Make your changes**:
-   - Follow existing code patterns
-   - Include tests
-   - Update documentation
+    - Follow existing code patterns
+    - Include tests
+    - Update documentation
 
 3. **Run quality checks**: `uv run python scripts/check.py` (see [Code quality](#code-quality) for the individual commands)
 
@@ -89,9 +89,9 @@ The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
     ```
 
 5. **Create a pull request**:
-   - Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md)
-   - Explain the changes
-   - Reference any related issues
+    - Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md)
+    - Explain the changes
+    - Reference any related issues
 
 ## Code guidelines
 

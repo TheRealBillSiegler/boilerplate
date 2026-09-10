@@ -14,7 +14,7 @@ Use this template when documenting breaking changes in **Boilerplate templates**
 
 ## Template
 
-```markdown
+````markdown
 # Migration guide: <feature or tool> v<OLD_VERSION> → v<NEW_VERSION>
 
 ## What's changing
@@ -24,28 +24,28 @@ Use this template when documenting breaking changes in **Boilerplate templates**
 ### Example
 
 Before (v<OLD_VERSION>):
-\`\`\`python
+```python
 # Old way
 from boilerplate import render_template
 result = render_template("my-template", answers={...})
-\`\`\`
+```
 
 After (v<NEW_VERSION>):
-\`\`\`python
+```python
 # New way
 from boilerplate import Composer
 result = Composer("my-template", answers={...}).render()
-\`\`\`
+```
 
 ## Automated migration
 
 Copier handles this migration automatically when you update your project:
 
-\`\`\`powershell
+```powershell
 # Update to latest template version
 copier update
 # (future) boilerplate update — not yet shipped, see design/adr-007-update-model.md
-\`\`\`
+```
 
 ### What the automation does
 
@@ -73,10 +73,10 @@ The update process will:
 
 **If** you have heavily customized `<component>`, the automated merge may require review:
 
-\`\`\`powershell
+```powershell
 # After running update, check for merge markers
 git diff
-\`\`\`
+```
 
 Look for conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`). Resolve by choosing the appropriate sections or merging both.
 
@@ -84,13 +84,13 @@ Look for conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`). Resolve by choosing
 
 **If** you have external scripts or tools calling the old API:
 
-\`\`\`python
+```python
 # Update external scripts from:
 old_function(param1, param2)
 
 # To:
 new_function(param1=param1, param2=param2)
-\`\`\`
+```
 
 These changes are **outside** the template-managed files and require manual updates.
 
@@ -98,12 +98,12 @@ These changes are **outside** the template-managed files and require manual upda
 
 Verify the automated migration succeeded:
 
-\`\`\`powershell
+```powershell
 # Run quality gates
 uv run ruff check
 uv run pyright
 uv run pytest
-\`\`\`
+```
 
 **Expected results**:
 - ✓ No linting errors
@@ -115,14 +115,14 @@ uv run pytest
 
 If critical issues arise:
 
-\`\`\`powershell
+```powershell
 # Option 1: Revert the update commit
 git revert HEAD
 uv sync --locked
 
 # Option 2: Restore from backup (if you created one)
 git checkout <branch-before-update>
-\`\`\`
+```
 
 Then open an issue with:
 - The error encountered
@@ -138,14 +138,14 @@ Then open an issue with:
 **Cause**: Your customizations conflict with template changes.
 
 **Solution**:
-\`\`\`bash
+```bash
 # Review conflicts
 git status
 # Edit files with markers (<<<<<<<, =======, >>>>>>>)
 # Choose appropriate sections
 git add <resolved-files>
 git commit -m "chore: resolve migration conflicts"
-\`\`\`
+```
 
 ### Type errors after migration
 
@@ -154,11 +154,11 @@ git commit -m "chore: resolve migration conflicts"
 **Cause**: API signature changes not fully applied to custom code.
 
 **Solution**:
-\`\`\`powershell
+```powershell
 # Identify failing imports/calls
 uv run python -m pyright --verbose
 # Update your custom code to match new signatures (see examples above)
-\`\`\`
+```
 
 ### Tests fail after update
 
@@ -167,11 +167,11 @@ uv run python -m pyright --verbose
 **Cause**: Breaking changes in behavior, not just API.
 
 **Solution**:
-\`\`\`powershell
+```powershell
 # Review test failures for deprecated patterns
 uv run python -m pytest -v
 # Update test assertions and mocks to match new behavior
-\`\`\`
+```
 
 ## Getting help
 
@@ -199,7 +199,7 @@ uv run python -m pytest -v
 _Migration guide created: [ISO-8601 date]_
 
 _For latest updates, see the [release notes](link)._
-```
+````
 
 ---
 

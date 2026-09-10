@@ -57,10 +57,10 @@ Applies to the manual (CLI / API / config) path. From 1.0, never remove a featur
 
 1. **Warn (minor release).** Keep the feature working but emit a warning naming the feature, the removal version, and the replacement:
 
-   ```text
-   ⚠️  'boilerplate <old>' is deprecated and will be removed in v2.0.0. Use 'boilerplate <new>' instead.
-       See: <migration-guide-url>
-   ```
+    ```text
+    ⚠️  'boilerplate <old>' is deprecated and will be removed in v2.0.0. Use 'boilerplate <new>' instead.
+        See: <migration-guide-url>
+    ```
 
 2. **Document.** Show both the current and deprecated approaches in the docs; mark the deprecation in the changelog.
 3. **Remove (major release).** Remove the feature; the error message MUST reference the migration guide.
