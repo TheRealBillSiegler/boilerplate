@@ -136,6 +136,12 @@
   color: var(--md-accent-bg-color);
 }
 
+/* Material's word-break: break-word splits identifiers mid-token in narrow
+   table columns (e.g. `default_te` / `mplates_di` / `r`); keep them whole. */
+.md-typeset table:not([class]) code {
+  word-break: normal;
+}
+
 /* Header legibility. Two problems with a charcoal header: (1) Material paints
    the slate page at #1e2129, within a few values of the #1f2124 header, so in
    the dark scheme the header, tab bar, and page merge into one surface; (2) at
