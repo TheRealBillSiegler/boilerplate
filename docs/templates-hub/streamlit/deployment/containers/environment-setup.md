@@ -29,7 +29,8 @@ Choose one of the following methods to install the required tools inside your WS
 The setup script ships in the [boilerplate repository](https://github.com/TheRealBillSiegler/boilerplate/blob/main/scripts/setup-wsl-env.sh), not in your generated project — download it first, then run it in your Ubuntu terminal:
 
 ```bash
-curl -O https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/setup-wsl-env.sh
+curl -O \
+  https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/setup-wsl-env.sh
 chmod +x setup-wsl-env.sh
 ./setup-wsl-env.sh
 ```
@@ -60,12 +61,16 @@ sudo mkdir -m 0755 -p /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
 sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
+echo "deb [arch=$(dpkg --print-architecture) \
+signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu \
+$(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
 sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
+  docker-compose-plugin
 ```
 
 #### Azure CLI
@@ -76,7 +81,8 @@ gpg --dearmor |
 sudo tee /usr/share/keyrings/microsoft.gpg > /dev/null
 
 AZ_REPO=$(lsb_release -cs)
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] \
+echo "deb [arch=$(dpkg --print-architecture) \
+signed-by=/usr/share/keyrings/microsoft.gpg] \
 https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |
 sudo tee /etc/apt/sources.list.d/azure-cli.list
 
