@@ -121,6 +121,20 @@
   color: var(--md-accent-fg-color);
 }
 
+/* Hover and focus for both buttons, both schemes. Material's stock hover paints the
+   accent pair, which in slate equals the primary button's rest colors (no feedback)
+   and, on the outline button, turns the label the same blue as the fill. */
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background-color: #2a9fd2;
+  border-color: #2a9fd2;
+  color: #0f1a26; /* 5.84:1 */
+}
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):hover,
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):focus {
+  color: var(--md-accent-bg-color);
+}
+
 /* Header legibility. Two problems with a charcoal header: (1) Material paints
    the slate page at #1e2129, within a few values of the #1f2124 header, so in
    the dark scheme the header, tab bar, and page merge into one surface; (2) at
