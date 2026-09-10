@@ -134,10 +134,10 @@ class Composer:
                 excluded from layer values).
 
         Returns:
-            Dependency graph, execution sequence, per-layer
-            values (cumulative questions plus that layer's own
-            directives, ``_tasks`` excluded), and the ``final`` merged
-            schema used for rendering.
+            Dependency graph, execution sequence, per-layer values
+                (cumulative questions plus that layer's own directives,
+                ``_tasks`` excluded), and the ``final`` merged schema used
+                for rendering.
         """
         sequence = resolution.execution_sequence
         layer_count = len(sequence)

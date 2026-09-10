@@ -26,7 +26,7 @@ class TemplateSpecifier:
         name: The template name (alphanumeric, underscore, hyphen only).
         version: The semantic version of the template.
 
-    Example:
+    Examples:
         >>> specifier = TemplateSpecifier("streamlit", "2.0.0")
         >>> str(specifier)
         'streamlit@2.0.0'
@@ -94,7 +94,7 @@ class TemplateSpecifier:
             InvalidTemplateSpecifierError: If the specifier string format is invalid.
             InvalidVersion: If the version format is invalid.
 
-        Example:
+        Examples:
             >>> specifier = TemplateSpecifier.from_string("project@1.2.3")
             >>> specifier.name
             'project'

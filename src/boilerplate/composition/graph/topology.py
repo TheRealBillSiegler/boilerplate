@@ -23,7 +23,7 @@ def normalize_dependencies(deps: DependencyMap) -> DependencyMap:
     Raises:
         DependencyCycleError: If any node depends on itself (self-cycle).
 
-    Example:
+    Examples:
         >>> deps = {"A": ["C", "B", "C"], "B": ["D"]}  # Missing D key; duplicate C
         >>> result = normalize_dependencies(deps)
         >>> {k: result[k] for k in sorted(result)}
@@ -76,7 +76,7 @@ def toposort_dependencies(deps: DependencyMap) -> list[str]:
     Raises:
         DependencyCycleError: If the dependencies contain a cycle.
 
-    Example:
+    Examples:
         >>> deps = {"A": ["Z", "B"], "B": [], "Z": []}
         >>> toposort_dependencies(deps)
         ['Z', 'B', 'A']

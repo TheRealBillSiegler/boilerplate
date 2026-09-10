@@ -34,7 +34,7 @@ class TemplateInfo(BaseModel):
         Returns:
             A specifier combining the template name and version.
 
-        Example:
+        Examples:
             >>> # Assuming template_info is a TemplateInfo instance
             >>> # template_info.specifier
             >>> # TemplateSpecifier(name='mytemplate', version='1.2.3')

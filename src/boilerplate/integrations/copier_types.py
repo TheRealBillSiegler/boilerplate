@@ -46,7 +46,7 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
         Attribute names without a leading underscore that
         are dataclass fields or non-callable class attributes.
 
-    Example:
+    Examples:
         Question data and init-only fields are included; methods are not:
 
         >>> "questions_data" in template_public_attr_names(Template)
