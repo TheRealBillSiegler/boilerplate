@@ -11,7 +11,7 @@ my-template/
 ├── README.md.jinja        # Jinja2 template files use .jinja suffix
 ├── pyproject.toml.jinja
 ├── _scripts/
-│   └── post_generation.py # Referenced by _tasks below — task paths must exist in the template
+│   └── post_generation.py # Referenced by _tasks below
 └── src/
     └── {{package_name}}/
         └── __init__.py.jinja

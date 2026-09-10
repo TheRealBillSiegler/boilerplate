@@ -16,7 +16,7 @@ For a project named `my-app` (package `my_app`):
 
 ```text
 my-app/
-├── pyproject.toml          # Project metadata and tool config (ruff, pyright, pytest)
+├── pyproject.toml          # Metadata + tool config (ruff, pyright, pytest)
 ├── README.md               # Project documentation
 ├── .gitignore
 ├── .vscode/                # VS Code settings
@@ -31,8 +31,8 @@ my-app/
 ├── tests/
 │   └── my_app/
 │       └── test_module.py  # Tests for the example module
-├── uv.lock                 # Pinned dependencies (written by the post-generation tasks)
-└── .copier-answers.project.yml  # Records the full merged answer set for future updates
+├── uv.lock                 # Pinned deps (written by the post-generation tasks)
+└── .copier-answers.project.yml  # Merged answer set, for future updates
 ```
 
 Post-generation tasks create the virtual environment and `uv.lock` and initialize a git repository (skipped with `--no-tasks`).
