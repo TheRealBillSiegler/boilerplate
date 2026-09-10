@@ -45,7 +45,8 @@ Pin to an exact template version when needed (check the current version with `bo
 boilerplate new project@0.2.0 my-versioned-project
 ```
 
-> **Note:** `boilerplate update` — moving a generated project to a newer template version — is planned; see the [roadmap](roadmap.md) for sequencing and the [update model design](design/adr-007-update-model.md) for the approach.
+!!! note "Planned"
+    `boilerplate update` — moving a generated project to a newer template version — is planned; see the [roadmap](roadmap.md) for sequencing and the [update model design](design/adr-007-update-model.md) for the approach.
 
 Non‑interactive (accept defaults) and overwrite existing destination:
 
