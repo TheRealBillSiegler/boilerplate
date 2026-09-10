@@ -74,7 +74,7 @@ class TemplateMeta(BaseModel):
         Returns:
             A validated SerializableVersion instance.
 
-        Example:
+        Examples:
             >>> TemplateMeta.coerce_version("1.2.3")
             SerializableVersion('1.2.3')
         """

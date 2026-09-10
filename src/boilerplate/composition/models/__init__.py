@@ -6,7 +6,7 @@ entities such as layers, graphs, and schemas.
 - Composition, CompositionLayer: High-level composition structures.
 - CompositionGraph, GraphNode: Graph structures for dependencies.
 
-Example:
+Examples:
     >>> from boilerplate.composition.models import Composition, CompositionLayer
     >>> layer = CompositionLayer(name="base", version="1.0.0", path="base", values={})
     >>> Composition(

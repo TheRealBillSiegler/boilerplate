@@ -107,7 +107,7 @@ def ensure_json(value: JSONLike) -> JSON:
         TypeError: If a mapping contains non-string keys or the value is an
             unknown object type.
 
-    Example:
+    Examples:
         >>> ensure_json(Path("x"))
         'x'
         >>> class X: ...

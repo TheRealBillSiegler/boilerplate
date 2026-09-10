@@ -33,6 +33,7 @@ class Resolver:
     dependency specifiers along with a map of specifier to TemplateInfo.
 
     Contract:
+
     - Input ``template_ref`` may be ``name`` or ``name@version``.
     - Registry must implement lookups for both latest and versioned resolution.
     - No cycle detection is performed here (handled by the graph layer).

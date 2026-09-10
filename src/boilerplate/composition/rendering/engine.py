@@ -85,7 +85,7 @@ def _is_layer_local_extension(spec: str) -> bool:
     Returns:
         True when the module portion is not a plain dotted import path.
 
-    Example:
+    Examples:
         >>> _is_layer_local_extension("_extensions/context.py:ContextUpdater")
         True
         >>> _is_layer_local_extension(

@@ -12,7 +12,7 @@ YAML-friendly form and extracting copier configuration.
 Canonical import:
     >>> from boilerplate.composition.serialization import dump_yaml  # doctest: +SKIP
 
-Example:
+Examples:
     >>> dump_yaml({"name": "example"})  # doctest: +ELLIPSIS
     'name: example...'
 """

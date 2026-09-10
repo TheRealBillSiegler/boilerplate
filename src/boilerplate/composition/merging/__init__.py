@@ -12,7 +12,7 @@ Exceptions:
 - MergeConflictError: Raised when a conflict cannot be resolved
     under the selected strategy.
 
-Example:
+Examples:
         >>> from boilerplate.composition.merging import union
         >>> union([["a", "b"], ["b", "c"]], "extensions")
         ['a', 'b', 'c']
