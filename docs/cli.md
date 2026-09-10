@@ -6,6 +6,7 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
      :module: boilerplate.cli.cli
      :command: app
      :prog_name: boilerplate
+     :depth: 1
 
 ## Environment variables
 
