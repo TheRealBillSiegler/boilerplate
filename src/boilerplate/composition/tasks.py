@@ -48,7 +48,7 @@ def coerce_task(item: object) -> JSON:
         The raw task shape — string, list of strings, or mapping —
         or ``str(item)`` when no usable ``cmd`` is present.
 
-    Example:
+    Examples:
         A guarded task keeps its condition; an unguarded argv passes bare:
 
         >>> class Guarded:
@@ -99,7 +99,7 @@ def normalize_tasks(final_schema: dict[str, JSON]) -> list[JSON]:
         Task entries in Copier's native shapes; ``[]`` when no
         valid tasks exist.
 
-    Example:
+    Examples:
         Strings keep shell semantics; mappings keep their condition:
 
         >>> normalize_tasks({"_tasks": ["echo hi", ["git", "init"]]})

@@ -120,6 +120,7 @@ def graph(
     """Shows dependency execution sequence for a template.
 
     Visualizes template dependencies in three formats:
+
     - table: Execution order as numbered table with paths
     - tree: Hierarchical dependency structure
     - json: Complete graph data (sequence + layers) for tools

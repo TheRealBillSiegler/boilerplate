@@ -102,9 +102,9 @@ app = typer.Typer(
     cls=BoilerplateGroup,
     help=(
         "Composable project scaffolder with template layering on top of Copier."
-        "\n\nGet started:"
-        "\n  boilerplate list               # browse templates"
-        "\n  boilerplate new project my-app # scaffold a project"
+        "\n\nGet started:\n\n"
+        "    boilerplate list               # browse templates\n"
+        "    boilerplate new project my-app # scaffold a project"
     ),
     rich_markup_mode="rich",
     pretty_exceptions_enable=True,

@@ -13,7 +13,7 @@ Canonical import:
         ...     Resolution,
         ... )  # doctest: +SKIP
 
-Example:
+Examples:
         >>> # resolver.resolve(...) returns a Resolution (doctest: +SKIP)
         >>> isinstance(Resolver().resolve(catalog, spec), Resolution)  # doctest: +SKIP
         True

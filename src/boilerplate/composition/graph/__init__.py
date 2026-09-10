@@ -21,7 +21,7 @@ Canonical import:
     ...     toposort_dependencies,
     ... )  # doctest: +SKIP
 
-Example:
+Examples:
         >>> deps = {"app": ["core"], "core": []}
     >>> order = toposort_dependencies(deps)
         >>> order.index("core") < order.index("app")
