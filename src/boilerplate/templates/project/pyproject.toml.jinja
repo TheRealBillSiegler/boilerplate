@@ -39,7 +39,7 @@ default = true
 packages = ["src/{{ package_name }}"]
 
 [tool.coverage.run]
-source = ["src.{{ package_name }}"]
+source = ["{{ package_name }}"]
 
 [tool.ruff]
 fix = true
