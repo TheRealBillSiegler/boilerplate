@@ -18,6 +18,10 @@ extends:
 
 **Key**: Each template versions itself, not tied to Boilerplate CLI versions.
 
+### When to bump
+
+A template version moves once per release, measured from the last released version of that template. Take the smallest step the whole unreleased change set requires (pre-1.0: MINOR for a breaking change, PATCH otherwise) and land it once. A later unreleased change raises that step if it needs a bigger one; it MUST NOT add another bump. Bumping per change or per pull request produces version numbers no consumer ever saw.
+
 ## Templates vs. projects
 
 **Templates** (versioned in `boilerplate.yml`): source code with `boilerplate.yml`, `copier.yml`, and template files.

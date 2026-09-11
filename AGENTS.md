@@ -138,6 +138,12 @@ Architecture is zero-trust-aligned. All security decisions must respect the OWAS
 - No hard line-wraps; keep each paragraph or bullet on one logical line.
 - Use RFC 2119 language (MUST, SHOULD, MAY) in governance and specification documents.
 
+## Versioning
+
+- Template versions in `boilerplate.yml` move once per release, measured from the last released version of that template. Take the smallest step the whole unreleased change set requires and land it once; never bump per change or per pull request. If an unreleased bump already exists, raise its size when a later change needs a bigger step instead of adding another.
+- The CLI version in `pyproject.toml` is written by release-please from conventional commits (`RELEASING.md`); never edit it by hand.
+- Pre-1.0 templates: a breaking change is a MINOR bump, everything else is PATCH. Policy: `docs/templates-hub/versioning.md`.
+
 ## Commits
 
 Use conventional commits:
