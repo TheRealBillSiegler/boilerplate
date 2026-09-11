@@ -5,11 +5,12 @@ set -euo pipefail
 # build-container.sh
 #
 # Description:
-#   Builds a Docker image using a short-lived Azure DevOps token (AAD-based).
+#   Builds a Docker image for the project. When the project's default
+#   package index needs credentials, the image build reads them from a
+#   Docker secret so they never land in an image layer.
 #
 # Requirements:
-#   - Docker and Azure CLI must be installed.
-#   - The user must be logged into Azure CLI.
+#   - Docker, reachable directly or via sudo.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -70,14 +71,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ------------------------------------------------------------------------------
-# Check sudo access
-# ------------------------------------------------------------------------------
-if ! sudo -v >/dev/null 2>&1; then
-    echo -e "${RED}❌ This script requires sudo to build Docker images securely.${RESET}"
-    exit 1
-fi
-
-# ------------------------------------------------------------------------------
 # Environment validation
 # ------------------------------------------------------------------------------
 if [ ! -f uv.lock ]; then
@@ -85,12 +78,29 @@ if [ ! -f uv.lock ]; then
     exit 1
 fi
 
-for cmd in az docker; do
-    if ! command -v "$cmd" &>/dev/null; then
-        echo -e "${RED}❌ Required tool '$cmd' is not installed or not in PATH.${RESET}"
-        exit 1
-    fi
-done
+if ! command -v docker &>/dev/null; then
+    echo -e "${RED}❌ Required tool 'docker' is not installed or not in PATH.${RESET}"
+    exit 1
+fi
+{%- if package_index_url and ('dev.azure.com' in package_index_url or 'pkgs.visualstudio.com' in package_index_url) %}
+
+if ! command -v az &>/dev/null; then
+    echo -e "${RED}❌ Required tool 'az' is not installed or not in PATH.${RESET}"
+    exit 1
+fi
+{%- endif %}
+
+# ------------------------------------------------------------------------------
+# Docker access
+# ------------------------------------------------------------------------------
+if docker info >/dev/null 2>&1; then
+    DOCKER=(docker)
+elif sudo -n docker info >/dev/null 2>&1 || sudo -v >/dev/null 2>&1; then
+    DOCKER=(sudo docker)
+else
+    echo -e "${RED}❌ Cannot reach the Docker daemon. Start Docker, or ask an administrator to grant your account access to it.${RESET}"
+    exit 1
+fi
 
 # ------------------------------------------------------------------------------
 # Resolve image name
@@ -104,6 +114,14 @@ if [[ -z "$IMAGE_NAME" ]]; then
     echo -e "${YELLOW}ℹ️  Using default image name: ${IMAGE_NAME}${RESET}"
 fi
 
+{% if not package_index_url -%}
+# ------------------------------------------------------------------------------
+# Build
+# ------------------------------------------------------------------------------
+echo -e "${BLUE}${BOLD}🐳 Building Docker image '$IMAGE_NAME'...${RESET}"
+"${DOCKER[@]}" buildx build --tag "$IMAGE_NAME" --load .
+{%- else %}
+{%- if 'dev.azure.com' in package_index_url or 'pkgs.visualstudio.com' in package_index_url %}
 # ------------------------------------------------------------------------------
 # Azure DevOps AAD authentication
 # ------------------------------------------------------------------------------
@@ -117,9 +135,6 @@ if ! az account get-access-token --resource "$DEVOPS_RESOURCE" --query accessTok
     }
 fi
 
-# ------------------------------------------------------------------------------
-# Get token and build
-# ------------------------------------------------------------------------------
 TOKEN=$(az account get-access-token \
     --resource "$DEVOPS_RESOURCE" \
     --query accessToken -o tsv | tr -d '\r\n')
@@ -129,16 +144,32 @@ if [[ -z "$TOKEN" ]]; then
     exit 1
 fi
 
+INDEX_SECRET="https://AzureDevOps:$TOKEN@{{ package_index_url | replace('https://', '') | replace('http://', '') }}"
+{%- else %}
+if [[ -z "${INDEX_URL:-}" ]]; then
+    echo -e "${RED}❌ Set INDEX_URL to the package index URL with credentials embedded (e.g. https://user:token@host/simple/).${RESET}"
+    exit 1
+fi
+
+INDEX_SECRET="$INDEX_URL"
+{%- endif %}
+
+# ------------------------------------------------------------------------------
+# Build
+# ------------------------------------------------------------------------------
+# sudo drops the caller's environment, so the index secret reaches docker through env either way.
+if [[ "${DOCKER[0]}" == "sudo" ]]; then
+    BUILD=(sudo env "INDEX=$INDEX_SECRET" docker)
+else
+    BUILD=(env "INDEX=$INDEX_SECRET" docker)
+fi
+
 echo -e "${BLUE}${BOLD}🐳 Building Docker image '$IMAGE_NAME'...${RESET}"
-sudo env \
-    INDEX="https://AzureDevOps:$TOKEN@{{ (package_index_url or 'https://pypi.org/simple/') | replace('https://', '') | replace('http://', '') }}" \
-    docker buildx build \
-    --secret id=index,env=INDEX \
-    --tag "$IMAGE_NAME" \
-    --load .
+"${BUILD[@]}" buildx build --secret id=index,env=INDEX --tag "$IMAGE_NAME" --load .
+{%- endif %}
 
 echo -e "${GREEN}✅ Docker image built successfully: ${IMAGE_NAME}${RESET}"
 
 echo -e "${BLUE}${BOLD}ℹ️  To run your container locally:${RESET}"
-echo -e "${YELLOW}   sudo docker run -p 8501:8501 ${IMAGE_NAME}${RESET}"
+echo -e "${YELLOW}   ${DOCKER[*]} run -p 8501:8501 ${IMAGE_NAME}${RESET}"
 echo -e "${BLUE}${BOLD}📣  Note:${RESET} ${YELLOW}If your app runs on a different port, update the -p flag accordingly.${RESET}"

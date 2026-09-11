@@ -5,12 +5,12 @@ set -euo pipefail
 # push-container.sh
 #
 # Description:
-#   Re-tags and pushes a local Docker image to Azure Container Registry (ACR)
-#   using Azure CLI and AAD-based authentication.
+#   Re-tags and pushes a local Docker image to a container registry.
+#   Authentication is chosen at runtime from the registry hostname.
 #
 # Requirements:
-#   - Docker and Azure CLI installed.
-#   - User logged into Azure CLI with AcrPush access.
+#   - Docker, reachable directly or via sudo.
+#   - Azure CLI, only when pushing to an Azure Container Registry.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -28,11 +28,12 @@ RED="\033[0;31m"
 # ------------------------------------------------------------------------------
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [-i <image:tag>] [-a <acr-login-server>] [-t <remote-tag>] [-h]
+Usage: $(basename "$0") [-i <image:tag>] [-r <registry>] [-n <namespace>] [-t <remote-tag>] [-h]
 
 Options:
   -i, --image-name   Local Docker image (default: <project-name>:local)
-  -a, --acr-name     ACR login server (default: {{ container_registry }})
+  -r, --registry     Registry hostname (default: {{ container_registry }})
+  -n, --namespace    Owner or organization within the registry (default: \$CONTAINER_NAMESPACE)
   -t, --tag          Remote image tag (default: latest)
   -h, --help         Show this help message
 EOF
@@ -50,17 +51,10 @@ get_project_name_from_pyproject() {
 }
 
 # ------------------------------------------------------------------------------
-# Check sudo access
-# ------------------------------------------------------------------------------
-if ! sudo -v >/dev/null 2>&1; then
-    echo -e "${RED}❌ This script requires sudo to access Docker.${RESET}"
-    exit 1
-fi
-
-# ------------------------------------------------------------------------------
 # Parse arguments
 # ------------------------------------------------------------------------------
-ACR_NAME="{{ container_registry }}"
+REGISTRY="{{ container_registry }}"
+NAMESPACE="${CONTAINER_NAMESPACE:-}"
 REMOTE_TAG="latest"
 LOCAL_IMAGE=""
 
@@ -70,8 +64,12 @@ while [[ $# -gt 0 ]]; do
         LOCAL_IMAGE="$2"
         shift 2
         ;;
-    -a | --acr-name)
-        ACR_NAME="$2"
+    -r | --registry)
+        REGISTRY="$2"
+        shift 2
+        ;;
+    -n | --namespace)
+        NAMESPACE="$2"
         shift 2
         ;;
     -t | --tag)
@@ -93,12 +91,22 @@ done
 # ------------------------------------------------------------------------------
 # Validate tools
 # ------------------------------------------------------------------------------
-for cmd in az docker; do
-    if ! command -v "$cmd" &>/dev/null; then
-        echo -e "${RED}❌ Required tool '$cmd' is not installed.${RESET}"
-        exit 1
-    fi
-done
+if ! command -v docker &>/dev/null; then
+    echo -e "${RED}❌ Required tool 'docker' is not installed or not in PATH.${RESET}"
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
+# Docker access
+# ------------------------------------------------------------------------------
+if docker info >/dev/null 2>&1; then
+    DOCKER=(docker)
+elif sudo -n docker info >/dev/null 2>&1 || sudo -v >/dev/null 2>&1; then
+    DOCKER=(sudo docker)
+else
+    echo -e "${RED}❌ Cannot reach the Docker daemon. Start Docker, or ask an administrator to grant your account access to it.${RESET}"
+    exit 1
+fi
 
 # ------------------------------------------------------------------------------
 # Infer image name
@@ -115,55 +123,80 @@ fi
 # ------------------------------------------------------------------------------
 # Check local Docker image exists
 # ------------------------------------------------------------------------------
-if ! sudo docker image inspect "$LOCAL_IMAGE" &>/dev/null; then
-    echo -e "${RED}❌ Local image '$LOCAL_IMAGE' not found. Run 'docker build'?${RESET}"
+if ! "${DOCKER[@]}" image inspect "$LOCAL_IMAGE" &>/dev/null; then
+    echo -e "${RED}❌ Local image '$LOCAL_IMAGE' not found. Run ./scripts/build-container.sh first.${RESET}"
     exit 1
 fi
 
 # ------------------------------------------------------------------------------
-# Azure authentication
+# Registry authentication
 # ------------------------------------------------------------------------------
-if ! az account show &>/dev/null; then
-    echo -e "${YELLOW}🔐 Not logged into Azure CLI. Logging in...${RESET}"
-    az login || {
-        echo -e "${RED}❌ Azure login failed.${RESET}"
+case "$REGISTRY" in
+*.azurecr.io)
+    if ! command -v az &>/dev/null; then
+        echo -e "${RED}❌ Required tool 'az' is not installed or not in PATH.${RESET}"
+        exit 1
+    fi
+
+    if ! az account show &>/dev/null; then
+        echo -e "${YELLOW}🔐 Not logged into Azure CLI. Logging in...${RESET}"
+        az login || {
+            echo -e "${RED}❌ Azure login failed.${RESET}"
+            exit 1
+        }
+    fi
+
+    ACR_REGISTRY_NAME="${REGISTRY%%.azurecr.io}"
+    echo -e "${BLUE}${BOLD}🔐 Acquiring AAD token for '$ACR_REGISTRY_NAME'...${RESET}"
+
+    TOKEN=$(az acr login \
+        --name "$ACR_REGISTRY_NAME" \
+        --expose-token \
+        --query accessToken \
+        -o tsv 2> >(grep -v "manual login" >&2)) || {
+        echo -e "${RED}❌ Failed to obtain ACR token.${RESET}"
         exit 1
     }
-fi
 
-# ------------------------------------------------------------------------------
-# Acquire ACR token
-# ------------------------------------------------------------------------------
-ACR_REGISTRY_NAME="${ACR_NAME%%.azurecr.io}"
-echo -e "${BLUE}${BOLD}🔐 Acquiring AAD token for '$ACR_REGISTRY_NAME'...${RESET}"
+    echo -e "${BLUE}${BOLD}🔐 Logging Docker into '$REGISTRY'...${RESET}"
+    echo "$TOKEN" | "${DOCKER[@]}" login "$REGISTRY" \
+        --username 00000000-0000-0000-0000-000000000000 \
+        --password-stdin
+    ;;
+ghcr.io | docker.io)
+    if [[ -z "$NAMESPACE" ]]; then
+        echo -e "${RED}❌ Set -n/--namespace (or \$CONTAINER_NAMESPACE) to the owner or organization the image belongs to on '$REGISTRY'.${RESET}"
+        exit 1
+    fi
 
-TOKEN=$(az acr login \
-    --name "$ACR_REGISTRY_NAME" \
-    --expose-token \
-    --query accessToken \
-    -o tsv 2> >(grep -v "manual login" >&2)) || {
-    echo -e "${RED}❌ Failed to obtain ACR token.${RESET}"
-    exit 1
-}
-
-# ------------------------------------------------------------------------------
-# Docker login to ACR
-# ------------------------------------------------------------------------------
-echo -e "${BLUE}${BOLD}🔐 Logging Docker into '$ACR_NAME'...${RESET}"
-echo "$TOKEN" | sudo docker login "$ACR_NAME" \
-    --username 00000000-0000-0000-0000-000000000000 \
-    --password-stdin
+    if [[ -n "${REGISTRY_TOKEN:-}" ]]; then
+        echo -e "${BLUE}${BOLD}🔐 Logging Docker into '$REGISTRY'...${RESET}"
+        echo "$REGISTRY_TOKEN" | "${DOCKER[@]}" login "$REGISTRY" \
+            --username "$NAMESPACE" \
+            --password-stdin
+    else
+        echo -e "${YELLOW}ℹ️  \$REGISTRY_TOKEN not set; assuming an existing 'docker login $REGISTRY' session.${RESET}"
+    fi
+    ;;
+*)
+    echo -e "${YELLOW}ℹ️  Assuming an existing 'docker login $REGISTRY' session.${RESET}"
+    ;;
+esac
 
 # ------------------------------------------------------------------------------
 # Tag and push image
 # ------------------------------------------------------------------------------
 REPO_NAME="${LOCAL_IMAGE%%:*}"
-REMOTE_IMAGE="${ACR_NAME}/${REPO_NAME}:${REMOTE_TAG}"
+if [[ -n "$NAMESPACE" ]]; then
+    REMOTE_IMAGE="${REGISTRY}/${NAMESPACE}/${REPO_NAME}:${REMOTE_TAG}"
+else
+    REMOTE_IMAGE="${REGISTRY}/${REPO_NAME}:${REMOTE_TAG}"
+fi
 
 echo -e "${BLUE}${BOLD}🔄 Tagging '$LOCAL_IMAGE' → '$REMOTE_IMAGE'...${RESET}"
-sudo docker tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
+"${DOCKER[@]}" tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
 
-echo -e "${BLUE}${BOLD}🚀 Pushing to ACR: $REMOTE_IMAGE...${RESET}"
-sudo docker push "$REMOTE_IMAGE"
+echo -e "${BLUE}${BOLD}🚀 Pushing to $REGISTRY: $REMOTE_IMAGE...${RESET}"
+"${DOCKER[@]}" push "$REMOTE_IMAGE"
 
 echo -e "${GREEN}${BOLD}✅ Image pushed successfully: $REMOTE_IMAGE${RESET}"

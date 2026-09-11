@@ -52,22 +52,30 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY --chown=appuser:appuser pyproject.toml uv.lock /app/
 
 # Install runtime dependencies (uv will automatically create the venv in /app/.venv)
+{% if package_index_url -%}
 RUN --mount=type=secret,id=index,env=INDEX \
     uv sync --frozen --no-install-project --no-dev \
     --default-index "$INDEX" \
     --keyring-provider subprocess
+{%- else -%}
+RUN uv sync --frozen --no-install-project --no-dev
+{%- endif %}
 
 # Copy full project source and install project dependencies (scripts go into the venv)
 COPY --chown=appuser:appuser . /app/
+{% if package_index_url -%}
 RUN --mount=type=secret,id=index,env=INDEX \
     uv sync --frozen --no-dev \
     --default-index "$INDEX" \
     --keyring-provider subprocess
+{%- else -%}
+RUN uv sync --frozen --no-dev
+{%- endif %}
 
 ##############################
 # Stage 2: Runtime
 ##############################
-FROM base as runtime
+FROM base AS runtime
 
 # Install curl for healthcheck
 RUN apt-get update && apt-get install --no-install-recommends -y curl && rm -rf /var/lib/apt/lists/*
