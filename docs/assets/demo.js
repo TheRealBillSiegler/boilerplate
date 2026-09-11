@@ -52,9 +52,11 @@
     });
   }
 
-  // Material's instant-navigation observable, when that feature is enabled;
-  // otherwise a plain DOMContentLoaded covers the one full-page load this
-  // script actually runs under today.
+  // Material exports document$ whether or not navigation.instant is on, but
+  // its bundle loads after page-content scripts, so document$ is undefined
+  // when this runs and the DOMContentLoaded branch is what executes today.
+  // The document$ branch only takes effect if this script moves to
+  // extra_javascript (loaded after the bundle).
   if (typeof document$ !== "undefined" && document$ && typeof document$.subscribe === "function") {
     document$.subscribe(initDemoCast);
   } else if (document.readyState === "loading") {
