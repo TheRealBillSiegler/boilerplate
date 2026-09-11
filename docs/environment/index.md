@@ -120,7 +120,7 @@ Generated projects arrive with the toolchain pre-wired. Beginners can ignore the
 ??? note "The shipped configuration (click to expand)"
 
     - **Ruff** (`[tool.ruff]`) — `fix = true` and a broad rule set (~26 categories: pyflakes, pycodestyle, isort, pydocstyle with the **Google** convention, annotations, bugbear, pathlib, pyupgrade, and more), plus docstring code formatting. `tests/` and `__init__.py` get sensible per-file ignores.
-    - **Pyright** (`[tool.pyright]`) — `typeCheckingMode = "strict"` over `src/` (tests relaxed). Type-checking runs live via Pylance in VS Code; add `pyright` to your dev dependencies to also run it from the CLI.
+    - **Pyright** (`[tool.pyright]`) — `typeCheckingMode = "strict"` over `src/` (tests relaxed). Type-checking runs live via Pylance in VS Code and from the CLI with `uv run pyright`; `pyright` ships in the dev group.
     - **pytest** (`[tool.pytest.ini_options]`) — `log_cli = true`, with `pytest-cov` and `pytest-mock` in the dev group.
     - **VS Code** (`.vscode/`) — Ruff as the default formatter for Python and notebooks, format-on-save, and pytest discovery enabled. The interpreter isn't pinned; the Python extension auto-detects `.venv` in the workspace root.
 
