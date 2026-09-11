@@ -1,21 +1,9 @@
-"""{{ package_name }}.models — structured data contracts.
+"""{{ package_name }}.models — Pydantic data contracts for the stack inventory.
 
-This package defines application models using Pydantic. These models serve as
-the canonical representation of inputs, outputs, and domain data.
-
-Each model marks an intentional boundary between user input, system logic,
-and serialization. They should remain pure, side-effect free, and declarative.
-
-- Pure: the same input always produces the same output
-- Side-effect free: they don't modify anything outside themselves
-- Declarative: they describe structure, not behavior
-
-What does it mean to "define a boundary"?
-A model separates concerns by drawing a line between:
-- messy, unstructured user input
-- safe, validated data used within your application
-- structured output for serialization or APIs
-
-It marks the point where data becomes trustworthy.
-Think of it as an airlock: raw input goes in, validated data comes out.
+Key classes:
+    LockedPackage: One resolved package entry from `uv.lock`.
+    ProjectInfo: The locked project's own metadata and dependency groups.
+    StackFilter: The UI boundary model built from widget values.
+    StackRow: One locked package joined with its scope and dependent count.
+    StackSummary: Counts of rows by scope.
 """

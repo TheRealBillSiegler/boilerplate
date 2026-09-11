@@ -1,0 +1,60 @@
+"""Tests for LockedPackage and its PEP 503 name normalization."""
+
+import pytest
+from pydantic import ValidationError
+
+from {{ package_name }}.models.locked_package import LockedPackage, normalize_name
+
+
+class TestNormalizeName:
+    """`normalize_name` collapses separators and lowercases."""
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("Typing_Extensions", "typing-extensions"),
+            ("a..b", "a-b"),
+            ("Already-Normal", "already-normal"),
+            ("  Foo  ", "foo"),
+            ("   ", ""),
+        ],
+        ids=[
+            "underscore-and-case",
+            "collapsed-dots",
+            "already-normal",
+            "stripped",
+            "whitespace-only",
+        ],
+    )
+    def test_normalizes_separators_and_case(self, raw: str, expected: str) -> None:
+        assert normalize_name(raw) == expected
+
+
+class TestLockedPackageHappyPath:
+    """A well-formed package entry validates and normalizes."""
+
+    def test_normalizes_name_and_dependencies(self) -> None:
+        package = LockedPackage(
+            name="Typing_Extensions",
+            version="4.12.0",
+            source_kind="registry",
+            dependencies=("Some_Dep", "another.dep"),
+        )
+        assert package.name == "typing-extensions"
+        assert package.dependencies == ("some-dep", "another-dep")
+
+    def test_dependencies_default_to_empty(self) -> None:
+        package = LockedPackage(name="alpha", version="1.0.0", source_kind="registry")
+        assert package.dependencies == ()
+
+
+class TestLockedPackageSadPath:
+    """Empty names and versions are rejected."""
+
+    def test_empty_name_is_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            LockedPackage(name="", version="1.0.0", source_kind="registry")
+
+    def test_empty_version_is_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            LockedPackage(name="package", version="", source_kind="registry")

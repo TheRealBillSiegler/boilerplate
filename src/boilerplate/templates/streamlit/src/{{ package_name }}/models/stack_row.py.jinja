@@ -1,0 +1,26 @@
+"""The model for one row of the rendered stack table."""
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StackRow(BaseModel):
+    """One locked package joined with its scope and dependent count.
+
+    Attributes:
+        name: The PEP 503 normalized package name.
+        version: The resolved version string.
+        scope: Whether the package is a runtime, development, or transitive
+            dependency.
+        source_kind: The single key of the lock entry's `source` table.
+        dependents: The number of locked packages that depend on this one.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    version: str
+    scope: Literal["runtime", "dev", "transitive"]
+    source_kind: str
+    dependents: int = Field(ge=0)

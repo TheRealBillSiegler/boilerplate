@@ -107,4 +107,4 @@ class TestRenderedStreamlitPytestPassesUnderItsOwnToolchain:
         dest = render("streamlit", tmp_path, skip_tasks=False)
         output = _run(["uv", "run", "pytest", "-v"], cwd=dest)
         assert "test_app_runs_without_exception" in output
-        assert "test_greeter_flow_renders_a_visible_greeting" in output
+        assert "test_invalid_search_shows_a_warning" in output

@@ -1,49 +1,78 @@
-"""Streamlit entry point for {{ project_name }}.
+"""Shows the project's own dependency stack, read from `uv.lock`.
 
-This module defines a minimal interactive UI built with Streamlit.
-It is scaffolded using Boilerplate and intended as a reproducible,
-testable starting point for productizing UI logic in Python.
-
-Run this module locally via:
+Displays how many packages are locked, how many are direct runtime or
+development dependencies, how many are transitive, and which packages the
+most others depend on. Run it with:
 
     streamlit run src/{{ package_name }}/app.py
 
-Or press F5 to launch in VS Code using the preconfigured debugger.
-
-This app is suitable for local development, containerized execution,
-and automated testing environments.
+Or press F5 in VS Code to launch it under the debugger.
 """
 
-import streamlit as st
+from pathlib import Path
+from typing import Final
 
-from {{ package_name }}.models.greeter import GreeterInput
-from {{ package_name }}.services.greeter import GreeterService
+import streamlit as st
+from pydantic import ValidationError
+
+from {{ package_name }}.adapters.lockfile import read_lockfile
+from {{ package_name }}.models.stack_filter import StackFilter
+from {{ package_name }}.services.inventory import (
+    apply_filter,
+    build_rows,
+    summarize,
+    top_dependents,
+)
+
+LOCKFILE: Final = Path(__file__).resolve().parents[2] / "uv.lock"
 
 
 def main() -> None:
-    """Renders the Streamlit UI.
+    """Renders the stack inventory page."""
+    st.set_page_config(page_title="{{ project_name }}", page_icon="🧱")
+    st.title("{{ project_name }}")
+    st.caption("Reads this project's own `uv.lock`.")
 
-    This function configures the Streamlit page and displays a minimal
-    interactive interface. It demonstrates separation between user-facing
-    behavior and domain logic, and supports local or container-based usage.
-    """
-    st.set_page_config(page_title="{{ project_name }} App", page_icon="🧱")
+    try:
+        project, packages = read_lockfile(LOCKFILE)
+    except FileNotFoundError:
+        st.error("uv.lock not found next to pyproject.toml. Run uv sync, then reload.")
+        st.stop()
 
-    st.title("Hello, Streamlit 👋")
-    st.caption("Scaffolded using Boilerplate.")
+    rows = build_rows(project, packages)
+    summary = summarize(rows)
 
-    st.markdown(
-        """
-        This app demonstrates a minimal Streamlit user interface with decoupled logic.
-        You can extend the service and model layers as your product evolves.
-        """
+    total_col, runtime_col, dev_col, transitive_col = st.columns(4)
+    total_col.metric("Locked packages", summary.total)
+    runtime_col.metric("Runtime", summary.runtime)
+    dev_col.metric("Dev", summary.dev)
+    transitive_col.metric("Transitive", summary.transitive)
+
+    search = st.text_input("Filter by name", placeholder="e.g. pydantic")
+    scope = st.selectbox("Scope", ("all", "runtime", "dev", "transitive"))
+    limit = st.number_input("Rows", min_value=1, max_value=500, value=50, step=10)
+
+    try:
+        stack_filter = StackFilter.model_validate(
+            {"search": search, "scope": scope, "limit": limit}
+        )
+    except ValidationError as error:
+        st.warning(error.errors()[0]["msg"])
+        st.stop()
+
+    filtered = apply_filter(rows, stack_filter)
+    st.dataframe([row.model_dump() for row in filtered], hide_index=True)
+
+    st.subheader("Most depended on")
+    top = top_dependents(rows)
+    st.bar_chart(
+        {
+            "package": [row.name for row in top],
+            "dependents": [row.dependents for row in top],
+        },
+        x="package",
+        y="dependents",
     )
-
-    name = st.text_input("Your name:")
-    if name:
-        service = GreeterService()
-        greeting = service.greet(GreeterInput(name=name))
-        st.success(greeting)
 
 
 if __name__ == "__main__":

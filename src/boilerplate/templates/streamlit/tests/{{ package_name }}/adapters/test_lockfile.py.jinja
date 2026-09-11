@@ -1,0 +1,107 @@
+"""Tests for reading `uv.lock` into validated models."""
+
+from pathlib import Path
+
+import pytest
+
+from {{ package_name }}.adapters.lockfile import read_lockfile
+
+LOCKFILE_TEXT = """\
+version = 1
+revision = 1
+requires-python = ">=3.11"
+
+[[package]]
+name = "demo-project"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "alpha" },
+    { name = "beta" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[[package]]
+name = "alpha"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "beta"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "gamma" },
+]
+
+[[package]]
+name = "gamma"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+
+[[package]]
+name = "pytest"
+version = "8.0.0"
+source = { registry = "https://pypi.org/simple" }
+"""
+
+NO_ROOT_LOCKFILE_TEXT = """\
+requires-python = ">=3.11"
+
+[[package]]
+name = "alpha"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+"""
+
+
+class TestReadLockfileHappyPath:
+    """A well-formed lock file yields validated project and package models."""
+
+    def test_reads_project_info(self, tmp_path: Path) -> None:
+        lock_path = tmp_path / "uv.lock"
+        lock_path.write_text(LOCKFILE_TEXT)
+
+        project, _packages = read_lockfile(lock_path)
+
+        assert project.name == "demo-project"
+        assert project.version == "0.1.0"
+        assert project.requires_python == ">=3.11"
+        assert project.runtime == ("alpha", "beta")
+        assert project.dev == ("pytest",)
+
+    def test_reads_every_package_entry(self, tmp_path: Path) -> None:
+        lock_path = tmp_path / "uv.lock"
+        lock_path.write_text(LOCKFILE_TEXT)
+
+        _project, packages = read_lockfile(lock_path)
+
+        assert {package.name for package in packages} == {
+            "demo-project",
+            "alpha",
+            "beta",
+            "gamma",
+            "pytest",
+        }
+        beta = next(package for package in packages if package.name == "beta")
+        assert beta.source_kind == "registry"
+        assert beta.dependencies == ("gamma",)
+
+
+class TestReadLockfileSadPath:
+    """Missing files and root-less lock files raise."""
+
+    def test_no_root_package_raises(self, tmp_path: Path) -> None:
+        lock_path = tmp_path / "uv.lock"
+        lock_path.write_text(NO_ROOT_LOCKFILE_TEXT)
+
+        with pytest.raises(ValueError, match=r"uv\.lock has no root package"):
+            read_lockfile(lock_path)
+
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError):
+            read_lockfile(tmp_path / "missing.lock")

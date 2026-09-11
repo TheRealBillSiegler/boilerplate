@@ -1,0 +1,65 @@
+"""Models for a single resolved package entry in `uv.lock`."""
+
+import re
+
+from pydantic import BaseModel, ConfigDict, field_validator
+
+_SEPARATORS = re.compile(r"[-_.]+")
+
+
+def normalize_name(raw: str) -> str:
+    """Normalizes a package name per PEP 503.
+
+    Args:
+        raw: A package name using `-`, `_`, or `.` as word separators, in
+            any case.
+
+    Returns:
+        The lowercased name with runs of separators collapsed to a single
+        `-`.
+
+    Example:
+        >>> normalize_name("Typing_Extensions")
+        'typing-extensions'
+    """
+    return _SEPARATORS.sub("-", raw.strip()).lower()
+
+
+class LockedPackage(BaseModel):
+    """One resolved package entry from a `uv.lock` file.
+
+    Attributes:
+        name: The PEP 503 normalized package name.
+        version: The resolved version string.
+        source_kind: The single key of the lock entry's `source` table,
+            such as `registry`, `editable`, `virtual`, `directory`, `git`,
+            `url`, or `path`.
+        dependencies: Normalized names of the package's direct dependencies.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    version: str
+    source_kind: str
+    dependencies: tuple[str, ...] = ()
+
+    @field_validator("name")
+    @classmethod
+    def _normalize_name(cls, value: str) -> str:
+        normalized = normalize_name(value)
+        if not normalized:
+            raise ValueError("name must not be empty")
+        return normalized
+
+    @field_validator("version")
+    @classmethod
+    def _require_version(cls, value: str) -> str:
+        if not value:
+            raise ValueError("version must not be empty")
+        return value
+
+    @field_validator("dependencies")
+    @classmethod
+    def _normalize_dependencies(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(normalize_name(item) for item in value)
