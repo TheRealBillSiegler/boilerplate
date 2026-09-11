@@ -1,7 +1,8 @@
 # Boilerplate template metadata
 # This template extends `project` to add Streamlit-specific scaffolding.
 # Questions and defaults from `project` are inherited; this layer overrides
-# the `dependencies` default to include streamlit and pydantic.
+# the `dependencies` default to include streamlit and pydantic and turns the
+# base layer's sample module off.
 
 schema_version: "1"       # Boilerplate metadata schema version
 

@@ -55,7 +55,7 @@ my-streamlit-app/
             └── test_app.py      # Drives the page with Streamlit's AppTest
 ```
 
-The package name derives from the project name. The render also inherits the project template's files: `notebooks/`, `src/<package>/module.py`, unit tests, and `.gitignore`. Each layer records its own answers file — `.copier-answers.project.yml` and `.copier-answers.streamlit.yml` — rather than a single shared one.
+The package name derives from the project name. The render also inherits the project template's `notebooks/`, `.vscode/`, and `.gitignore`; the base layer's sample module stays off because this template answers `sample_module` with no. Each layer records its answers in its own `.copier-answers.<layer>.yml`.
 With `--no-tasks` or `--ci`, the inherited cleanup task never runs either, so `_scripts/post_generation.py` (from the `project` layer) is left behind and isn't gitignored.
 
 ## Usage
