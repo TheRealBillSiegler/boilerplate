@@ -91,14 +91,14 @@ What the streamlit layer contributes:
 
 | Category | Added Value |
 |----------|-------------|
-| Runtime Dependencies | `streamlit`, `pydantic` |
-| App Entry Point | `app.py` with service-driven greeting example |
-| Domain Structure | `models/` & `services/` packages encouraging separation |
+| Runtime Dependencies | `streamlit`, `pydantic>=2` |
+| App Entry Point | `app.py`, reading the project's own `uv.lock` and rendering it as a stack inventory |
+| Domain Structure | `models/`, `services/`, and `adapters/` packages encouraging separation |
 | Containerization | `Dockerfile`, container scripts (build/push) |
 | Developer Experience | VS Code `launch.json` for F5 debugging |
-| Tests | Integration smoke test (`tests/integration/{{ package_name }}/test_app.py.jinja`) |
+| Tests | A unit test module per layer (`test_locked_package.py`, `test_stack_filter.py`, `test_lockfile.py`, `test_inventory.py`) plus an integration test (`tests/integration/{{ package_name }}/test_app.py.jinja`) |
 
-Because the schema changes are contained (a `dependencies` override plus the new `container_registry` prompt), all other prompts remain aligned with the base template—no redundant customization logic.
+Because the schema changes are contained (`dependencies` and `sample_module` overrides plus the new `container_registry` prompt), all other prompts remain aligned with the base template—no redundant customization logic.
 
 Observed example specifics for the Streamlit chain:
 
@@ -115,19 +115,19 @@ Delta for `streamlit` layer (excerpt):
 dependencies:
   default:
     - streamlit
-    - pydantic
+    - pydantic>=2
 ```
 
-Interpretation: the streamlit layer overrides the `dependencies` question and adds one new question, `container_registry` (type `str`, default `ghcr.io`). (`_tasks` never appears in deltas or per-layer values; inspect the accumulated task list in the merged configuration, e.g. `--sections final`.)
+Interpretation: the streamlit layer overrides the `dependencies` and `sample_module` defaults and adds one new question, `container_registry` (type `str`, default `ghcr.io`). (`_tasks` never appears in deltas or per-layer values; inspect the accumulated task list in the merged configuration, e.g. `--sections final`.)
 
 File system overlay (illustrative):
 
 | Origin | Files (examples) |
 |--------|------------------|
 | project | `pyproject.toml.jinja`, `README.md.jinja`, `src/{{ package_name }}/__init__.py.jinja`, base test scaffold |
-| streamlit | `src/{{ package_name }}/app.py.jinja`, `src/{{ package_name }}/models/greeter.py.jinja`, `src/{{ package_name }}/services/greeter.py.jinja`, `Dockerfile.jinja`, `.vscode/launch.json.jinja`, integration test |
+| streamlit | `README.md.jinja` (overrides project's), `src/{{ package_name }}/app.py.jinja`, `src/{{ package_name }}/adapters/lockfile.py.jinja`, `src/{{ package_name }}/models/locked_package.py.jinja`, `src/{{ package_name }}/services/inventory.py.jinja`, `Dockerfile.jinja`, `.vscode/launch.json.jinja`, integration test |
 
-File overlay follows [last-layer-wins semantics](../reference/merging.md#file-overlay); the streamlit layer only adds new paths here, so no overwrite occurs.
+File overlay follows [last-layer-wins semantics](../reference/merging.md#file-overlay); the streamlit layer overrides two project paths, `README.md.jinja` and `.gitattributes`, so those render from the streamlit layer; every other streamlit path is new.
 
 ## Author checklist
 

@@ -20,7 +20,7 @@ After installation, restart your machine and launch Ubuntu from the Start Menu t
 
 ## Setup options
 
-This guide's commands use `sudo docker` throughout — see the [Docker security note](index.md) for why.
+The build and push scripts use `docker` directly when your session can already reach the daemon, and fall back to `sudo docker` otherwise — see the [Docker security note](index.md) for why staying out of the `docker` group is worth it.
 
 Choose one of the following methods to install the required tools inside your WSL2 Ubuntu environment.
 
@@ -38,7 +38,7 @@ chmod +x setup-wsl-env.sh
 This installs:
 
 - Docker CE (from Docker's official APT repository)
-- Azure CLI (from Microsoft's APT repository)
+- Azure CLI (from Microsoft's APT repository). The script always installs it; you only need it for Azure Container Registry pushes or an Azure DevOps package index. If neither applies, use the manual setup below and skip the Azure CLI section.
 - uv (from Astral's installer)
 
 Example usage:
@@ -74,6 +74,8 @@ sudo apt install -y \
 ```
 
 #### Azure CLI
+
+Only needed for pushing to Azure Container Registry or building against an Azure DevOps package index — skip this section otherwise.
 
 ```bash
 curl -sL https://packages.microsoft.com/keys/microsoft.asc |

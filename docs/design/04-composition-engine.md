@@ -425,7 +425,7 @@ Example (`--questions --format json`):
     {
       "name": "dependencies",
       "type": "json",
-      "default": ["streamlit", "pydantic"],
+      "default": ["streamlit", "pydantic>=2"],
       "source": "project@2.1.0",
       "overridden_by": "streamlit@1.0.0"
     }
