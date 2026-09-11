@@ -50,9 +50,10 @@ dev_dependencies:
   type: json
   default:
     - ipykernel
+    - pyright
+    - pytest
     - pytest-cov
     - pytest-mock
-    - pytest
     - ruff
   help: "Main development dependencies"
 
