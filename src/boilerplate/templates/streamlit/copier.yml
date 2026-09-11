@@ -40,7 +40,7 @@ package_index_url:
   default: ""
 
 dependencies:
-  default: ["streamlit", "pydantic"]
+  default: ["streamlit", "pydantic>=2"]
 
 container_registry:
   type: str
