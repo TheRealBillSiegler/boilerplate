@@ -27,10 +27,10 @@ my-app/
 ├── src/
 │   └── my_app/             # Source code
 │       ├── __init__.py     # Package version
-│       └── module.py       # Example `add(a, b)` function
+│       └── module.py       # Example `add(a, b)` function (sample_module, default on)
 ├── tests/
 │   └── my_app/
-│       └── test_module.py  # Tests for the example module
+│       └── test_module.py  # Tests for the example module (sample_module, default on)
 ├── uv.lock                 # Pinned deps (written by the post-generation tasks)
 └── .copier-answers.project.yml  # Merged answer set, for future updates
 ```
@@ -53,6 +53,10 @@ uv run pytest
 ```
 
 Add dependencies with `uv add <pkg>` (see [Add a dependency](../environment/index.md#1-start-or-clone-a-project)); `pyproject.toml` holds project metadata, entry points and scripts, and the tool configuration described under [Configuration](../environment/index.md#configuration).
+
+## The sample module
+
+`module.py` and its test are a starting point, not scaffolding you must keep. Answer `sample_module` with no to render without them: `boilerplate new project ./my-app --data sample_module=false`. A template that extends `project` can set the default to off in its own `copier.yml`.
 
 ## Where next
 

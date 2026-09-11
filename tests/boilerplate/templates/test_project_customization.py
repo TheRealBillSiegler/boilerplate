@@ -72,3 +72,20 @@ class TestProfileIsOverridable:
         pyproject = (dest / "pyproject.toml").read_text()
         assert 'url = "https://forced.example.com/simple/"' in pyproject
         assert "ud.example.com" not in pyproject
+
+
+class TestSampleModule:
+    def test_sample_module_renders_by_default(self, tmp_path: Path):
+        dest = render("project", tmp_path)
+        package = dest / "src" / dest.name.replace("-", "_")
+        assert (package / "module.py").is_file()
+        assert (dest / "tests" / package.name / "test_module.py").is_file()
+
+    def test_sample_module_can_be_turned_off(self, tmp_path: Path):
+        dest = render("project", tmp_path, context_data={"sample_module": False})
+        package = dest / "src" / dest.name.replace("-", "_")
+        assert not (package / "module.py").exists()
+        assert not (dest / "tests" / package.name / "test_module.py").exists()
+        # An empty conditional name must vanish rather than leave a nameless file.
+        assert all(path.name for path in dest.rglob("*"))
+        assert not list(package.glob(".jinja"))
