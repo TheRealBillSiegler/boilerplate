@@ -16,16 +16,16 @@ classifiers = [
     "Private :: Do Not Upload",
 ]
 dependencies = [
-{% for dep in dependencies %}
+{%- for dep in dependencies %}
     "{{ dep }}",
-{% endfor %}
+{%- endfor %}
 ]
 
 [dependency-groups]
 dev = [
-{% for dep in dev_dependencies %}
+{%- for dep in dev_dependencies %}
     "{{ dep }}",
-{% endfor %}
+{%- endfor %}
 ]
 
 {% if package_index_url %}
