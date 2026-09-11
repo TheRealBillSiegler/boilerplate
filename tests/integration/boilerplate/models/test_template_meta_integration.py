@@ -189,7 +189,7 @@ class TestRealTemplateValidation:
         meta = TemplateMeta.load(streamlit_template_path)
 
         assert meta.name == "streamlit"
-        assert meta.version == SerializableVersion("0.1.1")
+        assert meta.version == SerializableVersion("0.2.0")
         assert meta.description == "Streamlit boilerplate for data applications"
         assert meta.extends == ["project"]  # Streamlit extends project
 

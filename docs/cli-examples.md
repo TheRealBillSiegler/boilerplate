@@ -14,7 +14,7 @@ boilerplate list
   Name        Version   Description
  ───────────────────────────────────────────────────────
   project     0.2.1     A suitable base for any Python project.
-  streamlit   0.1.1     Streamlit boilerplate for data applications
+  streamlit   0.2.0     Streamlit boilerplate for data applications
 ```
 
 ## Create a new project
@@ -40,7 +40,7 @@ boilerplate graph streamlit --format tree
 ```
 
 ```text
-- streamlit@0.1.1
+- streamlit@0.2.0
   - project@0.2.1
 ```
 
@@ -56,7 +56,7 @@ The JSON payload's shape (`streamlit` example — the `streamlit` template exten
 {
   "sequence": [
     "project@0.2.1",
-    "streamlit@0.1.1"
+    "streamlit@0.2.0"
   ],
   "layers": [
     {
@@ -67,9 +67,9 @@ The JSON payload's shape (`streamlit` example — the `streamlit` template exten
       "deps": []
     },
     {
-      "specifier": "streamlit@0.1.1",
+      "specifier": "streamlit@0.2.0",
       "name": "streamlit",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": ".../templates/streamlit",
       "deps": ["project@0.2.1"]
     }
