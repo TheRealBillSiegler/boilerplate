@@ -31,7 +31,7 @@ src/{{ package_name }}/
 ├── adapters/lockfile.py   # I/O: reads uv.lock and returns validated models
 ├── models/                # Pydantic models; StackFilter validates what the widgets send
 └── services/inventory.py  # pure functions: classify, filter, summarize
-tests/{{ package_name }}/                       # one test module per source module
+tests/{{ package_name }}/                       # unit tests per layer
 tests/integration/{{ package_name }}/test_app.py   # drives the page with Streamlit's AppTest
 Dockerfile, .dockerignore, scripts/             # container build and push
 ```
@@ -47,7 +47,7 @@ Keep the layering and swap the contents. Point `adapters/` at your data source a
 ```bash
 ./scripts/build-container.sh                    # builds {{ project_slug }}:local
 docker run -p 8501:8501 {{ project_slug }}:local
-./scripts/push-container.sh --namespace <owner> # tags and pushes to {{ container_registry }}
+./scripts/push-container.sh{% if 'azurecr.io' not in container_registry %} --namespace <owner>{% endif %}  # tags and pushes to {{ container_registry }}
 ```
 
 {% if 'azurecr.io' in container_registry -%}
