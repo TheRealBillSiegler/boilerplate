@@ -96,7 +96,7 @@ What the streamlit layer contributes:
 | Domain Structure | `models/` & `services/` packages encouraging separation |
 | Containerization | `Dockerfile`, container scripts (build/push) |
 | Developer Experience | VS Code `launch.json` for F5 debugging |
-| Tests | Integration smoke test (`tests/integration/{{ package_name }}/tests_app.py.jinja`) |
+| Tests | Integration smoke test (`tests/integration/{{ package_name }}/test_app.py.jinja`) |
 
 Because the schema changes are contained (a `dependencies` override plus the new `container_registry` prompt), all other prompts remain aligned with the base template—no redundant customization logic.
 

@@ -8,7 +8,7 @@ Nothing — see [Before you start](install.md#before-you-start) for what `uv` pr
 
 ### Do I need administrator rights?
 
-Only for two `winget` installs on Windows — see [Before you start](install.md#before-you-start).
+Only for the `winget` installs on Windows — see [Before you start](install.md#before-you-start).
 
 ### Is `-ExecutionPolicy Bypass` in the install command safe?
 
@@ -38,4 +38,4 @@ Do **not** open a public GitHub issue. Report vulnerabilities privately by follo
 
 ### How do I report a bug, request a feature, or contribute?
 
-See [Reporting bugs and requesting features](governance/contributing.md#reporting-bugs-and-requesting-features) in the contributing guide.
+See the [Contributing guide](governance/contributing.md) to get started, or [Reporting bugs and requesting features](governance/contributing.md#reporting-bugs-and-requesting-features) for issues.
