@@ -5,7 +5,7 @@
 schema_version: "1"       # Boilerplate metadata schema version
 
 name: project              # Template identifier (used in `boilerplate new project`)
-version: 0.2.1             # SemVer — bump when template content changes
+version: 0.2.1             # SemVer — one bump per release, the smallest step the unreleased changes need
 description: A suitable base for any Python project.
 
 # extends: []              # No parent template — this is a base layer.
