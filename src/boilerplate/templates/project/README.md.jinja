@@ -2,180 +2,57 @@
 
 {{ description }}
 
----
+## Quick start
 
-## Table of Contents
+You need Python {{ python_version_major }}.{{ python_version_minor }} or later and [uv](https://docs.astral.sh/uv/).
 
-1. [Getting Started](#getting-started)
-2. [Requirements](#requirements)
-3. [Installation](#installation)
-   - [Using UV](#using-uv)
-   - [Using Python and Pip](#using-python-and-pip)
-4. [Usage](#usage)
-5. [Development Workflow](#development-workflow)
-6. [VS Code Configuration](#vs-code-configuration)
-7. [Contributing](#contributing)
-
----
-
-## Getting Started
-
-This section provides instructions for setting up and using the `{{ project_slug }}` package.
-
----
-
-## Requirements
-
-- **Python {{ python_version_major }}.{{ python_version_minor }}** or later
-- (Optional) [**UV**](https://docs.astral.sh/uv) for advanced dependency and environment management
-
----
-
-## Installation
-
-### Using UV
-
-1. Install UV by following the instructions on the [UV website](https://docs.astral.sh/uv).
-
-2. Install the package:
-   ```bash
-   uv add {{ package_name }}
-   ```
-
-3. Verify the setup:
-   ```bash
-   uv run python -c "import {{ package_name }}; print({{ package_name }}.__version__)"
-   ```
-
----
-
-### Using Python and Pip
-
-1. Create a virtual environment:
-
-   - **Windows (Command Prompt):**
-     ```cmd
-     python -m venv .venv
-     .venv\Scripts\activate
-     ```
-   
-   - **Linux/MacOS:**
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
-
-2. Install the package:
-   ```bash
-   pip install {{ package_name }}
-   ```
-
-3. Verify the installation:
-   ```bash
-   python -c "import {{ package_name }}; print({{ package_name }}.__version__)"
-   ```
-
----
-
-## Usage
-
-### Activating the Environment
-
-- **If using UV:**
-  ```bash
-  uv shell
-  ```
-
-- **If using Python and Pip:**
-
-   - **Windows (Command Prompt):**
-     ```cmd
-     .venv\Scripts\activate
-     ```
-   
-   - **Linux/MacOS:**
-     ```bash
-     source .venv/bin/activate
-     ```
-
-### Running the Application
-
-Once the environment is active, you can use the package in your Python scripts:
-```python
-import {{ package_name }}
+```bash
+uv sync               # create .venv and install everything in uv.lock
+uv run pytest         # run the tests
+uv run ruff check .   # lint
+uv run ruff format .  # format
+uv run pyright        # type-check src/ in strict mode
 ```
 
-See the project documentation for additional usage examples.
+`uv run` executes inside the project environment, so nothing needs activating. If you want an activated shell, run `source .venv/bin/activate` (`.venv\Scripts\activate` on Windows) after `uv sync`.
+
+## Layout
+
+```text
+{{ project_slug }}/
+├── pyproject.toml            # metadata, dependencies, and the Ruff, Pyright, and pytest configuration
+├── uv.lock                   # the resolved dependency set; commit it
+├── src/{{ package_name }}/   # the package; module.py is a sample to replace
+├── tests/{{ package_name }}/ # mirrors src/, one test module per source module
+├── notebooks/                # a starter notebook; ipykernel is in the dev group
+└── .vscode/                  # workspace settings and recommended extensions
+```
+
+## Dependencies
+
+```bash
+uv add requests                 # runtime dependency
+uv add --group dev hypothesis   # development-only dependency
+```
+
+Both commands update `pyproject.toml` and `uv.lock`. Commit both files together.
+
+### Package index
+
+{% if package_index_url -%}
+This project resolves packages from `{{ package_index_url }}`, set by the `[[tool.uv.index]]` block in `pyproject.toml`, not from PyPI. Anyone running `uv sync` needs access to that index. Credentials come from the machine's uv configuration (a `uv.toml` with an index credential or the `keyring` provider), never from this repository.
+{%- else -%}
+Packages resolve from PyPI. To use a private index, add a `[[tool.uv.index]]` block to `pyproject.toml`; uv's documentation on indexes covers credentials.
+{%- endif %}
+
+## VS Code
+
+Open the folder and accept the recommended extensions when prompted. The workspace settings format on save with Ruff, enable pytest discovery, and run Pylance in workspace diagnostic mode. The interpreter is not pinned; the Python extension finds `.venv` once `uv sync` has created it.
+
+## Maintainer
+
+{{ author_name }} <{{ author_email }}>. Send questions and changes there.
 
 ---
 
-## Development Workflow
-
-This section is for contributors who are developing or modifying {{ project_slug }}.
-
-### Requirements for Development
-
-- **Git**: To clone and work with repositories.
-- **Visual Studio Code (VS Code)**: As the primary IDE.
-- **UV**: To manage Python environments and dependencies.
-
----
-
-### Setting Up for Development
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd {{ package_name }}
-   ```
-
-2. Sync the environment:
-   ```bash
-   uv sync
-   ```
-
----
-
-## VS Code Configuration
-
-### Extensions
-
-The following VS Code extensions are recommended for this project:
-
-- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-- [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
-- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
-- [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-- [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)
-
-### Pre-configured Settings
-
-The project includes pre-configured VS Code settings in `.vscode/settings.json` to streamline development:
-
-1. **Python Analysis:**
-   - Auto-import completions are enabled.
-   - Diagnostic mode is set to "workspace" for detailed type-checking within the workspace.
-
-2. **Code Formatting:**
-   - Ruff is the default formatter for Python files.
-   - Code is automatically formatted on save.
-
-3. **Testing:**
-   - pytest is enabled as the default test framework.
-
-4. **Notebooks:**
-   - Ruff is the formatter for Jupyter notebooks.
-   - Automatic formatting is enabled on save for notebooks.
-
-The Python interpreter isn't pinned in settings — VS Code's Python extension auto-detects `.venv` in the workspace root once it exists (run `uv sync` if it hasn't been created yet).
-
-Refer to `.vscode/settings.json` for the full configuration.
-
----
-
-##Contributing
-
-Contributions are welcome! Please send inquires or pull requests to {{ author_name }} for review.
-
-
----
+Scaffolded with [Boilerplate](https://github.com/TheRealBillSiegler/boilerplate) from the `project` template. The answers that produced this project are recorded in `.copier-answers.project.yml`, which `copier update` reads to bring in later template versions.
