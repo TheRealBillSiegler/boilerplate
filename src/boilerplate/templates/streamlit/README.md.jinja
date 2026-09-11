@@ -1,0 +1,86 @@
+# {{ project_name }}
+
+{{ description }}
+
+## Run
+
+You need [uv](https://docs.astral.sh/uv/); it installs the Python version pinned in `pyproject.toml`.
+
+```bash
+uv sync
+uv run streamlit run src/{{ package_name }}/app.py
+```
+
+Or press F5 in VS Code; `.vscode/launch.json` starts the same command under the debugger. The app opens at http://localhost:8501 and shows the stack behind this project, read from `uv.lock`: how many packages are locked, which are direct runtime or development dependencies, which are transitive, and which packages the most others depend on.
+
+## Test and check
+
+```bash
+uv run pytest          # unit tests per layer, plus a Streamlit AppTest run of the page
+uv run pytest --cov    # the same with coverage
+uv run ruff check .    # lint
+uv run ruff format .   # format
+uv run pyright         # type-check src/ in strict mode
+```
+
+## Layout
+
+```text
+src/{{ package_name }}/
+├── app.py                 # the page: widgets and layout, nothing else
+├── adapters/lockfile.py   # I/O: reads uv.lock and returns validated models
+├── models/                # Pydantic models; StackFilter validates what the widgets send
+└── services/inventory.py  # pure functions: classify, filter, summarize
+tests/{{ package_name }}/                       # one test module per source module
+tests/integration/{{ package_name }}/test_app.py   # drives the page with Streamlit's AppTest
+Dockerfile, .dockerignore, scripts/             # container build and push
+```
+
+The base template also contributes `src/{{ package_name }}/module.py` with its test, `notebooks/`, `.vscode/`, and `.gitignore`. `module.py` is a sample; delete it and its test when you no longer need them.
+
+## Make it yours
+
+Keep the layering and swap the contents. Point `adapters/` at your data source and return models from it, describe that data in `models/`, put the computation in `services/` as pure functions with unit tests, and keep `app.py` to widgets and layout. The `StackFilter` model shows the pattern for validating widget values before they reach any logic.
+
+## Container
+
+```bash
+./scripts/build-container.sh                    # builds {{ project_slug }}:local
+docker run -p 8501:8501 {{ project_slug }}:local
+./scripts/push-container.sh --namespace <owner> # tags and pushes to {{ container_registry }}
+```
+
+{% if 'azurecr.io' in container_registry -%}
+The push script signs in to Azure Container Registry with `az acr login`, so you need the Azure CLI and an `az login` session with push rights. No namespace is needed for Azure.
+{%- elif container_registry in ('ghcr.io', 'docker.io') -%}
+On `{{ container_registry }}` the namespace is your user or organization. Sign in once with `docker login {{ container_registry }}`, or set `REGISTRY_TOKEN` and the script signs in for you. Pass `--registry` to push somewhere else.
+{%- else -%}
+The script assumes an existing `docker login {{ container_registry }}` session; `--namespace` is optional and, when given, becomes the path segment before the image name. Pass `--registry` to push somewhere else.
+{%- endif %}
+
+The scripts are Bash; on Windows run them from WSL2. They use `docker` directly when your user can reach the daemon and fall back to `sudo docker` otherwise.
+
+## Dependencies
+
+```bash
+uv add polars                   # runtime dependency
+uv add --group dev hypothesis   # development-only dependency
+```
+
+Both commands update `pyproject.toml` and `uv.lock`. Commit both files together; the page reads `uv.lock`, so it reflects the change on the next run.
+
+### Package index
+
+{% if package_index_url -%}
+This project resolves packages from `{{ package_index_url }}`, set by the `[[tool.uv.index]]` block in `pyproject.toml`, not from PyPI. Anyone running `uv sync` needs access to that index. Credentials come from the machine's uv configuration (a `uv.toml` with an index credential or the `keyring` provider), never from this repository. The container build passes the same index to `uv sync` as a build secret; `scripts/build-container.sh` explains what it needs.
+{%- else -%}
+Packages resolve from PyPI. To use a private index, add a `[[tool.uv.index]]` block to `pyproject.toml`; uv's documentation on indexes covers credentials.
+{%- endif %}
+
+## Maintainer
+
+{{ author_name }} <{{ author_email }}>. Send questions and changes there.
+
+---
+
+Scaffolded with [Boilerplate](https://github.com/TheRealBillSiegler/boilerplate) from the `streamlit` template on top of `project`. The answers that produced this project are recorded in `.copier-answers.project.yml` and `.copier-answers.streamlit.yml`, which `copier update` reads per layer to bring in later template versions.

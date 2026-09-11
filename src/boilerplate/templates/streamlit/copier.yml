@@ -34,6 +34,21 @@ package_name:
   default: "{{ project_slug | replace('-', '_') }}"
   when: false
 
+description:
+  type: str
+  help: "What is a brief description of the project?"
+  default: "A new Python project."
+
+author_name:
+  type: str
+  help: "Your first and last name?"
+  default: "Your Name"
+
+author_email:
+  type: str
+  help: "Your email address?"
+  default: "username@domain.com"
+
 package_index_url:
   type: str
   help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)."
