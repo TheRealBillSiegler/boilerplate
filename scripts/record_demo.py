@@ -51,7 +51,8 @@ _DRAIN_TIMEOUT_S: Final = 0.02
 # result before the player loops.
 _READ_PAUSE_S: Final = 0.4
 _AFTER_RENDER_PAUSE_S: Final = 1.2
-_END_HOLD_S: Final = 3.0
+# Anything longer is clamped by the idle cap (recorder, header, player).
+_END_HOLD_S: Final = _IDLE_TIME_LIMIT_S
 
 # Brand theme, matching docs/stylesheets/extra.css. The asciicast v2 theme
 # object supports only fg/bg/palette (no separate cursor color).
