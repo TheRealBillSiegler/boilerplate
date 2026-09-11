@@ -1,0 +1,71 @@
+"""Reads a project's `uv.lock` file into validated models."""
+
+import tomllib
+from pathlib import Path
+
+from {{ package_name }}.models.locked_package import LockedPackage
+from {{ package_name }}.models.project_info import ProjectInfo
+
+
+def read_lockfile(path: Path) -> tuple[ProjectInfo, tuple[LockedPackage, ...]]:
+    """Parses a `uv.lock` file into the project's metadata and its packages.
+
+    Args:
+        path: Path to the `uv.lock` file.
+
+    Returns:
+        The locked project's own metadata and every package entry from the
+        lock file, including the root package.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist.
+        ValueError: If the lock file has no root package (an entry whose
+            `source` table has an `editable` or `virtual` key).
+    """
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    entries = data.get("package", [])
+
+    root_entry = next(
+        (
+            entry
+            for entry in entries
+            if {"editable", "virtual"} & entry.get("source", {}).keys()
+        ),
+        None,
+    )
+    if root_entry is None:
+        raise ValueError("uv.lock has no root package; run uv sync")
+
+    dev_names = [
+        dependency["name"]
+        for group in root_entry.get("dev-dependencies", {}).values()
+        for dependency in group
+    ]
+
+    project = ProjectInfo.model_validate(
+        {
+            "name": root_entry["name"],
+            "version": root_entry["version"],
+            "requires_python": data["requires-python"],
+            "runtime": [
+                dependency["name"] for dependency in root_entry.get("dependencies", [])
+            ],
+            "dev": dev_names,
+        }
+    )
+
+    packages = tuple(
+        LockedPackage.model_validate(
+            {
+                "name": entry["name"],
+                "version": entry["version"],
+                "source_kind": next(iter(entry.get("source", {}))),
+                "dependencies": [
+                    dependency["name"] for dependency in entry.get("dependencies", [])
+                ],
+            }
+        )
+        for entry in entries
+    )
+
+    return project, packages

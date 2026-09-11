@@ -1,0 +1,32 @@
+"""The UI boundary model for filtering the stack inventory."""
+
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+
+class StackFilter(BaseModel):
+    """Validated widget values used to filter and limit the stack inventory.
+
+    The UI constructs this model from widget values; a rejection is what
+    the page shows the user as a warning.
+
+    Attributes:
+        search: A case-insensitive substring to match against package names.
+        scope: Which dependency scope to include.
+        limit: The maximum number of rows to show.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    search: Annotated[
+        str,
+        StringConstraints(
+            strip_whitespace=True,
+            to_lower=True,
+            max_length=100,
+            pattern=r"^[A-Za-z0-9._-]*$",
+        ),
+    ] = ""
+    scope: Literal["all", "runtime", "dev", "transitive"] = "all"
+    limit: Annotated[int, Field(ge=1, le=500)] = 50

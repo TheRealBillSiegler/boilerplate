@@ -1,23 +1,38 @@
-"""Smoke test for the Streamlit app, run with Streamlit's in-process test harness."""
+"""Integration tests for the Streamlit app, run with Streamlit's AppTest harness."""
 
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
+from {{ package_name }}.adapters.lockfile import read_lockfile
+from {{ package_name }}.services.inventory import build_rows, summarize
+
 APP_PATH = Path(__file__).resolve().parents[3] / "src" / "{{ package_name }}" / "app.py"
+LOCKFILE = Path(__file__).resolve().parents[3] / "uv.lock"
 
 
 def test_app_runs_without_exception() -> None:
     """Verifies the app renders without raising."""
     at = AppTest.from_file(str(APP_PATH))
-    at.run(timeout=10)
+    at.run(timeout=30)
     assert not at.exception
 
 
-def test_greeter_flow_renders_a_visible_greeting() -> None:
-    """Verifies entering a name renders a visible greeting from the greeter."""
+def test_metrics_show_the_locked_package_count() -> None:
+    """Verifies the locked-packages metric matches the project's own uv.lock."""
+    project, packages = read_lockfile(LOCKFILE)
+    expected_total = summarize(build_rows(project, packages)).total
+
     at = AppTest.from_file(str(APP_PATH))
-    at.run(timeout=10)
-    at.text_input[0].set_value("Ada").run(timeout=10)
+    at.run(timeout=30)
+
+    assert at.metric[0].value == str(expected_total)
+
+
+def test_invalid_search_shows_a_warning() -> None:
+    """Verifies an invalid filter value warns instead of raising."""
+    at = AppTest.from_file(str(APP_PATH))
+    at.run(timeout=30)
+    at.text_input[0].set_value("not valid!").run(timeout=30)
+    assert at.warning
     assert not at.exception
-    assert "Welcome, Ada!" in at.success[0].value

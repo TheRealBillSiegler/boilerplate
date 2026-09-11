@@ -1,0 +1,105 @@
+"""Pure functions computing the stack inventory view from locked packages."""
+
+from collections.abc import Sequence
+from typing import Literal
+
+from {{ package_name }}.models.locked_package import LockedPackage
+from {{ package_name }}.models.project_info import ProjectInfo
+from {{ package_name }}.models.stack_filter import StackFilter
+from {{ package_name }}.models.stack_row import StackRow
+from {{ package_name }}.models.stack_summary import StackSummary
+
+
+def build_rows(
+    project: ProjectInfo, packages: Sequence[LockedPackage]
+) -> tuple[StackRow, ...]:
+    """Joins locked packages with the project's dependency groups.
+
+    Args:
+        project: The locked project's own metadata.
+        packages: Every package entry from the lock file, including the
+            root package.
+
+    Returns:
+        One row per package other than the root, sorted by name.
+    """
+    dependent_counts: dict[str, int] = {}
+    for package in packages:
+        for dependency in package.dependencies:
+            dependent_counts[dependency] = dependent_counts.get(dependency, 0) + 1
+
+    rows = [
+        StackRow(
+            name=package.name,
+            version=package.version,
+            scope=_scope_of(package.name, project),
+            source_kind=package.source_kind,
+            dependents=dependent_counts.get(package.name, 0),
+        )
+        for package in packages
+        if package.name != project.name
+    ]
+    return tuple(sorted(rows, key=lambda row: row.name))
+
+
+def apply_filter(
+    rows: Sequence[StackRow], stack_filter: StackFilter
+) -> tuple[StackRow, ...]:
+    """Filters rows by scope and name, then limits the result.
+
+    Args:
+        rows: Candidate rows, in their existing order.
+        stack_filter: The validated filter built from UI widget values.
+
+    Returns:
+        Matching rows, in input order, truncated to `stack_filter.limit`.
+    """
+    matched = [
+        row
+        for row in rows
+        if stack_filter.scope in ("all", row.scope) and stack_filter.search in row.name
+    ]
+    return tuple(matched[: stack_filter.limit])
+
+
+def summarize(rows: Sequence[StackRow]) -> StackSummary:
+    """Counts rows by scope.
+
+    Args:
+        rows: The rows to summarize.
+
+    Returns:
+        Total and per-scope counts.
+    """
+    return StackSummary(
+        total=len(rows),
+        runtime=sum(1 for row in rows if row.scope == "runtime"),
+        dev=sum(1 for row in rows if row.scope == "dev"),
+        transitive=sum(1 for row in rows if row.scope == "transitive"),
+    )
+
+
+def top_dependents(rows: Sequence[StackRow], count: int = 10) -> tuple[StackRow, ...]:
+    """Finds the rows the most other packages depend on.
+
+    Args:
+        rows: Candidate rows.
+        count: The maximum number of rows to return.
+
+    Returns:
+        Rows with at least one dependent, sorted by dependent count
+        descending then name, limited to `count`.
+    """
+    with_dependents = [row for row in rows if row.dependents > 0]
+    ordered = sorted(with_dependents, key=lambda row: (-row.dependents, row.name))
+    return tuple(ordered[:count])
+
+
+def _scope_of(
+    name: str, project: ProjectInfo
+) -> Literal["runtime", "dev", "transitive"]:
+    if name in project.runtime:
+        return "runtime"
+    if name in project.dev:
+        return "dev"
+    return "transitive"

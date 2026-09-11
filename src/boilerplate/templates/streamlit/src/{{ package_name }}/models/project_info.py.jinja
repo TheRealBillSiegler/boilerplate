@@ -1,0 +1,42 @@
+"""Models for the locked project's own metadata."""
+
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from {{ package_name }}.models.locked_package import normalize_name
+
+
+class ProjectInfo(BaseModel):
+    """Metadata for the project that produced a `uv.lock` file.
+
+    Attributes:
+        name: The PEP 503 normalized project name.
+        version: The project's own version string.
+        requires_python: The `requires-python` constraint from the lock file.
+        runtime: Normalized names of the project's direct runtime
+            dependencies, in lock order.
+        dev: Normalized names of the project's development dependencies,
+            deduplicated across every `dev-dependencies` group and sorted.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    version: str
+    requires_python: str
+    runtime: tuple[str, ...] = ()
+    dev: tuple[str, ...] = ()
+
+    @field_validator("name")
+    @classmethod
+    def _normalize_name(cls, value: str) -> str:
+        return normalize_name(value)
+
+    @field_validator("runtime")
+    @classmethod
+    def _normalize_runtime(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(normalize_name(item) for item in value)
+
+    @field_validator("dev")
+    @classmethod
+    def _normalize_dev(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(sorted({normalize_name(item) for item in value}))

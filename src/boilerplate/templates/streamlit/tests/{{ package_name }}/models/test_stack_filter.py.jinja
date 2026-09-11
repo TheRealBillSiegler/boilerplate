@@ -1,0 +1,49 @@
+"""Tests for StackFilter validation."""
+
+import pytest
+from pydantic import ValidationError
+
+from {{ package_name }}.models.stack_filter import StackFilter
+
+
+class TestStackFilterDefaults:
+    """Constructing with no arguments yields the documented defaults."""
+
+    def test_defaults(self) -> None:
+        stack_filter = StackFilter()
+        assert stack_filter.search == ""
+        assert stack_filter.scope == "all"
+        assert stack_filter.limit == 50
+
+
+class TestStackFilterSearch:
+    """`search` is normalized and constrained to a safe character set."""
+
+    def test_search_is_stripped_and_lowercased(self) -> None:
+        stack_filter = StackFilter(search="  Pydantic  ")
+        assert stack_filter.search == "pydantic"
+
+    def test_invalid_search_characters_are_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            StackFilter(search="not valid!")
+
+
+class TestStackFilterLimit:
+    """`limit` is bounded to the 1-500 range."""
+
+    @pytest.mark.parametrize("limit", [0, 501], ids=["below-minimum", "above-maximum"])
+    def test_out_of_range_limit_is_rejected(self, limit: int) -> None:
+        with pytest.raises(ValidationError):
+            StackFilter(limit=limit)
+
+    @pytest.mark.parametrize("limit", [1, 500], ids=["minimum", "maximum"])
+    def test_boundary_limit_is_accepted(self, limit: int) -> None:
+        assert StackFilter(limit=limit).limit == limit
+
+
+class TestStackFilterScope:
+    """`scope` only accepts the four known values."""
+
+    def test_unknown_scope_is_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            StackFilter.model_validate({"scope": "unknown"})

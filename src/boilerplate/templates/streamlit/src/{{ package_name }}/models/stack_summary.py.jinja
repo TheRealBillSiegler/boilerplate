@@ -1,0 +1,21 @@
+"""The model for the stack's package counts by scope."""
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class StackSummary(BaseModel):
+    """Counts of locked packages by scope.
+
+    Attributes:
+        total: The total number of rows.
+        runtime: The number of runtime dependencies.
+        dev: The number of development dependencies.
+        transitive: The number of transitive dependencies.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    total: int = Field(ge=0)
+    runtime: int = Field(ge=0)
+    dev: int = Field(ge=0)
+    transitive: int = Field(ge=0)

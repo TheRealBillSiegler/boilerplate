@@ -1,0 +1,181 @@
+"""Tests for the pure stack inventory functions."""
+
+from {{ package_name }}.models.locked_package import LockedPackage
+from {{ package_name }}.models.project_info import ProjectInfo
+from {{ package_name }}.models.stack_filter import StackFilter
+from {{ package_name }}.models.stack_row import StackRow
+from {{ package_name }}.services.inventory import (
+    apply_filter,
+    build_rows,
+    summarize,
+    top_dependents,
+)
+
+
+def _project(
+    *, runtime: tuple[str, ...] = (), dev: tuple[str, ...] = ()
+) -> ProjectInfo:
+    return ProjectInfo.model_validate(
+        {
+            "name": "demo",
+            "version": "0.1.0",
+            "requires_python": ">=3.11",
+            "runtime": runtime,
+            "dev": dev,
+        }
+    )
+
+
+class TestBuildRows:
+    """`build_rows` classifies scope, counts dependents, excludes the root."""
+
+    def test_classifies_scope_and_excludes_root(self) -> None:
+        project = _project(runtime=("alpha",), dev=("pytest",))
+        packages = (
+            LockedPackage(
+                name="demo",
+                version="0.1.0",
+                source_kind="editable",
+                dependencies=("alpha", "pytest"),
+            ),
+            LockedPackage(
+                name="alpha",
+                version="1.0.0",
+                source_kind="registry",
+                dependencies=("beta",),
+            ),
+            LockedPackage(name="pytest", version="8.0.0", source_kind="registry"),
+            LockedPackage(name="beta", version="2.0.0", source_kind="registry"),
+        )
+
+        rows = build_rows(project, packages)
+
+        by_name = {row.name: row for row in rows}
+        assert "demo" not in by_name
+        assert by_name["alpha"].scope == "runtime"
+        assert by_name["pytest"].scope == "dev"
+        assert by_name["beta"].scope == "transitive"
+
+    def test_dependents_counts_include_the_root(self) -> None:
+        project = _project(runtime=("alpha",))
+        packages = (
+            LockedPackage(
+                name="demo",
+                version="0.1.0",
+                source_kind="editable",
+                dependencies=("alpha",),
+            ),
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+        )
+
+        rows = build_rows(project, packages)
+
+        assert rows[0].dependents == 1
+
+    def test_rows_are_sorted_by_name(self) -> None:
+        project = _project()
+        packages = (
+            LockedPackage(name="demo", version="0.1.0", source_kind="editable"),
+            LockedPackage(name="zeta", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+        )
+
+        rows = build_rows(project, packages)
+
+        assert [row.name for row in rows] == ["alpha", "zeta"]
+
+
+class TestApplyFilter:
+    """`apply_filter` filters by scope and substring, then limits."""
+
+    @staticmethod
+    def _rows() -> tuple[StackRow, ...]:
+        project = _project(runtime=("alpha",), dev=("beta",))
+        packages = (
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="beta", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="gamma", version="1.0.0", source_kind="registry"),
+        )
+        return build_rows(project, packages)
+
+    def test_filters_by_scope(self) -> None:
+        rows = self._rows()
+        filtered = apply_filter(rows, StackFilter(scope="runtime"))
+        assert [row.name for row in filtered] == ["alpha"]
+
+    def test_filters_by_search_substring(self) -> None:
+        rows = self._rows()
+        filtered = apply_filter(rows, StackFilter(search="am"))
+        assert [row.name for row in filtered] == ["gamma"]
+
+    def test_limits_the_result(self) -> None:
+        rows = self._rows()
+        filtered = apply_filter(rows, StackFilter(limit=1))
+        assert len(filtered) == 1
+        assert filtered[0].name == rows[0].name
+
+
+class TestSummarize:
+    """`summarize` counts rows by scope."""
+
+    def test_counts_by_scope(self) -> None:
+        project = _project(runtime=("alpha",), dev=("beta",))
+        packages = (
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="beta", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="gamma", version="1.0.0", source_kind="registry"),
+        )
+
+        summary = summarize(build_rows(project, packages))
+
+        assert summary.total == 3
+        assert summary.runtime == 1
+        assert summary.dev == 1
+        assert summary.transitive == 1
+
+
+class TestTopDependents:
+    """`top_dependents` orders by dependent count then name, excludes zero."""
+
+    def test_orders_by_dependents_then_name_and_excludes_zero(self) -> None:
+        project = _project()
+        packages = (
+            LockedPackage(
+                name="demo",
+                version="0.1.0",
+                source_kind="editable",
+                dependencies=("alpha", "beta"),
+            ),
+            LockedPackage(
+                name="extra",
+                version="0.1.0",
+                source_kind="registry",
+                dependencies=("alpha",),
+            ),
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="beta", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="gamma", version="1.0.0", source_kind="registry"),
+        )
+
+        rows = build_rows(project, packages)
+        top = top_dependents(rows, count=10)
+
+        assert [row.name for row in top] == ["alpha", "beta"]
+
+    def test_count_limits_the_result(self) -> None:
+        project = _project()
+        packages = (
+            LockedPackage(
+                name="demo",
+                version="0.1.0",
+                source_kind="editable",
+                dependencies=("alpha", "beta"),
+            ),
+            LockedPackage(name="alpha", version="1.0.0", source_kind="registry"),
+            LockedPackage(name="beta", version="1.0.0", source_kind="registry"),
+        )
+
+        rows = build_rows(project, packages)
+        top = top_dependents(rows, count=1)
+
+        assert len(top) == 1
