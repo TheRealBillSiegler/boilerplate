@@ -1,5 +1,29 @@
 {% extends "base.html" %}
 
+{#
+  Page-flagged assets. A page that sets `demo: true` in its front matter gets
+  the asciinema player's stylesheet in <head> and its three scripts after
+  Material's bundle, in load order (player, recording data, the mount script
+  in docs/assets/demo.js). Keeping the wiring here means the page holds only
+  the figure it shows, and the player's load order lives in one place.
+#}
+
+{% block styles %}
+  {{ super() }}
+  {% if page.meta.demo %}
+    <link rel="stylesheet" href="{{ 'assets/asciinema/asciinema-player.css' | url }}">
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% if page.meta.demo %}
+    <script src="{{ 'assets/asciinema/asciinema-player.min.js' | url }}"></script>
+    <script src="{{ 'assets/demo/boilerplate-new-cast.js' | url }}"></script>
+    <script src="{{ 'assets/demo.js' | url }}"></script>
+  {% endif %}
+{% endblock %}
+
 {% block content %}
   {% if page.meta.status == "planned" %}
     <div class="admonition info">
