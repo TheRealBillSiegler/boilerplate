@@ -57,6 +57,30 @@
   --md-code-font: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+/* Brand palette, declared once. Every rule below takes its color from one of
+   these tokens (or from a Material variable set from them), so a palette
+   change is one edit here. Names say what the color is, not where it goes;
+   the scheme blocks decide where. */
+:root {
+  --bp-brand-blue: #40b4e5;         /* the sticker-art sky blue; AA only on dark */
+  --bp-brand-blue-hover: #2a9fd2;   /* one step darker, for hover/focus fills */
+  --bp-link-blue: #1f78b8;          /* link-safe blue: AA as text on white */
+  --bp-charcoal: #1f2124;           /* the sticker-art near-black */
+  --bp-charcoal-light: #2b2f34;
+  --bp-charcoal-dark: #121416;
+  --bp-header-slate: #282c33;       /* slate header, lifted off the page surface */
+  --bp-header-slate-light: #363b43;
+  --bp-ink-dark: #0f1a26;           /* dark text on brand blue */
+  --bp-ink-light: #dfe3ea;          /* body text on slate */
+  --bp-ink-lightest: #f3f5f9;       /* H1 on slate */
+  --bp-muted-light: #aeb4c0;        /* secondary text on slate */
+  --bp-white: #ffffff;
+  --bp-status-shipped: #2e8b57;
+  --bp-status-shipped-slate: #4fd487;
+  --bp-status-partial: #b8860b;
+  --bp-status-partial-slate: #e2c25f;
+}
+
 /* Light scheme (Material's "default" scheme). Material's own palette rule
    sets --md-typeset-a-color on the actual <body> element (selector
    `:root,[data-md-color-scheme="default"]`, and that attribute lives on
@@ -65,37 +89,37 @@
    selector here, instead of plain :root, is what lets the override apply. */
 :root,
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color: #1f2124;
-  --md-primary-fg-color--light: #2b2f34;
-  --md-primary-fg-color--dark: #121416;
-  --md-primary-bg-color: #ffffff;
+  --md-primary-fg-color: var(--bp-charcoal);
+  --md-primary-fg-color--light: var(--bp-charcoal-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal-dark);
+  --md-primary-bg-color: var(--bp-white);
   /* Darker sky blue: passes WCAG AA (4.73:1) as text on white, unlike the
      literal brand blue (#40b4e5 on white is 2.37:1 — fails). */
-  --md-accent-fg-color: #1f78b8;
+  --md-accent-fg-color: var(--bp-link-blue);
   --md-accent-fg-color--transparent: #1f78b81a;
-  --md-typeset-a-color: #1f78b8;
+  --md-typeset-a-color: var(--bp-link-blue);
 }
 
 /* Slate scheme (dark) — the sticker-art charcoal header, brand blue in full. */
 [data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #1f2124;
-  --md-primary-fg-color--light: #2b2f34;
-  --md-primary-fg-color--dark: #121416;
-  --md-accent-fg-color: #40b4e5;
+  --md-primary-fg-color: var(--bp-charcoal);
+  --md-primary-fg-color--light: var(--bp-charcoal-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal-dark);
+  --md-accent-fg-color: var(--bp-brand-blue);
   --md-accent-fg-color--transparent: #40b4e51a;
-  --md-typeset-a-color: #40b4e5;
+  --md-typeset-a-color: var(--bp-brand-blue);
   /* Text color Material puts on top of --md-accent-fg-color (hovered/focused
      buttons, selected search hits). Left at Material's white default, white
      on brand blue is 2.37:1 — fails WCAG AA; this dark navy clears 7.42:1. */
-  --md-accent-bg-color: #0f1a26;
+  --md-accent-bg-color: var(--bp-ink-dark);
   --md-accent-bg-color--light: #0f1a26cc;
   /* Lift body text from Material's default toward AA-comfortable on slate. */
-  --md-typeset-color: #dfe3ea;
+  --md-typeset-color: var(--bp-ink-light);
   /* Raise the muted/secondary foreground so it clears WCAG AA (>= ~5:1).
      Both tiers intentionally share the same value on slate — the lighter tier
      still needs lifting, and going lower would fail AA. */
-  --md-default-fg-color--light: #aeb4c0;
-  --md-default-fg-color--lighter: #aeb4c0;
+  --md-default-fg-color--light: var(--bp-muted-light);
+  --md-default-fg-color--lighter: var(--bp-muted-light);
 }
 
 /* Primary buttons: the literal brand blue with dark text, in both schemes.
@@ -104,9 +128,9 @@
    light scheme's link-safe accent (#1f78b8) is too dark to pass AA with dark
    text (3.71:1); #40b4e5 with #0f1a26 text clears AA at 7.42:1 in both. */
 .md-typeset .md-button--primary {
-  background-color: #40b4e5;
-  border-color: #40b4e5;
-  color: #0f1a26;
+  background-color: var(--bp-brand-blue);
+  border-color: var(--bp-brand-blue);
+  color: var(--bp-ink-dark);
 }
 
 /* Secondary buttons (.md-button without --primary) inherit their outline
@@ -127,9 +151,9 @@
    and, on the outline button, turns the label the same blue as the fill. */
 .md-typeset .md-button--primary:hover,
 .md-typeset .md-button--primary:focus {
-  background-color: #2a9fd2;
-  border-color: #2a9fd2;
-  color: #0f1a26; /* 5.84:1 */
+  background-color: var(--bp-brand-blue-hover);
+  border-color: var(--bp-brand-blue-hover);
+  color: var(--bp-ink-dark); /* 5.84:1 */
 }
 [data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):hover,
 [data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):focus {
@@ -152,9 +176,9 @@
    gets a light-on-dark surface with a hairline ring. Material's active-search
    rule (white field, dropdown) has higher specificity and still wins. */
 [data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #282c33;
-  --md-primary-fg-color--light: #363b43;
-  --md-primary-fg-color--dark: #1f2124;
+  --md-primary-fg-color: var(--bp-header-slate);
+  --md-primary-fg-color--light: var(--bp-header-slate-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal);
 }
 
 .md-tabs {
@@ -200,19 +224,19 @@
 /* Implementation-status legend (docs/status.md) — colors that hold their
    meaning (shipped/in-progress/design-only) in both schemes. */
 .md-typeset .status-shipped {
-  color: #2e8b57;
+  color: var(--bp-status-shipped);
 }
 
 [data-md-color-scheme="slate"] .md-typeset .status-shipped {
-  color: #4fd487;
+  color: var(--bp-status-shipped-slate);
 }
 
 .md-typeset .status-partial {
-  color: #b8860b;
+  color: var(--bp-status-partial);
 }
 
 [data-md-color-scheme="slate"] .md-typeset .status-partial {
-  color: #e2c25f;
+  color: var(--bp-status-partial-slate);
 }
 
 .md-typeset .status-design {
@@ -228,7 +252,7 @@
   justify-content: center;
   margin: 2rem 0;
   padding: 1.5rem;
-  background: #1f2124;
+  background: var(--bp-charcoal);
   border-radius: 8px;
 }
 
@@ -246,7 +270,7 @@
 }
 
 [data-md-color-scheme="slate"] .md-typeset h1 {
-  color: #f3f5f9;
+  color: var(--bp-ink-lightest);
 }
 
 /* Short brand rule under the H1 — a brand mark, not stock Material. */
