@@ -110,9 +110,10 @@
 }
 
 /* Secondary buttons (.md-button without --primary) inherit their outline
-   and text from --md-primary-fg-color unchanged. On slate, that variable is
-   the near-black charcoal above (#1f2124) against a page background that
-   Material derives from the same charcoal (~#1e2129) — a 1.0:1 contrast,
+   and text from --md-primary-fg-color unchanged. On slate that variable ends
+   up as the lighter header charcoal (#282c33 — the header-legibility block
+   below wins the cascade over the #1f2124 set above) against a page
+   background Material derives from the same hue (~#1e2129) — 1.15:1,
    effectively invisible. Repoint the slate case at the brand blue instead
    (6.8:1 against that background, well past the 3:1 a border/large-text UI
    component needs). Light scheme is unaffected: charcoal-on-white already
