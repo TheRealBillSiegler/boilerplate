@@ -245,7 +245,7 @@ _tasks:
 ```yaml
 # streamlit/copier.yml — overrides the default for 'dependencies'
 dependencies:
-  default: ["streamlit", "pydantic"]
+  default: ["streamlit", "pydantic>=2"]
 ```
 
 ---

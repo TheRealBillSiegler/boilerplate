@@ -1,30 +1,33 @@
 # Deploying Streamlit containers
 
-Containerize a Streamlit application and deploy it to Azure Container Registry (ACR) using Docker and the Azure CLI. This guide provides scripts and manual steps for each part of the process.
+Every render ships a Dockerfile and two scripts — `scripts/build-container.sh` and `scripts/push-container.sh` — that build and publish a container image. This section covers each part of the process; every script step also has a manual equivalent.
 
 ## Overview
 
-These pages cover deploying Streamlit apps in containers using WSL2 on Windows. Scripts automate the routine steps; every step also has a manual equivalent.
+The scripts run on any Docker host: Linux, macOS or Windows with Docker Desktop, or WSL2 on Windows. [Environment setup](environment-setup.md) covers the WSL2 case.
 
-All steps assume your development environment is Ubuntu running inside WSL2.
+Once an image is built, running it locally always looks the same:
+
+```bash
+docker run -p 8501:8501 text-highlighter:local
+```
 
 ## What you'll learn
 
-- How to prepare your machine for containerized Streamlit deployment
-- How to build Docker images from your Streamlit project
-- How to publish those images to Azure Container Registry (ACR)
-- How to stay aligned with security best practices
+- How to prepare your machine for containerized Streamlit deployment.
+- How to build Docker images from your Streamlit project.
+- How to push those images to GitHub Container Registry, Azure Container Registry, or any other registry you're already logged into.
 
 !!! warning "Don't add yourself to the `docker` group"
-    Running Docker without `sudo` requires membership in the `docker` group, which grants root-level access via the Docker socket. Every example and script in this guide uses `sudo` for Docker commands instead, keeping a clear privilege boundary between your user session and the Docker daemon.
+    Running Docker without `sudo` requires membership in the `docker` group, which grants root-level access via the Docker socket. The build and push scripts detect whether your session can already reach Docker and fall back to `sudo` otherwise, so you never need that group membership just to run them.
 
 ## Topics
 
 - [Environment setup](environment-setup.md)
-  Prepare your WSL2 Ubuntu environment by installing Docker, Azure CLI, and `uv`.
+  Install Docker and `uv`, plus the Azure CLI if you push to Azure Container Registry or build against an Azure DevOps package index.
 
 - [Building container images](building-container-images.md)
-  Build Docker images using a convenience script or manual `docker buildx` commands.
+  Build an image with the script or manual `docker buildx` commands; authenticate to a private package index when your project uses one.
 
 - [Pushing container images](pushing-container-images.md)
-  Publish your local image to ACR using an AAD-based token and optional script automation.
+  Publish the image to GitHub Container Registry, Azure Container Registry, or another registry, using the script or manual `docker` commands.

@@ -6,11 +6,12 @@ Build a Docker image from your Streamlit project using either the included scrip
 
 Before you begin:
 
-- You should be inside a WSL2 Ubuntu environment — [Environment setup](environment-setup.md) gets you there.
+- Docker, reachable directly or via `sudo` — [Environment setup](environment-setup.md) covers installing it, including on WSL2.
 - Your project must include:
     - A `pyproject.toml` file with a `[project] name` field.
     - A `uv.lock` file for dependency resolution.
-- You must be logged into Azure via the Azure CLI. This is required for every build, not only for pushes to ACR — the build script always requests a short-lived Azure DevOps token to authenticate package installation during the build.
+
+If your project's package index (the `package_index_url` answer from generation time) is empty, that's everything you need. If it points at a private index, see [Private package index](#private-package-index) below.
 
 ## Build options
 
@@ -27,8 +28,8 @@ Run the build script from your project directory:
 This script will:
 
 - Validate the presence of `uv.lock` (and read `pyproject.toml` to derive the default image name).
-- Use your Azure CLI session to retrieve an Azure DevOps access token.
-- Build the image with `docker buildx`, supplying the token to the build as a BuildKit secret (`id=index`) that the Dockerfile's `uv sync --default-index` consumes — the token is never baked into a layer.
+- Use `docker` directly if your session can reach the daemon, or `sudo docker` otherwise.
+- Build the image with `docker buildx`. When your project has a private package index configured, it authenticates first — see [Private package index](#private-package-index).
 - Tag the image using the project name with a default `:local` tag.
 
 If your `pyproject.toml` includes:
@@ -49,13 +50,29 @@ Upon successful completion, you'll see:
 ```bash
 ✅ Docker image built successfully: text-highlighter:local
 ℹ️  To run your container locally:
-   sudo docker run -p 8501:8501 text-highlighter:local
+   docker run -p 8501:8501 text-highlighter:local
 📣  Note: If your app runs on a different port, update the -p flag accordingly.
 ```
 
 ### Build manually
 
-To build the container manually, follow these steps:
+With no private package index, the script's build step is one command:
+
+```bash
+docker buildx build --tag text-highlighter:local --load .
+```
+
+Prefix it with `sudo` if your Docker daemon needs that. Replace `text-highlighter:local` with your preferred image tag.
+
+## Private package index
+
+When your project's package index needs credentials, the build passes them to `uv sync` as a Docker secret (`id=index`) so they never land in an image layer — the Dockerfile's `RUN --mount=type=secret,id=index,env=INDEX uv sync --default-index "$INDEX" --keyring-provider subprocess` consumes it. Which credentials, and how the script gets them, depends on the index host.
+
+### Azure DevOps index
+
+When the index host is `dev.azure.com` or `pkgs.visualstudio.com`, the script requests a short-lived Azure DevOps token through the Azure CLI and passes it as the secret. You need `az` installed and available on `PATH`.
+
+Manual steps:
 
 1. Authenticate with Azure CLI
 
@@ -75,26 +92,41 @@ To build the container manually, follow these steps:
 
     ```bash
     INDEX="https://AzureDevOps:${TOKEN}@<your-feed>/simple/" \
-    sudo -E docker buildx build \
+    docker buildx build \
       --secret id=index,env=INDEX \
       --tag text-highlighter:local \
       --load .
     ```
 
-Replace `text-highlighter:local` with your preferred image tag if needed.
+### Any other private index
+
+Set `INDEX_URL` to the index URL with credentials embedded (for example `https://user:token@host/simple/`) before running the script; the script errors with this instruction if it's unset:
+
+```bash
+INDEX_URL="https://user:token@host/simple/" ./scripts/build-container.sh
+```
+
+Manually, pass the same value through as the build secret:
+
+```bash
+env INDEX="$INDEX_URL" docker buildx build \
+  --secret id=index,env=INDEX \
+  --tag text-highlighter:local \
+  --load .
+```
 
 ## Verifying the image
 
 After building, confirm that your image exists:
 
 ```bash
-sudo docker images
+docker images
 ```
 
 To test it locally:
 
 ```bash
-sudo docker run -p 8501:8501 text-highlighter:local
+docker run -p 8501:8501 text-highlighter:local
 ```
 
 Change the `-p` value if your application serves on a different port.
