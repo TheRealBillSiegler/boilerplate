@@ -2,8 +2,10 @@
  * Home-page demo: plays the scripted terminal recording, respecting
  * prefers-reduced-motion.
  *
- * The home page embeds the scripted terminal demo as an asciicast, played
- * back by the self-hosted asciinema-player (docs/assets/asciinema/). A
+ * A page that sets `demo: true` in its front matter (the home page) embeds
+ * the scripted terminal demo as an asciicast, played back by the self-hosted
+ * asciinema-player (docs/assets/asciinema/); overrides/main.html adds the
+ * player's stylesheet and these scripts to that page. A
  * viewer who has asked their OS for reduced motion gets a static poster
  * frame with manual playback controls instead of autoplaying, looping
  * playback.
@@ -52,11 +54,12 @@
     });
   }
 
-  // Material exports document$ whether or not navigation.instant is on, but
-  // its bundle loads after page-content scripts, so document$ is undefined
-  // when this runs and the DOMContentLoaded branch is what executes today.
-  // The document$ branch only takes effect if this script moves to
-  // extra_javascript (loaded after the bundle).
+  // overrides/main.html emits this script after Material's bundle, so
+  // document$ (which Material exports whether or not navigation.instant is
+  // on) is defined here and the subscribe branch runs; it emits once the
+  // DOM is ready and again on every instant-navigation page swap. The
+  // DOMContentLoaded and immediate branches only cover a page that loads
+  // this script without the bundle, such as a local preview of the HTML.
   if (typeof document$ !== "undefined" && document$ && typeof document$.subscribe === "function") {
     document$.subscribe(initDemoCast);
   } else if (document.readyState === "loading") {
