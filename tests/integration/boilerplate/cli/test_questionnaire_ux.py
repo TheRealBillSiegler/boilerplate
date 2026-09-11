@@ -302,6 +302,7 @@ class TestTemplateCompositionBehavior:
                 "author_email": "test@example.com",
                 "package_index_url": "",
                 "container_registry": "ghcr.io",
+                "sample_module": False,
             },
             overwrite=True,
             interactive=True,

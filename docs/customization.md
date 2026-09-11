@@ -29,6 +29,7 @@ container_registry = "myregistry.azurecr.io"
 | Question | Templates | Effect |
 | --- | --- | --- |
 | `package_index_url` | `project` and everything extending it | emits a default `[[tool.uv.index]]` block in the generated `pyproject.toml` (empty = public PyPI, no block) |
+| `sample_module` | `project` and everything extending it | renders `module.py` and its test (default on; a layer that extends `project` can default it off) |
 | `container_registry` | `streamlit` | registry used by the generated `push-container.sh`, which authenticates via Azure CLI (ACR) today regardless of this value — pushing to a different registry (including the `ghcr.io` default) needs your own login step |
 | `author_name` / `author_email` | `project` and everything extending it | project metadata |
 

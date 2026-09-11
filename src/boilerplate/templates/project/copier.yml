@@ -57,6 +57,11 @@ dev_dependencies:
     - ruff
   help: "Main development dependencies"
 
+sample_module:
+  type: bool
+  help: "Include the sample module and its test (module.py, test_module.py) as a starting point?"
+  default: true
+
 author_name:
   type: str
   help: "Your first and last name?"
