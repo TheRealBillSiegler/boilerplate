@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from {{ package_name }}.adapters.lockfile import read_lockfile
@@ -9,6 +10,12 @@ from {{ package_name }}.services.inventory import build_rows, summarize
 
 APP_PATH = Path(__file__).resolve().parents[3] / "src" / "{{ package_name }}" / "app.py"
 LOCKFILE = Path(__file__).resolve().parents[3] / "uv.lock"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _warm_interpreter() -> None:
+    """Runs the app once so per-test timeouts measure the page, not cold imports."""
+    AppTest.from_file(str(APP_PATH)).run(timeout=180)
 
 
 def test_app_runs_without_exception() -> None:
