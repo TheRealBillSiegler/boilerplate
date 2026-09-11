@@ -74,7 +74,7 @@ _tasks:
 | `_templates_suffix`   | File extension for Jinja2 templates (`.jinja`) |
 | `_exclude`            | Glob patterns to exclude from output          |
 | `_jinja_extensions`   | Custom Jinja2 extensions to load              |
-| `_tasks`              | Post-generation commands                       |
+| `_tasks`              | Post-generation commands, run from the generated project root; scripts they call must ship in the template |
 | `when: false`         | Hide a question (computed value)               |
 
 ## Template composition
