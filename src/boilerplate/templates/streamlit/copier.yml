@@ -57,6 +57,9 @@ package_index_url:
 dependencies:
   default: ["streamlit", "pydantic>=2"]
 
+sample_module:
+  default: false
+
 container_registry:
   type: str
   help: "Container registry hostname for image pushes (e.g. ghcr.io or registry.example.com)."

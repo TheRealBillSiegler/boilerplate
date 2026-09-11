@@ -83,3 +83,18 @@ class TestDockerfileIndex:
         dockerfile = (dest / "Dockerfile").read_text(encoding="utf-8")
         assert "--mount=type=secret,id=index,env=INDEX" in dockerfile
         assert '--default-index "$INDEX"' in dockerfile
+
+
+class TestSampleModule:
+    def test_sample_module_is_off_by_default(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path)
+        package = dest / "src" / dest.name.replace("-", "_")
+        assert not (package / "module.py").exists()
+        assert not (dest / "tests" / package.name / "test_module.py").exists()
+        assert (package / "app.py").is_file()
+
+    def test_sample_module_can_be_turned_on(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path, context_data={"sample_module": True})
+        package = dest / "src" / dest.name.replace("-", "_")
+        assert (package / "module.py").is_file()
+        assert (dest / "tests" / package.name / "test_module.py").is_file()

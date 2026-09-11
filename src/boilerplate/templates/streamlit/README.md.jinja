@@ -36,7 +36,7 @@ tests/integration/{{ package_name }}/test_app.py   # drives the page with Stream
 Dockerfile, .dockerignore, scripts/             # container build and push
 ```
 
-The base template also contributes `src/{{ package_name }}/module.py` with its test, `notebooks/`, `.vscode/`, and `.gitignore`. `module.py` is a sample; delete it and its test when you no longer need them.
+The base template also contributes `notebooks/`, `.vscode/`, and `.gitignore`{% if sample_module %}, plus `src/{{ package_name }}/module.py` with its test because `sample_module` was answered yes{% endif %}.
 
 ## Make it yours
 
