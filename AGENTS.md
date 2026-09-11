@@ -68,7 +68,7 @@ def calculate_line_totals(order_items: list[OrderItem]) -> list[float]:
     Raises:
         ValueError: If any item has a negative price or quantity.
 
-    Example:
+    Examples:
         >>> calculate_line_totals([OrderItem(unit_price=10.0, quantity=2)])
         [20.0]
     """
