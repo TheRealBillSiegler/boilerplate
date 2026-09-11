@@ -6,7 +6,7 @@
 schema_version: "1"       # Boilerplate metadata schema version
 
 name: streamlit            # Template identifier (used in `boilerplate new streamlit`)
-version: 0.1.1             # SemVer — bump when template content changes
+version: 0.2.0             # SemVer — bump when template content changes
 description: Streamlit boilerplate for data applications
 
 extends:                   # Composition: this template layers on top of `project`.
