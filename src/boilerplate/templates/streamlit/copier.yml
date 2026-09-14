@@ -64,3 +64,24 @@ container_registry:
   type: str
   help: "Container registry hostname for image pushes (e.g. ghcr.io or registry.example.com)."
   default: "ghcr.io"
+
+# The previous release rendered the smoke test as tests_app.py. Copier's update
+# removes paths the new version stops rendering without checking whether the
+# project changed them, so this before-stage migration moves the project's copy
+# to the new name with `git mv`; the update then surfaces it as a conflict that
+# carries both versions instead of deleting it (docs/design/adr-007-update-model.md).
+# No `version` gate: bundled layers share the repository's tag stream, so the
+# migration runs on every update and is a no-op once the old name is gone.
+_migrations:
+  - when: "{{ _stage == 'before' }}"
+    command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import pathlib
+        import subprocess
+
+        for old in pathlib.Path("tests/integration").glob("*/tests_app.py"):
+            new = old.with_name("test_app.py")
+            if not new.exists():
+                subprocess.run(["git", "mv", str(old), str(new)], check=True)

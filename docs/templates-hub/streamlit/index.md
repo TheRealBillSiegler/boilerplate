@@ -56,6 +56,8 @@ my-streamlit-app/
 ```
 
 The package name derives from the project name. The render also inherits the project template's `notebooks/`, `.vscode/`, and `.gitignore`; the base layer's sample module stays off because this template answers `sample_module` with no. Each layer records its answers in its own `.copier-answers.<layer>.yml`.
+
+A project rendered by an earlier 0.1 release of this layer carries the smoke test as `tests_app.py`. On update, a before-stage migration moves it to `test_app.py` with `git mv`, so `copier update` presents the file as a conflict holding both versions instead of deleting yours. Copier requires `--trust` for an update that runs a migration.
 With `--no-tasks` or `--ci`, the inherited cleanup task never runs either, so `_scripts/post_generation.py` (from the `project` layer) is left behind and isn't gitignored.
 
 ## Usage
