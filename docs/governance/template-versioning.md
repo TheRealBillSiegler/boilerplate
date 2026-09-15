@@ -217,7 +217,7 @@ extends:
 
 ## Migration requirements for breaking changes
 
-*Design-only today: no shipped command runs migrations. This section specifies what template authors provide once the update spine ships ([ADR-007](../design/adr-007-update-model.md)).*
+*`boilerplate update` is design-only ([ADR-007](../design/adr-007-update-model.md)): no shipped command of this tool runs migrations. Vanilla `copier update` runs them now, and the bundled layers ship theirs under the rules below; the rules bind template authors either way.*
 
 ### Copier migration scripts
 
@@ -251,6 +251,12 @@ A migration is fix-up code, not replayed history: an update may cross several ve
 2. **Carried forward.** Keep every historical `_migrations` entry in every later release, in ascending version order — Copier reads the list only from the version being updated *to*, and executes it in declaration order rather than sorting by version.
 3. **Layer-scoped.** Touch only files your own template owns. Copier has no ownership model; a migration that rewrites a file another layer overrode destroys that override silently.
 4. **Conflict-aware.** Migrations run even when the merge left unresolved conflict markers, so a migration that parses a file must tolerate them — and a non-zero exit fails the whole update.
+
+Three further rules govern what an update costs the project. Copier removes every path the new template version stops rendering — by name, without comparing content — and its merge treats a renamed file as added on both sides. The template, not the tool, is where a project's own work survives that. Both behaviours are Copier internals rather than public API, verified against Copier 9.18.1; `tests/boilerplate/templates/test_streamlit_update_migration.py` drives a real update and fails if they change.
+
+5. **Rename through a staged move.** A template that renames or relocates a rendered path MUST ship a `before`-stage migration that moves the project's copy to the new name *and stages the move* (`git mv`, or a move followed by `git add -A -- <old> <new>`). Staging is the load-bearing half: Copier snapshots the index before it merges, so a staged move puts the project's content under the new name on the merge's "before updating" side, and the update pauses on a conflict carrying both versions. Without the migration the project's edited copy is deleted at exit 0 — no conflict marker, no `.rej` file, no message. The worked entry is in [Template authoring](../templates-hub/authoring.md#keeping-a-projects-work).
+6. **Render nothing the render's own `.gitignore` matches.** A file git ignores never enters the index, so Copier's merge cannot see it: no three-way merge, no conflict marker, no `.rej` file, and no history to recover it from. A template MUST NOT render a path its own ignore rules match, and MUST NOT ignore a path the render tells the user to commit.
+7. **Say who owns each file.** For every rendered file, choose between template-owned — the template keeps changing it, so a project that edits it risks a conflict whenever a release touches the same lines, and on a file small enough that one diff hunk spans it, any release at all ([ADR-015](../design/adr-015-idiomatic-artifacts.md#verification-2026-07-28)) — and project-owned, listed in `_skip_if_exists`, which the template writes once and never touches again. State the choice where an author will find it; silence means template-owned. It matters most for the files users are expected to rewrite: a README, an entry point, a sample module.
 
 ### Copier update process
 

@@ -115,6 +115,41 @@ Directory names can also use Jinja2 variables: `{{package_name}}/` expands to th
 - **Test rendering** with `boilerplate new my-template test-output --force --templates-dir <parent-dir>`.
 - **Inspect composition** with `boilerplate compose` and `boilerplate graph` before publishing multi-layer templates.
 
+## Keeping a project's work
+
+A project generated from your template is a git repository, and `copier update` reads it as one: it refuses a dirty tree, diffs against the index, and merges through it. Anything outside that index is invisible to the merge. Three habits follow; the rules themselves are in [Template versioning](../governance/template-versioning.md#authoring-rules).
+
+### Rename through a staged move
+
+Copier deletes every path your new version stops rendering, by name, without comparing content — so a project that edited the old file loses the edit, at exit 0, with nothing in the working tree to show it. A `before`-stage migration that moves *and stages* the file turns that deletion into a conflict carrying both versions:
+
+```yaml
+# copier.yml
+_migrations:
+  - when: "{{ _stage == 'before' }}"
+    command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import pathlib
+        import subprocess
+
+        old = pathlib.Path("tests/smoke_test.py")
+        new = old.with_name("test_smoke.py")
+        if old.exists() and not new.exists():
+            subprocess.run(["git", "mv", str(old), str(new)], check=True)
+```
+
+The entry declares no `version`, so Copier runs it on every update; the state check makes it a no-op once the old name is gone. Ship it in the same change as the rename, with a test that drives a real `copier update` from the previous tag — `tests/boilerplate/templates/test_streamlit_update_migration.py` in this repository is the worked example.
+
+### Render nothing your `.gitignore` matches
+
+An ignored file never enters the index, so the merge cannot see it: no conflict marker, no `.rej` file, nothing in history to recover. The reverse holds too — do not ignore a file your README tells the user to commit.
+
+### Say who owns each file
+
+A file your template keeps changing is template-owned: a project that edits it risks a conflict whenever a release touches the same lines, and on a file small enough that one diff hunk spans it, any release at all. A file the project should own after the first render belongs in `_skip_if_exists`: the template writes it once and never touches it again. Choose per file and say which; silence means template-owned. The choice matters most for the files users are expected to rewrite — the README, the entry point, a sample module.
+
 ## Bundled examples
 
 The bundled templates serve as working examples:
