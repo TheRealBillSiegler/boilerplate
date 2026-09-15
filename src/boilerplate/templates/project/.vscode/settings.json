@@ -6,6 +6,7 @@
     "editor.formatOnSave": true
   },
   "python.testing.pytestEnabled": true,
+  "files.eol": "\n",
   "notebook.defaultFormatter": "charliermarsh.ruff",
   "notebook.formatOnSave.enabled": true
 }

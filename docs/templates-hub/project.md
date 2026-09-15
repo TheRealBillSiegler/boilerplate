@@ -19,6 +19,7 @@ my-app/
 ├── pyproject.toml          # Metadata + tool config (ruff, pyright, pytest)
 ├── README.md               # Project documentation
 ├── .gitignore
+├── .gitattributes          # LF line endings on every platform
 ├── .vscode/                # VS Code settings
 │   ├── settings.json
 │   └── extensions.json
