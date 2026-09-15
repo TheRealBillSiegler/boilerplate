@@ -1,5 +1,7 @@
 """Tests for the project template's customization Questions."""
 
+import json
+import subprocess
 from functools import partial
 from pathlib import Path
 
@@ -89,3 +91,46 @@ class TestSampleModule:
         # An empty conditional name must vanish rather than leave a nameless file.
         assert all(path.name for path in dest.rglob("*"))
         assert not list(package.glob(".jinja"))
+
+
+class TestLineEndings:
+    """The render stays LF everywhere, so its scripts run in WSL after any checkout.
+
+    Without a `.gitattributes`, `core.autocrlf=true` rewrites every text file
+    CRLF on the next checkout, and a CRLF shebang fails in bash.
+    """
+
+    def test_gitattributes_forces_lf_for_every_text_file(self, tmp_path: Path):
+        dest = _render_project(tmp_path)
+        attributes = (dest / ".gitattributes").read_text(encoding="utf-8")
+        assert "* text=auto eol=lf" in attributes
+
+    def test_checkout_under_autocrlf_keeps_files_lf(self, tmp_path: Path):
+        dest = _render_project(tmp_path)
+        git = [
+            "git",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "user.name=tests",
+            "-c",
+            "user.email=tests@example.com",
+        ]
+        run = partial(subprocess.run, cwd=dest, check=True, capture_output=True)
+        run([*git, "init", "-q", "-b", "main"])
+        run([*git, "add", "-A"])
+        run([*git, "commit", "-q", "-m", "render"])
+        target = dest / "pyproject.toml"
+        target.unlink()
+        run([*git, "checkout", "--", "pyproject.toml"])
+        assert b"\r" not in target.read_bytes()
+
+    def test_editor_writes_lf(self, tmp_path: Path):
+        dest = _render_project(tmp_path)
+        settings = json.loads((dest / ".vscode" / "settings.json").read_text())
+        assert settings["files.eol"] == "\n"
+
+    def test_formatter_writes_lf(self, tmp_path: Path):
+        dest = _render_project(tmp_path)
+        pyproject = (dest / "pyproject.toml").read_text(encoding="utf-8")
+        assert 'line-ending = "lf"' in pyproject

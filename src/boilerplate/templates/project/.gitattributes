@@ -1,0 +1,5 @@
+# Every text file checks out LF on every platform. Scripts run in bash on Linux
+# and WSL, where a CRLF shebang fails; Windows editors and tooling read LF fine.
+# eol=lf overrides core.autocrlf on Windows checkouts. For a file that must stay
+# CRLF, add a line such as `*.bat text eol=crlf` beneath this one.
+* text=auto eol=lf
