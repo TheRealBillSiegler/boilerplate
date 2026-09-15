@@ -110,7 +110,7 @@ Directory names can also use Jinja2 variables: `{{package_name}}/` expands to th
 - **Restate Copier's defaults in `_exclude`.** A declared `_exclude` replaces Copier's built-in list (`.git`, `copier.yml`, `__pycache__`, …) instead of extending it. Copy the bundled templates' block, which also excludes `boilerplate.yml`; otherwise a `copier update` from a git clone copies the clone's `.git` over the project's.
 - **Sensible defaults** for all questions so `--non-interactive` works.
 - **Use `extends`** to layer on base templates rather than duplicating files.
-- **Version your templates** with PEP 440 versions (plain `X.Y.Z` works). Bump on every content change.
+- **Version your templates** with PEP 440 versions (plain `X.Y.Z` works). The version moves once per release, not once per change — see [when to bump](versioning.md#when-to-bump).
 - **Register your template for discovery**: custom templates live outside the bundled registry, so point the CLI at the directory *containing* `my-template/` with `--templates-dir` (works on `new`, `list`, `graph`, and `compose`; it adds to the search path, so bundled parents stay resolvable for `extends`) or set it persistently via [`BOILERPLATE_EXTRA_TEMPLATE_DIRS`](../customization.md#layers-structure).
 - **Test rendering** with `boilerplate new my-template test-output --force --templates-dir <parent-dir>`.
 - **Inspect composition** with `boilerplate compose` and `boilerplate graph` before publishing multi-layer templates.
