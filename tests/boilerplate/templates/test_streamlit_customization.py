@@ -1,5 +1,7 @@
 """Tests for the streamlit template's customization Questions."""
 
+import subprocess
+from functools import partial
 from pathlib import Path
 
 from tests.boilerplate.templates.conftest import render
@@ -98,3 +100,34 @@ class TestSampleModule:
         package = dest / "src" / dest.name.replace("-", "_")
         assert (package / "module.py").is_file()
         assert (dest / "tests" / package.name / "test_module.py").is_file()
+
+
+class TestLineEndings:
+    """The scripts stay LF through a Windows checkout, so they run in WSL and Linux.
+
+    The `.gitattributes` comes from the project layer; this guards that the
+    composition carries it into a streamlit render.
+    """
+
+    def test_scripts_stay_lf_after_an_autocrlf_checkout(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path)
+        git = [
+            "git",
+            "-c",
+            "core.autocrlf=true",
+            "-c",
+            "user.name=tests",
+            "-c",
+            "user.email=tests@example.com",
+        ]
+        run = partial(subprocess.run, cwd=dest, check=True, capture_output=True)
+        run([*git, "init", "-q", "-b", "main"])
+        run([*git, "add", "-A"])
+        run([*git, "commit", "-q", "-m", "render"])
+        scripts = sorted((dest / "scripts").glob("*.sh"))
+        assert scripts
+        for script in scripts:
+            script.unlink()
+        run([*git, "checkout", "--", "scripts"])
+        for script in scripts:
+            assert b"\r" not in script.read_bytes(), script.name
