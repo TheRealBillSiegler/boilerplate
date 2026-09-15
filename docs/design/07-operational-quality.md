@@ -279,7 +279,7 @@ Boilerplate MUST fail fast before rendering if any rendered file path would exce
 
 ### Filesystem Differences
 
-- Line endings: templates SHOULD include `.gitattributes` with `text=auto`. `boilerplate doctor` SHOULD validate this.
+- Line endings: first-party templates carry a `.gitattributes` with `* text=auto eol=lf`, and third-party templates should ([03 §Template Authoring Constraints](03-template-system.md#template-authoring-constraints)). `boilerplate doctor` SHOULD validate that the file is present and declares it.
 - Git submodule paths can be problematic on NTFS. Submodule initialization failures MUST produce clear errors with remediation (see [06-project-lifecycle.md](06-project-lifecycle.md)).
 
 ### Network Filesystems
