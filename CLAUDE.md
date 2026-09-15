@@ -22,6 +22,10 @@ Single-context; ADRs live in `docs/design/` as `adr-NNN-*.md`. See `docs/agents/
 
 Edits under `docs/` and to `mkdocs.yml` are governed by the golden-path tenets in `.claude/rules/docs.md`. When delegating docs edits to a subagent, name that file in the prompt — path-scoped rules may not auto-load in subagents.
 
+### Template rules
+
+Edits under `src/boilerplate/templates/` are governed by the tenets in `.claude/rules/templates.md`. Name that file in a subagent's prompt for the same reason.
+
 ## Instruction hierarchy
 
 When instructions conflict, apply in this order:
