@@ -72,7 +72,7 @@ class TestColorMode:
 
     docs/design/05-cli-reference.md §Accessibility: ``auto`` follows the
     terminal and ``NO_COLOR``; ``never`` forces color off; ``always`` forces it
-    on.
+    on, and an explicit ``--color`` wins over ``NO_COLOR``.
     """
 
     @pytest.fixture(autouse=True)
@@ -107,6 +107,17 @@ class TestColorMode:
             assert console.is_terminal
             assert console.color_system == "truecolor"
             assert not console.no_color
+
+    def test_always_wins_over_no_color(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+        display = Display(color=ColorMode.ALWAYS)
+        buffer = io.StringIO()
+        display.console.file = buffer
+
+        display.info("colored")
+
+        assert not display.console.no_color
+        assert "\x1b[" in buffer.getvalue()
 
 
 class TestAccessibleEnvFlag:

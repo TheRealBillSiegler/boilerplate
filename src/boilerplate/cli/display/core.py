@@ -77,14 +77,20 @@ class Display:
 
         color_system: str | None = _resolve_color_system(color)
         if color is ColorMode.ALWAYS:
+            # An explicit --color wins over NO_COLOR, which Rich would
+            # otherwise read from the environment on its own.
             self.console = Console(
-                theme=self.theme, color_system=color_system, force_terminal=True
+                theme=self.theme,
+                color_system=color_system,
+                force_terminal=True,
+                no_color=False,
             )
             self.error_console = Console(
                 theme=self.theme,
                 stderr=True,
                 color_system=color_system,
                 force_terminal=True,
+                no_color=False,
             )
         elif force_no_color:
             self.console = Console(theme=self.theme, no_color=True)
