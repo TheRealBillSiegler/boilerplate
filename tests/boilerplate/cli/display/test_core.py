@@ -24,6 +24,7 @@ from rich.console import Console
 from rich.style import Style
 from rich.theme import Theme
 
+from boilerplate.cli.display import ColorMode
 from boilerplate.cli.display.core import DEFAULT_THEME, Display
 
 if TYPE_CHECKING:
@@ -64,6 +65,48 @@ def test_custom_theme_overrides_default() -> None:
 
     # Verify fallback to default for undefined styles
     assert "warning" in display.theme.styles  # Should inherit from default
+
+
+class TestColorMode:
+    """The --color mode decides the consoles' color handling.
+
+    docs/design/05-cli-reference.md §Accessibility: ``auto`` follows the
+    terminal and ``NO_COLOR``; ``never`` forces color off; ``always`` forces it
+    on.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _isolate_color_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for name in ("NO_COLOR", "FORCE_COLOR", "BOILERPLATE_ACCESSIBLE"):
+            monkeypatch.delenv(name, raising=False)
+
+    def test_auto_is_the_default(self) -> None:
+        display = Display()
+
+        assert not display.console.no_color
+        assert not display.console.is_terminal
+
+    def test_auto_honors_no_color(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+
+        display = Display(color=ColorMode.AUTO)
+
+        assert display.console.no_color
+        assert display.error_console.no_color
+
+    def test_never_turns_color_off_on_both_consoles(self) -> None:
+        display = Display(color=ColorMode.NEVER)
+
+        assert display.console.no_color
+        assert display.error_console.no_color
+
+    def test_always_forces_color_even_when_piped(self) -> None:
+        display = Display(color=ColorMode.ALWAYS)
+
+        for console in (display.console, display.error_console):
+            assert console.is_terminal
+            assert console.color_system == "truecolor"
+            assert not console.no_color
 
 
 class TestAccessibleEnvFlag:

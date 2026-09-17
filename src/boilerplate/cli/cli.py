@@ -22,7 +22,7 @@ from boilerplate.cli.commands import (
     version,
 )
 from boilerplate.cli.context import CliContext
-from boilerplate.cli.display.core import Display
+from boilerplate.cli.display import ColorMode, Display
 from boilerplate.cli.seams import Seams
 from boilerplate.cli.utils import ensure_verbose_quiet_exclusive
 from boilerplate.common.env import env_flag
@@ -94,6 +94,13 @@ app = typer.Typer(
 )
 
 
+COLOR_OPTION = typer.Option(
+    ColorMode.AUTO,
+    "--color",
+    help="Color output. auto colors a terminal only and honors NO_COLOR.",
+)
+
+
 def _reconfigure_stdio_encoding() -> None:
     """Reconfigures stdout/stderr to UTF-8 so CLI glyphs survive legacy codepages.
 
@@ -137,7 +144,7 @@ def _version_callback(value: bool) -> None:
 def _bootstrap_runtime(
     verbose: bool,
     quiet: bool,
-    color: str | None,
+    color: ColorMode,
     ci_mode: bool,
     seams: Seams,
 ) -> CliContext:
@@ -187,11 +194,7 @@ def main(
         "-q",
         help="Suppress informational output.",
     ),
-    color: str = typer.Option(
-        "auto",
-        "--color",
-        help="Color output: auto, always, or never.",
-    ),
+    color: ColorMode = COLOR_OPTION,
     ci: bool = typer.Option(
         False,
         "--ci",
