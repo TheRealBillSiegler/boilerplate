@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 from typer.core import TyperCommand
 
 from boilerplate.cli.context import CliContext
-from boilerplate.cli.display.core import Display
+from boilerplate.cli.display import ColorMode, Display
 from boilerplate.cli.engine import UsageError
 from boilerplate.cli.utils import (
     build_template_catalog,
@@ -353,7 +353,7 @@ class TestCliErrorHandler:
         ctx = typer.Context(TyperCommand("stub"))
         ctx.obj = CliContext(
             settings=Settings(),
-            display=Display(color="never", quiet=True),
+            display=Display(color=ColorMode.NEVER, quiet=True),
             renderer=renderer,
         )
         wrapped = self._decorate_raiser(

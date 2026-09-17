@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.theme import Theme
 
+from boilerplate.cli.display.color_mode import ColorMode
 from boilerplate.common.env import env_flag
 
 ColorSystem = Literal["auto", "standard", "256", "truecolor", "windows"]
@@ -27,18 +28,16 @@ DEFAULT_THEME = Theme(
 )
 
 
-def _resolve_color_system(
-    color: str | None,
-) -> ColorSystem | None:
-    """Resolve the Rich color_system from --color flag and environment.
+def _resolve_color_system(color: ColorMode) -> ColorSystem | None:
+    """Resolve the Rich color_system from the --color mode.
 
     Args:
-        color: CLI --color value (auto, always, never, or None).
+        color: The mode selected with ``--color``.
 
     Returns:
         Rich color_system value, or None for auto-detection.
     """
-    if color == "always":
+    if color is ColorMode.ALWAYS:
         return "truecolor"
     return None  # auto-detect
 
@@ -55,14 +54,14 @@ class Display:
         self,
         theme: Theme | None = None,
         *,
-        color: str | None = None,
+        color: ColorMode = ColorMode.AUTO,
         quiet: bool = False,
     ) -> None:
         """Initialize the display with a custom or default theme.
 
         Args:
             theme: Optional Rich theme override.
-            color: Color mode — "auto", "always", or "never".
+            color: The mode selected with ``--color``.
             quiet: If True, suppress info/success output (errors still shown).
         """
         if theme is not None:
@@ -74,10 +73,10 @@ class Display:
 
         accessible = env_flag("BOILERPLATE_ACCESSIBLE")
         no_color = "NO_COLOR" in os.environ
-        force_no_color = color == "never" or accessible or no_color
+        force_no_color = color is ColorMode.NEVER or accessible or no_color
 
         color_system: str | None = _resolve_color_system(color)
-        if color == "always":
+        if color is ColorMode.ALWAYS:
             self.console = Console(
                 theme=self.theme, color_system=color_system, force_terminal=True
             )

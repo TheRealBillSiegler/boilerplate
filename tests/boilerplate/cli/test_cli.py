@@ -10,6 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 from boilerplate.cli import cli
+from boilerplate.cli.display import ColorMode
 from boilerplate.cli.seams import Seams
 from boilerplate.composition.rendering.renderer import Renderer
 from boilerplate.constants import ExitCode
@@ -76,6 +77,58 @@ def test_verbose_and_quiet_together_exit_with_validation_error(
     """Tests that --verbose and --quiet together exit 3 (VALIDATION_ERROR)."""
     result = typer_cli_runner.invoke(cli.app, ["--verbose", "--quiet", "list"])
     assert result.exit_code == ExitCode.VALIDATION_ERROR
+
+
+class TestColorOption:
+    """``--color`` accepts the three modes the design names and rejects the rest.
+
+    Regression: the option was a plain string, so any other value (a typo such
+    as ``--color nevr``, or ``--color NEVER``) was accepted and silently behaved
+    as ``auto`` with exit code 0.
+    """
+
+    @pytest.mark.parametrize("mode", [m.value for m in ColorMode])
+    def test_each_mode_is_accepted(
+        self, typer_cli_runner: CliRunner, mode: str
+    ) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["--color", mode, "version"])
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+
+    @pytest.mark.parametrize("value", ["purple", "NEVER", ""])
+    def test_any_other_value_is_rejected_naming_the_choices(
+        self, typer_cli_runner: CliRunner, value: str
+    ) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["--color", value, "version"])
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
+        output = " ".join(result.output.split())
+        assert "Invalid value for '--color'" in output
+        # Rich wraps the panel, so the choices may not sit on one line.
+        for choice in ("'auto'", "'always'", "'never'"):
+            assert choice in output
+
+    def test_help_lists_the_choices(self, typer_cli_runner: CliRunner) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["--help"])
+
+        assert "[auto|always|never]" in " ".join(result.output.split())
+
+    def test_selected_mode_reaches_the_display(
+        self, monkeypatch: pytest.MonkeyPatch, typer_cli_runner: CliRunner
+    ) -> None:
+        received: dict[str, object] = {}
+        real_display = cli.Display
+
+        def recording_display(**kwargs: object) -> object:
+            received.update(kwargs)
+            return real_display(**kwargs)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(cli, "Display", recording_display)
+
+        result = typer_cli_runner.invoke(cli.app, ["--color", "never", "version"])
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        assert received["color"] is ColorMode.NEVER
 
 
 class TestUsageErrorExitCode:
