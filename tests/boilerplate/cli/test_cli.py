@@ -111,7 +111,9 @@ class TestColorOption:
     def test_help_lists_the_choices(self, typer_cli_runner: CliRunner) -> None:
         result = typer_cli_runner.invoke(cli.app, ["--help"])
 
-        assert "[auto|always|never]" in " ".join(result.output.split())
+        # Typer brackets the choices differently across releases; the list is
+        # the contract.
+        assert "auto|always|never" in " ".join(result.output.split())
 
     def test_selected_mode_reaches_the_display(
         self, monkeypatch: pytest.MonkeyPatch, typer_cli_runner: CliRunner
