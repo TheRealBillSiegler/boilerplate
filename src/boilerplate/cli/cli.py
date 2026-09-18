@@ -5,16 +5,14 @@ Bootstraps settings, logging, Runtime, and registers commands.
 # Spec: docs/design/05-cli-reference.md
 
 import codecs
-import difflib
 import sys
 from typing import NoReturn
 
-import click
 import typer
-from typer import Context
 from typer.core import TyperGroup
 
 import boilerplate
+from boilerplate.cli import engine
 from boilerplate.cli.commands import (
     compose,
     graph,
@@ -32,7 +30,7 @@ from boilerplate.logging_config import configure_logging
 from boilerplate.settings import Settings
 
 
-def _reraise_as_validation_error(error: click.UsageError) -> NoReturn:
+def _reraise_as_validation_error(error: engine.UsageError) -> NoReturn:
     """Retags a click usage error with the taxonomy's exit code and re-raise.
 
     click defaults usage errors to exit 2, which docs/design/02-data-models.md
@@ -44,57 +42,40 @@ def _reraise_as_validation_error(error: click.UsageError) -> NoReturn:
         error: The usage error on its way out of the CLI.
 
     Raises:
-        click.UsageError: Always — the same instance, exit code corrected.
+        engine.UsageError: Always — the same instance, exit code corrected.
     """
     error.exit_code = ExitCode.VALIDATION_ERROR
     raise error
 
 
 class BoilerplateGroup(TyperGroup):
-    """Typer group that suggests similar commands on typos.
+    """Typer group where usage-error exit codes are pinned.
 
-    Also the single place usage-error exit codes are pinned: ``make_context``
-    covers root-level parsing and ``invoke`` covers subcommand parsing plus
-    errors raised inside command bodies, which is every path click routes
-    through ``BaseCommand.main``.
+    ``make_context`` covers root-level parsing and ``invoke`` covers subcommand
+    parsing plus errors raised inside command bodies, which is every path the
+    engine routes through ``Command.main``. Suggesting a close command on a
+    typo is Typer's own behavior and needs nothing here.
     """
 
     def make_context(
         self,
         info_name: str | None,
         args: list[str],
-        parent: click.Context | None = None,
+        parent: engine.Context | None = None,
         **extra: object,
-    ) -> click.Context:
+    ) -> engine.Context:
         """Builds the root context, pinning parse-error exit codes."""
         try:
             return super().make_context(info_name, args, parent, **extra)
-        except click.UsageError as e:
+        except engine.UsageError as e:
             _reraise_as_validation_error(e)
 
-    def invoke(self, ctx: click.Context) -> object:
+    def invoke(self, ctx: engine.Context) -> object:
         """Dispatches to the subcommand, pinning its usage-error exit codes."""
         try:
             return super().invoke(ctx)
-        except click.UsageError as e:
+        except engine.UsageError as e:
             _reraise_as_validation_error(e)
-
-    def resolve_command(
-        self, ctx: click.Context, args: list[str]
-    ) -> tuple[str | None, click.Command | None, list[str]]:
-        """Resolves command, suggesting close matches on failure."""
-        try:
-            return super().resolve_command(ctx, args)
-        except click.UsageError as e:
-            if args:
-                cmd_name = args[0]
-                matches = difflib.get_close_matches(
-                    cmd_name, self.list_commands(ctx), n=1, cutoff=0.6
-                )
-                if matches:
-                    msg = f"No such command '{cmd_name}'. Did you mean '{matches[0]}'?"
-                    raise click.UsageError(msg) from e
-            raise
 
 
 app = typer.Typer(
@@ -136,7 +117,7 @@ def _reconfigure_stdio_encoding() -> None:
             reconfigure(encoding="utf-8", errors="replace")
 
 
-def _print_help_and_exit(ctx: Context) -> None:
+def _print_help_and_exit(ctx: typer.Context) -> None:
     """Prints top-level help and exit successfully.
 
     Kept separate for clarity and easier testing of the help path.
@@ -189,7 +170,7 @@ def _bootstrap_runtime(
 
 @app.callback(invoke_without_command=True)
 def main(
-    ctx: Context,
+    ctx: typer.Context,
     verbose: bool = typer.Option(
         False,
         "--verbose",

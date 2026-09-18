@@ -95,7 +95,7 @@ class TestUsageErrorExitCode:
                 id="subcommand-unknown-option",
             ),
             pytest.param(["compose"], "Missing argument", id="missing-argument"),
-            pytest.param(["lisst"], "No such command", id="unknown-command"),
+            pytest.param(["lisst"], "Did you mean", id="unknown-command"),
             pytest.param(
                 ["compose", "project", "--sections", "bogus"],
                 "Unknown section",

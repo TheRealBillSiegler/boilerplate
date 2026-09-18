@@ -6,11 +6,11 @@ from logging import getLogger
 from pathlib import Path
 from typing import NoReturn
 
-import click
 import typer
 
 from boilerplate.catalog import TemplateCatalog
 from boilerplate.cli.display.core import Display
+from boilerplate.cli.engine import UsageError, get_current_context
 from boilerplate.cli.validators import validate_directory
 from boilerplate.common.exceptions import (
     ActionRequiredError,
@@ -46,7 +46,7 @@ def _current_display() -> Display | None:
     Display. Unit tests call decorated helpers with no context at all, so the
     absence of one is a supported case, not an error.
     """
-    ctx = click.get_current_context(silent=True)
+    ctx = get_current_context(silent=True)
     display = getattr(ctx.obj, "display", None) if ctx is not None else None
     return display if isinstance(display, Display) else None
 
@@ -107,7 +107,7 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         try:
             return func(*args, **kwargs)
-        except (typer.Exit, click.UsageError):
+        except (typer.Exit, UsageError):
             # typer.Exit already carries its code; usage errors are rendered and
             # exit-coded by the app group (cli.py), not here.
             raise

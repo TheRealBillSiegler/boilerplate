@@ -3,13 +3,14 @@
 from collections.abc import Callable
 from pathlib import Path
 
-import click
 import pytest
 import typer
 from pytest_mock import MockerFixture
+from typer.core import TyperCommand
 
 from boilerplate.cli.context import CliContext
 from boilerplate.cli.display.core import Display
+from boilerplate.cli.engine import UsageError
 from boilerplate.cli.utils import (
     build_template_catalog,
     build_template_table_data,
@@ -321,13 +322,12 @@ class TestCliErrorHandler:
         "exception",
         [
             typer.BadParameter("bad arg"),
-            click.NoSuchOption("--bogus"),
-            click.UsageError("plain usage error"),
+            UsageError("plain usage error"),
         ],
-        ids=["bad-parameter", "no-such-option", "plain-usage-error"],
+        ids=["bad-parameter", "plain-usage-error"],
     )
     def test_usage_errors_reach_the_app_boundary_intact(
-        self, exception: click.UsageError
+        self, exception: UsageError
     ) -> None:
         """Usage errors escape the handler so the app group can render and code them.
 
@@ -337,7 +337,7 @@ class TestCliErrorHandler:
         """
         wrapped = self._decorate_raiser(exception)
 
-        with pytest.raises(click.UsageError) as exc_info:
+        with pytest.raises(UsageError) as exc_info:
             wrapped()
 
         assert exc_info.value is exception
@@ -352,7 +352,7 @@ class TestCliErrorHandler:
         only bypassed the command's Display entirely. A quiet Display proves
         which path ran: it suppresses the hint, the bare-echo fallback does not.
         """
-        ctx = click.Context(click.Command("stub"))
+        ctx = typer.Context(TyperCommand("stub"))
         ctx.obj = CliContext(
             settings=Settings(), display=Display(color="never", quiet=True)
         )
