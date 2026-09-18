@@ -218,6 +218,29 @@ class InteractiveModeRequiresTtyError(BoilerplateError):
         )
 
 
+class DestinationRequiredError(BoilerplateError):
+    """Raised when a non-interactive render names no destination.
+
+    Raised by the ``new`` command before its Copier invocation. With no
+    prompt to ask, the only fallback would be the current directory, and a
+    render into whatever directory a pipeline happens to run in is the
+    outcome docs/design/05-cli-reference.md (Destination behavior) rules out.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initializes with default error code BP_INPUT_DEST_REQUIRED."""
+        super().__init__(
+            message,
+            error_code="BP_INPUT_DEST_REQUIRED",
+            remediation=kwargs.pop(
+                "remediation",
+                "Pass the destination directory as the second argument: "
+                "boilerplate new <template> <destination>.",
+            ),
+            **kwargs,
+        )
+
+
 class InteractiveRenderFailedError(BoilerplateError):
     """Raised when Copier's prompt machinery failed because prompting is impossible.
 

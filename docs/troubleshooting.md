@@ -66,6 +66,7 @@ Symptoms include the Test Explorer showing no tests, or `uv run pytest` passing 
 
 Boilerplate's render pipeline emits phase-tagged error codes (`BP_RENDER_*`, `BP_INPUT_*`) for problems around destination state, required answers, and interactive-prompt failures. The code appears as a bracketed suffix on the `Error:` line alongside a remediation hint; see [Error codes](cli.md#error-codes) for the fix for each.
 
+- [`BP_INPUT_DEST_REQUIRED`](cli.md#error-codes) — non-interactive render names no destination.
 - [`BP_INPUT_ANSWERS_MISSING`](cli.md#error-codes) — non-interactive render cannot proceed: a question has no default and no supplied value.
 - [`BP_INPUT_DATA_INVALID`](cli.md#error-codes) — `--data`/`--data-file` could not be parsed.
 - [`BP_INPUT_TTY_REQUIRED`](cli.md#error-codes) — interactive render without a terminal.

@@ -16,6 +16,7 @@ from boilerplate.common.exceptions import (
     ActionRequiredError,
     BoilerplateError,
     DestinationNotEmptyError,
+    DestinationRequiredError,
     DirectoryValidationError,
     InteractiveModeRequiresTtyError,
     InvalidDataError,
@@ -126,6 +127,7 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
                 remediation=e.remediation,
             )
         except (
+            DestinationRequiredError,
             InteractiveModeRequiresTtyError,
             InvalidDataError,
             InvalidVersionError,
