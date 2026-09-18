@@ -65,7 +65,7 @@ The merged `_jinja_extensions` union (see [What gets merged](reference/merging.m
 
 See the [command table](#cli-specified-vs-implemented) below for the specified-vs-implemented command areas.
 
-- :material-check-circle:{ .status-shipped } Global options (`--verbose/--quiet/--color/--ci/--version`) and a "did-you-mean" typo helper (`cli/cli.py`)
+- :material-check-circle:{ .status-shipped } Global options (`--verbose/--quiet/--color/--ci/--version`) and Typer's own did-you-mean on a mistyped command
 - :material-circle-outline:{ .status-design } Design 05's confirmation contracts (plan-then-prompt for mutating commands) — no code; sequencing in the [backlog](roadmap.md#backlog)
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
