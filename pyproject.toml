@@ -25,9 +25,6 @@ dependencies = [
     # range is bounded to versions whose internal module layout we have tested.
     "copier>=9.15,<10",
     "copier-template-extensions>=0.3.3",
-    # click is typer's engine, but cli.py subclasses TyperGroup and codes
-    # against click's command-resolution API directly, so pin our own floor.
-    "click>=8.1",
     "jinja2>=3.1",
     "packaging>=24",
     "pydantic>=2.10",
@@ -35,7 +32,8 @@ dependencies = [
     "python-slugify>=8.0.4",
     "pyyaml>=6.0",
     "rich>=13.9.4",
-    "typer>=0.15.1",
+    # 0.26 vendored Click; cli/engine.py names the three vendored objects the CLI needs.
+    "typer>=0.26",
 ]
 
 [project.urls]
