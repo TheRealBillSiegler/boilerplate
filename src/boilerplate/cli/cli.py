@@ -191,7 +191,7 @@ def main(
     ci: bool = typer.Option(
         False,
         "--ci",
-        help="CI mode: implies --quiet --non-interactive --yes --no-tasks.",
+        help="CI mode: implies --non-interactive --yes --no-tasks.",
     ),
     _version: bool = typer.Option(
         False,
@@ -214,11 +214,9 @@ def main(
     # (ADR-013 rationale).
     ci = ci or env_flag("BOILERPLATE_CI")
 
-    # --ci implies --quiet; the remaining implications (--non-interactive,
-    # --yes, --no-tasks) are honored by subcommands via CliContext.ci_mode.
-    if ci:
-        quiet = True
-
+    # The --ci implications (--non-interactive, --yes, --no-tasks) are honored
+    # by subcommands via CliContext.ci_mode. Output volume is not one of them:
+    # a pipeline that wants debug logs passes --ci --verbose.
     ensure_verbose_quiet_exclusive(verbose, quiet)
 
     # Bootstrap runtime once for subcommands, attach to Typer context.

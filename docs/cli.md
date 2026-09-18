@@ -14,7 +14,7 @@ Every environment variable the CLI reads. The generic `CI` variable is never rea
 
 | Variable | Effect | Where it's read |
 | --- | --- | --- |
-| `BOILERPLATE_CI` | Same as the global `--ci` flag: forces CI mode (quiet, non-interactive, auto-yes, no post-render tasks) and one-JSON-object-per-event logs on stderr. | `boilerplate.cli.cli` |
+| `BOILERPLATE_CI` | Same as the global `--ci` flag: forces CI mode (non-interactive, auto-yes, no post-render tasks) and one-JSON-object-per-event logs on stderr. | `boilerplate.cli.cli` |
 | `BOILERPLATE_NON_INTERACTIVE` | Same as `boilerplate new --non-interactive`: renders without prompting. | `boilerplate.cli.commands.new` |
 | `BOILERPLATE_ACCESSIBLE` | Same as `--color never`: forces color-free output. | `boilerplate.cli.display.core` |
 | `NO_COLOR` | The standard color-disable convention; disables console color and switches log output from Rich to one JSON object per event. | `boilerplate.cli.display.core`, `boilerplate.logging_config` |

@@ -187,13 +187,25 @@ class TestBoilerplateCiEnvVar:
             is False
         )
 
-    def test_env_var_ci_implies_quiet_conflicts_with_verbose(
+    def test_ci_and_verbose_combine(
         self, monkeypatch: pytest.MonkeyPatch, typer_cli_runner: CliRunner
     ) -> None:
-        """BOILERPLATE_CI forces --quiet, same as --ci, so it clashes with --verbose."""
-        monkeypatch.setenv("BOILERPLATE_CI", "1")
-        result = typer_cli_runner.invoke(cli.app, ["--verbose", "list"])
-        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        """CI mode does not imply --quiet, so a pipeline can ask for debug logs.
+
+        docs/design/05-cli-reference.md desugars --ci to --non-interactive
+        --yes --no-tasks and nothing about output volume.
+        """
+        called: dict[str, bool] = {}
+
+        def fake_configure_logging(debug: bool = False, ci: bool = False) -> None:
+            called.update(debug=debug, ci=ci)
+
+        monkeypatch.setattr(cli, "configure_logging", fake_configure_logging)
+
+        result = typer_cli_runner.invoke(cli.app, ["--ci", "--verbose", "version"])
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        assert called == {"debug": True, "ci": True}
 
 
 class TestReconfigureStdioEncoding:
