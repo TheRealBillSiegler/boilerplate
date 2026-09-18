@@ -68,6 +68,7 @@ When new error conditions are identified during implementation, they MUST be add
 | `BP_INPUT_FORCE_REQUIRED` | error | no | A multi-layer render in non-interactive mode requires `--force`. Exit code 3. Attribution: User |
 | `BP_INPUT_ANSWERS_MISSING` | error | no | Non-interactive render cannot proceed: required questions have no default and no supplied answer. Exit code 3. Attribution: User / Template Author |
 | `BP_INPUT_TTY_REQUIRED` | error | no | Interactive render requested but stdin is not a TTY, so prompts can never be answered. Exit code 3. Attribution: User |
+| `BP_INPUT_DEST_REQUIRED` | error | no | Non-interactive render names no destination; the current directory is never assumed. Exit code 3. Attribution: User |
 | `BP_INPUT_DATA_INVALID` | error | no | `--data`/`--data-file` input fails validation: a malformed or empty `--data` key, an underscore-prefixed (Copier-reserved) key, an unreadable or non-UTF-8 `--data-file`, invalid YAML, a non-mapping document, or a non-string YAML key. Exit code 3. Attribution: User |
 | `BP_CONFIG_DIR_INVALID` | error | no | A required directory path is missing, not a directory, or otherwise invalid. Exit code 2. Attribution: User |
 | `BP_CONFIG_PROFILE_INVALID` | error | no | `profile.toml` exists but is not valid TOML, or a reserved section is not a table. Exit code 1. Attribution: User |

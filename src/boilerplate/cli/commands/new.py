@@ -21,6 +21,7 @@ from boilerplate.cli.types import TextFormat
 from boilerplate.cli.utils import cli_error_handler, compute_composition
 from boilerplate.common.env import env_flag
 from boilerplate.common.exceptions import (
+    DestinationRequiredError,
     InteractiveModeRequiresTtyError,
     InvalidDataError,
 )
@@ -31,8 +32,11 @@ from boilerplate.settings.profile import load_profile
 from boilerplate.types import TemplateSpecifier
 
 DESTINATION_ARG = typer.Argument(
-    Path(),
-    help="Destination directory for the new project (defaults to current directory).",
+    None,
+    help=(
+        "Destination directory for the new project. Prompted for when omitted "
+        "interactively; required otherwise."
+    ),
 )
 DATA_OPTION = typer.Option(
     None,
@@ -141,6 +145,38 @@ def _require_tty_for_interactive(*, non_interactive: bool, dry_run: bool) -> Non
         "Interactive mode requires a terminal, but stdin is not a TTY "
         "(CI, piped input, or a session without a console)."
     )
+
+
+def _resolve_destination(
+    destination: Path | None, *, non_interactive: bool, dry_run: bool
+) -> Path:
+    """Returns the destination, prompting for it when interactive and absent.
+
+    The current directory is never assumed for a render: a pipeline that
+    forgot the argument must fail, not write into wherever it happens to run.
+    A dry run writes nothing, so it reports the working directory instead.
+
+    Args:
+        destination: The positional argument, or ``None`` when omitted.
+        non_interactive: Effective non-interactive flag after --ci/--yes
+            composition.
+        dry_run: Whether --dry-run was passed.
+
+    Returns:
+        The directory to render into.
+
+    Raises:
+        DestinationRequiredError: No destination and no prompt possible.
+    """
+    if destination is not None:
+        return destination
+    if dry_run:
+        return Path()
+    if non_interactive:
+        raise DestinationRequiredError(
+            "destination is required in non-interactive mode."
+        )
+    return Path(typer.prompt("Destination directory"))
 
 
 def _validate_data_key(key: object, source: str) -> None:
@@ -286,7 +322,7 @@ def new(
     template_spec: str = typer.Argument(
         ..., help="Template specifier (name or name@version)."
     ),
-    destination: Path = DESTINATION_ARG,
+    destination: Path | None = DESTINATION_ARG,
     force: bool = typer.Option(
         False,
         "--force",
@@ -334,9 +370,9 @@ def new(
         no_tasks=no_tasks,
     )
     _require_tty_for_interactive(non_interactive=non_interactive, dry_run=dry_run)
-
-    # Resolve destination directory (no log - obvious)
-    dest_dir = destination
+    dest_dir = _resolve_destination(
+        destination, non_interactive=non_interactive, dry_run=dry_run
+    )
 
     if templates_dir:
         _logger.debug("Using user-specified template root: %s", templates_dir)
@@ -402,8 +438,8 @@ def new(
     if not json_mode:
         display.info(f"Rendering to {dest_dir}...")
     template_info = render_engine.render(composition, execution_ctx)
-    if destination.exists() and force:
-        _logger.debug("Overwrite applied due to --force: %s", destination)
+    if dest_dir.exists() and force:
+        _logger.debug("Overwrite applied due to --force: %s", dest_dir)
 
     if json_mode:
         display.write(

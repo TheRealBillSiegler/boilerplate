@@ -269,7 +269,7 @@ def test_new_validates_template_directory_behavior(
     monkeypatch.setattr(validation_function, track_validate_directory)
 
     result = typer_cli_runner.invoke(
-        app, ["new", "foo", "--templates-dir", str(fake_path)]
+        app, ["new", "foo", str(tmp_path / "dest"), "--templates-dir", str(fake_path)]
     )
 
     # Verify behavior: validator was called with correct path
@@ -342,6 +342,7 @@ def test_new_flag_to_options_mapping(
 def test_new_handles_render_failure_behavior(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
+    temp_project_dir: Path,
     mocker: MockerFixture,
 ) -> None:
     """Tests that render failures are properly propagated to user."""
@@ -349,7 +350,14 @@ def test_new_handles_render_failure_behavior(
     mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
     mock_render_engine.return_value.render.side_effect = RuntimeError("copy failed")
     result = typer_cli_runner.invoke(
-        app, ["new", "mytpl", "--templates-dir", str(fake_template_dir)]
+        app,
+        [
+            "new",
+            "mytpl",
+            str(temp_project_dir),
+            "--templates-dir",
+            str(fake_template_dir),
+        ],
     )
     # Focus on behavior: error message propagation
     assert "copy failed" in result.output
@@ -1001,6 +1009,95 @@ class TestNonTtyGuard:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+        )
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        assert "Dry run" in result.output
+
+
+class TestDestination:
+    """The current directory is never assumed; a render needs a named destination.
+
+    docs/design/05-cli-reference.md, Destination behavior: provided or
+    prompted, and non-interactive without one exits 3.
+    """
+
+    def test_non_interactive_without_destination_exits_validation_error(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch("boilerplate.cli.commands.new.compute_composition")
+        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
+
+        result = typer_cli_runner.invoke(
+            app,
+            [
+                "new",
+                "mytpl",
+                "--non-interactive",
+                "--templates-dir",
+                str(fake_template_dir),
+            ],
+        )
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
+        assert "destination is required in non-interactive mode" in result.output
+        assert "BP_INPUT_DEST_REQUIRED" in result.output
+        mock_render_engine.return_value.render.assert_not_called()
+
+    def test_ci_without_destination_exits_validation_error(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch("boilerplate.cli.commands.new.compute_composition")
+        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
+
+        result = typer_cli_runner.invoke(
+            app, ["--ci", "new", "mytpl", "--templates-dir", str(fake_template_dir)]
+        )
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
+        mock_render_engine.return_value.render.assert_not_called()
+
+    @pytest.mark.usefixtures("interactive_tty")
+    def test_interactive_without_destination_prompts_for_it(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch("boilerplate.cli.commands.new.compute_composition")
+        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
+
+        result = typer_cli_runner.invoke(
+            app,
+            ["new", "mytpl", "--templates-dir", str(fake_template_dir)],
+            input=f"{temp_project_dir}\n",
+        )
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        execution_ctx = mock_render_engine.return_value.render.call_args[0][1]
+        assert execution_ctx.destination == temp_project_dir
+
+    def test_dry_run_without_destination_reports_the_working_directory(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch(
+            "boilerplate.cli.commands.new._stdin_supports_prompts",
+            return_value=False,
+        )
+
+        result = typer_cli_runner.invoke(
+            app,
+            ["new", "mytpl", "--dry-run", "--templates-dir", str(fake_template_dir)],
         )
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
