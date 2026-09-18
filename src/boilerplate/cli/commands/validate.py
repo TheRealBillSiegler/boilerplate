@@ -23,6 +23,7 @@ from pydantic_core import ErrorDetails
 from typer import Context
 from yaml.nodes import MappingNode, Node, ScalarNode
 
+from boilerplate.cli.types import TextFormat
 from boilerplate.cli.utils import cli_error_handler
 from boilerplate.common.yaml_loading import load_yaml
 from boilerplate.constants import ExitCode
@@ -306,7 +307,7 @@ def _check_answers_file_stub(template_dir: Path, meta: _MetaFile) -> _CheckResul
 TEMPLATE_DIR_ARG = typer.Argument(
     ..., help="Path to the template directory to validate."
 )
-FORMAT_OPTION = typer.Option(None, "--format", help="Output format: json.")
+FORMAT_OPTION = typer.Option(TextFormat.TEXT, "--format", help="Output format.")
 STRICT_OPTION = typer.Option(False, "--strict", help="Treat warnings as errors.")
 
 
@@ -314,7 +315,7 @@ STRICT_OPTION = typer.Option(False, "--strict", help="Treat warnings as errors."
 def validate(
     ctx: Context,
     template_dir: Path = TEMPLATE_DIR_ARG,
-    format: str | None = FORMAT_OPTION,
+    format: TextFormat = FORMAT_OPTION,
     strict: bool = STRICT_OPTION,
 ) -> None:
     """Validates that a template directory is well-formed."""
@@ -341,7 +342,7 @@ def validate(
     warnings = sum(1 for c in checks if c.status == _STATUS_WARN)
     errors = sum(1 for c in checks if c.status == _STATUS_FAIL)
 
-    if format == "json":
+    if format is TextFormat.JSON:
         display.write(
             json.dumps(
                 {

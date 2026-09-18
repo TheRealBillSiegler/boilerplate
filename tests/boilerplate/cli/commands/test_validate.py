@@ -1,11 +1,13 @@
 """Tests for `boilerplate validate` command."""
 
+import re
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from boilerplate.cli import app
+from boilerplate.constants import ExitCode
 
 _BOILERPLATE_YML = """\
 name: "demo"
@@ -285,3 +287,19 @@ class TestBoilerplateYmlCustomTags:
 
         assert result.exit_code == 1
         assert "boilerplate.yml no custom tags" in result.output
+
+
+class TestFormatOption:
+    """An unknown --format value is rejected instead of silently ignored."""
+
+    def test_rejects_an_unknown_format(
+        self, typer_cli_runner: CliRunner, tmp_path: Path
+    ) -> None:
+        result = typer_cli_runner.invoke(
+            app, ["validate", str(tmp_path), "--format", "xml"]
+        )
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert "Invalid value for '--format'" in " ".join(
+            re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
+        )

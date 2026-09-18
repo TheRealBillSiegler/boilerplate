@@ -1,6 +1,7 @@
 """Command to list available Boilerplate templates."""
 
 import json
+from enum import StrEnum
 from logging import getLogger
 from pathlib import Path
 
@@ -17,14 +18,25 @@ from boilerplate.constants import ExitCode
 
 _logger = getLogger(__name__)
 
-FORMAT_OPTION = typer.Option(None, "--format", help="Output format: json.")
+
+class ListFormat(StrEnum):
+    """Output formats for the template listing."""
+
+    TABLE = "table"
+    JSON = "json"
+    WIDE = "wide"
+
+
+FORMAT_OPTION = typer.Option(
+    ListFormat.TABLE, "--format", help="Output format. wide adds each template's path."
+)
 
 
 @cli_error_handler
 def list_templates(
     ctx: Context,
     templates_dir: Path = TEMPLATES_DIR_OPTION,
-    format: str | None = FORMAT_OPTION,
+    format: ListFormat = FORMAT_OPTION,
 ) -> None:
     """Lists all templates found in the registry."""
     cli_context = ctx.obj
@@ -35,13 +47,13 @@ def list_templates(
     template_infos = registry.list_all()
 
     if not template_infos:
-        if format == "json":
+        if format is ListFormat.JSON:
             display.write(json.dumps({"templates": [], "error": "No templates found."}))
             raise typer.Exit(code=ExitCode.FAILURE)
         display.error("No templates found.")
         raise typer.Exit(code=ExitCode.FAILURE)
 
-    if format == "json":
+    if format is ListFormat.JSON:
         data = [
             {
                 "name": t.name,
@@ -53,7 +65,9 @@ def list_templates(
         ]
         display.write(json.dumps({"templates": data}))
     else:
-        render_template_table(template_infos, display, show_path=cli_context.verbose)
+        render_template_table(
+            template_infos, display, show_path=format is ListFormat.WIDE
+        )
     _logger.debug("Templates command completed: %d templates", len(template_infos))
 
 
