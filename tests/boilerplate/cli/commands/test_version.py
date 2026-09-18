@@ -1,9 +1,12 @@
 """Tests for `boilerplate version` command."""
 
+import re
+
 import pytest
 from typer.testing import CliRunner
 
 from boilerplate.cli import app
+from boilerplate.constants import ExitCode
 
 
 def test_cli_version_command(
@@ -34,3 +37,15 @@ def test_cli_version_command_with_dev_version(
     result = typer_cli_runner.invoke(app, ["version"])
     assert result.exit_code == 0
     assert "boilerplate 1.0.0-dev+git.abc123" in result.output
+
+
+class TestFormatOption:
+    """An unknown --format value is rejected instead of silently ignored."""
+
+    def test_rejects_an_unknown_format(self, typer_cli_runner: CliRunner) -> None:
+        result = typer_cli_runner.invoke(app, ["version", "--format", "xml"])
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert "Invalid value for '--format'" in " ".join(
+            re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
+        )

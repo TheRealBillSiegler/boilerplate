@@ -1,5 +1,6 @@
 """Tests for `boilerplate new` command."""
 
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1052,3 +1053,19 @@ class TestStdinSupportsPrompts:
             SimpleNamespace(isatty=_raise_closed),
         )
         assert _stdin_supports_prompts() is False
+
+
+class TestFormatOption:
+    """An unknown --format value is rejected instead of silently ignored."""
+
+    def test_rejects_an_unknown_format(
+        self, typer_cli_runner: CliRunner, tmp_path: Path
+    ) -> None:
+        result = typer_cli_runner.invoke(
+            app, ["new", "project", str(tmp_path), "--format", "xml"]
+        )
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert "Invalid value for '--format'" in " ".join(
+            re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
+        )

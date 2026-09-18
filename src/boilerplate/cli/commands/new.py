@@ -17,6 +17,7 @@ import yaml
 from typer import Context
 
 from boilerplate.cli.common import TEMPLATES_DIR_OPTION
+from boilerplate.cli.types import TextFormat
 from boilerplate.cli.utils import cli_error_handler, compute_composition
 from boilerplate.common.env import env_flag
 from boilerplate.common.exceptions import (
@@ -46,6 +47,7 @@ DATA_FILE_OPTION = typer.Option(
     "--data-file",
     help="YAML file mapping question name to forced answer (read as UTF-8).",
 )
+FORMAT_OPTION = typer.Option(TextFormat.TEXT, "--format", help="Output format.")
 
 _logger = getLogger(__name__)
 
@@ -315,7 +317,7 @@ def new(
     ),
     data: list[str] | None = DATA_OPTION,
     data_file: Path | None = DATA_FILE_OPTION,
-    format: str | None = typer.Option(None, "--format", help="Output format: json."),
+    format: TextFormat = FORMAT_OPTION,
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
 ) -> None:
     """Renders the specified template and version into a destination directory."""
@@ -353,7 +355,7 @@ def new(
 
     render_engine = RenderEngine()
 
-    json_mode = format == "json"
+    json_mode = format is TextFormat.JSON
 
     if not json_mode:
         display.info("Resolving dependencies and composing layers...")

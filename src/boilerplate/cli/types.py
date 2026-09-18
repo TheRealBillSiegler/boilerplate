@@ -10,6 +10,13 @@ class DataFormat(StrEnum):
     JSON = "json"
 
 
+class TextFormat(StrEnum):
+    """Output formats for commands whose human-readable output is plain text."""
+
+    TEXT = "text"
+    JSON = "json"
+
+
 class Section(StrEnum):
     """All selectable compose sections."""
 

@@ -1,6 +1,7 @@
 """Tests for `boilerplate templates` command."""
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,32 @@ extends: []
     assert "beta" in result.output
     assert "Description" in result.output
     assert "Version" in result.output
+
+
+def test_templates_list_wide_adds_the_path_column(
+    tmp_path: Path, typer_cli_runner: CliRunner
+):
+    """`--format wide` shows where each template lives; the default does not."""
+    narrow = typer_cli_runner.invoke(app, ["list", "--templates-dir", str(tmp_path)])
+    wide = typer_cli_runner.invoke(
+        app, ["list", "--templates-dir", str(tmp_path), "--format", "wide"]
+    )
+
+    assert "Path" not in narrow.output
+    assert "Path" in wide.output
+
+
+def test_templates_list_rejects_an_unknown_format(
+    tmp_path: Path, typer_cli_runner: CliRunner
+):
+    result = typer_cli_runner.invoke(
+        app, ["list", "--templates-dir", str(tmp_path), "--format", "xml"]
+    )
+
+    assert result.exit_code == ExitCode.VALIDATION_ERROR
+    assert "Invalid value for '--format'" in " ".join(
+        re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
+    )
 
 
 def test_templates_empty_directory_still_lists_bundled(
