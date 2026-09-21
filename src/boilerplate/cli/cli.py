@@ -23,6 +23,7 @@ from boilerplate.cli.commands import (
 )
 from boilerplate.cli.context import CliContext
 from boilerplate.cli.display.core import Display
+from boilerplate.cli.seams import Seams
 from boilerplate.cli.utils import ensure_verbose_quiet_exclusive
 from boilerplate.common.env import env_flag
 from boilerplate.constants import ExitCode
@@ -138,6 +139,7 @@ def _bootstrap_runtime(
     quiet: bool,
     color: str | None,
     ci_mode: bool,
+    seams: Seams,
 ) -> CliContext:
     """Creates and configures the CLI runtime.
 
@@ -145,6 +147,7 @@ def _bootstrap_runtime(
     - Loads Settings with concise error handling
     - Configures logging once, with clear precedence:
       CLI --verbose takes priority; otherwise use settings.debug.
+    - Threads the injected renderer from `seams` into the CliContext.
 
     Note: configure_logging is treated as idempotent; the implementation
     defers to logging.basicConfig, which is a no-op when handlers exist.
@@ -162,6 +165,7 @@ def _bootstrap_runtime(
     return CliContext(
         settings=settings,
         display=display,
+        renderer=seams.renderer,
         verbose=verbose,
         quiet=quiet,
         ci_mode=ci_mode,
@@ -219,8 +223,12 @@ def main(
     # a pipeline that wants debug logs passes --ci --verbose.
     ensure_verbose_quiet_exclusive(verbose, quiet)
 
+    # Pick up an injected Seams (e.g. a test's recording renderer) if one was
+    # passed as `obj` to the runner; otherwise fall back to the real one.
+    seams = ctx.ensure_object(Seams)
+
     # Bootstrap runtime once for subcommands, attach to Typer context.
-    ctx.obj = _bootstrap_runtime(verbose, quiet, color, ci_mode=ci)
+    ctx.obj = _bootstrap_runtime(verbose, quiet, color, ci_mode=ci, seams=seams)
 
 
 # Register commands with grouping for help output
