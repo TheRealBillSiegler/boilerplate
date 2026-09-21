@@ -1,0 +1,119 @@
+name: Mutation score
+
+# Runs mutmut against the pure algorithmic core (see the comment above [tool.mutmut] in
+# pyproject.toml for why cli/ and templates/ are excluded) and enforces the ratchet in
+# scripts/mutation_ratchet.py: a package's mutation score may rise, never fall. This is
+# read-only validation, same as ci.yml — it never opens a pull request or pushes; raising
+# the baseline is a human step, documented in docs/governance/contributing.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: "Comma-separated paths to mutate instead of the configured set, for a cheap trial (e.g. src/boilerplate/common/)."
+        required: false
+        default: ""
+        type: string
+  schedule:
+    # 03:00 UTC on the 1st of every month — a quiet hour, no PR traffic to compete with.
+    - cron: "0 3 1 * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation
+  cancel-in-progress: false
+
+jobs:
+  mutation:
+    name: Mutation score
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen --group mutation
+
+      - name: Narrow mutated paths for a manual trial
+        # mutmut 3 has no CLI flag for this: which files get mutated comes only from
+        # [tool.mutmut] in pyproject.toml, so a cheap trial rewrites that file in place
+        # before running. This sets only_mutate, not source_paths: mutmut removes the
+        # real src/ from sys.path and imports tests against the copy it makes under
+        # mutants/ from source_paths (plus also_copy), so narrowing source_paths itself
+        # would drop the rest of the package tree from that copy and break every
+        # mutant's test run (tests/conftest.py imports boilerplate.cli at collection
+        # time) — see the comment above [tool.mutmut] in pyproject.toml. only_mutate
+        # patterns must end in "*" or ".py", so each directory input gets "/*" appended.
+        # The `paths` input is trusted (workflow_dispatch, triggered by a repo
+        # maintainer), but it still goes through an env var rather than
+        # string-interpolated shell/Python source.
+        if: github.event_name == 'workflow_dispatch' && inputs.paths != ''
+        env:
+          MUTATION_PATHS: ${{ inputs.paths }}
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          raw_paths = [p.strip() for p in os.environ["MUTATION_PATHS"].split(",") if p.strip()]
+          patterns = [p if p.endswith(".py") else p.rstrip("/") + "/*" for p in raw_paths]
+          quoted = ", ".join(f'"{p}"' for p in patterns)
+          only_mutate_line = f"only_mutate = [{quoted}]"
+
+          text = pathlib.Path("pyproject.toml").read_text()
+          if re.search(r"(?m)^only_mutate = \[.*?\]$", text):
+              new_text = re.sub(r"(?m)^only_mutate = \[.*?\]$", lambda _: only_mutate_line, text, count=1)
+          else:
+              new_text = re.sub(
+                  r"(?m)^(source_paths = \[.*?\])$",
+                  lambda m: f"{m.group(1)}\n{only_mutate_line}",
+                  text,
+                  count=1,
+              )
+          if new_text == text:
+              raise SystemExit("Did not find a 'source_paths = [...]' line in pyproject.toml to add only_mutate after")
+          pathlib.Path("pyproject.toml").write_text(new_text)
+          print(f"Set only_mutate to: {quoted}")
+          PY
+
+      - name: Run mutation testing
+        run: uv run mutmut run
+
+      - name: List mutant results
+        # --all takes a value in mutmut 3 rather than acting as a bare flag, so it
+        # needs an explicit "true" (a bare --all would consume the redirect target as
+        # its value instead).
+        run: uv run mutmut results --all true > mutmut-results.txt
+
+      - name: Check mutation-score ratchet
+        # `shell: bash` (rather than the implicit default of plain `bash -e {0}`)
+        # switches this step to `bash --noprofile --norc -eo pipefail {0}`, so the
+        # pipeline below fails on the ratchet script's exit code, not `tee`'s. `tee`
+        # both prints the summary to the job log and writes it to
+        # mutation-summary.txt for the step below.
+        shell: bash
+        run: uv run python scripts/mutation_ratchet.py check --results mutmut-results.txt --write mutation-scores.json | tee mutation-summary.txt
+
+      - name: Write step summary
+        if: always()
+        run: |
+          {
+            echo "## Mutation score ratchet"
+            echo
+            echo '```'
+            cat mutation-summary.txt 2>/dev/null || echo "No summary produced (an earlier step failed first)."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload mutation results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mutation-scores
+          path: |
+            mutation-scores.json
+            mutants/**/*.meta
+          if-no-files-found: warn
+          retention-days: 90

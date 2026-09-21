@@ -53,6 +53,10 @@ uv run python scripts/check.py
 
 The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
 
+### Mutation score ratchet
+
+A separate workflow, [Mutation score](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/mutation.yml), runs mutmut once a month against the pure algorithmic core (composition, common, models, types, repository, settings, catalog, integrations — not the CLI or the Jinja templates) and checks the result against `tests/mutation-baseline.json` with `scripts/mutation_ratchet.py`: a package's score may rise, never fall, and a drop fails the run. Trigger it manually from the Actions tab (`workflow_dispatch`) for a cheap trial on one package by filling in the `paths` input, e.g. `src/boilerplate/common/`. The workflow never opens a PR or pushes; raising the baseline after a genuine improvement is a human step — download the run's `mutation-scores.json` artifact and copy its contents over `tests/mutation-baseline.json` in an ordinary PR.
+
 ### Testing
 
 - Write tests for new features
