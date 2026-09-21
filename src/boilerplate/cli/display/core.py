@@ -93,8 +93,13 @@ class Display:
                 no_color=False,
             )
         elif force_no_color:
-            self.console = Console(theme=self.theme, no_color=True)
-            self.error_console = Console(theme=self.theme, stderr=True, no_color=True)
+            # Rich's no_color keeps bold and dim; color_system=None renders
+            # every style as bare text, which is what never and NO_COLOR
+            # require (docs/design/05-cli-reference.md, Terminal Accessibility).
+            self.console = Console(theme=self.theme, no_color=True, color_system=None)
+            self.error_console = Console(
+                theme=self.theme, stderr=True, no_color=True, color_system=None
+            )
         else:
             self.console = Console(theme=self.theme)
             self.error_console = Console(theme=self.theme, stderr=True)

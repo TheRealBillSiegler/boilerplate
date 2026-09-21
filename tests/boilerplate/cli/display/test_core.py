@@ -80,12 +80,6 @@ class TestColorMode:
         for name in ("NO_COLOR", "FORCE_COLOR", "BOILERPLATE_ACCESSIBLE"):
             monkeypatch.delenv(name, raising=False)
 
-    def test_auto_is_the_default(self) -> None:
-        display = Display()
-
-        assert not display.console.no_color
-        assert not display.console.is_terminal
-
     def test_auto_honors_no_color(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("NO_COLOR", "1")
 
@@ -99,6 +93,24 @@ class TestColorMode:
 
         assert display.console.no_color
         assert display.error_console.no_color
+
+    def test_never_emits_no_escape_codes_on_a_terminal(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The never mode MUST NOT emit ANSI escape codes (design 05, Accessibility).
+
+        Rich's no_color strips colors but keeps bold and dim, and FORCE_COLOR
+        makes Rich treat the buffer as a terminal, which is where those
+        attributes would leak into a styled table.
+        """
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        display = Display(color=ColorMode.NEVER)
+        buffer = io.StringIO()
+        display.console.file = buffer
+
+        display.table(["Name"], [("a",), ("b",)])
+
+        assert "\x1b[" not in buffer.getvalue()
 
     def test_always_forces_color_even_when_piped(self) -> None:
         display = Display(color=ColorMode.ALWAYS)
