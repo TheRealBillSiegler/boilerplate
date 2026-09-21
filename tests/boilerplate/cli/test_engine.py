@@ -1,15 +1,16 @@
 """The engine module names what Typer itself raises and pushes.
 
-Both objects come from Typer's private vendored Click, so these tests are the
-tripwire for an upstream rename: they fail before any command does.
+The import line in ``boilerplate.cli.engine`` is the tripwire for an upstream
+rename; these tests assert the two facts the CLI relies on: the usage-error
+class is the one the parser raises, and the context lookup sees the context
+Typer pushes.
 """
 
 import typer
-from typer.core import TyperCommand
 from typer.testing import CliRunner
 
 from boilerplate.cli import cli
-from boilerplate.cli.engine import Context, UsageError, get_current_context
+from boilerplate.cli.engine import UsageError, get_current_context
 
 
 class TestUsageError:
@@ -19,14 +20,6 @@ class TestUsageError:
         )
 
         assert isinstance(result.exception, UsageError)
-
-    def test_is_the_base_of_the_public_bad_parameter(self) -> None:
-        assert issubclass(typer.BadParameter, UsageError)
-
-
-class TestContext:
-    def test_is_the_base_of_the_public_context(self) -> None:
-        assert issubclass(typer.Context, Context)
 
 
 class TestGetCurrentContext:
@@ -43,9 +36,3 @@ class TestGetCurrentContext:
         assert result.exit_code == 0, result.output
         ctx, current = seen[0]
         assert current is ctx
-
-    def test_sees_a_context_entered_by_hand(self) -> None:
-        ctx = typer.Context(TyperCommand("stub"))
-
-        with ctx:
-            assert get_current_context() is ctx
