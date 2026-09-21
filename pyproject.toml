@@ -65,6 +65,12 @@ dev = [
     "pyte>=0.8.2",
     "mkdocs-llmstxt>=0.5.0",
 ]
+# Separate from dev: mutmut needs os.fork, which native Windows does not have (it
+# refuses to even start there), so Windows contributors must not be forced to resolve
+# it just to run the ordinary test suite.
+mutation = [
+    "mutmut>=3.8",
+]
 
 [project.scripts]
 boilerplate = "boilerplate.cli:app"
@@ -210,3 +216,35 @@ executionEnvironments = [
     { root = "src" },
     { root = "tests", reportUnknownLambdaType = "none", reportMissingParameterType = "none", reportUnknownParameterType = "none" },
 ]
+
+# Mutation testing (scripts/mutation_ratchet.py, .github/workflows/mutation.yml) scores
+# only the pure algorithmic core. `cli/` is excluded because its behaviour is exercised
+# end-to-end through subprocesses that mutmut cannot instrument, so mutating it would
+# yield mostly no-tests noise; `templates/` is excluded because Jinja and copier.yml are
+# not Python. `source_paths` still has to cover the whole tree: mutmut only copies what
+# is listed there into `mutants/`, and `tests/conftest.py` imports `boilerplate.cli` at
+# collection time, so excluding `cli/` there (instead of via `do_not_mutate`) would break
+# every mutant's test run, not just skip scoring it.
+[tool.mutmut]
+source_paths = ["src/"]
+# tests/scripts imports scripts/mutation_ratchet.py by path (it is not installed
+# package code), and mutmut only copies source_paths plus also_copy into mutants/, so
+# without this the mutant test runs can't find the module they import.
+also_copy = ["scripts/"]
+do_not_mutate = [
+    "src/boilerplate/cli/*",
+    "src/boilerplate/templates/*",
+    "src/boilerplate/__init__.py",
+    "src/boilerplate/__main__.py",
+    "src/boilerplate/constants.py",
+    "src/boilerplate/logging_config.py",
+]
+pytest_add_cli_args_test_selection = ["tests/"]
+# The suite's own addopts (-n auto --dist loadgroup, from [tool.pytest.ini_options]
+# above) get inherited because mutmut copies this pyproject.toml into mutants/ by
+# default, and pytest reads addopts from whichever ini file it finds first walking up
+# from its cwd. pytest-xdist workers cannot fork again from inside mutmut's own forked
+# mutant runner. A `-n` given on the command line overrides one from addopts (pytest
+# concatenates ini and CLI args in that order, and a store-type option keeps only the
+# last occurrence), so adding `-n 0` here is enough; the rest of addopts is unaffected.
+pytest_add_cli_args = ["-n", "0"]
