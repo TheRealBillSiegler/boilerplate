@@ -2,8 +2,8 @@
 
 A failure caught here costs seconds; the same failure in CI costs a full
 billed run plus the rerun after the fix. Mirrors the lint, typecheck, test,
-and docs jobs in ``.github/workflows/ci.yml`` (the package smoke test and
-ShellCheck are CI-only).
+and docs jobs in ``.github/workflows/ci.yml`` (the package smoke test,
+ShellCheck, and the new-tests-go-red check are CI-only).
 
 Usage:
     uv run python scripts/check.py

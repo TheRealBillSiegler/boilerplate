@@ -63,6 +63,8 @@ A separate workflow, [Mutation score](https://github.com/TheRealBillSiegler/boil
 - Use descriptive test names
 - Include integration tests for CLI commands
 
+When you add a test alongside a `src/` change, make it fail against the old code first, then land the fix — the standard red-green cycle. CI enforces this: see [New tests go red](./ci.md#new-tests-go-red) for the mechanics. Renaming a test function in place (same file, new name) looks like adding a new one to that check, so give the renamed test a fresh red run too — moving or renaming the whole file is handled automatically.
+
 ### Documentation
 
 - Update relevant documentation
