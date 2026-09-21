@@ -10,7 +10,7 @@ At every zoom level — site map, section order, page, paragraph — the reader 
 
 ## The site — information architecture
 
-1. **Sections are audiences on a journey** — arrive → evaluate → act → master → contribute. A page joins the section whose reader needs it; topic never overrides audience.
+1. **Sections are stages of one journey** — arrive → evaluate → act → master → contribute. A page joins the stage at which the reader needs it; the need at hand decides, never the topic and never a fixed reader label.
 2. **Nav order is the curriculum.** The prev/next chain (in `mkdocs.yml` nav) is a designed route; a page may assume everything before it in its section and nothing after it.
 3. **Every section orients at the door** — an index page saying what's here, who it's for, and where to start.
 
