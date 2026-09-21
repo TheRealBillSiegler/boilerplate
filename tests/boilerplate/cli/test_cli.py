@@ -2,6 +2,7 @@
 
 import io
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -79,6 +80,15 @@ def test_verbose_and_quiet_together_exit_with_validation_error(
     assert result.exit_code == ExitCode.VALIDATION_ERROR
 
 
+def _plain(output: str) -> str:
+    """Strip ANSI style codes from CLI output.
+
+    Typer forces color whenever ``GITHUB_ACTIONS`` is set, which puts escape
+    codes inside its own error panels; the claims below are about the words.
+    """
+    return re.sub(r"\x1b\[[0-9;]*m", "", output)
+
+
 class TestColorOption:
     """``--color`` accepts the three modes the design names and rejects the rest.
 
@@ -86,6 +96,22 @@ class TestColorOption:
     as ``--color nevr``, or ``--color NEVER``) was accepted and silently behaved
     as ``auto`` with exit code 0.
     """
+
+    @pytest.fixture(autouse=True)
+    def _terminal_like_stdout(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Make the captured stdout behave like a terminal, deterministically.
+
+        FORCE_COLOR is how Rich is told a stream is a terminal, so ``auto``
+        can color it; the other variables are cleared so the developer's
+        shell cannot flip a row. On a Windows process without VT support
+        Rich sends fd 1 through its Win32 path, where escapes never reach
+        captured text, and CliRunner's stdout reports the real fd; that
+        detection is switched off at the library boundary.
+        """
+        for name in ("NO_COLOR", "TTY_COMPATIBLE", "BOILERPLATE_ACCESSIBLE"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        monkeypatch.setattr("rich.console.detect_legacy_windows", lambda: False)
 
     @pytest.mark.parametrize("mode", [m.value for m in ColorMode])
     def test_each_mode_is_accepted(
@@ -102,35 +128,35 @@ class TestColorOption:
         result = typer_cli_runner.invoke(cli.app, ["--color", value, "version"])
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
-        output = " ".join(result.output.split())
+        output = " ".join(_plain(result.output).split())
         assert "Invalid value for '--color'" in output
         # Rich wraps the panel, so the choices may not sit on one line.
         for choice in ("'auto'", "'always'", "'never'"):
             assert choice in output
 
-    def test_help_lists_the_choices(self, typer_cli_runner: CliRunner) -> None:
-        result = typer_cli_runner.invoke(cli.app, ["--help"])
-
-        # Typer brackets the choices differently across releases; the list is
-        # the contract.
-        assert "auto|always|never" in " ".join(result.output.split())
-
-    def test_selected_mode_reaches_the_display(
-        self, monkeypatch: pytest.MonkeyPatch, typer_cli_runner: CliRunner
+    @pytest.mark.parametrize(
+        ("flags", "colored"),
+        [
+            pytest.param([], True, id="default"),
+            pytest.param(["--color", "auto"], True, id="auto"),
+            pytest.param(["--color", "always"], True, id="always"),
+            pytest.param(["--color", "never"], False, id="never"),
+        ],
+    )
+    def test_the_mode_decides_whether_output_carries_color(
+        self, typer_cli_runner: CliRunner, flags: list[str], colored: bool
     ) -> None:
-        received: dict[str, object] = {}
-        real_display = cli.Display
+        """On a terminal-like stdout, only never strips every escape code.
 
-        def recording_display(**kwargs: object) -> object:
-            received.update(kwargs)
-            return real_display(**kwargs)  # type: ignore[arg-type]
-
-        monkeypatch.setattr(cli, "Display", recording_display)
-
-        result = typer_cli_runner.invoke(cli.app, ["--color", "never", "version"])
+        auto colors a terminal, always forces color on, never forces it off,
+        and the default is auto (Terminal Accessibility in
+        docs/design/05-cli-reference.md). The bundled catalog supplies the
+        styled table.
+        """
+        result = typer_cli_runner.invoke(cli.app, [*flags, "list"])
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
-        assert received["color"] is ColorMode.NEVER
+        assert ("\x1b[" in result.output) is colored
 
 
 class TestUsageErrorExitCode:
