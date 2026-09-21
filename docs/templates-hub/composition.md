@@ -147,4 +147,4 @@ Before publishing:
 ☐ Launch/debug assets only when necessary
 ```
 
-Return to the [Templates Hub](index.md) · See the [Authoring guide](authoring.md)
+Return to the [Templates Hub](index.md) · See the [Authoring guide](authoring.md) · Next: [Versioning and migration](versioning.md)

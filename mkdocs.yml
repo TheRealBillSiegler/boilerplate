@@ -15,7 +15,6 @@ exclude_docs: |
 # journey entered via their section index.
 not_in_nav: |
   intentions/README.md
-  governance/migration-guide-template.md
   templates-hub/streamlit/deployment/containers/building-container-images.md
   templates-hub/streamlit/deployment/containers/environment-setup.md
   templates-hub/streamlit/deployment/containers/pushing-container-images.md
@@ -187,6 +186,8 @@ nav:
       - Container deployment: templates-hub/streamlit/deployment/containers/index.md
     - Template Authoring: templates-hub/authoring.md
     - Template Composition: templates-hub/composition.md
+    - Versioning and Migration: templates-hub/versioning.md
+    - Migration Guide Template: templates-hub/migration-guide-template.md
   - CLI:
     - cli-overview.md
     - Examples: cli-examples.md
@@ -240,6 +241,5 @@ nav:
     - Roadmap: roadmap.md
     - CI Pipeline: governance/ci.md
     - Versioning & Compatibility: governance/versioning.md
-    - Template Versioning: governance/template-versioning.md
     - Security Policy: governance/security.md
     - License: about/license.md

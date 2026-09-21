@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the umbrella policy for how Boilerplate is versioned and how it manages backward-incompatible change across the CLI, configuration/profiles, and the Python API. Template-specific versioning and migrations live in the [Template Versioning & Migration Policy](./template-versioning.md).
+This is the umbrella policy for how Boilerplate is versioned and how it manages backward-incompatible change across the CLI, configuration/profiles, and the Python API. Template-specific versioning and migrations live in [Versioning and migration](../templates-hub/versioning.md).
 
 **Principle**: [Semantic Versioning 2.0.0](https://semver.org/) — `MAJOR.MINOR.PATCH`. A breaking change requires a major bump paired with a migration path.
 
@@ -121,7 +121,7 @@ Every release should keep a backward-compatibility suite that pins the surfaces 
 - Bumped a dependency to address a CVE
 ```
 
-For a CLI breaking change, also publish a migration guide — what changed, why, and how to update scripts — using the [Migration Guide Template](./migration-guide-template.md).
+For a CLI breaking change, also publish a migration guide — what changed, why, and how to update scripts — using the [Migration Guide Template](../templates-hub/migration-guide-template.md).
 
 ---
 
@@ -135,11 +135,11 @@ The authoritative description of the **current** command surface is the [CLI Ref
 
 ## Related documents
 
-- [Template Versioning & Migration Policy](./template-versioning.md) — template versioning, Copier migrations, composition constraints
-- [Migration Guide Template](./migration-guide-template.md) — reusable skeleton for a template migration guide
+- [Versioning and migration](../templates-hub/versioning.md) — template versioning, Copier migrations, composition constraints
+- [Migration Guide Template](../templates-hub/migration-guide-template.md) — reusable skeleton for a template migration guide
 - [Contributing Guidelines](./contributing.md)
 - [Design Spec — CLI Reference](../design/05-cli-reference.md) — target CLI surface and behavior (current surface: [CLI Reference](../cli.md))
 
 ---
 
-[← Back to Governance](contributing.md)
+[← Back to Contribute](../contribute.md)
