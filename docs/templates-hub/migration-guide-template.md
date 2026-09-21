@@ -5,10 +5,10 @@ Use this template when documenting breaking changes in **Boilerplate templates**
 !!! info "Important"
     This template is for **template migrations** (projects updating to new template versions via `copier update`).
 
-    - For **CLI tool** migration guides (command renames, option changes), see the [Versioning & Compatibility Policy](./versioning.md).
-    - For context on both template and CLI migration approaches, see [Versioning & Compatibility Policy § Two Breaking-Change Paths](./versioning.md#two-breaking-change-paths).
+    - For **CLI tool** migration guides (command renames, option changes), see the [Versioning & Compatibility Policy](../governance/versioning.md).
+    - For context on both template and CLI migration approaches, see [Versioning & Compatibility Policy § Two Breaking-Change Paths](../governance/versioning.md#two-breaking-change-paths).
 
-**Reference**: [Template Versioning Policy—Semantic versioning and compatibility](./template-versioning.md)
+**Reference**: [Versioning and migration](./versioning.md)
 
 ---
 
@@ -44,7 +44,6 @@ Copier handles this migration automatically when you update your project:
 ```powershell
 # Update to latest template version
 copier update
-# (future) boilerplate update — not yet shipped, see design/adr-007-update-model.md
 ```
 
 ### What the automation does
@@ -54,7 +53,7 @@ The update process will:
 1. **Update configuration**: Automatically transform `<old_config>` to `<new_config>` format.
 2. **Rename files**: Move `old_structure/` to `new_structure/` preserving your customizations.
 3. **Update imports**: Replace deprecated import paths with new ones in `.py` files.
-4. **Merge conflicts**: Present interactive prompts for conflicting customizations.
+4. **Merge conflicts**: Leave conflict markers in files where your customizations and the template change overlap.
 
 **No manual intervention needed** for these transformations.
 
@@ -133,7 +132,7 @@ Then open an issue with:
 
 ### Merge conflicts during automated update
 
-**Symptom**: Copier reports conflicts and stops the update.
+**Symptom**: Copier leaves conflict markers and exits 0.
 
 **Cause**: Your customizations conflict with template changes.
 
@@ -217,3 +216,7 @@ _For latest updates, see the [release notes](link)._
 - [ ] Specify deprecation timeline (when old version ends support).
 - [ ] Test the automated migration on a sample project before publishing.
 - [ ] Have a Boilerplate maintainer review before merging.
+
+## Where next
+
+Return to [Versioning and migration](versioning.md) for the policy this template documents, and hand the finished guide off through [Versioning & compatibility](../governance/versioning.md).
