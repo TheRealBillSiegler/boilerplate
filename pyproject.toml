@@ -127,6 +127,9 @@ select = [
     "FURB", # refurb: general code improvements
     "RUF",  # Ruff-specific rules
 ]
+# The Google convention below disables D401; the house style is imperative
+# summaries repo-wide (AGENTS.md, Types and docs), so it is re-enabled here.
+extend-select = ["D401"]
 
 ignore = [
     # Ruff formatter will fix these rules.
