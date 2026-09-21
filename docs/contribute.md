@@ -10,6 +10,5 @@ Set up for development, understand the pipeline, and the policies that govern th
 - **[Roadmap](roadmap.md)** — the sequencing and phase gates for what ships next.
 - **[CI Pipeline](governance/ci.md)** — what runs on every push and pull request, and why.
 - **[Versioning & Compatibility](governance/versioning.md)** — the SemVer policy for this project.
-- **[Template Versioning](governance/template-versioning.md)** — the migration policy for generated projects.
 - **[Security Policy](governance/security.md)** — how to report a vulnerability.
 - **[License](about/license.md)** — the project's license.

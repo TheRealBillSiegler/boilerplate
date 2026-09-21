@@ -106,7 +106,7 @@ The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
 When contributing breaking changes, follow Boilerplate's versioning and deprecation policies:
 
 - **CLI changes**: Follow the [Versioning & Compatibility Policy](./versioning.md) — deprecate for at least one minor version before removal
-- **Template changes**: Follow the [Template Versioning & Migration Policy](./template-versioning.md) — provide automated migration via Copier scripts
+- **Template changes**: Follow [Versioning and migration](../templates-hub/versioning.md) — provide automated migration via Copier scripts
 - **Approval & deprecation**: See the [Versioning & Compatibility Policy § Breaking-Change Approval](./versioning.md#breaking-change-approval) for the approval process and deprecation guidelines
 
 ## Architecture

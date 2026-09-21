@@ -117,7 +117,7 @@ Directory names can also use Jinja2 variables: `{{package_name}}/` expands to th
 
 ## Keeping a project's work
 
-A project generated from your template is a git repository, and `copier update` reads it as one: it refuses a dirty tree, diffs against the index, and merges through it. Anything outside that index is invisible to the merge. Three habits follow; the rules themselves are in [Template versioning](../governance/template-versioning.md#authoring-rules).
+A project generated from your template is a git repository, and `copier update` reads it as one: it refuses a dirty tree, diffs against the index, and merges through it. Anything outside that index is invisible to the merge. Three habits follow; the rules themselves are in [Template versioning](versioning.md#authoring-rules).
 
 ### Rename through a staged move
 

@@ -5,7 +5,7 @@ paths:
 
 # Bundled template tenets
 
-Policy: `docs/governance/template-versioning.md` §Authoring rules. How-to, with the worked migration entry: `docs/templates-hub/authoring.md` §Keeping a project's work.
+Policy: `docs/templates-hub/versioning.md` §Authoring rules. How-to, with the worked migration entry: `docs/templates-hub/authoring.md` §Keeping a project's work.
 
 Neither the policy nor the how-to auto-loads when you edit a template. These two carry the most cost if missed:
 

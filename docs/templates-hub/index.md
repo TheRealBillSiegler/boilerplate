@@ -15,7 +15,7 @@ Choose a template. See what's available. Jump to deeper docs when you need them.
 
 List locally: `boilerplate list`
 
-Authoring a custom template? See the [Authoring guide](authoring.md) and [Composition guide](composition.md).
+Authoring a custom template? See the [Authoring guide](authoring.md) and [Composition guide](composition.md); when a template needs a breaking change, [Versioning and migration](versioning.md) sets the rules and the [Migration guide template](migration-guide-template.md) documents it.
 
 ## Where next
 

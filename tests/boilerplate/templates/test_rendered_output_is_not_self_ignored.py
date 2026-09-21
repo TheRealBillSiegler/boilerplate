@@ -6,7 +6,7 @@ and merges through it. A file the project's own ``.gitignore`` matches never
 reaches that index, so it is invisible to every one of those steps — the user's
 edits to it are unrecoverable if a later template version drops the file.
 
-Both halves of the rule are guarded here (docs/governance/template-versioning.md,
+Both halves of the rule are guarded here (docs/templates-hub/versioning.md,
 Authoring rules): nothing the layer renders may be ignored, and nothing the
 render tells the user to commit may be ignored. The second half is checked
 against the path rather than the file, because the lock file is written by a
