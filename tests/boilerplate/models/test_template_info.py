@@ -13,13 +13,13 @@ from boilerplate.models import TemplateInfo
 # Test fixtures for common scenarios
 @pytest.fixture
 def simple_template(template_factory: Callable[..., TemplateInfo]) -> TemplateInfo:
-    """A basic template for testing core functionality."""
+    """Provide a basic template for testing core functionality."""
     return template_factory("simple", "1.0.0", description="A simple template")
 
 
 @pytest.fixture
 def complex_template(template_factory: Callable[..., TemplateInfo]) -> TemplateInfo:
-    """A complex template with dependencies for testing advanced scenarios."""
+    """Provide a complex template with dependencies for testing advanced scenarios."""
     return template_factory(
         "webapp",
         "2.1.0",
@@ -30,7 +30,7 @@ def complex_template(template_factory: Callable[..., TemplateInfo]) -> TemplateI
 
 @pytest.fixture
 def copier_template() -> CopierTemplate:
-    """A minimal CopierTemplate for validation tests."""
+    """Provide a minimal CopierTemplate for validation tests."""
     return CopierTemplate(str(Path()))
 
 

@@ -23,7 +23,7 @@ def test_build_template_catalog_engine_success(fake_template_dir: Path) -> None:
 def _write_fixture_template(
     parent: Path, name: str, *, version: str = "1.0.0", extends: list[str] | None = None
 ) -> Path:
-    """Writes a minimal template under ``parent/<name>`` and returns its directory."""
+    """Write a minimal template under ``parent/<name>`` and return its directory."""
     tpl_dir = parent / name
     tpl_dir.mkdir(parents=True)
     (tpl_dir / "copier.yml").write_text("# empty config\n")

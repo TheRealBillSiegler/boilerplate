@@ -6,7 +6,7 @@ _ENV_FLAG_FALSY = {"0", "false"}
 
 
 def env_flag(name: str) -> bool:
-    """Returns whether env var ``name`` opts into a boolean mode flag.
+    """Return whether env var ``name`` opts into a boolean mode flag.
 
     Surrounding whitespace is trimmed before the check, so a whitespace-only
     value reads as unset. Truthy for any remaining value except unset,

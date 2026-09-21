@@ -40,7 +40,7 @@ _logger = getLogger(__name__)
 
 
 def validate_sections_param(value: str | None) -> str | None:
-    """Validates sections parameter for Typer callback."""
+    """Validate sections parameter for Typer callback."""
     if value is not None and value.strip() == "":
         # Get all valid sections for error message
         valid_sections = {s.value for s in Section}
@@ -56,7 +56,7 @@ def parse_sections(
     all_flag: bool,
     stats_flag: bool = False,
 ) -> list[Section]:
-    """Parses and validates the sections selection, preserving order."""
+    """Parse and validate the sections selection, preserving order."""
     if stats_flag:
         return [Section.STATS]
     if all_flag:
@@ -89,7 +89,7 @@ def parse_sections(
 
 
 def _layer_mapping(layer: CompositionLayer, section: Section) -> dict[str, JSON]:
-    """Returns the mapping a per-layer section renders for one layer.
+    """Return the mapping a per-layer section renders for one layer.
 
     Args:
         layer: The layer to read.
@@ -111,7 +111,7 @@ def write_sections(
     sections: Sequence[Section],
     format: DataFormat,
 ) -> dict[str, JSON]:
-    """Writes the selected sections to a directory alongside a manifest.
+    """Write the selected sections to a directory alongside a manifest.
 
     Args:
         composition: Composition to export.
@@ -167,7 +167,7 @@ def format_sections(
     sections: Sequence[Section],
     format: DataFormat,
 ) -> dict[Section, str]:
-    """Renders the selected sections as text for stdout.
+    """Render the selected sections as text for stdout.
 
     Args:
         composition: Composition to render.
@@ -226,7 +226,7 @@ def compose(
     quiet: bool = QUIET_OPTION,
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
 ) -> None:
-    """Queries composition artifacts and prints or writes selected sections."""
+    """Query composition artifacts and print or write selected sections."""
     cli_context = ctx.obj
     display: Display = cli_context.display
     # The global --quiet only parses before the subcommand; honor either position.

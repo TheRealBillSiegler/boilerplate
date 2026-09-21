@@ -13,7 +13,7 @@ from boilerplate.repository.directory_repository import DirectoryTemplateReposit
 
 @pytest.fixture
 def repo_with_real_templates(real_templates_dir: Path) -> DirectoryTemplateRepository:
-    """Creates a DirectoryTemplateRepository using real template files."""
+    """Create a DirectoryTemplateRepository using real template files."""
     return DirectoryTemplateRepository(real_templates_dir)
 
 

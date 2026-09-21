@@ -51,7 +51,7 @@ _ANSWERS_STUB = (
 
 
 def _git(cwd: Path, *args: str) -> None:
-    """Runs a git command in ``cwd``, raising on failure.
+    """Run a git command in ``cwd``, raising on failure.
 
     Args:
         cwd: Directory to run the command in.
@@ -96,7 +96,7 @@ def temp_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture()
 def dirty_git_template(tmp_path: Path) -> Path:
-    """Builds a template repo tagged ``v1.0.0`` with newer, uncommitted edits.
+    """Build a template repo tagged ``v1.0.0`` with newer, uncommitted edits.
 
     The uncommitted revision differs from the tagged one in both halves a
     layer contributes: it declares an extra question in ``copier.yml`` and
@@ -129,7 +129,7 @@ def dirty_git_template(tmp_path: Path) -> Path:
 
 
 def _single_layer_composition(template: Path) -> Composition:
-    """Wraps ``template`` as a one-layer composition.
+    """Wrap ``template`` as a one-layer composition.
 
     Args:
         template: Template directory to render.
@@ -150,7 +150,7 @@ def _single_layer_composition(template: Path) -> Composition:
 
 
 def _render(template: Path, destination: Path) -> None:
-    """Renders ``template`` into ``destination`` non-interactively.
+    """Render ``template`` into ``destination`` non-interactively.
 
     Args:
         template: Template directory to render.
@@ -169,7 +169,7 @@ def _render(template: Path, destination: Path) -> None:
 
 
 def _catalog_config(catalog: Path) -> dict[str, Any]:
-    """Reads the sole catalog template's Copier config the way `Composer` does.
+    """Read the sole catalog template's Copier config the way `Composer` does.
 
     Args:
         catalog: Directory holding template subdirectories.

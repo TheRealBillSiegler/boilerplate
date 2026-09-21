@@ -28,7 +28,7 @@ class TestDirectoryTemplateRepositoryBasicOperations:
         templates_dir_factory: "Callable[[list[tuple[str, str, dict[str, object]]]], Path]",
         standard_templates_for_directory_tests: list[tuple[str, str, str]],
     ) -> Path:
-        """Creates a standard template directory layout for testing basic operations."""
+        """Create a standard template directory layout for testing basic operations."""
         return templates_dir_factory(
             [
                 (name, version, {"questions": {"foo": {"type": "str"}}})
@@ -71,7 +71,7 @@ class TestDirectoryTemplateRepositoryVersionHandling:
         self,
         templates_dir_factory: "Callable[[list[tuple[str, str, dict[str, object]]]], Path]",
     ) -> Path:
-        """Creates templates directory with multiple versions of the same template."""
+        """Create templates directory with multiple versions of the same template."""
         return templates_dir_factory(
             [
                 ("mytpl", "1.1.0", {"questions": {"alpha": {"type": "str"}}}),

@@ -71,7 +71,7 @@ class TestAccessibleEnvFlag:
 
     @pytest.fixture(autouse=True)
     def _isolate_color_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Keeps NO_COLOR/FORCE_COLOR from leaking into no_color detection."""
+        """Keep NO_COLOR/FORCE_COLOR from leaking into no_color detection."""
         monkeypatch.delenv("NO_COLOR", raising=False)
         monkeypatch.delenv("FORCE_COLOR", raising=False)
 

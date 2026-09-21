@@ -42,7 +42,7 @@ class DirectoryTemplateRepository(TemplateRepository):
     """
 
     def __init__(self, templates_dir: Path) -> None:
-        """Initializes the repository with a templates directory.
+        """Initialize the repository with a templates directory.
 
         Args:
             templates_dir: Root directory containing template subdirectories.
@@ -52,7 +52,7 @@ class DirectoryTemplateRepository(TemplateRepository):
         self._load_templates()
 
     def _load_templates(self) -> None:
-        """Loads all templates from the directory into memory.
+        """Load all templates from the directory into memory.
 
         A candidate directory with unreadable or invalid metadata is skipped
         with a warning naming the failing file; it does not abort discovery
@@ -119,7 +119,7 @@ class DirectoryTemplateRepository(TemplateRepository):
                 _logger.warning("Skipping template candidate [%s]: %s", e.error_code, e)
 
     def load_templates(self) -> list[TemplateInfo]:
-        """Returns the templates discovered when this repository was constructed.
+        """Return the templates discovered when this repository was constructed.
 
         Discovery runs once, in ``__init__``; this method only hands back the
         result, so repeated calls cost nothing and see no filesystem changes.

@@ -58,7 +58,7 @@ def serialize_for_yaml(data: dict[str, Any]) -> dict[str, object]:
 
 
 def extract_complete_copier_config(copier_template: CopierTemplate) -> dict[str, Any]:
-    """Extracts complete Copier configuration using full API interface.
+    """Extract complete Copier configuration using full API interface.
 
     Converts all public Template attributes to copier.yml-style fields, with
     questions_data expanded as top-level keys.

@@ -34,7 +34,7 @@ def insert_css(svg_text: str) -> str:
 
 
 def replace_blue(_: Match[str]) -> str:
-    """Replaces fill or stroke attributes with blue color with a class attribute.
+    """Replace fill or stroke attributes with blue color with a class attribute.
 
     Args:
         match: A regex match object representing the color attribute.
@@ -46,7 +46,7 @@ def replace_blue(_: Match[str]) -> str:
 
 
 def replace_black(_: Match[str]) -> str:
-    """Replaces stroke attribute with black color with a class attribute.
+    """Replace stroke attribute with black color with a class attribute.
 
     Args:
         match: A regex match object representing the black stroke attribute.
@@ -79,7 +79,7 @@ def process_svg(svg_content: str) -> str:
 
 
 def main() -> None:
-    r"""Main function to process the SVG file and save the modified version.
+    r"""Process the SVG file and save the modified version.
 
     The input path is passed as an argument (defaulting to
     docs\\assets\\boilerplate-cli-logo.svg). The output file is saved in

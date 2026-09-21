@@ -42,7 +42,7 @@ class HardenedSafeLoader(yaml.SafeLoader):
     """
 
     def __init__(self, stream: str | IO[str]) -> None:
-        """Initializes the loader with a full alias-expansion budget.
+        """Initialize the loader with a full alias-expansion budget.
 
         Args:
             stream: YAML source text or a readable text stream.
@@ -51,7 +51,7 @@ class HardenedSafeLoader(yaml.SafeLoader):
         self._alias_budget = MAX_ALIAS_NODES
 
     def compose_node(self, parent: Node | None, index: int) -> Node | None:
-        """Composes the next node, charging alias resolutions against the budget.
+        """Compose the next node, charging alias resolutions against the budget.
 
         Args:
             parent: The node under composition, if any.
@@ -74,7 +74,7 @@ class HardenedSafeLoader(yaml.SafeLoader):
     def construct_mapping(
         self, node: MappingNode, deep: bool = False
     ) -> dict[Hashable, Any]:
-        """Constructs a mapping, rejecting duplicate keys.
+        """Construct a mapping, rejecting duplicate keys.
 
         Args:
             node: The mapping node to construct.
@@ -111,7 +111,7 @@ class HardenedSafeLoader(yaml.SafeLoader):
         return super().construct_mapping(node, deep)
 
     def _charge_alias(self, node: Node, mark: Mark | None) -> None:
-        """Charges one alias resolution's logical subtree size to the budget.
+        """Charge one alias resolution's logical subtree size to the budget.
 
         Walks the referenced subtree iteratively and aborts as soon as the
         budget is exhausted, so a hostile document costs at most
@@ -149,7 +149,7 @@ class HardenedSafeLoader(yaml.SafeLoader):
 
 # Any mirrors yaml.safe_load's return type; this is a drop-in replacement.
 def load_yaml(stream: str | IO[str]) -> Any:  # noqa: ANN401
-    """Parses a single YAML document with hardened ``safe_load`` semantics.
+    """Parse a single YAML document with hardened ``safe_load`` semantics.
 
     Behaves like ``yaml.safe_load`` except that duplicate mapping keys are an
     error and total alias expansion is capped at ``MAX_ALIAS_NODES``.

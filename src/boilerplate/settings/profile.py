@@ -19,12 +19,12 @@ class ProfileError(BoilerplateError):
     """Raised when ``profile.toml`` exists but cannot be read as expected."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_CONFIG_PROFILE_INVALID."""
+        """Initialize with default error code BP_CONFIG_PROFILE_INVALID."""
         super().__init__(message, error_code="BP_CONFIG_PROFILE_INVALID", **kwargs)
 
 
 def _require_table(value: object, name: str) -> dict[str, Any]:
-    """Returns ``value`` as a table, treating absence as empty.
+    """Return ``value`` as a table, treating absence as empty.
 
     Args:
         value: The raw TOML value for the section.
@@ -44,7 +44,7 @@ def _require_table(value: object, name: str) -> dict[str, Any]:
 
 
 def load_profile(template_name: str) -> dict[str, Any]:
-    """Loads default answers for ``template_name`` from ``profile.toml``.
+    """Load default answers for ``template_name`` from ``profile.toml``.
 
     Args:
         template_name: The invoked template's name (selects

@@ -33,7 +33,7 @@ _DEFAULT_CONDITIONS: Final = ("true", "", None, True)
 
 
 def coerce_task(item: object) -> JSON:
-    """Projects a Copier Task-like object back to its raw ``copier.yml`` shape.
+    """Project a Copier Task-like object back to its raw ``copier.yml`` shape.
 
     Execution semantics survive the round trip: a string command stays a
     shell string, an argv command stays a list, and a non-default
@@ -84,7 +84,7 @@ def coerce_task(item: object) -> JSON:
 
 
 def normalize_tasks(final_schema: dict[str, JSON]) -> list[JSON]:
-    """Extracts tasks from the merged final schema in Copier's native shapes.
+    """Extract tasks from the merged final schema in Copier's native shapes.
 
     Strings, argv lists, and ``command`` mappings pass through unchanged so
     Copier — not Boilerplate — interprets their execution semantics; list

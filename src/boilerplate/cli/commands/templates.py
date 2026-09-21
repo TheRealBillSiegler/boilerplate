@@ -38,7 +38,7 @@ def list_templates(
     templates_dir: Path = TEMPLATES_DIR_OPTION,
     format: ListFormat = FORMAT_OPTION,
 ) -> None:
-    """Lists all templates found in the registry."""
+    """List all templates found in the registry."""
     cli_context = ctx.obj
     display = cli_context.display
     settings = cli_context.settings

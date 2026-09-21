@@ -19,7 +19,7 @@ from boilerplate.constants import ExitCode
 def _write_template(
     directory: Path, name: str, version: str, extends: list[str] | None = None
 ) -> None:
-    """Helper to create a template directory with boilerplate.yml and copier.yml.
+    """Create a template directory with boilerplate.yml and copier.yml.
 
     No question or renderable body: sufficient for `graph`/`list`, which only
     read metadata, but not for `new`, which actually renders. Use
@@ -42,7 +42,7 @@ extends: {extends or []}
 def _write_renderable_template(
     directory: Path, name: str = "tiny", *, question_default: str = "demo"
 ) -> Path:
-    """Creates a single-layer template Copier can actually render.
+    """Create a single-layer template Copier can actually render.
 
     One question (`project_name`, defaulting to `question_default`) and one
     Jinja file, so a real render produces an observable, deterministic file.

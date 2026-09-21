@@ -15,7 +15,7 @@ class ContextUpdater(ContextHook):
     """Context hook that injects system Python version information."""
 
     def hook(self, context: dict[str, Any]) -> None:
-        """Injects system Python version into the context.
+        """Inject system Python version into the context.
 
         Args:
             context: The current template context dictionary (modified in place)

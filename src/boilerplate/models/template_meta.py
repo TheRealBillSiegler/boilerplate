@@ -51,7 +51,7 @@ class TemplateMeta(BaseModel):
 
     @field_serializer("version")
     def serialize_version(self, value: Version, _info: object) -> str:
-        """Serializes the version as a string for YAML output.
+        """Serialize the version as a string for YAML output.
 
         Args:
             value: The Version instance to serialize.
@@ -66,7 +66,7 @@ class TemplateMeta(BaseModel):
     @field_validator("schema_version", "version", mode="before")
     @classmethod
     def coerce_version(cls, value: object) -> SerializableVersion:
-        """Coerces raw version-like input to a SerializableVersion.
+        """Coerce raw version-like input to a SerializableVersion.
 
         Args:
             value: The input value to convert.
@@ -82,7 +82,7 @@ class TemplateMeta(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> Self:
-        """Loads metadata from a boilerplate.yml file or directory containing one.
+        """Load metadata from a boilerplate.yml file or directory containing one.
 
         Args:
             path: Path to either a boilerplate.yml file or a directory containing one.
@@ -99,7 +99,7 @@ class TemplateMeta(BaseModel):
         return cls.model_validate(raw_data)
 
     def dump(self, path: Path, *, overwrite: bool = False) -> None:
-        """Serializes the model to a YAML file.
+        """Serialize the model to a YAML file.
 
         Args:
             path: Path to write the YAML file.

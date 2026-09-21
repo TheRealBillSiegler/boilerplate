@@ -26,7 +26,7 @@ class SerializableVersion(BaseVersion):
         _source: type,
         _handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
-        """Returns a Pydantic core schema supporting parsing and serialization.
+        """Return a Pydantic core schema supporting parsing and serialization.
 
         Args:
             _source: The source type for schema generation (ignored).
@@ -49,7 +49,7 @@ class SerializableVersion(BaseVersion):
         _core_schema: core_schema.CoreSchema,
         _handler: object,
     ) -> dict[str, object]:
-        """Generates the JSON schema definition for OpenAPI or similar tools.
+        """Generate the JSON schema definition for OpenAPI or similar tools.
 
         Args:
             _core_schema: The core schema provided by Pydantic (ignored).
@@ -71,7 +71,7 @@ class SerializableVersion(BaseVersion):
         value: object,
         _info: core_schema.ValidationInfo,
     ) -> "SerializableVersion":
-        """Validates and converts input into a SerializableVersion instance.
+        """Validate and convert input into a SerializableVersion instance.
 
         Args:
             value: The raw input value to validate.
@@ -93,7 +93,7 @@ class SerializableVersion(BaseVersion):
             raise ValueError(f"Invalid version: {value}") from exc
 
     def __repr__(self) -> str:
-        """Returns an eval-able representation of the version.
+        """Return an eval-able representation of the version.
 
         Returns:
             A string of the form ``SerializableVersion('1.2.3')``.

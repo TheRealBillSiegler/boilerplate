@@ -190,7 +190,7 @@ class TestCliErrorHandler:
 
     @staticmethod
     def _decorate_raiser(exc: BaseException) -> Callable[[], None]:
-        """Wraps a function that raises ``exc`` with cli_error_handler."""
+        """Wrap a function that raises ``exc`` with cli_error_handler."""
 
         @cli_error_handler
         def _raise() -> None:

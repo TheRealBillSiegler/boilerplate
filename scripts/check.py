@@ -37,7 +37,7 @@ _STEPS: Final[list[tuple[list[str], dict[str, str]]]] = [
 
 
 def main() -> int:
-    """Runs every gate step, stopping at the first failure.
+    """Run every gate step, stopping at the first failure.
 
     Returns:
         Process exit code: 0 when every step passes, 1 otherwise.

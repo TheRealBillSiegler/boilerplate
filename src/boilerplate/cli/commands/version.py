@@ -20,7 +20,7 @@ def version(
     ctx: Context,
     format: TextFormat = FORMAT_OPTION,
 ) -> None:
-    """Shows the installed CLI version."""
+    """Show the installed CLI version."""
     cli_context = ctx.obj
     d = cli_context.display
 

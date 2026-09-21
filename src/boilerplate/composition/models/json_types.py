@@ -46,7 +46,7 @@ SUPPORTED_JSON_TYPE_NAMES: Final[str] = "None, bool, int, float, str, list, dict
 
 
 def is_json_object(value: JSON) -> TypeGuard[JSONObject]:
-    """Returns True if value is a JSON object.
+    """Return True if value is a JSON object.
 
     Args:
         value: A JSON-compatible value.
@@ -58,7 +58,7 @@ def is_json_object(value: JSON) -> TypeGuard[JSONObject]:
 
 
 def is_json_array(value: JSON) -> TypeGuard[JSONArray]:
-    """Returns True if value is a JSON array.
+    """Return True if value is a JSON array.
 
     Args:
         value: A JSON-compatible value.
@@ -70,7 +70,7 @@ def is_json_array(value: JSON) -> TypeGuard[JSONArray]:
 
 
 def _coerce_json(value: object) -> JSON:
-    """Coerces a value to JSON-compatible types recursively (strict)."""
+    """Coerce a value to JSON-compatible types recursively (strict)."""
     if isinstance(value, bytearray):
         # Normalize bytearray via bytes -> str using fsdecode for portability.
         return cast(JSON, os.fsdecode(bytes(value)))
@@ -94,7 +94,7 @@ def _coerce_json(value: object) -> JSON:
 
 
 def ensure_json(value: JSONLike) -> JSON:
-    """Normalizes a value to JSON-compatible types.
+    """Normalize a value to JSON-compatible types.
 
     Args:
         value: A JSONLike value to normalize.

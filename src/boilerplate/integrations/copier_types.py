@@ -30,7 +30,7 @@ from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
 
 @functools.cache
 def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
-    """Collects public, non-callable attribute names of a ``Template`` class.
+    """Collect public, non-callable attribute names of a ``Template`` class.
 
     Inspects unevaluated descriptors: properties are property objects
     (non-callable, so included) while methods are plain functions

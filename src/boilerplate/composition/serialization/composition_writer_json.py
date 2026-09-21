@@ -7,7 +7,7 @@ from boilerplate.composition.models.json_types import JSON
 
 
 def dump_json(data: dict[str, JSON]) -> str:
-    """Serializes a mapping to deterministic JSON text.
+    """Serialize a mapping to deterministic JSON text.
 
     - Preserves insertion order
     - Pretty printed (2 spaces)
@@ -17,7 +17,7 @@ def dump_json(data: dict[str, JSON]) -> str:
 
 
 def write_json(data: dict[str, JSON], path: Path) -> None:
-    """Writes deterministic JSON to ``path`` using UTF-8 and LF newlines."""
+    """Write deterministic JSON to ``path`` using UTF-8 and LF newlines."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(dump_json(data), encoding="utf-8", newline="\n")
 

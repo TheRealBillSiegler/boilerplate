@@ -61,7 +61,7 @@ def subprocess_cli_runner() -> Callable[..., subprocess.CompletedProcess[str]]:
 
 # Module-level helper functions
 def create_copier_template(location: Path) -> CopierTemplate:
-    """Creates a test CopierTemplate with basic structure."""
+    """Create a test CopierTemplate with basic structure."""
     return CopierTemplate(str(location))
 
 
@@ -80,7 +80,7 @@ class RecordingRenderer:
     """
 
     def __init__(self, error: Exception | None = None) -> None:
-        """Initializes the recorder with an optional render-time failure.
+        """Initialize the recorder with an optional render-time failure.
 
         Args:
             error: When set, `render` raises this instead of succeeding.
@@ -89,7 +89,7 @@ class RecordingRenderer:
         self.error = error
 
     def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
-        """Records the call and returns the root layer's `TemplateInfo`.
+        """Record the call and return the root layer's `TemplateInfo`.
 
         Args:
             composition: Composition the caller wants rendered.
@@ -113,7 +113,7 @@ class RecordingRenderer:
 
 @pytest.fixture()
 def renderer() -> RecordingRenderer:
-    """A `RecordingRenderer` standing in for `RenderEngine` at the CLI seam."""
+    """Provide a `RecordingRenderer` standing in for `RenderEngine` at the CLI seam."""
     return RecordingRenderer()
 
 
@@ -144,7 +144,7 @@ def interactive_tty(mocker: MockerFixture) -> None:
 
 @pytest.fixture(scope="session")
 def real_templates_dir() -> Path:
-    """Gets the path to the real templates directory (session-scoped)."""
+    """Get the path to the real templates directory (session-scoped)."""
     return Path(__file__).parent.parent / "src" / "boilerplate" / "templates"
 
 
@@ -163,13 +163,13 @@ def integration_catalog(real_templates_dir: Path) -> TemplateCatalog:
 # Common, lightweight shared fixtures
 @pytest.fixture()
 def temp_project_dir(tmp_path: Path) -> Path:
-    """An empty directory to use as --output for `boilerplate new` tests."""
+    """Provide an empty directory to use as --output for `boilerplate new` tests."""
     return tmp_path / "project"
 
 
 @pytest.fixture()
 def fake_template_dir(tmp_path: Path) -> Path:
-    """Creates a throw-away template directory named ``mytpl``.
+    """Create a throw-away template directory named ``mytpl``.
 
     Includes the minimal files required for TemplateRegistry to treat it as a
     valid template.
@@ -191,7 +191,7 @@ extends: []
 
 @pytest.fixture(autouse=True)
 def clear_boilerplate_env(monkeypatch: pytest.MonkeyPatch):
-    """Removes all BOILERPLATE_* env vars and the generic CI var for hermetic isolation.
+    """Remove all BOILERPLATE_* env vars and the generic CI var for hermetic isolation.
 
     CI is scrubbed too so that a real CI runner's ambient `CI=true` can never
     leak into a test asserting on boilerplate's own env vars.
@@ -220,7 +220,7 @@ class TemplateConfig:
 
 @pytest.fixture()
 def catalog_builder() -> Callable[..., TemplateCatalog]:
-    """Factory to build a TemplateCatalog from Settings or explicit dirs.
+    """Provide a factory to build a TemplateCatalog from Settings or explicit dirs.
 
     Usage:
       - catalog_builder(settings=my_settings)
@@ -233,7 +233,7 @@ def catalog_builder() -> Callable[..., TemplateCatalog]:
         default_dir: Path,
         extra_dirs: list[Path] | None = None,
     ) -> TemplateCatalog:
-        """Creates a TemplateCatalog.
+        """Create a TemplateCatalog.
 
         Args:
             settings: Optional pre-built Settings object. When provided, default_dir and
@@ -255,14 +255,14 @@ def catalog_builder() -> Callable[..., TemplateCatalog]:
 
 @pytest.fixture
 def template_factory(tmp_path: Path, mocker: MockerFixture):
-    """Factory for creating real and mock TemplateInfo instances."""
+    """Provide a factory for creating real and mock TemplateInfo instances."""
 
     def _create_template_info(
         name: str,
         version: str = "1.0.0",
         **kwargs,
     ) -> TemplateInfo:
-        """Creates templates with custom parameters - supports both old and new API.
+        """Create templates with custom parameters - supports both old and new API.
 
         Args:
             name: Template name
@@ -339,7 +339,7 @@ def template_factory(tmp_path: Path, mocker: MockerFixture):
 
 @pytest.fixture
 def resolution_factory(template_factory: Callable[..., TemplateInfo], tmp_path: Path):
-    """Factory to build a Resolution from a mapping of specifiers to configs.
+    """Provide a factory to build a Resolution from a mapping of specifiers to configs.
 
     The configs are not applied automatically; tests that need per-layer compiled
     schemas should monkeypatch planner.compile_layer_schemas to return a list
@@ -380,14 +380,14 @@ def resolution_factory(template_factory: Callable[..., TemplateInfo], tmp_path: 
 
 @pytest.fixture()
 def composition_factory(resolution_factory: Callable[..., Resolution]):
-    """Factory for creating Composition objects for testing rendering/merging."""
+    """Provide a Composition factory for testing rendering/merging."""
 
     def _create_composition(
         template_specs: list[str],
         layer_schemas: list[dict[str, Any]] | None = None,
         final_schema: dict[str, Any] | None = None,
     ) -> Composition:
-        """Creates a composition with the specified templates and schemas.
+        """Create a composition with the specified templates and schemas.
 
         Args:
             template_specs: List of specifiers, e.g., 'base@1.0.0', 'child@1.0.0'
@@ -412,7 +412,7 @@ def composition_factory(resolution_factory: Callable[..., Resolution]):
             layer_schema_map[spec] = config.copy()  # Defensive copy
 
         def extract_config_for_test(template_info: TemplateInfo) -> dict[str, Any]:
-            """Extracts config from layer_schemas instead of template directory."""
+            """Extract config from layer_schemas instead of template directory."""
             spec = f"{template_info.name}@{template_info.meta.version}"
             return layer_schema_map.get(spec, {})
 
@@ -448,13 +448,13 @@ STANDARD_TEST_TEMPLATES = [
 
 @pytest.fixture()
 def standard_templates_for_directory_tests():
-    """Standard template data for directory repository tests."""
+    """Provide standard template data for directory repository tests."""
     return STANDARD_TEST_TEMPLATES[:2]  # Just project and streamlit
 
 
 @pytest.fixture
 def templates_dir_factory(tmp_path: Path):
-    """Factory to create on-disk template directories for repository tests.
+    """Provide a factory to create on-disk template directories for repository tests.
 
     This consolidates repeated inline file system setup across tests. It creates
     one subdirectory per template entry, writes a minimal boilerplate.yml with
@@ -525,7 +525,7 @@ def templates_dir_factory(tmp_path: Path):
 
 @pytest.fixture()
 def captured_display() -> tuple[Display, io.StringIO]:
-    """Provides a Display wired to a StringIO buffer for easy output capture.
+    """Provide a Display wired to a StringIO buffer for easy output capture.
 
     The Console is constructed with deterministic settings so that snapshot
     output is identical on Windows and Linux (no legacy_windows substitution,
@@ -549,7 +549,7 @@ def captured_display() -> tuple[Display, io.StringIO]:
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Groups all snapshot-using tests onto one xdist worker.
+    """Group all snapshot-using tests onto one xdist worker.
 
     We co-locate tests that either:
         - are marked with @pytest.mark.snapshot, or

@@ -12,7 +12,7 @@ from boilerplate.catalog import TemplateCatalog
 def multi_dir_environment(
     tmp_path: Path, catalog_builder: Callable[..., TemplateCatalog]
 ) -> tuple[list[Path], TemplateCatalog]:
-    """Creates three template directories with a small set of templates.
+    """Create three template directories with a small set of templates.
 
     Returns a tuple of ([dir1, dir2, dir3], catalog) for reuse across tests.
     """

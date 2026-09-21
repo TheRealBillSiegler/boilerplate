@@ -31,7 +31,7 @@ def _invoke_and_capture_execution_ctx(
     seams: Seams,
     cli_args: list[str],
 ) -> object:
-    """Invokes `new` and returns the ExecutionContext the renderer received."""
+    """Invoke `new` and return the ExecutionContext the renderer received."""
     full_args = [
         *cli_args,
         str(temp_project_dir),

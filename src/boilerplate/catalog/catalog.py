@@ -21,12 +21,12 @@ class TemplateCatalog:
     """
 
     def __init__(self) -> None:
-        """Initializes an empty catalog."""
+        """Initialize an empty catalog."""
         self._by_tag: dict[str, TemplateInfo] = {}
         self._by_name: dict[str, dict[Version, TemplateInfo]] = {}
 
     def register(self, template: TemplateInfo) -> None:
-        """Registers a single TemplateInfo with the catalog.
+        """Register a single TemplateInfo with the catalog.
 
         Uses "first one wins" policy - if a template with the same name@version
         already exists, the existing one is kept and the new one is ignored.
@@ -54,7 +54,7 @@ class TemplateCatalog:
         self._by_name[template.name][template.meta.version] = template
 
     def register_many(self, templates: list[TemplateInfo]) -> None:
-        """Registers multiple TemplateInfo objects with the catalog.
+        """Register multiple TemplateInfo objects with the catalog.
 
         Args:
             templates: Templates to register.
@@ -63,7 +63,7 @@ class TemplateCatalog:
             self.register(tpl)
 
     def get_by_tag(self, tag: str) -> TemplateInfo | None:
-        """Looks up a template by canonical tag.
+        """Look up a template by canonical tag.
 
         Args:
             tag: Canonical template tag (e.g., 'project@1.2.3').
@@ -74,7 +74,7 @@ class TemplateCatalog:
         return self._by_tag.get(tag)
 
     def _normalize_version(self, version: Version | str | None) -> Version | None:
-        """Converts version parameter to Version object if needed.
+        """Convert version parameter to Version object if needed.
 
         Args:
             version: Version object, version string, or None.
@@ -92,7 +92,7 @@ class TemplateCatalog:
     def resolve(
         self, name: str, version: Version | str | None = None
     ) -> TemplateInfo | None:
-        """Resolves a template by name and optional version.
+        """Resolve a template by name and optional version.
 
         Args:
             name: Canonical template name.
@@ -119,7 +119,7 @@ class TemplateCatalog:
         return versions.get(normalized_version)
 
     def resolve_latest(self, name: str) -> TemplateInfo | None:
-        """Returns the highest-versioned template for a name per PEP 440.
+        """Return the highest-versioned template for a name per PEP 440.
 
         Args:
             name: Canonical template name.
@@ -130,7 +130,7 @@ class TemplateCatalog:
         return self.resolve(name, None)
 
     def list_all(self) -> list[TemplateInfo]:
-        """Returns all registered templates.
+        """Return all registered templates.
 
         Returns:
             All registered templates.
@@ -138,7 +138,7 @@ class TemplateCatalog:
         return list(self._by_tag.values())
 
     def list_tags(self) -> list[str]:
-        """Returns all registered canonical tags.
+        """Return all registered canonical tags.
 
         Returns:
             All tags.
@@ -146,7 +146,7 @@ class TemplateCatalog:
         return list(self._by_tag.keys())
 
     def __len__(self) -> int:
-        """Returns the number of unique registered templates (by tag).
+        """Return the number of unique registered templates (by tag).
 
         Returns:
             Number of registered templates.
@@ -154,7 +154,7 @@ class TemplateCatalog:
         return len(self._by_tag)
 
     def __iter__(self) -> Iterator[TemplateInfo]:
-        """Iterates over all registered TemplateInfo.
+        """Iterate over all registered TemplateInfo.
 
         Returns:
             Iterator of templates.

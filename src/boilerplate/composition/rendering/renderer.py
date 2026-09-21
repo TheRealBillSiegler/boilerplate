@@ -19,7 +19,7 @@ class Renderer(Protocol):
     """
 
     def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
-        """Renders all layers of ``composition`` into ``ctx.destination``.
+        """Render all layers of ``composition`` into ``ctx.destination``.
 
         Args:
             composition: Computed composition (layers and final merged schema).

@@ -41,7 +41,7 @@ class Resolver:
     """
 
     def resolve(self, template_ref: str, registry: TemplateCatalog) -> Resolution:
-        """Resolves a template reference into a complete dependency map and templates.
+        """Resolve a template reference into a complete dependency map and templates.
 
         Args:
             template_ref: Template identifier (e.g., ``name`` or ``name@version``).
@@ -134,7 +134,7 @@ class Resolver:
         first: tuple[str, str | None],
         second: tuple[str, str | None],
     ) -> str:
-        """Builds a diamond version-conflict message naming both requiring paths.
+        """Build a diamond version-conflict message naming both requiring paths.
 
         Args:
             name: Template name shared by both conflicting specifiers.
@@ -160,7 +160,7 @@ class Resolver:
 
     @staticmethod
     def _iter_extends(extends: Sequence[str] | None) -> Sequence[str]:
-        """Normalizes and iterates over ``extends`` safely.
+        """Normalize and iterate over ``extends`` safely.
 
         Args:
             extends: Sequence of dependency references or None.
@@ -172,7 +172,7 @@ class Resolver:
 
     @staticmethod
     def _fetch_template(reference: str, registry: TemplateCatalog) -> TemplateInfo:
-        """Loads a template by reference.
+        """Load a template by reference.
 
         Reference can be ``"name@version"`` for a specific version or
         ``"name"`` for latest.
