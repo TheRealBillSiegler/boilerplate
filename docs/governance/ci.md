@@ -12,7 +12,7 @@ flowchart TD
         direction TB
         changes{"changes job<br>anything outside docs touched?"}
         changes -- "docs-only" --> skip["code jobs skip"]
-        changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: ubuntu-only on PRs, diagonal on pushes"]
+        changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: ubuntu-only on PRs, diagonal on pushes<br>tests-go-red: pull_request events only"]
         docsjob["docs build<br>always runs, no needs"]
         code --> gate["gate<br>the single pass/fail signal"]
         skip --> gate
@@ -30,7 +30,7 @@ flowchart TD
 
 ## The dispatcher: `changes`
 
-The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The five code jobs run only when something outside docs changed.
+The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed.
 
 | Event | BASE | HEAD |
 | --- | --- | --- |
@@ -51,6 +51,10 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 | `push` | ubuntu × {3.12, 3.13}, windows × 3.13, macos × 3.13 |
 
 PRs run one leg because development and the local gate already exercise Windows; CI's marginal PR signal is the POSIX leg. Pushes run the *diagonal* instead of the full OS × version cross product: OS-specific bugs are Python-version-independent and version-specific bugs are OS-independent, so the missing cells add multiplier cost without adding coverage. Windows and macOS breakage cannot land silently — it is caught by the merge-time push run.
+
+## New tests go red
+
+A PR that changes `src/` and adds tests must show at least one added test failing against the base commit's `src/` — otherwise none of them ever went red and the job fails, naming them. It runs on `pull_request` events only: a push has no base commit to diff added tests against. Script: [`scripts/new_tests_go_red.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/new_tests_go_red.py).
 
 ## The docs job
 
