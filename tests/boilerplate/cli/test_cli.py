@@ -4,11 +4,14 @@ import io
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 from boilerplate.cli import cli
+from boilerplate.cli.seams import Seams
+from boilerplate.composition.rendering.renderer import Renderer
 from boilerplate.constants import ExitCode
 
 
@@ -276,3 +279,37 @@ class TestReconfigureStdioEncoding:
         )
         assert result.returncode == 0
         assert "project → streamlit".encode() in result.stdout
+
+
+@pytest.mark.usefixtures("interactive_tty")
+def test_a_renderer_passed_as_obj_reaches_the_new_command(
+    typer_cli_runner: CliRunner,
+    fake_template_dir: Path,
+    temp_project_dir: Path,
+    renderer: Renderer,
+    seams: Seams,
+) -> None:
+    """A renderer injected via Click's `obj` is the one `new` drives.
+
+    Exercises the seam end to end: `CliRunner.invoke(..., obj=seams)` sets
+    `ctx.obj`; `main`'s `ctx.ensure_object(Seams)` picks it up; and
+    `_bootstrap_runtime` threads `seams.renderer` into the `CliContext` the
+    `new` command reads. `.claude/rules/tests.md` requires every patch to
+    replace something at a boundary the code does not control — this seam
+    exists so that boundary is Click's own `obj` mechanism instead of
+    patching the command's engine import.
+    """
+    result = typer_cli_runner.invoke(
+        cli.app,
+        [
+            "new",
+            "mytpl",
+            str(temp_project_dir),
+            "--templates-dir",
+            str(fake_template_dir),
+        ],
+        obj=seams,
+    )
+
+    assert result.exit_code == ExitCode.SUCCESS, result.output
+    assert len(renderer.calls) == 1  # type: ignore[attr-defined]

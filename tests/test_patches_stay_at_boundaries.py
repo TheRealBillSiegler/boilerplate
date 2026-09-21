@@ -31,10 +31,6 @@ OBJECT_PATCHERS = {"mocker.patch.object", "patch.object", "monkeypatch.setattr"}
 
 # Each entry names the seam and why the real thing cannot stand in the test.
 ALLOWED_SEAMS: dict[str, str] = {
-    "boilerplate.cli.commands.new.RenderEngine": (
-        "Drives Copier: a real render is slow and writes a project; the "
-        "ExecutionContext it receives is the observable contract."
-    ),
     "boilerplate.cli.commands.new._stdin_supports_prompts": (
         "Console probe; whether stdin is a terminal depends on the host."
     ),

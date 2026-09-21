@@ -17,7 +17,9 @@ from boilerplate.cli.commands.new import (
     _stdin_is_real_console,  # pyright: ignore[reportPrivateUsage]
     _stdin_supports_prompts,  # pyright: ignore[reportPrivateUsage]
 )
+from boilerplate.cli.seams import Seams
 from boilerplate.common.exceptions import InvalidDataError
+from boilerplate.composition.rendering.renderer import Renderer
 from boilerplate.constants import ExitCode
 
 
@@ -25,24 +27,22 @@ def _invoke_and_capture_execution_ctx(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
     temp_project_dir: Path,
-    mocker: MockerFixture,
+    renderer: Renderer,
+    seams: Seams,
     cli_args: list[str],
 ) -> object:
-    """Invokes `new` and returns the ExecutionContext passed to RenderEngine."""
-    mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
+    """Invokes `new` and returns the ExecutionContext the renderer received."""
     full_args = [
         *cli_args,
         str(temp_project_dir),
         "--templates-dir",
         str(fake_template_dir),
     ]
-    result = typer_cli_runner.invoke(app, full_args)
+    result = typer_cli_runner.invoke(app, full_args, obj=seams)
     assert result.exit_code == ExitCode.SUCCESS, result.output
 
-    render_call = mock_render_engine.return_value.render.call_args
-    assert render_call is not None, "RenderEngine.render was not called"
-    return render_call[0][1]  # Second positional argument is ExecutionContext
+    assert len(renderer.calls) == 1, "renderer.render was not called exactly once"
+    return renderer.calls[-1][1]  # Second element of the tuple is ExecutionContext
 
 
 class TestApplyCiModeAndYes:
@@ -283,13 +283,12 @@ def test_new_flag_to_options_mapping(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
     temp_project_dir: Path,
-    mocker: MockerFixture,
+    renderer: Renderer,
+    seams: Seams,
     cli_args: list[str],
     expected: dict[str, object],
 ) -> None:
-    """Validates that CLI flags map to ExecutionContext arguments on RenderEngine."""
-    mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
+    """Validates that CLI flags map to ExecutionContext arguments on the renderer."""
     # Add explicit dirs/paths to keep environment-independent
     full_args = [
         *cli_args,
@@ -297,13 +296,13 @@ def test_new_flag_to_options_mapping(
         "--templates-dir",
         str(fake_template_dir),
     ]
-    typer_cli_runner.invoke(app, full_args)
+    result = typer_cli_runner.invoke(app, full_args, obj=seams)
+
+    assert result.exit_code == ExitCode.SUCCESS, result.output
 
     # Verify the render call with ExecutionContext containing expected parameters
-    mock_render_engine.assert_called_once()
-    render_call = mock_render_engine.return_value.render.call_args
-    assert render_call is not None
-    execution_ctx = render_call[0][1]  # Second argument is ExecutionContext
+    assert len(renderer.calls) == 1
+    execution_ctx = renderer.calls[-1][1]
     assert execution_ctx.interactive is expected["interactive"]
     assert execution_ctx.overwrite is expected["overwrite"]
 
@@ -313,12 +312,11 @@ def test_new_handles_render_failure_behavior(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
     temp_project_dir: Path,
-    mocker: MockerFixture,
+    renderer: Renderer,
+    seams: Seams,
 ) -> None:
     """Tests that render failures are properly propagated to user."""
-    # Mock RenderEngine to raise a RuntimeError
-    mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-    mock_render_engine.return_value.render.side_effect = RuntimeError("copy failed")
+    renderer.error = RuntimeError("copy failed")  # pyright: ignore[reportAttributeAccessIssue]
     result = typer_cli_runner.invoke(
         app,
         [
@@ -328,6 +326,7 @@ def test_new_handles_render_failure_behavior(
             "--templates-dir",
             str(fake_template_dir),
         ],
+        obj=seams,
     )
     # Focus on behavior: error message propagation
     assert "copy failed" in result.output
@@ -338,12 +337,11 @@ def test_new_default_is_interactive(
     typer_cli_runner: CliRunner,
     fake_template_dir: Path,
     temp_project_dir: Path,
-    mocker: MockerFixture,
+    renderer: Renderer,
+    seams: Seams,
 ) -> None:
     """Interactive mode is enabled by default and creates destination."""
-    mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
-    typer_cli_runner.invoke(
+    result = typer_cli_runner.invoke(
         app,
         [
             "new",
@@ -352,13 +350,14 @@ def test_new_default_is_interactive(
             "--templates-dir",
             str(fake_template_dir),
         ],
+        obj=seams,
     )
 
+    assert result.exit_code == ExitCode.SUCCESS, result.output
+
     # Verify interactive=True by default in ExecutionContext
-    mock_render_engine.assert_called_once()
-    render_call = mock_render_engine.return_value.render.call_args
-    assert render_call is not None
-    execution_ctx = render_call[0][1]  # Second argument is ExecutionContext
+    assert len(renderer.calls) == 1
+    execution_ctx = renderer.calls[-1][1]
     assert execution_ctx.interactive is True
 
 
@@ -371,14 +370,16 @@ class TestCiModeAndNoTasks:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         """`boilerplate --ci new ...` honors the full four-flag implication."""
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["--ci", "new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
@@ -389,14 +390,16 @@ class TestCiModeAndNoTasks:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         """`--no-tasks` without `--ci` still propagates to ExecutionContext."""
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project", "--no-tasks"],
         )
         assert ctx.skip_tasks is True  # type: ignore[attr-defined]
@@ -408,14 +411,16 @@ class TestCiModeAndNoTasks:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         """Without any flag, tasks run (skip_tasks=False on ExecutionContext)."""
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.skip_tasks is False  # type: ignore[attr-defined]
@@ -425,7 +430,8 @@ class TestCiModeAndNoTasks:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """BOILERPLATE_CI=1 with no flags matches --ci's full implication chain."""
@@ -434,7 +440,8 @@ class TestCiModeAndNoTasks:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
@@ -449,6 +456,8 @@ class TestNonInteractiveEnvVar:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -463,7 +472,8 @@ class TestNonInteractiveEnvVar:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
@@ -475,6 +485,8 @@ class TestNonInteractiveEnvVar:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -489,7 +501,8 @@ class TestNonInteractiveEnvVar:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
@@ -501,7 +514,8 @@ class TestNonInteractiveEnvVar:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
         monkeypatch: pytest.MonkeyPatch,
         value: str,
     ) -> None:
@@ -511,7 +525,8 @@ class TestNonInteractiveEnvVar:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.interactive is True  # type: ignore[attr-defined]
@@ -521,6 +536,8 @@ class TestNonInteractiveEnvVar:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -535,7 +552,8 @@ class TestNonInteractiveEnvVar:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project", "--non-interactive"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
@@ -547,6 +565,8 @@ class TestNonInteractiveEnvVar:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
@@ -555,7 +575,6 @@ class TestNonInteractiveEnvVar:
             "boilerplate.cli.commands.new._stdin_supports_prompts",
             return_value=False,
         )
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
         monkeypatch.setenv("CI", "true")
 
         result = typer_cli_runner.invoke(
@@ -567,11 +586,12 @@ class TestNonInteractiveEnvVar:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_TTY_REQUIRED" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
 
 @pytest.mark.usefixtures("interactive_tty")
@@ -583,13 +603,15 @@ class TestDataFlagsCliWiring:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project", "--data", "project_name=my-app"],
         )
         assert ctx.context_data == {"project_name": "my-app"}  # type: ignore[attr-defined]
@@ -599,13 +621,15 @@ class TestDataFlagsCliWiring:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project", "--data", "a=1", "--data", "b=2"],
         )
         assert ctx.context_data == {"a": "1", "b": "2"}  # type: ignore[attr-defined]
@@ -615,7 +639,8 @@ class TestDataFlagsCliWiring:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
         tmp_path: Path,
     ) -> None:
         data_file = tmp_path / "answers.yml"
@@ -624,7 +649,8 @@ class TestDataFlagsCliWiring:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project", "--data-file", str(data_file)],
         )
         assert ctx.context_data == {"project_name": "from-file"}  # type: ignore[attr-defined]
@@ -634,7 +660,8 @@ class TestDataFlagsCliWiring:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
         tmp_path: Path,
     ) -> None:
         data_file = tmp_path / "answers.yml"
@@ -645,7 +672,8 @@ class TestDataFlagsCliWiring:
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             [
                 "new",
                 "project",
@@ -665,13 +693,15 @@ class TestDataFlagsCliWiring:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
             temp_project_dir,
-            mocker,
+            renderer,
+            seams,
             ["new", "project"],
         )
         assert ctx.context_data == {}  # type: ignore[attr-defined]
@@ -691,10 +721,9 @@ class TestDataFlagsFailureModes:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
             app,
             [
@@ -707,11 +736,12 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_missing_data_file_exits_validation_error(
         self,
@@ -719,9 +749,9 @@ class TestDataFlagsFailureModes:
         fake_template_dir: Path,
         temp_project_dir: Path,
         tmp_path: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
         missing = tmp_path / "does-not-exist.yml"
 
         result = typer_cli_runner.invoke(
@@ -736,11 +766,12 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_non_mapping_data_file_exits_validation_error(
         self,
@@ -748,9 +779,9 @@ class TestDataFlagsFailureModes:
         fake_template_dir: Path,
         temp_project_dir: Path,
         tmp_path: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
         data_file = tmp_path / "answers.yml"
         data_file.write_text("- one\n- two\n", encoding="utf-8")
 
@@ -766,11 +797,12 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_invalid_yaml_data_file_exits_validation_error(
         self,
@@ -778,9 +810,9 @@ class TestDataFlagsFailureModes:
         fake_template_dir: Path,
         temp_project_dir: Path,
         tmp_path: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
         data_file = tmp_path / "answers.yml"
         data_file.write_text("a: [unclosed\n", encoding="utf-8")
 
@@ -796,21 +828,21 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_underscore_prefixed_data_key_exits_validation_error(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
             app,
             [
@@ -823,22 +855,22 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_dry_run_with_malformed_data_entry_exits_validation_error(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         """Regression: --dry-run does not skip --data/--data-file validation."""
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
             app,
             [
@@ -851,11 +883,12 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_dry_run_with_missing_data_file_exits_validation_error(
         self,
@@ -863,10 +896,10 @@ class TestDataFlagsFailureModes:
         fake_template_dir: Path,
         temp_project_dir: Path,
         tmp_path: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
         """Regression: --dry-run does not skip --data/--data-file validation."""
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
         missing = tmp_path / "does-not-exist.yml"
 
         result = typer_cli_runner.invoke(
@@ -881,11 +914,12 @@ class TestDataFlagsFailureModes:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_DATA_INVALID" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
 
 class TestNonTtyGuard:
@@ -900,13 +934,14 @@ class TestNonTtyGuard:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
             "boilerplate.cli.commands.new._stdin_supports_prompts",
             return_value=False,
         )
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
             app,
@@ -917,12 +952,13 @@ class TestNonTtyGuard:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "BP_INPUT_TTY_REQUIRED" in result.output
         assert "--non-interactive" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     @pytest.mark.parametrize("flag", ["--non-interactive", "--yes"])
     def test_non_interactive_flags_bypass_guard(
@@ -930,6 +966,8 @@ class TestNonTtyGuard:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
         mocker: MockerFixture,
         flag: str,
     ) -> None:
@@ -937,7 +975,6 @@ class TestNonTtyGuard:
             "boilerplate.cli.commands.new._stdin_supports_prompts",
             return_value=False,
         )
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
             app,
@@ -949,10 +986,11 @@ class TestNonTtyGuard:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
-        mock_render_engine.return_value.render.assert_called_once()
+        assert len(renderer.calls) == 1
 
     def test_dry_run_without_tty_succeeds(
         self,
@@ -994,10 +1032,9 @@ class TestDestination:
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
             app,
             [
@@ -1007,27 +1044,29 @@ class TestDestination:
                 "--templates-dir",
                 str(fake_template_dir),
             ],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
         assert "destination is required in non-interactive mode" in result.output
         assert "BP_INPUT_DEST_REQUIRED" in result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     def test_ci_without_destination_exits_validation_error(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
-            app, ["--ci", "new", "mytpl", "--templates-dir", str(fake_template_dir)]
+            app,
+            ["--ci", "new", "mytpl", "--templates-dir", str(fake_template_dir)],
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
-        mock_render_engine.return_value.render.assert_not_called()
+        assert not renderer.calls
 
     @pytest.mark.usefixtures("interactive_tty")
     def test_interactive_without_destination_prompts_for_it(
@@ -1035,18 +1074,18 @@ class TestDestination:
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
         temp_project_dir: Path,
-        mocker: MockerFixture,
+        renderer: Renderer,
+        seams: Seams,
     ) -> None:
-        mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
-
         result = typer_cli_runner.invoke(
             app,
             ["new", "mytpl", "--templates-dir", str(fake_template_dir)],
             input=f"{temp_project_dir}\n",
+            obj=seams,
         )
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
-        execution_ctx = mock_render_engine.return_value.render.call_args[0][1]
+        execution_ctx = renderer.calls[-1][1]
         assert execution_ctx.destination == temp_project_dir
 
     def test_dry_run_without_destination_reports_the_working_directory(

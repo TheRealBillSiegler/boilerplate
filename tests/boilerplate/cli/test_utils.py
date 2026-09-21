@@ -36,6 +36,7 @@ from boilerplate.composition.graph.exceptions import (
     DependencyNotFoundError,
 )
 from boilerplate.composition.merging.exceptions import MergeConflictError
+from boilerplate.composition.rendering.renderer import Renderer
 from boilerplate.constants import ExitCode
 from boilerplate.models.template_info import TemplateInfo
 from boilerplate.settings import Settings
@@ -340,7 +341,7 @@ class TestCliErrorHandler:
         assert exc_info.value is exception
 
     def test_error_renders_through_context_display_without_a_ctx_argument(
-        self, capsys: pytest.CaptureFixture[str]
+        self, capsys: pytest.CaptureFixture[str], renderer: Renderer
     ) -> None:
         """The Display comes from the active Click context, not from the arguments.
 
@@ -351,7 +352,9 @@ class TestCliErrorHandler:
         """
         ctx = typer.Context(TyperCommand("stub"))
         ctx.obj = CliContext(
-            settings=Settings(), display=Display(color="never", quiet=True)
+            settings=Settings(),
+            display=Display(color="never", quiet=True),
+            renderer=renderer,
         )
         wrapped = self._decorate_raiser(
             DestinationNotEmptyError("destination /tmp/out is not empty")
