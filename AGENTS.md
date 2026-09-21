@@ -49,7 +49,7 @@
 - Full type hints on public APIs.
 - Google-style docstrings per the official [Google Python Style Guide §3.8](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), rendered by mkdocstrings: summary line, then `Args:`, `Returns:`, `Raises:`, `Attributes:`, and `Example:` sections as applicable. Classes document `Attributes:`; modules open with a summary of purpose and key classes.
 - Types live in annotations, not docstrings: per §3.8, an `Args:` description carries a type only where the signature is unannotated. mkdocstrings renders parameter and return types from the annotations.
-- House choices on top of §3.8: descriptive third-person summaries repo-wide ("Calculates…", not "Calculate…" — the guide allows either style but requires consistency), and `Example:` sections are runnable doctests (CI runs `pytest --doctest-modules src`).
+- House choices on top of §3.8: imperative summaries repo-wide ("Calculate…", not "Calculates…" — the guide allows either style but requires consistency), and `Example:` sections are runnable doctests (CI runs `pytest --doctest-modules src`).
 - The canonical worked example for the full section vocabulary (module docstrings, `Yields:` for generators, properties documented in their getters, `*args`/`**kwargs` notation) is [napoleon's Google-style example](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html), read with the types rule above. Standard section names only — mkdocstrings renders unrecognized sections as admonitions.
 - Docstrings must not contain conversation leakage.
 
@@ -57,7 +57,7 @@ Worked format:
 
 ```python
 def calculate_line_totals(order_items: list[OrderItem]) -> list[float]:
-    """Calculates the total price for each order line item.
+    """Calculate the total price for each order line item.
 
     Args:
         order_items: Items with unit price and quantity.
