@@ -99,6 +99,52 @@ def _is_layer_local_extension(spec: str) -> bool:
     return not all(part.isidentifier() for part in module_part.split("."))
 
 
+def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo:
+    """Builds the TemplateInfo for a rendered final layer.
+
+    Args:
+        final_path: Filesystem path of the final (root) template.
+        fallback_name: Name to use if metadata is missing.
+
+    Returns:
+        TemplateInfo describing the final layer and a Copier Template instance.
+    """
+    try:
+        meta = TemplateMeta.load(final_path)
+        name = meta.name
+    except Exception as e:
+        _logger.exception(
+            "Template metadata load failed, using fallback for %s: %s",
+            final_path,
+            e,
+        )
+        meta = TemplateMeta.model_construct(
+            schema_version=TemplateMeta.model_fields["schema_version"].default,
+            name=fallback_name,
+            description="",
+            version="0.0.0",
+            extends=[],
+        )
+        name = fallback_name
+
+    try:
+        # No `ref`, matching `_build_merged_template`: this description of
+        # "the template" must name the same revision the render wrote.
+        copier_template = CopierTemplate(url=str(final_path))
+        return TemplateInfo(
+            name=name,
+            meta=meta,
+            location=final_path,
+            copier_template=copier_template,
+        )
+    except Exception as e:
+        _logger.exception("Copier template creation failed for %s: %s", final_path, e)
+        _logger.warning("Template %s will render without copier integration", name)
+        return TemplateInfo.model_construct(
+            name=name, meta=meta, location=final_path, copier_template=None
+        )
+
+
 class WorkerOptions(TypedDict, total=False):
     """Type-safe options for copier Worker constructor."""
 
@@ -229,7 +275,7 @@ class RenderEngine:
             )
 
         final_layer = composition.layers[-1]
-        return self._final_template_info(
+        return final_template_info(
             final_path=final_layer.path, fallback_name=final_layer.name
         )
 
@@ -422,53 +468,5 @@ class RenderEngine:
             cursor = cursor.__cause__ or cursor.__context__
         return False
 
-    @staticmethod
-    def _final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo:
-        """Builds `TemplateInfo` for the rendered final layer.
 
-        Args:
-            final_path: Filesystem path of the final (root) template.
-            fallback_name: Name to use if metadata is missing.
-
-        Returns:
-            TemplateInfo describing the final layer and a Copier Template instance.
-        """
-        try:
-            meta = TemplateMeta.load(final_path)
-            name = meta.name
-        except Exception as e:
-            _logger.exception(
-                "Template metadata load failed, using fallback for %s: %s",
-                final_path,
-                e,
-            )
-            meta = TemplateMeta.model_construct(
-                schema_version=TemplateMeta.model_fields["schema_version"].default,
-                name=fallback_name,
-                description="",
-                version="0.0.0",
-                extends=[],
-            )
-            name = fallback_name
-
-        try:
-            # No `ref`, matching `_build_merged_template`: this description of
-            # "the template" must name the same revision the render wrote.
-            copier_template = CopierTemplate(url=str(final_path))
-            return TemplateInfo(
-                name=name,
-                meta=meta,
-                location=final_path,
-                copier_template=copier_template,
-            )
-        except Exception as e:
-            _logger.exception(
-                "Copier template creation failed for %s: %s", final_path, e
-            )
-            _logger.warning("Template %s will render without copier integration", name)
-            return TemplateInfo.model_construct(
-                name=name, meta=meta, location=final_path, copier_template=None
-            )
-
-
-__all__ = ["RenderEngine", "Template"]
+__all__ = ["RenderEngine", "Template", "final_template_info"]
