@@ -1,13 +1,23 @@
 """Unit tests for the Boilerplate CLI's custom exceptions."""
 
+import functools
+import inspect
+import re
+from pathlib import Path
+
 import pytest
 
+import boilerplate.common.exceptions as common_exceptions_module
+import boilerplate.composition.graph.exceptions as graph_exceptions_module
+import boilerplate.composition.merging.exceptions as merging_exceptions_module
+import boilerplate.settings.profile as profile_module
 from boilerplate.common.exceptions import (
     ActionRequiredError,
     BoilerplateError,
     DestinationNotEmptyError,
     DestinationRequiredError,
     DirectoryValidationError,
+    InteractiveModeRequiresTtyError,
     InteractiveRenderFailedError,
     InvalidDataError,
     InvalidTemplateSpecifierError,
@@ -20,10 +30,83 @@ from boilerplate.common.exceptions import (
 )
 from boilerplate.composition.graph.exceptions import (
     DependencyCycleError,
+    DependencyError,
     DependencyNotFoundError,
+    VersionConflictError,
 )
 from boilerplate.composition.merging.exceptions import MergeConflictError
 from boilerplate.settings.profile import ProfileError
+
+REGISTRY = Path(__file__).parents[3] / "docs" / "design" / "07-operational-quality.md"
+
+# ActionRequiredError and DependencyError are intermediate bases: neither
+# overrides __init__ to set a default error_code, so instantiating either
+# directly gives error_code=None. They exist to be subclassed, not raised on
+# their own, so they carry no registry entry and must not be tested as if
+# they did.
+INTERMEDIATE_BASES = frozenset({ActionRequiredError, DependencyError})
+
+# The class-to-code binding transcribed from each class's docstring; the
+# registry names codes, not classes, so this table is the one independent
+# source of the mapping. The two tests around it keep it honest: every code
+# here must be registered, and every concrete class must have a row.
+EXPECTED_CODES: dict[type[BoilerplateError], str] = {
+    DirectoryValidationError: "BP_CONFIG_DIR_INVALID",
+    TemplateNotFoundError: "BP_RESOLVE_TEMPLATE_NOT_FOUND",
+    InvalidVersionError: "BP_VERSION_INVALID",
+    DestinationNotEmptyError: "BP_RENDER_DEST_NOT_EMPTY",
+    NonInteractiveRequiresForceError: "BP_INPUT_FORCE_REQUIRED",
+    DestinationRequiredError: "BP_INPUT_DEST_REQUIRED",
+    InteractiveModeRequiresTtyError: "BP_INPUT_TTY_REQUIRED",
+    InvalidTemplateSpecifierError: "BP_INPUT_SPECIFIER_INVALID",
+    MetadataValidationError: "BP_RESOLVE_METADATA_INVALID",
+    MissingRequiredAnswersError: "BP_INPUT_ANSWERS_MISSING",
+    InvalidDataError: "BP_INPUT_DATA_INVALID",
+    InteractiveRenderFailedError: "BP_RENDER_PROMPT_FAILED",
+    DependencyNotFoundError: "BP_RESOLVE_DEP_NOT_FOUND",
+    DependencyCycleError: "BP_GRAPH_CYCLE",
+    VersionConflictError: "BP_RESOLVE_VERSION_CONFLICT",
+    MergeConflictError: "BP_RESOLVE_MERGE_CONFLICT",
+    ProfileError: "BP_CONFIG_PROFILE_INVALID",
+    UserCancelledError: "BP_RENDER_USER_CANCELLED",
+}
+
+# A registry row carries a severity and a retryable column; the phase-prefix
+# table above it in the same document does not, so anchoring on them keeps
+# bare prefixes such as BP_RESOLVE_ out of the set.
+_REGISTRY_CODE_LINE = re.compile(
+    r"^\| `(BP_[A-Z0-9_]+)` \| [a-z]+ \| (?:yes|no) \|", re.MULTILINE
+)
+
+
+@functools.cache
+def registered_codes() -> frozenset[str]:
+    """Returns every code the design-07 Error Code Registry table lists."""
+    text = REGISTRY.read_text(encoding="utf-8")
+    return frozenset(_REGISTRY_CODE_LINE.findall(text))
+
+
+def concrete_error_classes() -> list[type[BoilerplateError]]:
+    """Returns every concrete BoilerplateError subclass in the exception modules."""
+    modules = (
+        common_exceptions_module,
+        graph_exceptions_module,
+        merging_exceptions_module,
+        profile_module,
+    )
+    classes: list[type[BoilerplateError]] = []
+    for module in modules:
+        for obj in vars(module).values():
+            if (
+                inspect.isclass(obj)
+                and issubclass(obj, BoilerplateError)
+                and obj is not BoilerplateError
+                and obj.__module__ == module.__name__
+                and obj not in INTERMEDIATE_BASES
+            ):
+                classes.append(obj)
+    classes.sort(key=lambda cls: cls.__qualname__)
+    return classes
 
 
 class TestBoilerplateError:
@@ -114,44 +197,35 @@ class TestTemplateNotFoundError:
 
 
 class TestErrorCodeContract:
-    """Verifies each concrete error carries its registered BP code.
+    """Each concrete error defaults to its registered BP code.
 
     The codes are the stable public contract registered in
-    docs/design/07-operational-quality.md §Error Code Registry.
+    docs/design/07-operational-quality.md §Error Code Registry. EXPECTED_CODES
+    binds classes to codes; the registry checks the codes, and the module scan
+    checks that no class is missing from the binding.
     """
+
+    def test_the_registry_was_found(self) -> None:
+        """A moved or renamed registry fails loudly instead of registering nothing."""
+        assert len(registered_codes()) > 10
 
     @pytest.mark.parametrize(
         ("exception_class", "expected_code"),
-        [
-            (DirectoryValidationError, "BP_CONFIG_DIR_INVALID"),
-            (TemplateNotFoundError, "BP_RESOLVE_TEMPLATE_NOT_FOUND"),
-            (InvalidVersionError, "BP_VERSION_INVALID"),
-            (DestinationNotEmptyError, "BP_RENDER_DEST_NOT_EMPTY"),
-            (NonInteractiveRequiresForceError, "BP_INPUT_FORCE_REQUIRED"),
-            (DestinationRequiredError, "BP_INPUT_DEST_REQUIRED"),
-            (InvalidTemplateSpecifierError, "BP_INPUT_SPECIFIER_INVALID"),
-            (MetadataValidationError, "BP_RESOLVE_METADATA_INVALID"),
-            (MissingRequiredAnswersError, "BP_INPUT_ANSWERS_MISSING"),
-            (InvalidDataError, "BP_INPUT_DATA_INVALID"),
-            (InteractiveRenderFailedError, "BP_RENDER_PROMPT_FAILED"),
-            (DependencyNotFoundError, "BP_RESOLVE_DEP_NOT_FOUND"),
-            (DependencyCycleError, "BP_GRAPH_CYCLE"),
-            (MergeConflictError, "BP_RESOLVE_MERGE_CONFLICT"),
-            (ProfileError, "BP_CONFIG_PROFILE_INVALID"),
-            (UserCancelledError, "BP_RENDER_USER_CANCELLED"),
-        ],
+        EXPECTED_CODES.items(),
+        ids=[cls.__name__ for cls in EXPECTED_CODES],
     )
-    def test_error_code_matches_registry(
+    def test_default_code_is_the_expected_one(
         self, exception_class: type[BoilerplateError], expected_code: str
     ) -> None:
-        """Each concrete exception defaults to its registered phase-tagged code."""
         assert exception_class("boom").error_code == expected_code
 
-    def test_no_flat_numeric_codes_remain(self) -> None:
-        """Codes follow BP_{PHASE}_{DESCRIPTOR}, not flat BP1xx/2xx/3xx scheme."""
-        code = DestinationNotEmptyError("boom").error_code
-        assert code is not None
-        assert code.startswith("BP_")
+    def test_every_expected_code_is_registered(self) -> None:
+        """A typo in the binding cannot pass: the registry is the source of codes."""
+        assert set(EXPECTED_CODES.values()) <= registered_codes()
+
+    def test_every_concrete_error_has_an_expected_code(self) -> None:
+        """A class added without a row fails here instead of going untested."""
+        assert set(concrete_error_classes()) == set(EXPECTED_CODES)
 
 
 class TestSeverityAndRetryable:
