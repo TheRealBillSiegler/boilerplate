@@ -62,7 +62,7 @@ def _apply_ci_mode_and_yes(
     yes: bool,
     no_tasks: bool,
 ) -> tuple[bool, bool]:
-    """Resolves final ``(non_interactive, no_tasks)`` from raw flag values.
+    """Resolve final ``(non_interactive, no_tasks)`` from raw flag values.
 
     ``--ci`` implies ``--non-interactive --yes --no-tasks``. ``--yes``
     implies ``--non-interactive``. Subcommand flags compose with OR
@@ -83,7 +83,7 @@ def _apply_ci_mode_and_yes(
 
 
 def _stdin_supports_prompts() -> bool:
-    """Returns True when stdin can host interactive prompts (a real TTY).
+    """Return True when stdin can host interactive prompts (a real TTY).
 
     A module-level seam so tests can simulate either environment: CI,
     piped execution, and captured test runs all leave stdin without a TTY.
@@ -101,7 +101,7 @@ _STD_INPUT_HANDLE = -10
 
 
 def _stdin_is_real_console() -> bool:
-    """Rejects character devices that ``isatty()`` misreports as terminals.
+    """Reject character devices that ``isatty()`` misreports as terminals.
 
     On Windows ``isatty()`` returns True for any character device — including
     ``NUL`` — so ``< NUL`` redirection passes the isatty check even though the
@@ -121,7 +121,7 @@ def _stdin_is_real_console() -> bool:
 
 
 def _require_tty_for_interactive(*, non_interactive: bool, dry_run: bool) -> None:
-    """Fails closed when an interactive render could never receive answers.
+    """Fail closed when an interactive render could never receive answers.
 
     In a non-TTY environment Copier's prompt layer (questionary /
     prompt_toolkit) may retry-loop on EOF instead of raising, growing
@@ -149,7 +149,7 @@ def _require_tty_for_interactive(*, non_interactive: bool, dry_run: bool) -> Non
 def _resolve_destination(
     destination: Path | None, *, non_interactive: bool, dry_run: bool
 ) -> Path:
-    """Returns the destination, prompting for it when interactive and absent.
+    """Return the destination, prompting for it when interactive and absent.
 
     The current directory is never assumed for a render: a pipeline that
     forgot the argument must fail, not write into wherever it happens to run.
@@ -179,7 +179,7 @@ def _resolve_destination(
 
 
 def _validate_data_key(key: object, source: str) -> None:
-    """Rejects a forced-answer key shared by ``--data`` and ``--data-file``.
+    """Reject a forced-answer key shared by ``--data`` and ``--data-file``.
 
     Args:
         key: Candidate key as parsed from ``source``.
@@ -207,7 +207,7 @@ def _validate_data_key(key: object, source: str) -> None:
 
 
 def _parse_data_entries(entries: list[str] | None) -> dict[str, Any]:
-    """Parses repeatable ``--data key=value`` entries into a forced-answers dict.
+    """Parse repeatable ``--data key=value`` entries into a forced-answers dict.
 
     Args:
         entries: Raw ``key=value`` strings in CLI order; ``None`` when
@@ -234,7 +234,7 @@ def _parse_data_entries(entries: list[str] | None) -> dict[str, Any]:
 
 
 def _load_data_file(path: Path | None) -> dict[str, Any]:
-    """Loads forced answers from a ``--data-file`` YAML mapping.
+    """Load forced answers from a ``--data-file`` YAML mapping.
 
     Args:
         path: Path passed to ``--data-file``; ``None`` when the option was
@@ -274,7 +274,7 @@ def _load_data_file(path: Path | None) -> dict[str, Any]:
 
 
 def _resolve_data(data: list[str] | None, data_file: Path | None) -> dict[str, Any]:
-    """Merges ``--data-file`` and ``--data`` into one forced-answers dict.
+    """Merge ``--data-file`` and ``--data`` into one forced-answers dict.
 
     Precedence on key collision: ``--data`` wins over ``--data-file``. Both
     ride Copier's ``data`` channel (forced answers), distinct from the
@@ -298,7 +298,7 @@ def _resolve_data(data: list[str] | None, data_file: Path | None) -> dict[str, A
 def _resolve_profile(
     spec: TemplateSpecifier | None, template_spec: str
 ) -> dict[str, Any]:
-    """Returns the profile's default answers for the invoked root template.
+    """Return the profile's default answers for the invoked root template.
 
     Args:
         spec: Parsed template specifier when the argument carried a version,
@@ -355,7 +355,7 @@ def new(
     format: TextFormat = FORMAT_OPTION,
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
 ) -> None:
-    """Renders the specified template and version into a destination directory."""
+    """Render the specified template and version into a destination directory."""
     cli_context = ctx.obj
     display = cli_context.display
     settings = cli_context.settings

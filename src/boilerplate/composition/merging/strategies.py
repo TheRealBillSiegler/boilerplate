@@ -6,12 +6,12 @@ from boilerplate.composition.merging.exceptions import MergeConflictError
 
 
 def override(values: list[object], _: str) -> object:
-    """Returns the last value (later layers override earlier ones)."""
+    """Return the last value (later layers override earlier ones)."""
     return values[-1]
 
 
 def accumulate(values: list[object], _: str) -> list[object]:
-    """Concatenates lists or appends scalars in order (for _tasks, secrets)."""
+    """Concatenate lists or append scalars in order (for _tasks, secrets)."""
     result: list[object] = []
     for value in values:
         if isinstance(value, list):
@@ -22,7 +22,7 @@ def accumulate(values: list[object], _: str) -> list[object]:
 
 
 def union(values: list[object], _: str) -> list[object]:
-    """Returns a de-duplicated union preserving first-seen order."""
+    """Return a de-duplicated union preserving first-seen order."""
     seen = set()
     result = []
     for value in values:
@@ -38,7 +38,7 @@ def union(values: list[object], _: str) -> list[object]:
 
 
 def merge_questions(values: list[object], key: str) -> object:
-    """Merges question values: dicts overlay, lists dedupe-concat, scalars override."""
+    """Merge question values: dicts overlay, lists dedupe-concat, scalars override."""
     if not values:
         raise MergeConflictError(f"No values provided for '{key}'")
 
@@ -60,7 +60,7 @@ def merge_questions(values: list[object], key: str) -> object:
 
 
 def intersect_versions(values: list[object], key: str) -> str:
-    """Returns the highest PEP 440 version string among the inputs."""
+    """Return the highest PEP 440 version string among the inputs."""
     versions = []
     for v in values:
         if not isinstance(v, str):

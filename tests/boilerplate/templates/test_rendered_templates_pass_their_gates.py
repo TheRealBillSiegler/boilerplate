@@ -27,7 +27,7 @@ from tests.boilerplate.templates.conftest import LAYERS, render
 
 
 def _run(cmd: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> str:
-    """Runs `cmd` in `cwd`, failing the test with captured output on error.
+    """Run `cmd` in `cwd`, failing the test with captured output on error.
 
     Args:
         cmd: Argv to execute.

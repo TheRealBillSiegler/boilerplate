@@ -81,13 +81,13 @@ _REGISTRY_CODE_LINE = re.compile(
 
 @functools.cache
 def registered_codes() -> frozenset[str]:
-    """Returns every code the design-07 Error Code Registry table lists."""
+    """Return every code the design-07 Error Code Registry table lists."""
     text = REGISTRY.read_text(encoding="utf-8")
     return frozenset(_REGISTRY_CODE_LINE.findall(text))
 
 
 def concrete_error_classes() -> list[type[BoilerplateError]]:
-    """Returns every concrete BoilerplateError subclass in the exception modules."""
+    """Return every concrete BoilerplateError subclass in the exception modules."""
     modules = (
         common_exceptions_module,
         graph_exceptions_module,

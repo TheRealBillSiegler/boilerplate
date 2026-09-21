@@ -39,7 +39,7 @@ class CopierConfigMerger:
 
     @classmethod
     def get_layer_local_keys(cls) -> set[str]:
-        """Returns Copier fields that are layer-local and not merged."""
+        """Return Copier fields that are layer-local and not merged."""
         copier_fields = {
             f"_{attr}"
             for attr in template_public_attr_names(Template)
@@ -48,7 +48,7 @@ class CopierConfigMerger:
         return copier_fields - cls.mergeable_keys
 
     def __init__(self) -> None:
-        """Initializes merger with strategy mapping for mergeable keys."""
+        """Initialize merger with strategy mapping for mergeable keys."""
         self.merge_strategies: dict[str, MergeFunction] = {
             "_min_copier_version": intersect_versions,
             TASKS_KEY: accumulate,
@@ -57,7 +57,7 @@ class CopierConfigMerger:
         }
 
     def merge(self, configurations: list[dict[str, object]]) -> dict[str, object]:
-        """Merges multiple configuration dictionaries into unified questions."""
+        """Merge multiple configuration dictionaries into unified questions."""
         merged: dict[str, object] = {}
         layer_local_keys = self.get_layer_local_keys()
 

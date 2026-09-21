@@ -36,7 +36,7 @@ class BoilerplateError(Exception):
         error_code: str | None = None,
         remediation: str | None = None,
     ) -> None:
-        """Initializes with optional error code and remediation."""
+        """Initialize with optional error code and remediation."""
         super().__init__(message)
         self.error_code = error_code
         self.remediation = remediation
@@ -57,7 +57,7 @@ class DirectoryValidationError(BoilerplateError):
     """Raised when a directory path fails validation (missing, not a dir, etc.)."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_CONFIG_DIR_INVALID."""
+        """Initialize with default error code BP_CONFIG_DIR_INVALID."""
         super().__init__(message, error_code="BP_CONFIG_DIR_INVALID", **kwargs)
 
 
@@ -65,7 +65,7 @@ class TemplateNotFoundError(BoilerplateError):
     """Raised when a requested template cannot be located in any catalog path."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_RESOLVE_TEMPLATE_NOT_FOUND."""
+        """Initialize with default error code BP_RESOLVE_TEMPLATE_NOT_FOUND."""
         super().__init__(
             message,
             error_code="BP_RESOLVE_TEMPLATE_NOT_FOUND",
@@ -81,7 +81,7 @@ class InvalidVersionError(BoilerplateError):
     """Raised when a provided version string is not PEP 440 compliant."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_VERSION_INVALID."""
+        """Initialize with default error code BP_VERSION_INVALID."""
         super().__init__(message, error_code="BP_VERSION_INVALID", **kwargs)
 
 
@@ -89,7 +89,7 @@ class DestinationNotEmptyError(BoilerplateError):
     """Raised when the destination directory exists and is not empty without force."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_RENDER_DEST_NOT_EMPTY."""
+        """Initialize with default error code BP_RENDER_DEST_NOT_EMPTY."""
         super().__init__(
             message,
             error_code="BP_RENDER_DEST_NOT_EMPTY",
@@ -102,7 +102,7 @@ class NonInteractiveRequiresForceError(BoilerplateError):
     """Raised when a multi-layer render in non-interactive mode requires --force."""
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_FORCE_REQUIRED."""
+        """Initialize with default error code BP_INPUT_FORCE_REQUIRED."""
         super().__init__(
             message,
             error_code="BP_INPUT_FORCE_REQUIRED",
@@ -119,7 +119,7 @@ class InvalidTemplateSpecifierError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_SPECIFIER_INVALID."""
+        """Initialize with default error code BP_INPUT_SPECIFIER_INVALID."""
         super().__init__(
             message,
             error_code="BP_INPUT_SPECIFIER_INVALID",
@@ -135,7 +135,7 @@ class MetadataValidationError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_RESOLVE_METADATA_INVALID."""
+        """Initialize with default error code BP_RESOLVE_METADATA_INVALID."""
         super().__init__(message, error_code="BP_RESOLVE_METADATA_INVALID", **kwargs)
 
 
@@ -150,7 +150,7 @@ class MissingRequiredAnswersError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_ANSWERS_MISSING."""
+        """Initialize with default error code BP_INPUT_ANSWERS_MISSING."""
         super().__init__(
             message,
             error_code="BP_INPUT_ANSWERS_MISSING",
@@ -178,7 +178,7 @@ class InvalidDataError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_DATA_INVALID."""
+        """Initialize with default error code BP_INPUT_DATA_INVALID."""
         super().__init__(
             message,
             error_code="BP_INPUT_DATA_INVALID",
@@ -203,7 +203,7 @@ class InteractiveModeRequiresTtyError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_TTY_REQUIRED."""
+        """Initialize with default error code BP_INPUT_TTY_REQUIRED."""
         super().__init__(
             message,
             error_code="BP_INPUT_TTY_REQUIRED",
@@ -228,7 +228,7 @@ class DestinationRequiredError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_INPUT_DEST_REQUIRED."""
+        """Initialize with default error code BP_INPUT_DEST_REQUIRED."""
         super().__init__(
             message,
             error_code="BP_INPUT_DEST_REQUIRED",
@@ -252,7 +252,7 @@ class InteractiveRenderFailedError(BoilerplateError):
     """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_RENDER_PROMPT_FAILED."""
+        """Initialize with default error code BP_RENDER_PROMPT_FAILED."""
         super().__init__(
             message,
             error_code="BP_RENDER_PROMPT_FAILED",
@@ -279,5 +279,5 @@ class UserCancelledError(BoilerplateError):
     """
 
     def __init__(self, message: str = "Aborted.", **kwargs: str | None) -> None:
-        """Initializes with default error code BP_RENDER_USER_CANCELLED."""
+        """Initialize with default error code BP_RENDER_USER_CANCELLED."""
         super().__init__(message, error_code="BP_RENDER_USER_CANCELLED", **kwargs)

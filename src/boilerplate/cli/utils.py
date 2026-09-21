@@ -41,7 +41,7 @@ _logger = getLogger(__name__)
 
 
 def _current_display() -> Display | None:
-    """Returns the Display carried by the active Click context, if any.
+    """Return the Display carried by the active Click context, if any.
 
     Commands always run inside a Click context whose object holds the
     Display. Unit tests call decorated helpers with no context at all, so the
@@ -59,7 +59,7 @@ def _display_error_and_exit(
     error_code: str | None = None,
     remediation: str | None = None,
 ) -> NoReturn:
-    """Displays error message with optional error code and remediation, then exit.
+    """Display error message with optional error code and remediation, then exit.
 
     The ``Error:`` line carries the stable ``BP_*`` code as a bracketed
     suffix, per docs/design/07-operational-quality.md §Error Message Format.
@@ -97,7 +97,7 @@ def ensure_verbose_quiet_exclusive(verbose: bool, quiet: bool) -> None:
 
 
 def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
-    """Decorator to handle common CLI exceptions and convert to exit codes.
+    """Decorate a command to convert common CLI exceptions to exit codes.
 
     This eliminates the need for scattered try/catch patterns across
     commands. Automatically handles BoilerplateError hierarchy and displays
@@ -174,7 +174,7 @@ def build_template_catalog(
     templates_dir: Path | None,
     settings: Settings,
 ) -> TemplateCatalog:
-    """Creates a TemplateCatalog from the configured template directories.
+    """Create a TemplateCatalog from the configured template directories.
 
     Emits no UI messages and never exits the process: validation failures
     raise BoilerplateError and unexpected exceptions propagate, so commands
@@ -228,7 +228,7 @@ def compute_composition(
     include_states: bool = False,
     include_deltas: bool = False,
 ) -> Composition:
-    """Runs the catalog -> resolve -> compose pipeline for a template reference.
+    """Run the catalog -> resolve -> compose pipeline for a template reference.
 
     Single owner of that pipeline for every command that needs a composition.
     Raises rather than exiting, so the caller's ``cli_error_handler`` maps the
@@ -260,7 +260,7 @@ def resolve_templates_directories(
     templates_dir: Path | None,
     settings: Settings,
 ) -> list[Path]:
-    """Returns the templates directories to search, priority-ordered.
+    """Return the templates directories to search, priority-ordered.
 
     ``templates_dir`` (from ``--templates-dir``) is prepended to the
     configured ``settings.template_dirs`` rather than replacing them, so
@@ -277,7 +277,7 @@ def build_template_table_data(
     template_infos: Sequence[TemplateInfo],
     show_path: bool,
 ) -> tuple[list[str], Sequence[tuple[str, ...]]]:
-    """Builds headers and rows for a template table."""
+    """Build headers and rows for a template table."""
     if show_path:
         headers = ["Name", "Version", "Description", "Path"]
         rows = [
@@ -303,7 +303,7 @@ def render_template_table(
     display: Display,
     show_path: bool,
 ) -> None:
-    """Renders a table of template infos using the display object."""
+    """Render a table of template infos using the display object."""
     headers, rows = build_template_table_data(template_infos, show_path)
     # When showing paths, make the path column (last column) clickable
     path_column_index = len(headers) - 1 if show_path else None

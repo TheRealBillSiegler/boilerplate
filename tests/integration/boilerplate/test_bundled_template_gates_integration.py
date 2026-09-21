@@ -36,7 +36,7 @@ _TEMPLATE_NAMES = sorted(
 
 
 def _render(name: str, catalog: TemplateCatalog, destination: Path) -> None:
-    """Renders `name` from `catalog` into `destination` with defaults, no tasks."""
+    """Render `name` from `catalog` into `destination` with defaults, no tasks."""
     resolution = Resolver().resolve(name, catalog)
     composition = Composer().compose(resolution)
     ctx = ExecutionContext(
@@ -49,7 +49,7 @@ def _render(name: str, catalog: TemplateCatalog, destination: Path) -> None:
 
 
 def _run(cmd: list[str], *, cwd: Path, label: str) -> None:
-    """Runs `cmd` in `cwd`; fails the test with captured output if it errors."""
+    """Run `cmd` in `cwd`; fails the test with captured output if it errors."""
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
     assert result.returncode == 0, f"{label}:\n{result.stdout}{result.stderr}"
 
@@ -64,7 +64,7 @@ def template_name(request: pytest.FixtureRequest) -> str:
 def rendered_template(
     template_name: str, integration_catalog: TemplateCatalog, tmp_path: Path
 ) -> Path:
-    """Renders `template_name` with default answers into an isolated tmp dir.
+    """Render `template_name` with default answers into an isolated tmp dir.
 
     The destination is deliberately NOT named after the template: the
     project's package name defaults to its folder name, and a folder named

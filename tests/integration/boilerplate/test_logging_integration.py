@@ -74,7 +74,7 @@ class CliResult:
         return self.combined_output.lower()
 
     def contains(self, text: str, case_sensitive: bool = False) -> bool:
-        """Checks if output contains the given text."""
+        """Check if output contains the given text."""
         search_text = (
             self.combined_output if case_sensitive else self.combined_output_lower
         )
@@ -82,11 +82,11 @@ class CliResult:
         return target in search_text
 
     def matches_pattern(self, pattern: re.Pattern[str]) -> bool:
-        """Checks if output matches the given regex pattern."""
+        """Check if output matches the given regex pattern."""
         return bool(pattern.search(self.combined_output))
 
     def get_log_lines(self) -> list[str]:
-        """Extracts lines that appear to be log messages."""
+        """Extract lines that appear to be log messages."""
         return [
             line
             for line in self.combined_output.split("\n")
@@ -103,11 +103,11 @@ class CliTestHelper:
         self.cli_runner = cli_runner
 
     def run(self, *args: str) -> CliResult:
-        """Executes CLI command and returns wrapped result."""
+        """Execute a CLI command and return the wrapped result."""
         return CliResult(self.cli_runner(*args))
 
     def run_normal_and_verbose(self, *base_args: str) -> tuple[CliResult, CliResult]:
-        """Runs command in both normal and verbose modes."""
+        """Run command in both normal and verbose modes."""
         normal = self.run(*base_args)
         verbose = self.run("--verbose", *base_args)
         return normal, verbose
@@ -117,7 +117,7 @@ class CliTestHelper:
 def cli_helper(
     subprocess_cli_runner: Callable[..., subprocess.CompletedProcess[str]],
 ) -> CliTestHelper:
-    """Provides CLI test helper."""
+    """Provide CLI test helper."""
     return CliTestHelper(subprocess_cli_runner)
 
 

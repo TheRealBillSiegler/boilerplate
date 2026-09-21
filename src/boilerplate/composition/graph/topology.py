@@ -7,7 +7,7 @@ from boilerplate.composition.graph.types import DependencyMap
 
 
 def normalize_dependencies(deps: DependencyMap) -> DependencyMap:
-    """Normalizes a dependency map: dedupe, add missing keys, reject self-cycles.
+    """Normalize a dependency map: dedupe, add missing keys, reject self-cycles.
 
     Args:
         deps: Raw DependencyMap that may contain duplicates, missing keys,
@@ -56,7 +56,7 @@ def normalize_dependencies(deps: DependencyMap) -> DependencyMap:
 
 
 def toposort_dependencies(deps: DependencyMap) -> list[str]:
-    """Returns items in dependency-first sequence.
+    """Return items in dependency-first sequence.
 
     Independent roots (nodes no other node depends on) are processed in
     lexicographic order. Within each root's reachable subgraph, a post-order

@@ -72,7 +72,7 @@ def _dotted(node: ast.expr) -> str | None:
 
 
 def _imports(tree: ast.Module) -> dict[str, str]:
-    """Maps each name a module binds by import to the dotted path it names."""
+    """Map each name a module binds by import to the dotted path it names."""
     names: dict[str, str] = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -85,7 +85,7 @@ def _imports(tree: ast.Module) -> dict[str, str]:
 
 
 def patch_targets(source: str) -> Iterator[str]:
-    """Yields the dotted target of every patch call in a test module's source."""
+    """Yield the dotted target of every patch call in a test module's source."""
     tree = ast.parse(source)
     names = _imports(tree)
     for node in ast.walk(tree):
@@ -105,7 +105,7 @@ def patch_targets(source: str) -> Iterator[str]:
 
 
 def _owner_module(target: str) -> str | None:
-    """Returns the module that owns the object a patch target replaces.
+    """Return the module that owns the object a patch target replaces.
 
     Resolves the owner by importing it, so ``pkg.mod.sys.stdin`` reports
     ``sys`` and a class attribute reports the class's module.
@@ -133,7 +133,7 @@ def _is_internal(target: str) -> bool:
 
 
 def violations(source: str) -> list[str]:
-    """Lists the patch targets in ``source`` that reach inside the package."""
+    """List the patch targets in ``source`` that reach inside the package."""
     return [
         target
         for target in patch_targets(source)

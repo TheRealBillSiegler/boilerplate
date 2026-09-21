@@ -70,7 +70,7 @@ _WORKER_EXCLUDES: tuple[str, ...] = (
 
 
 def _is_layer_local_extension(spec: str) -> bool:
-    """Returns whether a ``_jinja_extensions`` entry only works in its own layer.
+    """Return whether a ``_jinja_extensions`` entry only works in its own layer.
 
     ``copier_template_extensions`` accepts filepath-style loader specs
     (``_extensions/context.py:ContextUpdater``) that it resolves relative to
@@ -100,7 +100,7 @@ def _is_layer_local_extension(spec: str) -> bool:
 
 
 def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo:
-    """Builds the TemplateInfo for a rendered final layer.
+    """Build the TemplateInfo for a rendered final layer.
 
     Args:
         final_path: Filesystem path of the final (root) template.
@@ -163,7 +163,7 @@ class RenderEngine:
     """Runs Copier across composition layers using a merged question schema."""
 
     def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
-        """Renders all layers of `composition` into `ctx.destination`.
+        """Render all layers of `composition` into `ctx.destination`.
 
         Args:
             composition: Computed composition (layers and final merged schema).
@@ -285,7 +285,7 @@ class RenderEngine:
         questions: dict[str, object],
         supplied: dict[str, object],
     ) -> list[str]:
-        """Returns names of required questions that have no supplied value.
+        """Return names of required questions that have no supplied value.
 
         A question is "required" when it lacks both a ``default`` and a
         statically-false ``when`` (``when: false``, meaning "never ask;
@@ -335,7 +335,7 @@ class RenderEngine:
         tasks_value: list[JSON],
         extensions_value: list[str],
     ) -> CopierTemplate:
-        """Constructs a `MergedTemplate` with questions, tasks, and extensions.
+        """Construct a `MergedTemplate` with questions, tasks, and extensions.
 
         Args:
             template_path: Path to the template layer on disk.
@@ -388,7 +388,7 @@ class RenderEngine:
         worker_opts: WorkerOptions,
         merged_template: CopierTemplate,
     ) -> dict[str, object]:
-        """Runs a Copier Worker with the provided merged template.
+        """Run a Copier Worker with the provided merged template.
 
         Args:
             worker_opts: Keyword arguments for `copier.Worker`.
@@ -446,7 +446,7 @@ class RenderEngine:
 
     @staticmethod
     def _is_interactive_prompt_failure(exc: BaseException) -> bool:
-        """Returns True if ``exc`` (or any cause/context) is a prompt-layer failure.
+        """Return True if ``exc`` (or any cause/context) is a prompt-layer failure.
 
         Walks the ``__cause__`` / ``__context__`` chain looking for an
         exception whose type is defined in ``prompt_toolkit`` or

@@ -6,7 +6,7 @@ from boilerplate.common.exceptions import DirectoryValidationError
 
 
 def validate_directory(path: Path) -> Path:
-    """Ensures a directory exists and is a directory.
+    """Ensure a directory exists and is a directory.
 
     Args:
         path: The directory to validate.

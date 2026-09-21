@@ -32,7 +32,7 @@ class TestTemplateCompositionBehavior:
         catalog: TemplateCatalog,
         execution_context: ExecutionContext,
     ):
-        """Helper method to compose and render using the three-class pattern."""
+        """Compose and render using the three-class pattern."""
         resolver = Resolver()
         composer = Composer()
         render_engine = RenderEngine()
@@ -47,7 +47,7 @@ class TestTemplateCompositionBehavior:
         return render_engine.render(composition, execution_context)
 
     def _compose_only(self, template_ref: str, catalog: TemplateCatalog):
-        """Helper method to compose only using the three-class pattern."""
+        """Compose only using the three-class pattern."""
         resolver = Resolver()
         composer = Composer()
 
@@ -59,7 +59,7 @@ class TestTemplateCompositionBehavior:
 
     @pytest.fixture(autouse=True)
     def setup_test_environment(self, tmp_path: Path):
-        """Sets up test environment and cleans up."""
+        """Set up the test environment and clean up."""
         self.test_output_dir = tmp_path / "behavior_test_project"
         yield
         if self.test_output_dir.exists():

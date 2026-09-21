@@ -31,7 +31,7 @@ class Composer:
         self,
         extract_config: Callable[[TemplateInfo], dict[str, object]] | None = None,
     ) -> None:
-        """Initializes the composer with optional config extraction function.
+        """Initialize the composer with optional config extraction function.
 
         Args:
             extract_config: Function to extract a complete copier config mapping
@@ -47,7 +47,7 @@ class Composer:
     def _compute_delta(
         self, before: dict[str, JSON] | None, after: dict[str, JSON] | None
     ) -> dict[str, JSON] | None:
-        """Computes delta between two states."""
+        """Compute delta between two states."""
         # Normalize inputs - simplify None handling
         before = before or {}
         after = after or {}
@@ -76,7 +76,7 @@ class Composer:
         return out or None
 
     def _compute_value_delta(self, before: JSON, after: JSON) -> JSON:
-        """Computes delta for a specific value, handling different types."""
+        """Compute delta for a specific value, handling different types."""
         if isinstance(before, dict) and isinstance(after, dict):
             nested = self._compute_delta(before, after)
             return nested or after
@@ -85,7 +85,7 @@ class Composer:
     def _build_graph(
         self, resolution: Resolution, sequence: list[str]
     ) -> CompositionGraph:
-        """Builds the composition graph from resolution and sequence."""
+        """Build the composition graph from resolution and sequence."""
         nodes: dict[str, GraphNode] = {}
         for specifier, template_info in resolution.templates.items():
             if specifier in sequence:
@@ -111,7 +111,7 @@ class Composer:
         include_states: bool = False,
         include_deltas: bool = False,
     ) -> Composition:
-        """Composes resolved templates into an ordered, layered Composition.
+        """Compose resolved templates into an ordered, layered Composition.
 
         Walks ``resolution.execution_sequence``, extracts each template's
         complete copier config, and merges cumulatively: later layers

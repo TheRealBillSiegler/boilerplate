@@ -18,7 +18,7 @@ runner = CliRunner()
 
 
 def _write_needs_answer_template(root: Path) -> Path:
-    """A single-layer template with one question that has no default."""
+    """Write a single-layer template with one question that has no default."""
     tpl_dir = root / "needsanswer"
     tpl_dir.mkdir(parents=True)
     (tpl_dir / "boilerplate.yml").write_text(

@@ -32,7 +32,7 @@ from boilerplate.settings import Settings
 
 
 def _reraise_as_validation_error(error: engine.UsageError) -> NoReturn:
-    """Retags a click usage error with the taxonomy's exit code and re-raise.
+    """Retag a click usage error with the taxonomy's exit code and re-raise.
 
     click defaults usage errors to exit 2, which docs/design/02-data-models.md
     §Exit Codes reserves for ``CONFIG_ERROR``; bad command-line input is
@@ -65,14 +65,14 @@ class BoilerplateGroup(TyperGroup):
         parent: engine.Context | None = None,
         **extra: object,
     ) -> engine.Context:
-        """Builds the root context, pinning parse-error exit codes."""
+        """Build the root context, pinning parse-error exit codes."""
         try:
             return super().make_context(info_name, args, parent, **extra)
         except engine.UsageError as e:
             _reraise_as_validation_error(e)
 
     def invoke(self, ctx: engine.Context) -> object:
-        """Dispatches to the subcommand, pinning its usage-error exit codes."""
+        """Dispatch to the subcommand, pinning its usage-error exit codes."""
         try:
             return super().invoke(ctx)
         except engine.UsageError as e:
@@ -119,7 +119,7 @@ def _reconfigure_stdio_encoding() -> None:
 
 
 def _print_help_and_exit(ctx: typer.Context) -> None:
-    """Prints top-level help and exit successfully.
+    """Print top-level help and exit successfully.
 
     Kept separate for clarity and easier testing of the help path.
     """
@@ -128,7 +128,7 @@ def _print_help_and_exit(ctx: typer.Context) -> None:
 
 
 def _version_callback(value: bool) -> None:
-    """Prints version and exit when --version is passed."""
+    """Print version and exit when --version is passed."""
     if value:
         typer.echo(f"boilerplate {boilerplate.__version__}")
         raise typer.Exit()
@@ -141,7 +141,7 @@ def _bootstrap_runtime(
     ci_mode: bool,
     seams: Seams,
 ) -> CliContext:
-    """Creates and configures the CLI runtime.
+    """Create and configure the CLI runtime.
 
     - Instantiates Display (user-facing boundary)
     - Loads Settings with concise error handling
@@ -206,7 +206,7 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """Initializes runtime context and global logging."""
+    """Initialize runtime context and global logging."""
     _reconfigure_stdio_encoding()
 
     # If no subcommand is invoked (None or empty string), show help and

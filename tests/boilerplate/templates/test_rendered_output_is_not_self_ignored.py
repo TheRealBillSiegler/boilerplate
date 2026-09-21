@@ -40,12 +40,12 @@ def _git(project: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
 
 
 def _init_repo(project: Path) -> None:
-    """Initializes a repository in `project` so git resolves its ignore rules."""
+    """Initialize a repository in `project` so git resolves its ignore rules."""
     _git(project, "init", "-q", "-b", "main").check_returncode()
 
 
 def _self_ignored_paths(project: Path) -> list[str]:
-    """Lists the paths in `project` that the project's own `.gitignore` matches.
+    """List the paths in `project` that the project's own `.gitignore` matches.
 
     Args:
         project: A rendered project directory with a repository initialized.
@@ -64,7 +64,7 @@ def _self_ignored_paths(project: Path) -> list[str]:
 
 
 def _is_ignored(project: Path, path: str) -> bool:
-    """Reports whether `project`'s ignore rules match `path`, which need not exist."""
+    """Report whether `project`'s ignore rules match `path`, which need not exist."""
     return _git(project, "check-ignore", "-q", "--no-index", path).returncode == 0
 
 

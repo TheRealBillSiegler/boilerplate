@@ -31,7 +31,7 @@ def render(
     profile: dict[str, object] | None = None,
     skip_tasks: bool = True,
 ) -> Path:
-    """Renders the bundled layer `name` into `tmp_path / "out"` with the given answers.
+    """Render the bundled layer `name` into `tmp_path / "out"` with the given answers.
 
     Args:
         name: Layer name, e.g. "project" or "streamlit".

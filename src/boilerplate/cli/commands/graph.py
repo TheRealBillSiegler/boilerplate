@@ -39,7 +39,7 @@ FORMAT_OPTION = typer.Option(
 
 
 def present_list(graph: CompositionGraph, display: Display) -> None:
-    """Presents dependency graph as a numbered table.
+    """Present dependency graph as a numbered table.
 
     Args:
         graph: Composition graph to render
@@ -66,7 +66,7 @@ def present_list(graph: CompositionGraph, display: Display) -> None:
 
 
 def present_tree(graph: CompositionGraph, display: Display) -> None:
-    """Presents dependency graph as a hierarchical tree.
+    """Present dependency graph as a hierarchical tree.
 
     Args:
         graph: Composition graph to render
@@ -117,7 +117,7 @@ def graph(
     format: GraphFormat = FORMAT_OPTION,
     output: Path | None = OUTPUT_OPTION,
 ) -> None:
-    """Shows dependency execution sequence for a template.
+    """Show dependency execution sequence for a template.
 
     Visualizes template dependencies in three formats:
 

@@ -116,7 +116,7 @@ class _EventRecorder:
     """
 
     def __init__(self, *, idle_cap_s: float) -> None:
-        """Starts a new recording clock.
+        """Start a new recording clock.
 
         Args:
             idle_cap_s: Maximum gap, in seconds, credited between two
@@ -142,7 +142,7 @@ class _EventRecorder:
         return self._virtual_time_s
 
     def restart(self) -> None:
-        """Moves every event recorded so far to time zero and restarts the clock.
+        """Move every event recorded so far to time zero and restarts the clock.
 
         Called once the shell's first prompt is up: what came before it
         (PowerShell's start-up, well under the idle cap but a blank screen
@@ -154,7 +154,7 @@ class _EventRecorder:
         self._last_wall_time_s = time.monotonic()
 
     def output(self, s: str) -> None:
-        """Records a chunk of terminal output at the current recorder time.
+        """Record a chunk of terminal output at the current recorder time.
 
         Args:
             s: A chunk of data just read from the shell's pty.
@@ -163,7 +163,7 @@ class _EventRecorder:
             self.events.append((self._advance(), "o", s))
 
     def mark(self, label: str) -> None:
-        """Records a labeled marker event at the current recorder time.
+        """Record a labeled marker event at the current recorder time.
 
         Args:
             label: The marker's label (rendered as a named chapter by
@@ -172,7 +172,7 @@ class _EventRecorder:
         self.events.append((self._advance(), "m", label))
 
     def hold(self) -> None:
-        """Records an empty output event so the recording ends at the current time.
+        """Record an empty output event so the recording ends at the current time.
 
         The player and the gif renderer treat the last event as the end of
         the recording, so a pause after the final output only survives if
@@ -191,7 +191,7 @@ class _CursorReporter:
     """
 
     def __init__(self, *, rows: int, cols: int, reply: Callable[[str], object]) -> None:
-        """Creates the emulated screen.
+        """Create the emulated screen.
 
         Args:
             rows: Screen height, in character cells.
@@ -205,7 +205,7 @@ class _CursorReporter:
         self._pending = ""
 
     def observe(self, s: str) -> None:
-        """Feeds a chunk of shell output to the screen, answering any requests.
+        """Feed a chunk of shell output to the screen, answering any requests.
 
         Args:
             s: A chunk of data just read from the shell's pty.
@@ -244,7 +244,7 @@ class _PtyObserver:
         self._reporter = reporter
 
     def write(self, s: str, /) -> object:
-        """Implements the pexpect ``logfile_read`` write protocol.
+        """Implement the pexpect ``logfile_read`` write protocol.
 
         Args:
             s: A chunk of data pexpect just read from the child's output.
@@ -257,14 +257,14 @@ class _PtyObserver:
         return None
 
     def flush(self) -> object:
-        """Implements the pexpect ``logfile_read`` flush protocol (a no-op)."""
+        """Implement the pexpect ``logfile_read`` flush protocol (a no-op)."""
         return None
 
 
 def _write_cast(
     path: Path, events: list[tuple[float, str, str]], *, duration_s: float
 ) -> None:
-    """Writes ``events`` to ``path`` as a complete asciicast v2 file.
+    """Write ``events`` to ``path`` as a complete asciicast v2 file.
 
     Writes to a sibling temp file and replaces ``path`` atomically, so a
     reader never observes a partially written cast.
@@ -293,7 +293,7 @@ def _write_cast(
 
 
 def _cast_js_path(cast_path: Path) -> Path:
-    """Returns where the JavaScript wrapper for ``cast_path`` is written.
+    """Return where the JavaScript wrapper for ``cast_path`` is written.
 
     Args:
         cast_path: The ``.cast`` file path.
@@ -306,7 +306,7 @@ def _cast_js_path(cast_path: Path) -> Path:
 
 
 def _write_cast_js(cast_path: Path) -> None:
-    """Wraps the cast at ``cast_path`` as a JavaScript string next to it.
+    """Wrap the cast at ``cast_path`` as a JavaScript string next to it.
 
     The docs home page loads the recording through a plain ``<script src>``
     tag instead of letting the player fetch the ``.cast`` file: fetch() of a
@@ -350,7 +350,7 @@ class _Session:
 
 
 def _settle(child: pexpect.spawn[str], seconds: float) -> None:
-    """Keeps reading the child's output for ``seconds``, then returns.
+    """Keep reading the child's output for ``seconds``, then returns.
 
     The pause the recording needs is the same either way, but reading
     through it (rather than sleeping) lets the cursor reporter answer a
@@ -374,7 +374,7 @@ def _settle(child: pexpect.spawn[str], seconds: float) -> None:
 
 
 def _drain(child: pexpect.spawn[str]) -> None:
-    """Reads whatever the child has already echoed, without blocking long.
+    """Read whatever the child has already echoed, without blocking long.
 
     Called between individual keystrokes so each character's echo lands in
     the recording with its own real timestamp, instead of arriving as one
@@ -387,7 +387,7 @@ def _drain(child: pexpect.spawn[str]) -> None:
 
 
 def _type_slowly(child: pexpect.spawn[str], text: str) -> None:
-    """Sends ``text`` one character at a time at a fixed cadence.
+    """Send ``text`` one character at a time at a fixed cadence.
 
     Keystrokes are paced, not synchronised with their echoes: each one is
     followed by ``_TYPE_DELAY_S`` of reading, which records the echo with
@@ -409,7 +409,7 @@ def _type_slowly(child: pexpect.spawn[str], text: str) -> None:
 
 
 def _press_enter(child: pexpect.spawn[str]) -> None:
-    """Sends a carriage return and drains its echo.
+    """Send a carriage return and drains its echo.
 
     Args:
         child: The spawned shell.
@@ -419,7 +419,7 @@ def _press_enter(child: pexpect.spawn[str]) -> None:
 
 
 def _clear_and_type(child: pexpect.spawn[str], answer: str) -> None:
-    """Clears a pre-filled default (Ctrl+U) then types and submits ``answer``.
+    """Clear a pre-filled default (Ctrl+U) then types and submits ``answer``.
 
     Args:
         child: The spawned shell.
@@ -432,7 +432,7 @@ def _clear_and_type(child: pexpect.spawn[str], answer: str) -> None:
 
 
 def _expect_prompt(child: pexpect.spawn[str], *, timeout: float) -> None:
-    """Waits for the bare shell prompt; raises if it shows a failed exit.
+    """Wait for the bare shell prompt; raises if it shows a failed exit.
 
     Args:
         child: The spawned shell.
@@ -457,7 +457,7 @@ def _ask(
     timeout: float,
     mark: str | None = None,
 ) -> None:
-    """Waits for a Copier question, marks it if asked, then answers it.
+    """Wait for a Copier question, marks it if asked, then answers it.
 
     Args:
         session: The shell and its event recorder.
@@ -622,7 +622,7 @@ def _record_scenario(cast_path: Path) -> None:
 
 
 def main(argv: list[str]) -> int:
-    """Runs the demo recording end-to-end.
+    """Run the demo recording end-to-end.
 
     Args:
         argv: Command-line arguments; expects exactly one, the output

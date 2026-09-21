@@ -74,7 +74,7 @@ else:
 
 
 def check_uv() -> None:
-    """Validates if the `uv` tool is globally installed and functional.
+    """Validate if the `uv` tool is globally installed and functional.
 
     Logs a success message if found and working; otherwise, displays an installation
     command and exits the script. Also checks if uv can reach package indexes.
@@ -93,7 +93,7 @@ def check_uv() -> None:
 def run_command(
     command: str, max_retries: int = 3, retry_delay: int = 2, silent: bool = False
 ) -> bool:
-    """Executes a shell command with retry logic for transient failures.
+    """Execute a shell command with retry logic for transient failures.
 
     Args:
         command: The shell command to execute.
@@ -142,7 +142,7 @@ def run_command(
 
 
 def setup_environment() -> bool:
-    """Configures the virtual environment using `uv`.
+    """Configure the virtual environment using `uv`.
 
     Synchronizes dependencies based on `pyproject.toml`.
     Handles transient failures with retry logic.
@@ -176,7 +176,7 @@ def setup_environment() -> bool:
 
 
 def initialize_git() -> bool:
-    """Initializes a Git repository if not already present.
+    """Initialize a Git repository if not already present.
 
     Logs success and provides instructions for remote setup if initialized.
 
@@ -210,7 +210,7 @@ def initialize_git() -> bool:
 
 
 def print_remote_instructions() -> None:
-    """Displays instructions to connect the repository to a remote."""
+    """Display instructions to connect the repository to a remote."""
     console.print(
         "[blue]To connect your Git repository to a remote, use these commands:[/blue]\n"
         "   git remote add origin <REMOTE_URL>\n"
@@ -220,7 +220,7 @@ def print_remote_instructions() -> None:
 
 
 def cleanup_scripts_dir() -> None:
-    """Removes the `_scripts` directory post-execution.
+    """Remove the `_scripts` directory post-execution.
 
     Raises:
         Exception: If the directory cannot be removed. This is cosmetic
@@ -241,7 +241,7 @@ def cleanup_scripts_dir() -> None:
 
 
 def post_generation() -> None:
-    """Performs all post-generation tasks with resilient error handling."""
+    """Perform all post-generation tasks with resilient error handling."""
     console.print(f"[cyan]{emoji_rocket} Starting post-generation tasks...[/cyan]")
 
     tasks_completed = 0

@@ -60,7 +60,7 @@ class TemplateSpecifier:
     SPECIFIER_PATTERN = re.compile(r"^(?P<name>[a-zA-Z0-9_\-]+)@(?P<version>.+)$")
 
     def __init__(self, name: str, version: str | Version) -> None:
-        """Initializes a template specifier.
+        """Initialize a template specifier.
 
         Args:
             name: The template name.
@@ -82,7 +82,7 @@ class TemplateSpecifier:
 
     @classmethod
     def from_string(cls, specifier_string: str) -> Self:
-        """Parses a template specifier from a string.
+        """Parse a template specifier from a string.
 
         Args:
             specifier_string: Specifier string in format "name@version".
@@ -110,25 +110,25 @@ class TemplateSpecifier:
         return cls(match.group("name"), match.group("version"))
 
     def __str__(self) -> str:
-        """Returns the string representation in format 'name@version'."""
+        """Return the string representation in format 'name@version'."""
         return f"{self.name}@{self.version}"
 
     def __repr__(self) -> str:
-        """Returns the detailed string representation."""
+        """Return the detailed string representation."""
         return f"TemplateSpecifier(name='{self.name}', version='{self.version}')"
 
     def __eq__(self, other: object) -> bool:
-        """Checks equality with another TemplateSpecifier."""
+        """Check equality with another TemplateSpecifier."""
         if not isinstance(other, type(self)):
             return NotImplemented
         return self.name == other.name and self.version == other.version
 
     def __hash__(self) -> int:
-        """Returns a hash for use in sets and dictionaries."""
+        """Return a hash for use in sets and dictionaries."""
         return hash((self.name, self.version))
 
     def __lt__(self, other: Self) -> bool:
-        """Compares with another TemplateSpecifier by name then version."""
+        """Compare with another TemplateSpecifier by name then version."""
         if not isinstance(other, type(self)):
             return NotImplemented
         if self.name != other.name:
@@ -141,7 +141,7 @@ class TemplateSpecifier:
         _source: type,
         _handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
-        """Returns a Pydantic core schema for validation and serialization.
+        """Return a Pydantic core schema for validation and serialization.
 
         Returns:
             The schema for Pydantic integration.
@@ -156,7 +156,7 @@ class TemplateSpecifier:
 
     @classmethod
     def _validate(cls, value: str | Self, _info: object = None) -> Self:
-        """Validates and converts input to TemplateSpecifier.
+        """Validate and convert input to TemplateSpecifier.
 
         Args:
             value: Input value (string or TemplateSpecifier).

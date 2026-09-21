@@ -49,7 +49,7 @@ class _CheckResult:
         self.message = message
 
     def to_dict(self) -> dict[str, str]:
-        """Converts to JSON-serializable dict."""
+        """Convert to JSON-serializable dict."""
         result: dict[str, str] = {"name": self.name, "status": self.status}
         if self.message:
             result["message"] = self.message
@@ -57,7 +57,7 @@ class _CheckResult:
 
 
 def _check_file_exists(template_dir: Path, filename: str) -> _CheckResult:
-    """Checks that a required file exists."""
+    """Check that a required file exists."""
     path = template_dir / filename
     if path.is_file():
         return _CheckResult(f"{filename} exists", _STATUS_PASS)
@@ -83,7 +83,7 @@ class _MetaFile(NamedTuple):
 
 
 def _read_meta(template_dir: Path) -> _MetaFile:
-    """Reads and parses boilerplate.yml once for the checks that inspect it.
+    """Read and parse boilerplate.yml once for the checks that inspect it.
 
     Args:
         template_dir: Template directory being validated.
@@ -102,7 +102,7 @@ def _read_meta(template_dir: Path) -> _MetaFile:
 
 
 def _check_yaml_valid(meta: _MetaFile) -> _CheckResult:
-    """Checks that boilerplate.yml is valid YAML."""
+    """Check that boilerplate.yml is valid YAML."""
     name = "boilerplate.yml valid YAML"
     if meta.text is None:
         return _CheckResult(name, _STATUS_FAIL, "File not found")
@@ -112,7 +112,7 @@ def _check_yaml_valid(meta: _MetaFile) -> _CheckResult:
 
 
 def _check_copier_yml_loadable(template_dir: Path) -> _CheckResult:
-    """Checks that copier.yml loads with Copier's own config loader.
+    """Check that copier.yml loads with Copier's own config loader.
 
     copier.yml parsing is delegated to Copier per
     docs/design/03-template-system.md (YAML Parsing Rules), so Copier-native
@@ -134,7 +134,7 @@ def _check_copier_yml_loadable(template_dir: Path) -> _CheckResult:
 
 
 def _check_no_duplicate_keys(template_dir: Path, filename: str) -> _CheckResult:
-    """Checks for duplicate mapping keys without constructing any tags.
+    """Check for duplicate mapping keys without constructing any tags.
 
     Works at the YAML node level (``yaml.compose_all``), so Copier-native
     tags such as ``!include`` cannot break it -- no constructor ever runs.
@@ -177,20 +177,20 @@ def _check_no_duplicate_keys(template_dir: Path, filename: str) -> _CheckResult:
 
 
 def _describe(error: ErrorDetails) -> str:
-    """Renders one pydantic error as ``field: message``."""
+    """Render one pydantic error as ``field: message``."""
     field = ".".join(str(part) for part in error["loc"])
     return f"{field}: {error['msg']}" if field else error["msg"]
 
 
 def _summarize(name: str, messages: list[str]) -> _CheckResult:
-    """Turns the messages attributed to one check into its result."""
+    """Turn the messages attributed to one check into its result."""
     if messages:
         return _CheckResult(name, _STATUS_FAIL, "; ".join(messages))
     return _CheckResult(name, _STATUS_PASS)
 
 
 def _check_meta_schema(meta: _MetaFile) -> list[_CheckResult]:
-    """Validates boilerplate.yml against TemplateMeta and splits the failures.
+    """Validate boilerplate.yml against TemplateMeta and split the failures.
 
     TemplateMeta owns the boilerplate.yml schema, so validating through it
     keeps ``validate`` accepting exactly the metadata that discovery and
@@ -236,7 +236,7 @@ def _check_meta_schema(meta: _MetaFile) -> list[_CheckResult]:
 
 
 def _check_no_custom_yaml_tags(meta: _MetaFile) -> _CheckResult:
-    """Checks that boilerplate.yml contains no custom YAML tags.
+    """Check that boilerplate.yml contains no custom YAML tags.
 
     The no-custom-tags security constraint is scoped to Boilerplate-owned
     files per docs/design/03-template-system.md (YAML Parsing Rules);
@@ -318,7 +318,7 @@ def validate(
     format: TextFormat = FORMAT_OPTION,
     strict: bool = STRICT_OPTION,
 ) -> None:
-    """Validates that a template directory is well-formed."""
+    """Validate that a template directory is well-formed."""
     cli_context = ctx.obj
     display = cli_context.display
 

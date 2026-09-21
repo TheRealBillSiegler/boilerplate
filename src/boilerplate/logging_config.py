@@ -26,7 +26,7 @@ class JsonLogFormatter(logging.Formatter):
     """
 
     def __init__(self, request_id: str) -> None:
-        """Initializes with the per-invocation correlation ID.
+        """Initialize with the per-invocation correlation ID.
 
         Args:
             request_id: Correlation ID attached to every record. Taken
@@ -37,7 +37,7 @@ class JsonLogFormatter(logging.Formatter):
         self._request_id = request_id
 
     def format(self, record: logging.LogRecord) -> str:
-        """Renders the record as a single-line JSON object.
+        """Render the record as a single-line JSON object.
 
         Args:
             record: The log record to serialize.
@@ -67,7 +67,7 @@ class JsonLogFormatter(logging.Formatter):
 
 
 def configure_logging(debug: bool = False, ci: bool = False) -> None:
-    """Configures logging for the Boilerplate CLI.
+    """Configure logging for the Boilerplate CLI.
 
     Rich console output when stderr is a TTY (and ``NO_COLOR`` is unset);
     otherwise one strict-JSON object per log event on stderr, per

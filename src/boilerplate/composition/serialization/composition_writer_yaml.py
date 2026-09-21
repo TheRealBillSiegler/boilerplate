@@ -16,7 +16,7 @@ class _IndentedSafeDumper(yaml.SafeDumper):
 
 
 def dump_yaml(data: dict[str, JSON]) -> str:
-    """Serializes a mapping to deterministic YAML text with a trailing newline."""
+    """Serialize a mapping to deterministic YAML text with a trailing newline."""
     text = yaml.dump(
         data,
         Dumper=_IndentedSafeDumper,
@@ -30,7 +30,7 @@ def dump_yaml(data: dict[str, JSON]) -> str:
 
 
 def write_yaml(data: dict[str, JSON], path: Path) -> None:
-    """Writes deterministic YAML to ``path`` using UTF-8 and LF newlines."""
+    """Write deterministic YAML to ``path`` using UTF-8 and LF newlines."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(dump_yaml(data), encoding="utf-8", newline="\n")
 

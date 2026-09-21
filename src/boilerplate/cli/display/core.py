@@ -30,7 +30,7 @@ DEFAULT_THEME = Theme(
 def _resolve_color_system(
     color: str | None,
 ) -> ColorSystem | None:
-    """Resolves the Rich color_system from --color flag and environment.
+    """Resolve the Rich color_system from --color flag and environment.
 
     Args:
         color: CLI --color value (auto, always, never, or None).
@@ -58,7 +58,7 @@ class Display:
         color: str | None = None,
         quiet: bool = False,
     ) -> None:
-        """Initializes the display with a custom or default theme.
+        """Initialize the display with a custom or default theme.
 
         Args:
             theme: Optional Rich theme override.
@@ -99,7 +99,7 @@ class Display:
     # Pager removed from CLI.
 
     def info(self, message: str) -> None:
-        """Prints an informational message using the 'info' style.
+        """Print an informational message using the 'info' style.
 
         Suppressed when ``quiet`` is set.
 
@@ -111,7 +111,7 @@ class Display:
         self.console.print(message, style="info")
 
     def success(self, message: str) -> None:
-        """Prints a success message using the 'success' style.
+        """Print a success message using the 'success' style.
 
         Suppressed when ``quiet`` is set.
 
@@ -123,11 +123,11 @@ class Display:
         self.console.print(message, style="success")
 
     def warning(self, message: str) -> None:
-        """Prints a warning message using the 'warning' style."""
+        """Print a warning message using the 'warning' style."""
         self.error_console.print(message, style="warning")
 
     def error(self, message: str) -> None:
-        """Prints an error message using the 'error' style."""
+        """Print an error message using the 'error' style."""
         self.error_console.print(message, style="error")
 
     def write(self, content: str, *, end: str = "\n") -> None:
@@ -144,7 +144,7 @@ class Display:
         )
 
     def write_line(self, content: str = "") -> None:
-        """Prints a single line (convenience over write)."""
+        """Print a single line (convenience over write)."""
         self.write(content)
 
     def table(
@@ -156,7 +156,7 @@ class Display:
         wrap_last_column: bool = False,
         path_column_index: int | None = None,
     ) -> None:
-        """Renders a table with styled headers and optional rows."""
+        """Render a table with styled headers and optional rows."""
         tbl = Table(header_style="info", box=box.SIMPLE_HEAVY, expand=expand)
 
         # Add columns with appropriate settings

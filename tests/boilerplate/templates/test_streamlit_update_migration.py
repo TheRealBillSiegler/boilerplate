@@ -62,7 +62,7 @@ def _copy_layer_into(repo: Path) -> None:
 
 @pytest.fixture(scope="module")
 def layer_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """The streamlit layer as a git repo: the previous release, then the shipped one.
+    """Build the streamlit layer as a git repo: previous release, then shipped one.
 
     The previous release rendered the smoke test as ``tests_app.py`` and shipped
     no migrations; the shipped release is the layer as it exists in the tree.

@@ -18,7 +18,7 @@ class TemplateRepository(ABC):
 
     @abstractmethod
     def load_templates(self) -> list[TemplateInfo]:
-        """Loads all available templates from this repository.
+        """Load all available templates from this repository.
 
         Returns:
             All available templates.

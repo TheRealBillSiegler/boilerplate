@@ -17,13 +17,13 @@ class FakeTtyStderr(io.StringIO):
     """In-memory stderr stand-in that reports being a TTY."""
 
     def isatty(self) -> bool:
-        """Reports TTY so the Rich branch is selected."""
+        """Report TTY so the Rich branch is selected."""
         return True
 
 
 @pytest.fixture(autouse=True)
 def reset_logging() -> None:
-    """Resets logging configuration before each test."""
+    """Reset logging configuration before each test."""
     # Clear all handlers and reset levels to ensure clean state
     root = logging.getLogger()
     root.handlers.clear()
@@ -141,19 +141,19 @@ class TestStructuredJsonLogging:
 
     @pytest.fixture(autouse=True)
     def _isolate_request_id_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Keeps ambient BOILERPLATE_REQUEST_ID out of the tests."""
+        """Keep ambient BOILERPLATE_REQUEST_ID out of the tests."""
         monkeypatch.delenv("BOILERPLATE_REQUEST_ID", raising=False)
 
     @staticmethod
     def _capture_stderr(monkeypatch: pytest.MonkeyPatch) -> io.StringIO:
-        """Replaces sys.stderr with an in-memory non-TTY stream."""
+        """Replace sys.stderr with an in-memory non-TTY stream."""
         fake = io.StringIO()
         monkeypatch.setattr(sys, "stderr", fake)
         return fake
 
     @staticmethod
     def _records(stream: io.StringIO) -> list[dict[str, Any]]:
-        """Parses each stderr line as a strict-JSON object."""
+        """Parse each stderr line as a strict-JSON object."""
         return [json.loads(line) for line in stream.getvalue().splitlines() if line]
 
     def test_non_tty_records_carry_required_fields(

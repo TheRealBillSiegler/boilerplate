@@ -130,7 +130,7 @@ def _make_two_layer_composition(
     final_copier_yml: str = "",
     with_tasks: bool = False,
 ) -> Composition:
-    """Builds a base -> final composition with per-layer-controllable `copier.yml`.
+    """Build a base -> final composition with per-layer-controllable `copier.yml`.
 
     Per-layer directives (e.g. `_jinja_extensions`) can be exercised without
     touching the shipped first-party templates.
@@ -331,7 +331,7 @@ def test_multi_layer_only_final_executes_tasks(tmp_path: Path):
 def _make_composition_with_questions(
     tmp_path: Path, questions: dict[str, Any]
 ) -> Composition:
-    """Builds a single-layer composition carrying the given question schema."""
+    """Build a single-layer composition carrying the given question schema."""
     p = tmp_path / "tmpl0"
     p.mkdir(parents=True, exist_ok=True)
     (p / "boilerplate.yml").write_text(

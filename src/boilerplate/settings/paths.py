@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def _config_root() -> Path:
-    """Returns the platform-specific boilerplate config root directory."""
+    """Return the platform-specific boilerplate config root directory."""
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         if appdata is None:
@@ -24,5 +24,5 @@ def _config_root() -> Path:
 
 
 def profile_toml_path() -> Path:
-    """Returns the path to the per-user ``profile.toml``."""
+    """Return the path to the per-user ``profile.toml``."""
     return _config_root() / "profile.toml"

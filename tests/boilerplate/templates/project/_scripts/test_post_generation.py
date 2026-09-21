@@ -28,7 +28,7 @@ SCRIPT_PATH = (
 
 
 def _load_module() -> types.ModuleType:
-    """Loads ``post_generation.py`` fresh from its on-disk path."""
+    """Load ``post_generation.py`` fresh from its on-disk path."""
     spec = importlib.util.spec_from_file_location(
         "post_generation_under_test", SCRIPT_PATH
     )
@@ -41,7 +41,7 @@ def _load_module() -> types.ModuleType:
 
 @pytest.fixture()
 def pg(monkeypatch: pytest.MonkeyPatch) -> types.ModuleType:
-    """A freshly loaded post_generation module with deterministic, captured output.
+    """Load a fresh post_generation module with deterministic, captured output.
 
     Rich features (status spinners) are disabled and the console is redirected
     to an in-memory buffer so tests can assert on printed text without

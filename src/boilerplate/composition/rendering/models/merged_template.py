@@ -21,7 +21,7 @@ class MergedTemplate(Template):
         extra_config: dict[str, Any] | None = None,
         ref: str | None = None,
     ) -> None:
-        """Initializes a merged template wrapper.
+        """Initialize a merged template wrapper.
 
         Args:
             url: Copier template URL/path to initialize.

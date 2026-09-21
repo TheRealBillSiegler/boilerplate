@@ -6,7 +6,7 @@ from boilerplate.composition.models.json_types import JSON
 
 
 def walk_counts(obj: object) -> tuple[int, int]:
-    """Walks a JSON-like object and counts (keys, scalars)."""
+    """Walk a JSON-like object and count (keys, scalars)."""
     if isinstance(obj, dict):
         k = len(obj)
         s = 0
@@ -27,7 +27,7 @@ def walk_counts(obj: object) -> tuple[int, int]:
 
 
 def max_depth(obj: object, *, _depth: int = 0) -> int:
-    """Computes maximum nesting depth for a JSON-like object."""
+    """Compute maximum nesting depth for a JSON-like object."""
     if isinstance(obj, dict):
         if not obj:
             return _depth + 1
@@ -40,17 +40,17 @@ def max_depth(obj: object, *, _depth: int = 0) -> int:
 
 
 def top_level_user_fields(mapping: dict[str, JSON]) -> int:
-    """Counts top-level question fields (non-directive keys)."""
+    """Count top-level question fields (non-directive keys)."""
     return sum(1 for k in mapping if not k.startswith("_"))
 
 
 def directives_present(mapping: dict[str, JSON]) -> list[str]:
-    """Returns a sorted list of directive keys present (leading underscore)."""
+    """Return a sorted list of directive keys present (leading underscore)."""
     return sorted([k for k in mapping if k.startswith("_")])
 
 
 def aggregate_delta_counts(deltas: Iterable[dict[str, JSON] | None]) -> tuple[int, int]:
-    """Aggregates (keys, scalars) across provided delta mappings."""
+    """Aggregate (keys, scalars) across provided delta mappings."""
     total_keys = 0
     total_scalars = 0
     for d in deltas:
