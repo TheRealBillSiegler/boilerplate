@@ -124,18 +124,15 @@ def test_resolve_templates_directories_falls_back_to_settings(tmp_path: Path) ->
     assert result == [dir1, dir2]
 
 
-def test_build_template_catalog_config_error(mocker: MockerFixture) -> None:
-    """Tests that build_template_catalog propagates validation errors."""
+def test_build_template_catalog_rejects_a_missing_directory(tmp_path: Path) -> None:
+    """A templates directory that does not exist is a configuration error."""
     settings = Settings()
-    bad_dir = Path("/nonexistent")
+    missing = tmp_path / "nonexistent"
 
-    mock_validate = mocker.patch("boilerplate.cli.utils.validate_directory")
-    mock_validate.side_effect = BoilerplateError("Invalid directory")
+    with pytest.raises(DirectoryValidationError) as exc_info:
+        build_template_catalog(missing, settings)
 
-    with pytest.raises(BoilerplateError) as exc_info:
-        build_template_catalog(bad_dir, settings)
-
-    assert "Invalid directory" in str(exc_info.value)
+    assert str(missing) in str(exc_info.value)
 
 
 def test_build_template_catalog_reports_actual_permission_denied(
