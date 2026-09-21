@@ -65,7 +65,6 @@ def test_cli_handles_settings_error_behavior(
     result = typer_cli_runner.invoke(cli.app, command)
     # Focus on behavior: error message content and format
     assert error_message in result.output
-    assert error_message in result.output
 
 
 def test_verbose_and_quiet_together_exit_with_validation_error(

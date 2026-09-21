@@ -60,7 +60,6 @@ class TestApplyCiModeAndYes:
             (False, False, False, False, (False, False)),
             # Subcommand flags alone.
             (False, True, False, False, (True, False)),
-            (False, False, True, False, (True, False)),
             (False, False, False, True, (False, True)),
             # --yes implies non-interactive; does not imply no-tasks.
             (False, False, True, False, (True, False)),
@@ -1068,6 +1067,8 @@ class TestDestination:
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
         assert "Dry run" in result.output
+        # Dry run: "would render <layers> to ." when no destination is given.
+        assert "to ." in " ".join(result.output.split())
 
 
 class TestStdinSupportsPrompts:
