@@ -26,7 +26,6 @@ from boilerplate.common.exceptions import (
     InvalidDataError,
 )
 from boilerplate.common.yaml_loading import load_yaml
-from boilerplate.composition.rendering.engine import RenderEngine
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.settings.profile import load_profile
 from boilerplate.types import TemplateSpecifier
@@ -389,8 +388,6 @@ def new(
     elif "@" not in template_spec:
         _logger.debug("No version specified; resolving latest for '%s'", template_spec)
 
-    render_engine = RenderEngine()
-
     json_mode = format is TextFormat.JSON
 
     if not json_mode:
@@ -437,7 +434,7 @@ def new(
     # Step 3: Apply templates
     if not json_mode:
         display.info(f"Rendering to {dest_dir}...")
-    template_info = render_engine.render(composition, execution_ctx)
+    template_info = cli_context.renderer.render(composition, execution_ctx)
     if dest_dir.exists() and force:
         _logger.debug("Overwrite applied due to --force: %s", dest_dir)
 
