@@ -17,7 +17,7 @@ from boilerplate.cli.commands.new import (
     _stdin_is_real_console,  # pyright: ignore[reportPrivateUsage]
     _stdin_supports_prompts,  # pyright: ignore[reportPrivateUsage]
 )
-from boilerplate.common.exceptions import BoilerplateError, InvalidDataError
+from boilerplate.common.exceptions import InvalidDataError
 from boilerplate.constants import ExitCode
 
 
@@ -29,7 +29,6 @@ def _invoke_and_capture_execution_ctx(
     cli_args: list[str],
 ) -> object:
     """Invokes `new` and returns the ExecutionContext passed to RenderEngine."""
-    mocker.patch("boilerplate.cli.commands.new.compute_composition")
     mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
     full_args = [
@@ -239,47 +238,20 @@ class TestResolveData:
         assert result == {"a": "from-flag", "b": "kept"}
 
 
-@pytest.mark.parametrize(
-    "error_message,validation_function",
-    [
-        (
-            "does not exist or is invalid",
-            "boilerplate.cli.utils.validate_directory",
-        ),
-    ],
-)
 @pytest.mark.usefixtures("interactive_tty")
-def test_new_validates_template_directory_behavior(
-    monkeypatch: pytest.MonkeyPatch,
-    typer_cli_runner: CliRunner,
-    tmp_path: Path,
-    error_message: str,
-    validation_function: str,
+def test_new_rejects_a_missing_templates_directory(
+    typer_cli_runner: CliRunner, tmp_path: Path
 ) -> None:
-    """Tests that 'new' command properly calls directory validation."""
-    fake_path = tmp_path / "nonexistent"
-    validation_calls = []
-
-    def track_validate_directory(p: Path) -> Path:
-        validation_calls.append(p)
-        if p == fake_path:
-            raise BoilerplateError(f"Directory '{p}' {error_message}")
-        return p
-
-    monkeypatch.setattr(validation_function, track_validate_directory)
+    """A --templates-dir that does not exist stops the command before any render."""
+    missing = tmp_path / "nonexistent"
 
     result = typer_cli_runner.invoke(
-        app, ["new", "foo", str(tmp_path / "dest"), "--templates-dir", str(fake_path)]
+        app, ["new", "foo", str(tmp_path / "dest"), "--templates-dir", str(missing)]
     )
 
-    # Verify behavior: validator was called with correct path
-    assert fake_path in validation_calls, "Directory validation should be called"
-    # Verify error message propagation (Rich hard-wraps output at console
-    # width, which can split this message mid-phrase on long tmp paths)
-    normalized_output = " ".join(result.output.split())
-    assert error_message in normalized_output, (
-        f"Expected error message in output: {result.output}"
-    )
+    assert result.exit_code == ExitCode.CONFIG_ERROR, result.output
+    # Rich hard-wraps output at console width, which can split the message.
+    assert "does not exist or is invalid" in " ".join(result.output.split())
 
 
 @pytest.mark.parametrize(
@@ -317,7 +289,6 @@ def test_new_flag_to_options_mapping(
     expected: dict[str, object],
 ) -> None:
     """Validates that CLI flags map to ExecutionContext arguments on RenderEngine."""
-    mocker.patch("boilerplate.cli.commands.new.compute_composition")
     mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
     # Add explicit dirs/paths to keep environment-independent
@@ -371,7 +342,6 @@ def test_new_default_is_interactive(
     mocker: MockerFixture,
 ) -> None:
     """Interactive mode is enabled by default and creates destination."""
-    mocker.patch("boilerplate.cli.commands.new.compute_composition")
     mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
     typer_cli_runner.invoke(
@@ -968,7 +938,6 @@ class TestNonTtyGuard:
             "boilerplate.cli.commands.new._stdin_supports_prompts",
             return_value=False,
         )
-        mocker.patch("boilerplate.cli.commands.new.compute_composition")
         mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
@@ -1028,7 +997,6 @@ class TestDestination:
         fake_template_dir: Path,
         mocker: MockerFixture,
     ) -> None:
-        mocker.patch("boilerplate.cli.commands.new.compute_composition")
         mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
@@ -1053,7 +1021,6 @@ class TestDestination:
         fake_template_dir: Path,
         mocker: MockerFixture,
     ) -> None:
-        mocker.patch("boilerplate.cli.commands.new.compute_composition")
         mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
@@ -1071,7 +1038,6 @@ class TestDestination:
         temp_project_dir: Path,
         mocker: MockerFixture,
     ) -> None:
-        mocker.patch("boilerplate.cli.commands.new.compute_composition")
         mock_render_engine = mocker.patch("boilerplate.cli.commands.new.RenderEngine")
 
         result = typer_cli_runner.invoke(
