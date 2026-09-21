@@ -16,10 +16,13 @@ from typer.testing import CliRunner
 
 from boilerplate.catalog import TemplateCatalog
 from boilerplate.cli.display.core import Display
+from boilerplate.cli.seams import Seams
 from boilerplate.cli.utils import build_template_catalog
 from boilerplate.composition.composer import Composer
 from boilerplate.composition.merging import CopierConfigMerger
 from boilerplate.composition.models import Composition
+from boilerplate.composition.rendering.engine import final_template_info
+from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.composition.resolution import Resolution
 from boilerplate.integrations.copier_types import Template as CopierTemplate
 from boilerplate.models.template_info import TemplateInfo
@@ -60,6 +63,64 @@ def subprocess_cli_runner() -> Callable[..., subprocess.CompletedProcess[str]]:
 def create_copier_template(location: Path) -> CopierTemplate:
     """Creates a test CopierTemplate with basic structure."""
     return CopierTemplate(str(location))
+
+
+class RecordingRenderer:
+    """Fakes `Renderer` by recording calls instead of driving Copier.
+
+    Satisfies the `Renderer` Protocol structurally (see
+    `boilerplate.composition.rendering.renderer`); passed to `new` through
+    `Seams` so tests can assert on what the command sent to the renderer
+    instead of patching the command's engine import.
+
+    Attributes:
+        calls: Every `(composition, ctx)` pair `render` was called with, in
+            call order.
+        error: Exception `render` raises instead of returning, when set.
+    """
+
+    def __init__(self, error: Exception | None = None) -> None:
+        """Initializes the recorder with an optional render-time failure.
+
+        Args:
+            error: When set, `render` raises this instead of succeeding.
+        """
+        self.calls: list[tuple[Composition, ExecutionContext]] = []
+        self.error = error
+
+    def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
+        """Records the call and returns the root layer's `TemplateInfo`.
+
+        Args:
+            composition: Composition the caller wants rendered.
+            ctx: Execution parameters for the (unperformed) render.
+
+        Returns:
+            The `TemplateInfo` `RenderEngine.render` would return for this
+            composition's final layer.
+
+        Raises:
+            Exception: `self.error`, when set at construction.
+        """
+        self.calls.append((composition, ctx))
+        if self.error is not None:
+            raise self.error
+        final_layer = composition.layers[-1]
+        return final_template_info(
+            final_path=final_layer.path, fallback_name=final_layer.name
+        )
+
+
+@pytest.fixture()
+def renderer() -> RecordingRenderer:
+    """A `RecordingRenderer` standing in for `RenderEngine` at the CLI seam."""
+    return RecordingRenderer()
+
+
+@pytest.fixture()
+def seams(renderer: RecordingRenderer) -> Seams:
+    """`Seams` wired to the `renderer` fixture, ready to pass as `obj` to the runner."""
+    return Seams(renderer=renderer)
 
 
 @pytest.fixture()
