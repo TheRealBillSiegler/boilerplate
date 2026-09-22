@@ -55,29 +55,27 @@ FORMAT_OPTION = typer.Option(TextFormat.TEXT, "--format", help="Output format.")
 _logger = getLogger(__name__)
 
 
-def _apply_ci_mode_and_yes(
+def _apply_ci_mode(
     *,
     ci_mode: bool,
     non_interactive: bool,
-    yes: bool,
     no_tasks: bool,
 ) -> tuple[bool, bool]:
     """Resolve final ``(non_interactive, no_tasks)`` from raw flag values.
 
-    ``--ci`` implies ``--non-interactive --yes --no-tasks``. ``--yes``
-    implies ``--non-interactive``. Subcommand flags compose with OR
-    semantics: if any source turns a behavior on, it stays on.
+    ``--ci`` implies ``--non-interactive --no-tasks``. Subcommand flags
+    compose with OR semantics: if any source turns a behavior on, it stays
+    on.
 
     Args:
         ci_mode: Whether global ``--ci`` was passed.
         non_interactive: Whether subcommand ``--non-interactive`` was passed.
-        yes: Whether subcommand ``--yes`` was passed.
         no_tasks: Whether subcommand ``--no-tasks`` was passed.
 
     Returns:
         A tuple ``(effective_non_interactive, effective_no_tasks)``.
     """
-    effective_non_interactive = non_interactive or yes or ci_mode
+    effective_non_interactive = non_interactive or ci_mode
     effective_no_tasks = no_tasks or ci_mode
     return effective_non_interactive, effective_no_tasks
 
@@ -129,7 +127,7 @@ def _require_tty_for_interactive(*, non_interactive: bool, dry_run: bool) -> Non
     starts.
 
     Args:
-        non_interactive: Effective non-interactive flag after --ci/--yes
+        non_interactive: Effective non-interactive flag after --ci
             composition; when True the guard is skipped.
         dry_run: Whether --dry-run was passed; dry runs never prompt, so
             they stay legal when piped.
@@ -157,7 +155,7 @@ def _resolve_destination(
 
     Args:
         destination: The positional argument, or ``None`` when omitted.
-        non_interactive: Effective non-interactive flag after --ci/--yes
+        non_interactive: Effective non-interactive flag after --ci
             composition.
         dry_run: Whether --dry-run was passed.
 
@@ -334,12 +332,6 @@ def new(
         "-n",
         help="Run in non-interactive mode using default values for all questions.",
     ),
-    yes: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Accept all defaults without prompting (implies --non-interactive).",
-    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -362,10 +354,9 @@ def new(
 
     # Tool-scoped opt-in; the generic CI var is deliberately never read
     # (ADR-013 rationale).
-    non_interactive, no_tasks = _apply_ci_mode_and_yes(
+    non_interactive, no_tasks = _apply_ci_mode(
         ci_mode=cli_context.ci_mode,
         non_interactive=non_interactive or env_flag("BOILERPLATE_NON_INTERACTIVE"),
-        yes=yes,
         no_tasks=no_tasks,
     )
     _require_tty_for_interactive(non_interactive=non_interactive, dry_run=dry_run)
@@ -418,7 +409,7 @@ def new(
 
     # Build execution context. The profile (profile.toml) pre-fills the
     # questionnaire as overridable defaults: an interactive answer overrides
-    # them, and --yes takes them as-is. It rides Copier's user_defaults
+    # them, and --non-interactive takes them as-is. It rides Copier's user_defaults
     # channel, not the forced-answer (data) channel. --data/--data-file are
     # forced answers: taken as-is, never prompted for, and win over the
     # profile on a key collision (--data over --data-file over profile).

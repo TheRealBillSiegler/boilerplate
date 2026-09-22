@@ -24,7 +24,9 @@ def test_profile_toml_fills_project_questions(
     )
     dest = tmp_path / "myapp"
 
-    result = runner.invoke(app, ["new", "project", str(dest), "--yes", "--no-tasks"])
+    result = runner.invoke(
+        app, ["new", "project", str(dest), "--non-interactive", "--no-tasks"]
+    )
 
     assert result.exit_code == 0, result.output
     pyproject = (dest / "pyproject.toml").read_text()
@@ -41,7 +43,9 @@ def test_without_profile_file_renders_public(
     )
     dest = tmp_path / "myapp"
 
-    result = runner.invoke(app, ["new", "project", str(dest), "--yes", "--no-tasks"])
+    result = runner.invoke(
+        app, ["new", "project", str(dest), "--non-interactive", "--no-tasks"]
+    )
 
     assert result.exit_code == 0, result.output
     assert "[[tool.uv.index]]" not in (dest / "pyproject.toml").read_text()
