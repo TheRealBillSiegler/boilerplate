@@ -50,7 +50,11 @@ DATA_FILE_OPTION = typer.Option(
     "--data-file",
     help="YAML file mapping question name to forced answer (read as UTF-8).",
 )
-FORMAT_OPTION = typer.Option(TextFormat.TEXT, "--format", help="Output format.")
+FORMAT_OPTION = typer.Option(
+    TextFormat.TEXT,
+    "--format",
+    help="Output format: text, or one JSON object with template, destination and layers.",
+)
 
 _logger = getLogger(__name__)
 
@@ -299,23 +303,29 @@ def new(
         False,
         "--force",
         "-f",
-        help="Overwrite destination if it exists.",
+        help="Overwrite the destination if it already exists. Does not imply --non-interactive.",
     ),
     non_interactive: bool = typer.Option(
         False,
         "--non-interactive",
-        help="Run in non-interactive mode using default values for all questions.",
+        help=(
+            "Use defaults for all unanswered questions without prompting; "
+            "fail if a required question has none."
+        ),
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
         "-n",
-        help="Show what would be created without writing files.",
+        help=(
+            "Print the composed layer sequence and destination without "
+            "rendering or writing files."
+        ),
     ),
     no_tasks: bool = typer.Option(
         False,
         "--no-tasks",
-        help="Skip post-generation task execution.",
+        help="Skip execution of all template tasks.",
     ),
     data: list[str] | None = DATA_OPTION,
     data_file: Path | None = DATA_FILE_OPTION,

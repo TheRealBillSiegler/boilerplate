@@ -65,7 +65,7 @@ These options apply to all commands and MUST be processed before any subcommand.
 | `--help` | `-h` | flag | — | Print help text and exit |
 | `--version` | — | flag | — | Print version and exit |
 | `--templates-dir` | — | path | null | Override the template search directory for the command |
-| `--format` | — | enum | varies | Output format (command-dependent: `table`, `json`, `yaml`, `tree`, `wide`) |
+| `--format` | — | enum | varies | Output format (command-dependent: `text`, `table`, `json`, `yaml`, `tree`, `wide`) |
 | `--ci` | | flag | `false` | Convenience flag equivalent to `--non-interactive --yes`. Default: `false`. See `--ci` behavior below. Component flags inapplicable to a given command (e.g. `--non-interactive` on `eject` and `adopt`) are no-ops for that command. |
 | `--color` | — | enum | `auto` | Color output mode: `auto`, `always`, `never`. Default: `auto`. |
 | `--offline` | — | flag | `false` | Use only the local cache; do not attempt any network access for remote catalog sources. Default: `false`. |
@@ -110,7 +110,8 @@ The following flags govern execution of untrusted template content and are accep
 
 | Command | Supported Formats |
 | --- | --- |
-| `new`, `update`, `status`, `doctor`, `validate`, `init-template`, `env` | `table` (default), `json` |
+| `new` | `text` (default), `json` |
+| `update`, `status`, `doctor`, `validate`, `init-template`, `env` | `table` (default), `json` |
 | `list` | `table` (default), `json`, `wide` |
 | `compose` | `yaml` (default), `json` |
 | `graph` | `table` (default), `json`, `tree` |
@@ -168,7 +169,7 @@ System commands:
 Global options:
   -v, --verbose       Enable debug logging
   -q, --quiet         Suppress non-error output
-      --format FMT    Output format (json, table, yaml, tree, wide)
+      --format FMT    Output format (text, json, table, yaml, tree, wide)
       --templates-dir Override template search directory
       --ci            CI mode (non-interactive, --yes)
       --color MODE    Color output (auto, always, never)
