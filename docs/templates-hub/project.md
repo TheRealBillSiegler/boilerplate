@@ -37,7 +37,7 @@ my-app/
 ```
 
 Post-generation tasks create the virtual environment and `uv.lock` and initialize a git repository (skipped with `--no-tasks`).
-With `--no-tasks` or `--ci`, the cleanup step also never runs, so `_scripts/post_generation.py` is left behind in the generated project — it isn't gitignored.
+With `--no-tasks`, the cleanup step also never runs, so `_scripts/post_generation.py` is left behind in the generated project — it isn't gitignored.
 
 ## Usage
 

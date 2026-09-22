@@ -258,7 +258,7 @@ class InteractiveRenderFailedError(BoilerplateError):
             error_code="BP_RENDER_PROMPT_FAILED",
             remediation=kwargs.pop(
                 "remediation",
-                "Re-run with --ci (implies --non-interactive --yes --no-tasks) "
+                "Re-run with --ci (implies --non-interactive) "
                 "from a shell where all required answers have defaults, or use "
                 "a terminal that supports interactive prompts (e.g., PowerShell "
                 "on Windows, a real tty on Unix).",

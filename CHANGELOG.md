@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- `--ci` and `BOILERPLATE_CI` no longer skip post-generation tasks; they imply `--non-interactive` only. Pass `--no-tasks` to skip tasks in a pipeline
+
 ### Removed
 
 - `new --yes`/`-y`: it only implied `--non-interactive`; pass `--non-interactive` instead

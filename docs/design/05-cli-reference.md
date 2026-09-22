@@ -66,7 +66,7 @@ These options apply to all commands and MUST be processed before any subcommand.
 | `--version` | — | flag | — | Print version and exit |
 | `--templates-dir` | — | path | null | Override the template search directory for the command |
 | `--format` | — | enum | varies | Output format (command-dependent: `table`, `json`, `yaml`, `tree`, `wide`) |
-| `--ci` | | flag | `false` | Convenience flag equivalent to `--non-interactive --yes --no-tasks`. Default: `false`. See `--ci` behavior below. Component flags inapplicable to a given command (e.g. `--non-interactive` or `--no-tasks` on `eject` and `adopt`) are no-ops for that command. |
+| `--ci` | | flag | `false` | Convenience flag equivalent to `--non-interactive --yes`. Default: `false`. See `--ci` behavior below. Component flags inapplicable to a given command (e.g. `--non-interactive` on `eject` and `adopt`) are no-ops for that command. |
 | `--color` | — | enum | `auto` | Color output mode: `auto`, `always`, `never`. Default: `auto`. |
 | `--offline` | — | flag | `false` | Use only the local cache; do not attempt any network access for remote catalog sources. Default: `false`. |
 
@@ -96,7 +96,7 @@ The following flags govern execution of untrusted template content and are accep
 
 **`--version`**: Prints the version string (e.g., `boilerplate 0.2.0`) and exits with code `0`.
 
-**`--ci` behavior**: Designed for CI/CD pipelines where no human is present. `--ci` desugars to `--non-interactive --yes --no-tasks`: tasks are skipped with a warning regardless of trust state, because no human is present to review what would execute and the trust verification pipeline does not yet exist. To execute tasks in CI, pass `--ci --allow-tasks`, which desugars to `--non-interactive --yes --allow-tasks` and resolves under the `--allow-tasks --yes` column of the truth table (execute for both trust states). Revisit the trust-gated default when the verification pipeline ships at Phase 4 entry.
+**`--ci` behavior**: Designed for CI/CD pipelines where no human is present. `--ci` desugars to `--non-interactive --yes`: every question takes its default or forced answer, and task execution resolves under the truth table's `--yes` column, so trusted sources execute and untrusted sources skip with a warning. To execute tasks from an untrusted source in CI, pass `--ci --allow-tasks`, which resolves under the `--allow-tasks --yes` column (execute for both trust states).
 
 **Environment variable equivalents**: `BOILERPLATE_CI` mirrors `--ci`; `BOILERPLATE_NON_INTERACTIVE` mirrors `new`'s `--non-interactive` (see below). Each is a tool-scoped opt-in following the `PIP_NO_INPUT` convention: the value is trimmed of surrounding whitespace, then enabled when the trimmed value is non-empty and not `0` or `false` (case-insensitive) — an explicit `0`/`false`, and empty or whitespace-only, all behave as unset. An explicit CLI flag always wins; the env var can only turn a behavior on, never veto a flag that is present. Both compose with the non-TTY guard (see `new` command below) exactly as the flags do. The generic `CI` environment variable is never inspected — see [adr-013-interactivity-contract.md](adr-013-interactivity-contract.md).
 
@@ -170,7 +170,7 @@ Global options:
   -q, --quiet         Suppress non-error output
       --format FMT    Output format (json, table, yaml, tree, wide)
       --templates-dir Override template search directory
-      --ci            CI mode (non-interactive, --yes, skip tasks)
+      --ci            CI mode (non-interactive, --yes)
       --color MODE    Color output (auto, always, never)
       --offline       Use local cache only
   -h, --help          Show this message and exit
@@ -1219,7 +1219,7 @@ Common invocation patterns for automated environments:
 | Create project, no interaction, env var instead of a flag (POSIX shells) | `BOILERPLATE_CI=1 boilerplate new template dest` |
 | Create project, no interaction, env var instead of a flag (PowerShell) | `$env:BOILERPLATE_CI = "1"; boilerplate new template dest` |
 | Create with answers file | `boilerplate new template dest --ci --answers answers.yml` |
-| Create with tasks (explicit opt-in) | `boilerplate new template dest --ci --allow-tasks` |
+| Create from an untrusted source, tasks allowed | `boilerplate new template dest --ci --allow-tasks` |
 | Update project | `boilerplate update --ci` |
 | Validate template | `boilerplate validate ./my-template/` |
 | JSON output for scripting | `boilerplate list --format json` |

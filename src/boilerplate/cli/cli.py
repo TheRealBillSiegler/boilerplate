@@ -195,7 +195,7 @@ def main(
     ci: bool = typer.Option(
         False,
         "--ci",
-        help="CI mode: implies --non-interactive --yes --no-tasks.",
+        help="CI mode: never prompt (implies --non-interactive on new) and log JSON to stderr.",
     ),
     _version: bool = typer.Option(
         False,
@@ -218,9 +218,9 @@ def main(
     # (ADR-013 rationale).
     ci = ci or env_flag("BOILERPLATE_CI")
 
-    # The --ci implications (--non-interactive, --yes, --no-tasks) are honored
-    # by subcommands via CliContext.ci_mode. Output volume is not one of them:
-    # a pipeline that wants debug logs passes --ci --verbose.
+    # The --ci implication (--non-interactive) is honored by subcommands via
+    # CliContext.ci_mode. Output volume is not part of it: a pipeline that
+    # wants debug logs passes --ci --verbose.
     ensure_verbose_quiet_exclusive(verbose, quiet)
 
     # Pick up an injected Seams (e.g. a test's recording renderer) if one was
