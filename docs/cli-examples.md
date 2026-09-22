@@ -28,7 +28,7 @@ boilerplate new project my_app
 - Non-interactive with defaults, force overwrite if exists:
 
 ```powershell
-boilerplate new project -n -f my_app
+boilerplate new project --non-interactive -f my_app
 ```
 
 ## Inspect a template graph

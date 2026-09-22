@@ -239,8 +239,8 @@ The selection prompt MUST NOT make network calls. It operates only on locally ca
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--force` | `-f` | flag | `false` | Overwrite destination if it already exists (no confirmation). Default: `false`. |
-| `--non-interactive` | `-n` | flag | `false` | Use defaults for all unanswered questions without prompting. Default: `false`. |
-| `--dry-run` | `-d` | flag | `false` | Show the composition plan without rendering or writing files. Default: `false`. |
+| `--non-interactive` | — | flag | `false` | Use defaults for all unanswered questions without prompting. Default: `false`. |
+| `--dry-run` | `-n` | flag | `false` | Show the composition plan without rendering or writing files. Default: `false`. |
 | `--render-to` | — | path | null | Render the template to the specified directory for inspection without creating a managed project. Default: null. |
 | `--git-init` | — | flag | `true` | Initialize a Git repository in the created project directory. Default: `true`. Use `--no-git-init` to skip. |
 | `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
@@ -248,7 +248,7 @@ The selection prompt MUST NOT make network calls. It operates only on locally ca
 | `--save-answers` | — | path | null | Write final merged answers to a YAML file for CI reproducibility. Default: null. See `--save-answers` notes below. |
 | `--data` | — | key=value | — | Forced answer for one question (repeatable). Never prompted for; satisfies the non-interactive required-answer pre-flight. Precedence on collision: `--data` > `--data-file` > profile pre-fills. |
 | `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8. Same forced-answer semantics as `--data`; `--data` wins on a key collision. |
-| `--no-tasks` | `-T` | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
+| `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--yes` | `-y` | flag | `false` | Suppress confirmation prompts for task execution and Jinja2 extension loading. Default: `false`. For untrusted templates, `--allow-tasks` (or `--allow-untrusted`) is additionally required. Does not affect interactive question prompts — use `--non-interactive` for that. |
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
@@ -256,6 +256,8 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 **`--data`/`--data-file` vs `--answers`/`--set`/`--save-answers`**: `--data` and `--data-file` name Copier's own forced-answers channel directly (`--data`/`--data-file` in Copier itself), so the flag names carry over unchanged for anyone already familiar with Copier. `--answers`/`--set`/`--save-answers` cover the round-trip answers workflow; their overlap with the forced-answers flags is reconciled in that feature's design.
 
 `--no-tasks` is the canonical flag name. `--skip-tasks` is accepted as an alias for compatibility but is not displayed in help text.
+
+Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `--non-interactive` and `--no-tasks` are scripted, safety-relevant switches and have no short form; `-n` means dry run here as it does in Copier, make and rsync.
 
 **`--dry-run` vs `--render-to`**: `--dry-run` shows the composition plan and the list of files that would be created without producing any output. To render files for inspection without committing a managed project, use `--render-to <dir>`.
 
@@ -298,7 +300,7 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
-| `--dry-run` | `-d` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
+| `--dry-run` | `-n` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
 | `--continue` | `-c` | flag | `false` | Resume after resolving merge conflicts (write lock file). Default: `false`. |
 | `--abort` | — | flag | `false` | Abandon an in-progress update; restore pre-update file state. Default: `false`. |
 | `--target-version` | `-t` | string | null | Target template version. Default: latest. |
@@ -306,8 +308,8 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--allow-downgrade` | — | flag | `false` | Permit updating to an older template version (normally rejected). Default: `false`. |
-| `--non-interactive` | `-n` | flag | `false` | Use defaults for new questions without prompting. Default: `false`. |
-| `--no-tasks` | `-T` | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
+| `--non-interactive` | — | flag | `false` | Use defaults for new questions without prompting. Default: `false`. |
+| `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
 | `--force` | `-f` | flag | `false` | Skip the clean working tree pre-flight check. Default: `false`. Does NOT skip confirmation (use `--yes` for that). |
 
@@ -601,7 +603,7 @@ Import an existing Copier-managed project into Boilerplate lifecycle management.
 
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
-| `--dry-run` | `-d` | flag | `false` | Show what would be written without making changes. Default: `false`. |
+| `--dry-run` | `-n` | flag | `false` | Show what would be written without making changes. Default: `false`. |
 | `--format` | — | enum | `table` | Output format: `table`, `json`. Default: `table`. |
 
 **Preconditions**:
@@ -633,7 +635,7 @@ Stop Boilerplate lifecycle management of a project. This is the exact inverse of
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--yes` | `-y` | flag | `false` | Skip the confirmation prompt. Default: `false`. |
-| `--dry-run` | `-d` | flag | `false` | List what would be removed without changing anything. Default: `false`. |
+| `--dry-run` | `-n` | flag | `false` | List what would be removed without changing anything. Default: `false`. |
 | `--format` | — | enum | `table` | Output format: `table`, `json`. Default: `table`. |
 
 **What is removed** (Boilerplate-owned artifacts only):
@@ -810,7 +812,7 @@ boilerplate env apply [options] <profile-spec>
 
 | Flag | Short | Description |
 | --- | --- | --- |
-| `--dry-run` | `-d` | Display the provisioning plan without applying changes. Default: `false`. |
+| `--dry-run` | `-n` | Display the provisioning plan without applying changes. Default: `false`. |
 | `--yes` | `-y` | Skip confirmation prompt. Default: `false`. |
 | `--force` | `-f` | Re-install tools even if the correct version is already present. Default: `false`. |
 
@@ -1153,12 +1155,12 @@ The following table summarizes flag availability across commands. **Global flags
 | Flag | `new` | `update` | `adopt` | `eject` | `list` | `compose` | `graph` | `validate` | `status` | `doctor` | `init-template` | `test` | `env` | `lock` | `cache` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `--force` | X | X | | | | | | | | | | | X | | X |
-| `--non-interactive` / `-n` | X | X | | | | | | | | | | | | | |
-| `--dry-run` | X | X | X | X | | | | | | | | | X | | |
+| `--non-interactive` | X | X | | | | | | | | | | | | | |
+| `--dry-run` / `-n` | X | X | X | X | | | | | | | | | X | | |
 | `--answers` | X | X | | | | | | | | | | | | | |
 | `--set` | X | X | | | | | | | | | | | | | |
 | `--save-answers` | X | | | | | | | | | | | | | | |
-| `--no-tasks` / `-T` | X | X | | | | | | | | | | | | | |
+| `--no-tasks` | X | X | | | | | | | | | | | | | |
 | `--allow-extensions` | X | X | | | | | | | | | | | | | |
 | `--allow-tasks` | X | X | | | | | | | | | | | | | |
 | `--allow-untrusted` | X | X | | | | | | | | | | | | | |

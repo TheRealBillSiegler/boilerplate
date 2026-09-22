@@ -16,7 +16,7 @@ This guide scaffolds your first project and runs its tests. Install Boilerplate 
 Generate a clean, opinionated project structure, accepting every default in one shot:
 
 ```bash
-boilerplate new project my-first-project -n
+boilerplate new project my-first-project --non-interactive
 ```
 
 Expected: creates my-first-project/ with:
@@ -27,7 +27,7 @@ Expected: creates my-first-project/ with:
 - `__init__.py` with a version string
 - additional files
 
-Want to set the project name, description, dependencies, and author yourself? Drop `-n` and answer the 7 prompts interactively (each has a sensible default — press Enter to accept it):
+Want to set the project name, description, dependencies, and author yourself? Drop `--non-interactive` and answer the 7 prompts interactively (each has a sensible default — press Enter to accept it):
 
 ```bash
 boilerplate new project my-first-project
@@ -51,7 +51,7 @@ boilerplate new project@0.2.1 my-versioned-project
 Non‑interactive (accept defaults) and overwrite existing destination:
 
 ```bash
-boilerplate new project -n -f my-first-project
+boilerplate new project --non-interactive -f my-first-project
 ```
 
 !!! warning "`--force` / `-f` overwrites without confirmation"

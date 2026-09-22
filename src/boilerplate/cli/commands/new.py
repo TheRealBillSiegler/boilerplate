@@ -304,12 +304,12 @@ def new(
     non_interactive: bool = typer.Option(
         False,
         "--non-interactive",
-        "-n",
         help="Run in non-interactive mode using default values for all questions.",
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
+        "-n",
         help="Show what would be created without writing files.",
     ),
     no_tasks: bool = typer.Option(
