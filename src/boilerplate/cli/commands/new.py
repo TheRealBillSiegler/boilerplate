@@ -55,31 +55,6 @@ FORMAT_OPTION = typer.Option(TextFormat.TEXT, "--format", help="Output format.")
 _logger = getLogger(__name__)
 
 
-def _apply_ci_mode(
-    *,
-    ci_mode: bool,
-    non_interactive: bool,
-    no_tasks: bool,
-) -> tuple[bool, bool]:
-    """Resolve final ``(non_interactive, no_tasks)`` from raw flag values.
-
-    ``--ci`` implies ``--non-interactive --no-tasks``. Subcommand flags
-    compose with OR semantics: if any source turns a behavior on, it stays
-    on.
-
-    Args:
-        ci_mode: Whether global ``--ci`` was passed.
-        non_interactive: Whether subcommand ``--non-interactive`` was passed.
-        no_tasks: Whether subcommand ``--no-tasks`` was passed.
-
-    Returns:
-        A tuple ``(effective_non_interactive, effective_no_tasks)``.
-    """
-    effective_non_interactive = non_interactive or ci_mode
-    effective_no_tasks = no_tasks or ci_mode
-    return effective_non_interactive, effective_no_tasks
-
-
 def _stdin_supports_prompts() -> bool:
     """Return True when stdin can host interactive prompts (a real TTY).
 
@@ -353,11 +328,12 @@ def new(
     settings = cli_context.settings
 
     # Tool-scoped opt-in; the generic CI var is deliberately never read
-    # (ADR-013 rationale).
-    non_interactive, no_tasks = _apply_ci_mode(
-        ci_mode=cli_context.ci_mode,
-        non_interactive=non_interactive or env_flag("BOILERPLATE_NON_INTERACTIVE"),
-        no_tasks=no_tasks,
+    # (ADR-013 rationale). --ci implies --non-interactive only; a pipeline
+    # that wants tasks skipped passes --no-tasks explicitly.
+    non_interactive = (
+        non_interactive
+        or env_flag("BOILERPLATE_NON_INTERACTIVE")
+        or cli_context.ci_mode
     )
     _require_tty_for_interactive(non_interactive=non_interactive, dry_run=dry_run)
     dest_dir = _resolve_destination(

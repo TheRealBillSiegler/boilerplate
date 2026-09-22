@@ -194,8 +194,7 @@ class TestBoilerplateCiEnvVar:
     ) -> None:
         """CI mode does not imply --quiet, so a pipeline can ask for debug logs.
 
-        docs/design/05-cli-reference.md desugars --ci to --non-interactive
-        --no-tasks and nothing about output volume.
+        --ci implies --non-interactive only and nothing about output volume.
         """
         called: dict[str, bool] = {}
 

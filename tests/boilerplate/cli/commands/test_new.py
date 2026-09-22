@@ -10,7 +10,6 @@ from typer.testing import CliRunner
 
 from boilerplate.cli import app
 from boilerplate.cli.commands.new import (
-    _apply_ci_mode,  # pyright: ignore[reportPrivateUsage]
     _load_data_file,  # pyright: ignore[reportPrivateUsage]
     _parse_data_entries,  # pyright: ignore[reportPrivateUsage]
     _resolve_data,  # pyright: ignore[reportPrivateUsage]
@@ -43,44 +42,6 @@ def _invoke_and_capture_execution_ctx(
 
     assert len(renderer.calls) == 1, "renderer.render was not called exactly once"
     return renderer.calls[-1][1]  # Second element of the tuple is ExecutionContext
-
-
-class TestApplyCiModeAndYes:
-    """Decision table for ``_apply_ci_mode``.
-
-    Encodes the composition rules documented on the helper. If any row below
-    surprises you, the rules are either wrong or under-specified — fix both
-    the helper and this table together.
-    """
-
-    @pytest.mark.parametrize(
-        ("ci_mode", "non_interactive", "no_tasks", "expected"),
-        [
-            # No flags → defaults off.
-            (False, False, False, (False, False)),
-            # Subcommand flags alone.
-            (False, True, False, (True, False)),
-            (False, False, True, (False, True)),
-            # --ci alone implies both.
-            (True, False, False, (True, True)),
-            # --ci with subcommand flags is idempotent.
-            (True, True, True, (True, True)),
-        ],
-    )
-    def test_composition_rules(
-        self,
-        *,
-        ci_mode: bool,
-        non_interactive: bool,
-        no_tasks: bool,
-        expected: tuple[bool, bool],
-    ) -> None:
-        result = _apply_ci_mode(
-            ci_mode=ci_mode,
-            non_interactive=non_interactive,
-            no_tasks=no_tasks,
-        )
-        assert result == expected
 
 
 class TestParseDataEntries:
@@ -361,7 +322,7 @@ def test_new_default_is_interactive(
 class TestCiModeAndNoTasks:
     """`--ci` and `--no-tasks` propagate into ExecutionContext as promised."""
 
-    def test_ci_flag_sets_non_interactive_and_skip_tasks(
+    def test_ci_flag_sets_non_interactive_and_leaves_tasks_running(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
@@ -369,7 +330,7 @@ class TestCiModeAndNoTasks:
         renderer: Renderer,
         seams: Seams,
     ) -> None:
-        """`boilerplate --ci new ...` honors the full four-flag implication."""
+        """`boilerplate --ci new ...` implies `--non-interactive` only."""
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
             fake_template_dir,
@@ -379,7 +340,7 @@ class TestCiModeAndNoTasks:
             ["--ci", "new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
-        assert ctx.skip_tasks is True  # type: ignore[attr-defined]
+        assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
     def test_no_tasks_flag_alone_sets_skip_tasks(
         self,
@@ -421,7 +382,7 @@ class TestCiModeAndNoTasks:
         )
         assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
-    def test_ci_env_var_alone_sets_non_interactive_and_skip_tasks(
+    def test_ci_env_var_alone_sets_non_interactive_and_leaves_tasks_running(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
@@ -430,7 +391,7 @@ class TestCiModeAndNoTasks:
         seams: Seams,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """BOILERPLATE_CI=1 with no flags matches --ci's full implication chain."""
+        """BOILERPLATE_CI=1 matches --ci: --non-interactive only, tasks still run."""
         monkeypatch.setenv("BOILERPLATE_CI", "1")
         ctx = _invoke_and_capture_execution_ctx(
             typer_cli_runner,
@@ -441,7 +402,7 @@ class TestCiModeAndNoTasks:
             ["new", "project"],
         )
         assert ctx.interactive is False  # type: ignore[attr-defined]
-        assert ctx.skip_tasks is True  # type: ignore[attr-defined]
+        assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
 
 class TestNonInteractiveEnvVar:
