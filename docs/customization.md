@@ -22,7 +22,7 @@ container_registry = "myregistry.azurecr.io"
 ```
 
 - Keys are **template question names** (see each template's `copier.yml`). The only reserved names are the two table headers; a key matching no question is ignored.
-- Precedence, high to low: your interactive answer › `[templates.<name>]` › `[defaults]` › the template's own default. Defaults pre-fill prompts — you can still override at the prompt; `--yes` takes them as-is.
+- Precedence, high to low: your interactive answer › `[templates.<name>]` › `[defaults]` › the template's own default. Defaults pre-fill prompts — you can still override at the prompt; `--non-interactive` takes them as-is.
 
 ### Questions the first-party templates share
 

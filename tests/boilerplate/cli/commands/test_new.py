@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 
 from boilerplate.cli import app
 from boilerplate.cli.commands.new import (
-    _apply_ci_mode_and_yes,  # pyright: ignore[reportPrivateUsage]
+    _apply_ci_mode,  # pyright: ignore[reportPrivateUsage]
     _load_data_file,  # pyright: ignore[reportPrivateUsage]
     _parse_data_entries,  # pyright: ignore[reportPrivateUsage]
     _resolve_data,  # pyright: ignore[reportPrivateUsage]
@@ -46,7 +46,7 @@ def _invoke_and_capture_execution_ctx(
 
 
 class TestApplyCiModeAndYes:
-    """Decision table for ``_apply_ci_mode_and_yes``.
+    """Decision table for ``_apply_ci_mode``.
 
     Encodes the composition rules documented on the helper. If any row below
     surprises you, the rules are either wrong or under-specified — fix both
@@ -54,19 +54,17 @@ class TestApplyCiModeAndYes:
     """
 
     @pytest.mark.parametrize(
-        ("ci_mode", "non_interactive", "yes", "no_tasks", "expected"),
+        ("ci_mode", "non_interactive", "no_tasks", "expected"),
         [
             # No flags → defaults off.
-            (False, False, False, False, (False, False)),
+            (False, False, False, (False, False)),
             # Subcommand flags alone.
-            (False, True, False, False, (True, False)),
-            (False, False, False, True, (False, True)),
-            # --yes implies non-interactive; does not imply no-tasks.
-            (False, False, True, False, (True, False)),
-            # --ci alone implies all four (both tuple elements True).
-            (True, False, False, False, (True, True)),
+            (False, True, False, (True, False)),
+            (False, False, True, (False, True)),
+            # --ci alone implies both.
+            (True, False, False, (True, True)),
             # --ci with subcommand flags is idempotent.
-            (True, True, True, True, (True, True)),
+            (True, True, True, (True, True)),
         ],
     )
     def test_composition_rules(
@@ -74,14 +72,12 @@ class TestApplyCiModeAndYes:
         *,
         ci_mode: bool,
         non_interactive: bool,
-        yes: bool,
         no_tasks: bool,
         expected: tuple[bool, bool],
     ) -> None:
-        result = _apply_ci_mode_and_yes(
+        result = _apply_ci_mode(
             ci_mode=ci_mode,
             non_interactive=non_interactive,
-            yes=yes,
             no_tasks=no_tasks,
         )
         assert result == expected
@@ -960,8 +956,7 @@ class TestNonTtyGuard:
         assert "--non-interactive" in result.output
         assert not renderer.calls
 
-    @pytest.mark.parametrize("flag", ["--non-interactive", "--yes"])
-    def test_non_interactive_flags_bypass_guard(
+    def test_non_interactive_flag_bypasses_guard(
         self,
         typer_cli_runner: CliRunner,
         fake_template_dir: Path,
@@ -969,7 +964,6 @@ class TestNonTtyGuard:
         renderer: Renderer,
         seams: Seams,
         mocker: MockerFixture,
-        flag: str,
     ) -> None:
         mocker.patch(
             "boilerplate.cli.commands.new._stdin_supports_prompts",
@@ -982,7 +976,7 @@ class TestNonTtyGuard:
                 "new",
                 "mytpl",
                 str(temp_project_dir),
-                flag,
+                "--non-interactive",
                 "--templates-dir",
                 str(fake_template_dir),
             ],
@@ -1172,3 +1166,17 @@ class TestFormatOption:
         assert "Invalid value for '--format'" in " ".join(
             re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
         )
+
+
+class TestYesOptionRemoved:
+    """``--yes``/``-y`` only ever implied ``--non-interactive``; use that flag."""
+
+    @pytest.mark.parametrize("flag", ["--yes", "-y"])
+    def test_yes_is_rejected_as_an_unknown_option(
+        self, typer_cli_runner: CliRunner, tmp_path: Path, flag: str
+    ) -> None:
+        result = typer_cli_runner.invoke(app, ["new", "project", str(tmp_path), flag])
+        output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert "No such option" in " ".join(output.split())

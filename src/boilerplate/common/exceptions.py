@@ -209,7 +209,7 @@ class InteractiveModeRequiresTtyError(BoilerplateError):
             error_code="BP_INPUT_TTY_REQUIRED",
             remediation=kwargs.pop(
                 "remediation",
-                "Pass --non-interactive or --yes to render with defaults "
+                "Pass --non-interactive to render with defaults "
                 "(or use the global flag: boilerplate --ci new ...), or "
                 "run from an interactive terminal; --data/--data-file "
                 "answers are preserved and used under --non-interactive.",

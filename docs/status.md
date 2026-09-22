@@ -70,7 +70,7 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
 
-- :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive/--yes`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). **It does not write a lock file.**
+- :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). **It does not write a lock file.**
 - :material-circle-outline:{ .status-design } Lock-file generation (`boilerplate.lock`) — no code reads or writes a lock file
 - :material-circle-outline:{ .status-design } Project update (`update` command), three-way merge, migration records, and rollback — none implemented
 

@@ -30,7 +30,7 @@ Grammar: two reserved tables — `[defaults]` (any template) and `[templates.<na
 
 **Two answer channels, kept distinct** (`ExecutionContext`):
 
-- `profile` → Copier `user_defaults=` — pre-fills the prompt, **overridable** interactively, taken as-is under `--yes`. This is what a *default* means.
+- `profile` → Copier `user_defaults=` — pre-fills the prompt, **overridable** interactively, taken as-is under `--non-interactive`. This is what a *default* means.
 - `context_data` → Copier `data=` — a **forced** answer (prompt skipped); also carries answers threaded between composition layers. Merging profile values into this channel makes them non-overridable — the exact regression the final review caught.
 
 **Org configuration is split out of the product.** An organization layers its private config *after* the canonical public installer via an org-owned script that writes two plain files: `uv.toml` (machine package resolution + keyring/artifacts-keyring) and `%APPDATA%\boilerplate\profile.toml` (generation defaults). An organization keeps its real setup in its own repository; the public repo documents the generic pattern (fictional `acme`) in [customization.md](../customization.md).
