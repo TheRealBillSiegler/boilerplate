@@ -1141,3 +1141,53 @@ class TestYesOptionRemoved:
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR
         assert "No such option" in " ".join(output.split())
+
+
+class TestDryRunShortFlag:
+    """``-n`` is dry run, matching Copier, make, git clean, and rsync.
+
+    ``--non-interactive`` and ``--no-tasks`` are scripted, safety-relevant
+    switches and keep long forms only; see docs/design/05-cli-reference.md.
+    """
+
+    def test_short_flag_n_behaves_as_dry_run_with_no_destination_needed(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
+        mocker: MockerFixture,
+    ) -> None:
+        mocker.patch(
+            "boilerplate.cli.commands.new._stdin_supports_prompts",
+            return_value=False,
+        )
+
+        result = typer_cli_runner.invoke(
+            app,
+            ["new", "mytpl", "-n", "--templates-dir", str(fake_template_dir)],
+            obj=seams,
+        )
+
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        assert "Dry run" in result.output
+        assert not renderer.calls
+
+    def test_short_flag_t_is_rejected_as_an_unknown_option(
+        self, typer_cli_runner: CliRunner, tmp_path: Path
+    ) -> None:
+        result = typer_cli_runner.invoke(app, ["new", "project", str(tmp_path), "-T"])
+        output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert "No such option" in " ".join(output.split())
+
+    def test_help_gives_n_to_dry_run_and_no_short_form_to_the_scripted_switches(
+        self, typer_cli_runner: CliRunner
+    ) -> None:
+        result = typer_cli_runner.invoke(app, ["new", "--help"])
+        output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+
+        assert re.search(r"--dry-run\s+-n\b", output)
+        assert re.search(r"--non-interactive\s+[A-Za-z]", output)
+        assert re.search(r"--no-tasks\s+[A-Za-z]", output)
