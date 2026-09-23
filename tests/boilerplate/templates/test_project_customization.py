@@ -93,6 +93,32 @@ class TestSampleModule:
         assert not list(package.glob(".jinja"))
 
 
+class TestRenderedListsAndReadme:
+    def test_dependencies_render_one_per_line(self, tmp_path: Path):
+        dest = _render_project(tmp_path, context_data={"dependencies": ["requests"]})
+        pyproject = (dest / "pyproject.toml").read_text(encoding="utf-8")
+        assert 'dependencies = [\n    "requests",\n]' in pyproject
+
+    def test_readme_names_the_private_index_when_set(self, tmp_path: Path):
+        dest = _render_project(
+            tmp_path,
+            context_data={
+                "package_index_url": "https://pkgs.example.com/feed/pypi/simple/"
+            },
+        )
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert (
+            "resolves packages from `https://pkgs.example.com/feed/pypi/simple/`"
+            in readme
+        )
+        assert "Packages resolve from PyPI" not in readme
+
+    def test_readme_points_at_pypi_by_default(self, tmp_path: Path):
+        dest = _render_project(tmp_path)
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "Packages resolve from PyPI" in readme
+
+
 class TestLineEndings:
     """The render stays LF everywhere, so its scripts run in WSL after any checkout.
 
