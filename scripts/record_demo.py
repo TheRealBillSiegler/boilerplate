@@ -5,7 +5,11 @@ pseudo-terminal (via pexpect) running PowerShell, the shell the demo is
 meant to look like: PSReadLine colours the command line as a viewer types
 it, exactly as it does on a workstation. Every wait is a match against the
 shell's or Copier's own output stream, so a changed prompt or a failed step
-fails the recording loudly instead of shipping a stale demo.
+fails the recording loudly instead of shipping a stale demo. The questions
+it answers are the table ``_QUESTIONS``, which
+``tests/scripts/test_record_demo.py`` checks against the project template's
+own question list, so a question added to the template fails the local gate
+before it can stall a recording.
 
 PSReadLine asks the terminal where the cursor is before it draws anything
 (a ``CSI 6 n`` request that a terminal emulator answers with ``CSI row ;
@@ -135,6 +139,7 @@ _QUESTIONS: Final[tuple[_Question, ...]] = (
     _Question("brief description", "Daily forecast summaries for the team."),
     _Question("runtime dependencies", None),
     _Question("development dependencies", None),
+    _Question("sample module", None),
     _Question("first and last name", "Bill Siegler"),
     _Question("email address", "bill@example.com"),
     _Question("Package index URL", None),
