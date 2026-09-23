@@ -27,6 +27,54 @@ class TestContainerRegistry:
         assert "(default: registry.example.com)" in push
 
 
+class TestReadme:
+    def test_default_readme(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path)
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "tags and pushes to ghcr.io" in readme
+        assert "--namespace <owner>" in readme
+        assert "Packages resolve from PyPI" in readme
+        assert "az acr login" not in readme
+        assert "one test module per source module" not in readme
+
+    def test_readme_for_an_azure_registry(self, tmp_path: Path):
+        dest = render(
+            "streamlit",
+            tmp_path,
+            context_data={"container_registry": "acme.azurecr.io"},
+        )
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "az acr login" in readme
+        assert "--namespace" not in readme
+
+    def test_readme_for_a_third_party_registry(self, tmp_path: Path):
+        dest = render(
+            "streamlit",
+            tmp_path,
+            context_data={"container_registry": "registry.example.com"},
+        )
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "assumes an existing" in readme
+        assert "REGISTRY_TOKEN" not in readme
+
+    def test_readme_for_a_custom_package_index(self, tmp_path: Path):
+        dest = render(
+            "streamlit",
+            tmp_path,
+            context_data={
+                "package_index_url": "https://pkgs.example.com/feed/pypi/simple/"
+            },
+        )
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "https://pkgs.example.com/feed/pypi/simple/" in readme
+        assert "build secret" in readme
+
+    def test_readme_for_a_sample_module(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path, context_data={"sample_module": True})
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert "module.py" in readme
+
+
 class TestBuildIndex:
     def test_build_script_defaults_to_a_plain_build(self, tmp_path: Path):
         dest = render("streamlit", tmp_path)
