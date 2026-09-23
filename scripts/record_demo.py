@@ -34,7 +34,7 @@ import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pyte
 
@@ -102,6 +102,43 @@ _FAILED_PROMPT_RE: Final = r"\[exit -?\d*\]> "
 # moment it takes over the line (the cursor-position request above, cursor
 # visibility toggles), so the anchor tolerates a run of CSI sequences.
 _BARE_PROMPT_RE: Final = r"PS ~/repos\S*> (?:\x1b\[[0-9;?]*[A-Za-z])*$"
+
+
+class _Question(NamedTuple):
+    """Pair a Copier question with the answer the scenario gives it.
+
+    A plain tuple rather than a model: the values are constants read only by
+    this script, so there is no boundary to validate at.
+
+    Attributes:
+        pattern: Regular expression matched against the question text as it
+            arrives on the pty; a substring of the template's ``help``.
+        answer: Replacement for the pre-filled default (cleared with Ctrl+U
+            first); ``None`` accepts the default as-is.
+        timeout: Seconds to wait for ``pattern`` to appear.
+        mark: Optional marker label recorded once ``pattern`` appears.
+    """
+
+    pattern: str
+    answer: str | None
+    timeout: float = 30.0
+    mark: str | None = None
+
+
+# The project template's questions in the order Copier asks them (see
+# src/boilerplate/templates/project/copier.yml). The first wait is longer
+# because it also covers the CLI's cold start.
+_QUESTIONS: Final[tuple[_Question, ...]] = (
+    _Question(
+        "name of the project", "Weather Report", timeout=60.0, mark="first question"
+    ),
+    _Question("brief description", "Daily forecast summaries for the team."),
+    _Question("runtime dependencies", None),
+    _Question("development dependencies", None),
+    _Question("first and last name", "Bill Siegler"),
+    _Question("email address", "bill@example.com"),
+    _Question("Package index URL", None),
+)
 
 
 class DemoRecordingError(Exception):
@@ -449,32 +486,21 @@ def _expect_prompt(child: pexpect.spawn[str], *, timeout: float) -> None:
         )
 
 
-def _ask(
-    session: _Session,
-    pattern: str,
-    answer: str | None,
-    *,
-    timeout: float,
-    mark: str | None = None,
-) -> None:
-    """Wait for a Copier question, marks it if asked, then answers it.
+def _ask(session: _Session, question: _Question) -> None:
+    """Wait for a Copier question, mark it if asked, then answer it.
 
     Args:
         session: The shell and its event recorder.
-        pattern: Substring of the question text to wait for.
-        answer: Replacement text for the pre-filled default (cleared with
-            Ctrl+U first); ``None`` accepts the default as-is.
-        timeout: Seconds to wait for ``pattern`` to appear.
-        mark: Optional marker label to record once ``pattern`` appears.
+        question: What to wait for and how to answer it.
     """
-    session.child.expect(pattern, timeout=timeout)
-    if mark:
-        session.recorder.mark(mark)
+    session.child.expect(question.pattern, timeout=question.timeout)
+    if question.mark:
+        session.recorder.mark(question.mark)
     _settle(session.child, _READ_PAUSE_S)
-    if answer is None:
+    if question.answer is None:
         _press_enter(session.child)
     else:
-        _clear_and_type(session.child, answer)
+        _clear_and_type(session.child, question.answer)
 
 
 def _spawn_shell(recorder: _EventRecorder, demo_root: Path) -> pexpect.spawn[str]:
@@ -576,24 +602,8 @@ def _record_scenario(cast_path: Path) -> None:
         _type_slowly(child, "boilerplate new project weather-report")
         _press_enter(child)
 
-        _ask(
-            session,
-            "name of the project",
-            "Weather Report",
-            timeout=60,
-            mark="first question",
-        )
-        _ask(
-            session,
-            "brief description",
-            "Daily forecast summaries for the team.",
-            timeout=30,
-        )
-        _ask(session, "runtime dependencies", None, timeout=30)
-        _ask(session, "development dependencies", None, timeout=30)
-        _ask(session, "first and last name", "Bill Siegler", timeout=30)
-        _ask(session, "email address", "bill@example.com", timeout=30)
-        _ask(session, "Package index URL", None, timeout=30)
+        for question in _QUESTIONS:
+            _ask(session, question)
 
         # Rich prints display.success(...) with highlighting on (no
         # highlight=False, unlike the CLI's other console), so it wraps the
