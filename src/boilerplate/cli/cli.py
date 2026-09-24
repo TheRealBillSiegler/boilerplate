@@ -193,7 +193,7 @@ def main(
         False,
         "--quiet",
         "-q",
-        help="Suppress informational output.",
+        help="Hide progress, success, and hint messages.",
     ),
     color: ColorMode = COLOR_OPTION,
     ci: bool = typer.Option(

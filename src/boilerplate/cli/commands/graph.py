@@ -1,7 +1,7 @@
 """`boilerplate graph` command for dependency graph visualization.
 
 Provides three output formats for analyzing template dependency relationships:
-- list: Numbered table showing execution sequence
+- table: Numbered table of the layers in the order they apply
 - tree: Hierarchical dependency structure
 - json: Machine-readable graph data with sequence and layers
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 import typer
 from rich.tree import Tree
 
-from boilerplate.cli.common import OUTPUT_OPTION, TEMPLATES_DIR_OPTION
+from boilerplate.cli.common import TEMPLATES_DIR_OPTION
 from boilerplate.cli.display import Display
 from boilerplate.cli.utils import cli_error_handler, compute_composition
 from boilerplate.composition.models.graph import CompositionGraph
@@ -35,6 +35,10 @@ FORMAT_OPTION = typer.Option(
     GraphFormat.TABLE,
     "--format",
     help="Output format: table, tree, or json.",
+)
+
+OUTPUT_OPTION = typer.Option(
+    None, "--output", "-o", help="Write the JSON to this file instead of stdout."
 )
 
 
@@ -110,23 +114,18 @@ def present_tree(graph: CompositionGraph, display: Display) -> None:
 @cli_error_handler
 def graph(
     ctx: typer.Context,
-    template: str = typer.Argument(
-        ..., help="Template reference (name or name@version)."
-    ),
+    template: str = typer.Argument(..., help="Template to use (name or name@version)."),
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
     format: GraphFormat = FORMAT_OPTION,
     output: Path | None = OUTPUT_OPTION,
 ) -> None:
-    """Show dependency execution sequence for a template.
+    """Show the layers a template is built from, in the order they apply.
 
     Visualizes template dependencies in three formats:
 
-    - table: Execution order as numbered table with paths
-    - tree: Hierarchical dependency structure
-    - json: Complete graph data (sequence + layers) for tools
-
-    The graph shows how templates depend on each other and the order
-    they would execute during composition.
+    - table: numbered list with each layer's path
+    - tree: which template extends which
+    - json: the same data for tools
     """
     cli_context = ctx.obj
     display: Display = cli_context.display

@@ -41,14 +41,14 @@ DATA_OPTION = typer.Option(
     None,
     "--data",
     help=(
-        "Forced answer for one question, as key=value (repeatable). Never "
-        "prompted for; satisfies non-interactive's required-answer check."
+        "Answer to one question, as key=value (repeatable). Skips the "
+        "prompt and counts as answered in non-interactive mode."
     ),
 )
 DATA_FILE_OPTION = typer.Option(
     None,
     "--data-file",
-    help="YAML file mapping question name to forced answer (read as UTF-8).",
+    help="YAML file of question: answer pairs (UTF-8).",
 )
 FORMAT_OPTION = typer.Option(
     TextFormat.TEXT,
@@ -296,7 +296,7 @@ def _resolve_profile(
 def new(
     ctx: Context,
     template_spec: str = typer.Argument(
-        ..., help="Template specifier (name or name@version)."
+        ..., help="Template to use (name or name@version)."
     ),
     destination: Path | None = DESTINATION_ARG,
     force: bool = typer.Option(
@@ -317,22 +317,19 @@ def new(
         False,
         "--dry-run",
         "-n",
-        help=(
-            "Print the composed layer sequence and destination without "
-            "rendering or writing files."
-        ),
+        help="Show the layers and destination without writing any files.",
     ),
     no_tasks: bool = typer.Option(
         False,
         "--no-tasks",
-        help="Skip execution of all template tasks.",
+        help="Skip the template's post-creation tasks.",
     ),
     data: list[str] | None = DATA_OPTION,
     data_file: Path | None = DATA_FILE_OPTION,
     format: TextFormat = FORMAT_OPTION,
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
 ) -> None:
-    """Render the specified template and version into a destination directory."""
+    """Create a new project from a template."""
     cli_context = ctx.obj
     display = cli_context.display
     settings = cli_context.settings
