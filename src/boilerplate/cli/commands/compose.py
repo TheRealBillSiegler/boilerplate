@@ -1,4 +1,4 @@
-"""Queries composition artifacts and prints or writes selected sections.
+"""Shows the merged configuration a template composes, layer by layer.
 
 Section export and formatting live here rather than on ``Composition``: they
 are presentation concerns owned by the CLI, and the domain model stays free of
@@ -16,7 +16,6 @@ from slugify import slugify
 
 from boilerplate import __version__
 from boilerplate.cli.common import (
-    OUTPUT_OPTION,
     QUIET_OPTION,
     TEMPLATES_DIR_OPTION,
 )
@@ -202,22 +201,23 @@ def format_sections(
 SECTIONS_OPTION = typer.Option(
     None,
     "--sections",
-    help="Comma-separated composition sections: final,layers,states,deltas (or stats for metadata)",
+    help="Sections to show, comma-separated: final, layers, states, deltas, stats.",
     callback=validate_sections_param,
 )
-ALL_OPTION = typer.Option(
-    False, "--all", help="Include all sections (stats first, then composition sections)"
+ALL_OPTION = typer.Option(False, "--all", help="Show every section.")
+STATS_OPTION = typer.Option(False, "--stats", help="Show only the summary.")
+FORMAT_OPTION = typer.Option(
+    DataFormat.YAML, "--format", help="Output format: yaml or json."
 )
-STATS_OPTION = typer.Option(False, "--stats", help="Shortcut for sections=stats")
-FORMAT_OPTION = typer.Option(DataFormat.YAML, "--format", help="Data format: yaml|json")
+OUTPUT_OPTION = typer.Option(
+    None, "--output", "-o", help="Directory to write the sections into."
+)
 
 
 @cli_error_handler
 def compose(
     ctx: typer.Context,
-    template: str = typer.Argument(
-        ..., help="Template reference (name or name@version)."
-    ),
+    template: str = typer.Argument(..., help="Template to use (name or name@version)."),
     sections: str | None = SECTIONS_OPTION,
     all_sections: bool = ALL_OPTION,
     stats: bool = STATS_OPTION,
@@ -226,7 +226,16 @@ def compose(
     quiet: bool = QUIET_OPTION,
     templates_dir: Path | None = TEMPLATES_DIR_OPTION,
 ) -> None:
-    """Query composition artifacts and print or write selected sections."""
+    """Show the merged configuration a template composes, layer by layer.
+
+    - final: the fully merged configuration
+    - layers: each layer's own values
+    - states: each layer's configuration after it applies
+    - deltas: what each layer changed
+    - stats: summary counts
+
+    Prints to stdout by default. --output writes each section to a file in a directory.
+    """
     cli_context = ctx.obj
     display: Display = cli_context.display
     # The global --quiet only parses before the subcommand; honor either position.

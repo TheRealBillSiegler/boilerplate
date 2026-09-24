@@ -318,7 +318,7 @@ def validate(
     format: TextFormat = FORMAT_OPTION,
     strict: bool = STRICT_OPTION,
 ) -> None:
-    """Validate that a template directory is well-formed."""
+    """Check that a template directory is well-formed."""
     cli_context = ctx.obj
     display = cli_context.display
 
