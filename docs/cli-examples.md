@@ -4,7 +4,7 @@ A few common tasks with concise, copy-pastable commands.
 
 ## Discover templates
 
-- List templates found in the registry:
+- List the templates you can create a project from:
 
 ```powershell
 boilerplate list
@@ -77,7 +77,7 @@ The JSON payload's shape (`streamlit` example — the `streamlit` template exten
 }
 ```
 
-## Compose and export artifacts
+## Compose a template
 
 - Show final merged questions and the per-layer contributions:
 
@@ -98,13 +98,13 @@ boilerplate compose project --sections stats
 ```
 
 ```text
-Composing: project@0.2.1
+Layers: project@0.2.1
 STATS
 layers: 1
 layers_count: 1
-total_keys: 37
-total_scalars: 33
-top_level_fields: 9
+total_keys: 41
+total_scalars: 37
+top_level_fields: 10
 directives:
   - _jinja_extensions
   - _secret_questions
