@@ -70,7 +70,7 @@ class TemplateSpecifier:
             InvalidTemplateSpecifierError: If name or version format is invalid.
         """
         if not self.NAME_PATTERN.match(name):
-            raise InvalidTemplateSpecifierError(f"Invalid template name format: {name}")
+            raise InvalidTemplateSpecifierError(f"Invalid template name: {name}")
 
         self.name = name
         try:
@@ -104,7 +104,7 @@ class TemplateSpecifier:
         match = cls.SPECIFIER_PATTERN.match(specifier_string)
         if not match:
             raise InvalidTemplateSpecifierError(
-                f"Invalid specifier format: {specifier_string}"
+                f"Invalid template reference: {specifier_string}"
             )
 
         return cls(match.group("name"), match.group("version"))

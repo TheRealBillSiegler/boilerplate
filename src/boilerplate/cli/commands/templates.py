@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 from typer import Context
 
-from boilerplate.cli.common import TEMPLATES_DIR_OPTION
+from boilerplate.cli.common import TEMPLATE_DIRS_HINT, TEMPLATES_DIR_OPTION
 from boilerplate.cli.utils import (
     build_template_catalog,
     cli_error_handler,
@@ -51,6 +51,7 @@ def list_templates(
             display.write(json.dumps({"templates": [], "error": "No templates found."}))
             raise typer.Exit(code=ExitCode.FAILURE)
         display.error("No templates found.")
+        display.info(f"  Hint: {TEMPLATE_DIRS_HINT}")
         raise typer.Exit(code=ExitCode.FAILURE)
 
     if format is ListFormat.JSON:

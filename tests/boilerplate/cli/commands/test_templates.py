@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import pytest
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from boilerplate.cli import app
 from boilerplate.constants import ExitCode
@@ -81,6 +81,44 @@ def test_templates_empty_directory_still_lists_bundled(
     assert result.exit_code == 0
     assert "project" in result.output
     assert "Bundled templates:" not in result.output
+
+
+@pytest.fixture
+def empty_catalog_list(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, typer_cli_runner: CliRunner
+) -> Result:
+    """Run `list` with the bundled and the extra templates directory both empty."""
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    monkeypatch.setenv("BOILERPLATE_DEFAULT_TEMPLATES_DIR", str(empty_dir))
+    return typer_cli_runner.invoke(app, ["list", "--templates-dir", str(empty_dir)])
+
+
+def test_templates_list_empty_catalog_exits_failure(empty_catalog_list: Result) -> None:
+    """An empty catalog exits with the general failure code."""
+    assert empty_catalog_list.exit_code == ExitCode.FAILURE
+
+
+def test_templates_list_empty_catalog_says_none_found(
+    empty_catalog_list: Result,
+) -> None:
+    """An empty catalog is reported as "No templates found."."""
+    assert "No templates found." in empty_catalog_list.output
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "--templates-dir",
+        "BOILERPLATE_DEFAULT_TEMPLATES_DIR",
+        "BOILERPLATE_EXTRA_TEMPLATE_DIRS",
+    ],
+)
+def test_templates_list_empty_catalog_hints_at_each_source(
+    empty_catalog_list: Result, source: str
+) -> None:
+    """The empty-catalog hint names each place templates are found."""
+    assert source in empty_catalog_list.output
 
 
 def test_templates_permission_error_behavior(

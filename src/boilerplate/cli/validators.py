@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from boilerplate.cli.common import TEMPLATE_DIRS_HINT
 from boilerplate.common.exceptions import DirectoryValidationError
 
 
@@ -15,12 +16,17 @@ def validate_directory(path: Path) -> Path:
         The same path if valid.
 
     Raises:
-        DirectoryValidationError: If the directory does not exist or is invalid.
+        DirectoryValidationError: If the path does not exist or is not a
+            directory.
     """
     try:
-        if not path.exists() or not path.is_dir():
+        if not path.exists():
             raise DirectoryValidationError(
-                f"Directory '{path}' does not exist or is invalid."
+                f"'{path}' does not exist.", remediation=TEMPLATE_DIRS_HINT
+            )
+        if not path.is_dir():
+            raise DirectoryValidationError(
+                f"'{path}' is not a directory.", remediation=TEMPLATE_DIRS_HINT
             )
     except (PermissionError, OSError) as e:
         raise DirectoryValidationError(

@@ -132,7 +132,7 @@ def graph(
     settings = cli_context.settings
 
     if output is not None and format is not GraphFormat.JSON:
-        display.error("Output option requires JSON format.")
+        display.error("--output only works with --format json.")
         raise typer.Exit(code=ExitCode.VALIDATION_ERROR)
 
     comp = compute_composition(template, templates_dir, settings)

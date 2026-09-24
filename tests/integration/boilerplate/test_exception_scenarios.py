@@ -22,7 +22,7 @@ class TestDirectoryValidationScenarios:
 
         error_message = str(exc_info.value)
         assert str(nonexistent_path) in error_message
-        assert "does not exist" in error_message or "invalid" in error_message
+        assert "does not exist" in error_message
 
     def test_validate_directory_with_file_instead_of_directory(self) -> None:
         """Raises BoilerplateError when given a file path instead of directory."""
@@ -34,7 +34,7 @@ class TestDirectoryValidationScenarios:
 
             error_message = str(exc_info.value)
             assert str(file_path) in error_message
-            assert "does not exist" in error_message or "invalid" in error_message
+            assert "is not a directory" in error_message
 
     def test_validate_directory_with_valid_directory(self) -> None:
         """Returns the same path when given a valid directory."""
@@ -74,7 +74,7 @@ class TestErrorHandlingInCLIWorkflows:
             # Should contain the path that failed
             assert str(invalid_path) in error_message
             # Should be clear about what went wrong
-            assert "does not exist" in error_message or "invalid" in error_message
+            assert "does not exist" in error_message
             # Should not contain technical jargon
             assert "BoilerplateError" not in error_message
             assert "Exception" not in error_message

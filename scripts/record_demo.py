@@ -611,12 +611,13 @@ def _record_scenario(cast_path: Path) -> None:
             _ask(session, question)
 
         # Rich prints display.success(...) with highlighting on (no
-        # highlight=False, unlike the CLI's other console), so it wraps the
-        # quoted path in its own SGR run: the bytes on the pty are
-        # "rendered to \x1b[0m\x1b[32m'weather-report'", never the plain
-        # substring. Tolerate any run of SGR codes between the words and
-        # the quote instead of matching literal adjacency.
-        child.expect(r"rendered to (?:\x1b\[[0-9;]*m)*'weather-report'", timeout=180)
+        # highlight=False, unlike the CLI's other console), so it may split
+        # the line into SGR runs. The unquoted destination matches no
+        # highlighter pattern today and stays in the same run as "Created";
+        # the only split falls around the "(N layers)" suffix. Tolerate any
+        # run of SGR codes between the word and the destination anyway, so
+        # a highlighter change cannot stall the recording.
+        child.expect(r"Created (?:\x1b\[[0-9;]*m)*weather-report", timeout=180)
         _expect_prompt(child, timeout=60)
         recorder.mark("render done")
         _settle(child, _AFTER_RENDER_PAUSE_S)

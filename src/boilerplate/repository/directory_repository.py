@@ -82,12 +82,13 @@ class DirectoryTemplateRepository(TemplateRepository):
                     parsed = TemplateSpecifier.from_string(tag)
                 except InvalidTemplateSpecifierError as e:
                     raise MetadataValidationError(
-                        f"Invalid template specifier format at {boilerplate_yml}: {tag}"
+                        f"{boilerplate_yml}: '{tag}' is not a valid name@version."
                     ) from e
 
                 if parsed.name != meta.name or parsed.version != meta.version:
                     raise MetadataValidationError(
-                        f"Metadata mismatch at {boilerplate_yml}: tag {tag} disagrees with meta."
+                        f"{boilerplate_yml}: tag '{tag}' does not match the name "
+                        "and version declared in the same file."
                     )
 
                 tpl = TemplateInfo(

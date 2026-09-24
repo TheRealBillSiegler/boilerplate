@@ -365,7 +365,7 @@ def new(
     json_mode = format is TextFormat.JSON
 
     if not json_mode:
-        display.info("Resolving dependencies and composing layers...")
+        display.info(f"Resolving {template_ref}...")
     composition = compute_composition(template_ref, templates_dir, settings)
 
     # Validate --data/--data-file before any dry-run output: a malformed
@@ -386,7 +386,7 @@ def new(
                 )
             )
         else:
-            display.info(f"Dry run: would render {layer_names} to {dest_dir}")
+            display.info(f"Dry run: would create {dest_dir} from {layer_names}")
         _logger.debug("Dry run completed for template '%s'", template_spec)
         return
 
@@ -426,7 +426,11 @@ def new(
         )
     else:
         # Post-creation guidance
-        display.success(f"Template '{template_info.name}' rendered to '{dest_dir}'.")
+        layer_count = len(composition.sequence)
+        layer_word = "layer" if layer_count == 1 else "layers"
+        display.success(
+            f"Created {dest_dir} from {template_info.name} ({layer_count} {layer_word})."
+        )
         display.write("")
         display.info("Next steps:")
         display.write(f"  cd {dest_dir}")
