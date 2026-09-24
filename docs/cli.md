@@ -47,7 +47,7 @@ Every `BP_*` code in the shipped exception hierarchy. A code the error boundary 
 | --- | --- | --- |
 | `BP_CONFIG_DIR_INVALID` | A configured template directory (the bundled default, `--templates-dir`, or a `BOILERPLATE_EXTRA_TEMPLATE_DIRS` entry) doesn't exist, isn't a directory, or can't be read. | Point the option or environment variable at a directory that exists and is readable. |
 | `BP_RESOLVE_TEMPLATE_NOT_FOUND` | Defined and rendered by the error boundary, but no shipped command raises it — a missing template surfaces as `BP_RESOLVE_DEP_NOT_FOUND`. | — |
-| `BP_VERSION_INVALID` | Reserved for a version string that fails PEP 440 validation. Defined in the registry but not yet produced by any shipped command — an invalid version inside a specifier currently surfaces as `BP_INPUT_SPECIFIER_INVALID` instead. | — |
+| `BP_VERSION_INVALID` | Reserved for a version string that fails PEP 440 validation. Defined in the exception hierarchy but not yet produced by any shipped command — an invalid version inside a template reference currently surfaces as `BP_INPUT_SPECIFIER_INVALID` instead. | — |
 | `BP_RENDER_DEST_NOT_EMPTY` | Defined but not produced by any shipped command; without `--force`, Copier's own per-file conflict handling applies. | — |
 | `BP_INPUT_FORCE_REQUIRED` | Defined but not produced by any shipped command. | — |
 | `BP_INPUT_SPECIFIER_INVALID` | A `name@version` template reference is malformed — an invalid name, or a version segment that isn't PEP 440 compliant, including inside an `extends` reference. | Use the format `name` or `name@version`. |

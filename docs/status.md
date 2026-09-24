@@ -106,7 +106,7 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 
 | Command | Status | Notes |
 | --- | --- | --- |
-| `new` | :material-progress-clock:{ .status-partial } Partial | Renders projects (incl. `--data`/`--data-file` forced answers); does not write a lock file (`cli/commands/new.py`) |
+| `new` | :material-progress-clock:{ .status-partial } Partial | Renders projects (incl. answers supplied with `--data`/`--data-file`); does not write a lock file (`cli/commands/new.py`) |
 | `list` | :material-check-circle:{ .status-shipped } | `cli/commands/templates.py` |
 | `compose` | :material-check-circle:{ .status-shipped } | `cli/commands/compose.py` |
 | `graph` | :material-check-circle:{ .status-shipped } | `cli/commands/graph.py` |

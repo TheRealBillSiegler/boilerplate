@@ -26,8 +26,9 @@ pip install git+https://github.com/TheRealBillSiegler/boilerplate.git
 ## Quick Start
 
 ```bash
-boilerplate list               # browse available templates
-boilerplate new project my-app # scaffold a new project
+boilerplate list
+boilerplate new project my-app
+boilerplate new streamlit my-dashboard
 ```
 
 ## Customizing for your organization

@@ -79,7 +79,7 @@ _tasks:
 
 ## Template composition
 
-Templates can inherit from other templates using `extends` in `boilerplate.yml`. See the [Composition guide](composition.md) for merge rules, execution order, and diagnostics commands.
+Templates can inherit from other templates using `extends` in `boilerplate.yml`. See the [Composition guide](composition.md) for merge rules, layer order, and diagnostics commands.
 
 When authoring a child template, its `copier.yml` only needs to declare what it overrides or adds — not the full parent config:
 
@@ -89,7 +89,7 @@ dependencies:
   default: ["streamlit", "pydantic>=2"]
 ```
 
-Declare `_answers_file: .copier-answers.<layer>.yml` in `copier.yml` and ship an answers-file stub — a template file literally named `{{ _copier_conf.answers_file }}.jinja` rendering `_copier_answers` (see `project`'s stub for the reference pattern). Copier writes an answers file only by rendering that stub; the directive alone is inert, and `boilerplate validate` warns when a composition-intended template (one declaring `_answers_file` or `extends`) ships without it. See the [Composition guide § Execution order](composition.md#execution-order) for why every layer must redeclare the inherited answers its own files or paths use.
+Declare `_answers_file: .copier-answers.<layer>.yml` in `copier.yml` and ship an answers-file stub — a template file literally named `{{ _copier_conf.answers_file }}.jinja` rendering `_copier_answers` (see `project`'s stub for the reference pattern). Copier writes an answers file only by rendering that stub; the directive alone is inert, and `boilerplate validate` warns when a composition-intended template (one declaring `_answers_file` or `extends`) ships without it. See the [Composition guide § Layer order](composition.md#layer-order) for why every layer must redeclare the inherited answers its own files or paths use.
 
 ## Template files
 
@@ -111,7 +111,7 @@ Directory names can also use Jinja2 variables: `{{package_name}}/` expands to th
 - **Sensible defaults** for all questions so `--non-interactive` works.
 - **Use `extends`** to layer on base templates rather than duplicating files.
 - **Version your templates** with PEP 440 versions (plain `X.Y.Z` works). The version moves once per release, not once per change — see [when to bump](versioning.md#when-to-bump).
-- **Register your template for discovery**: custom templates live outside the bundled registry, so point the CLI at the directory *containing* `my-template/` with `--templates-dir` (works on `new`, `list`, `graph`, and `compose`; it adds to the search path, so bundled parents stay resolvable for `extends`) or set it persistently via [`BOILERPLATE_EXTRA_TEMPLATE_DIRS`](../customization.md#layers-structure).
+- **Point the CLI at your template**: custom templates live outside the bundled templates directory, so point the CLI at the directory *containing* `my-template/` with `--templates-dir` (works on `new`, `list`, `graph`, and `compose`; it adds to the search path, so bundled parents stay resolvable for `extends`) or set it persistently via [`BOILERPLATE_EXTRA_TEMPLATE_DIRS`](../customization.md#layers-structure).
 - **Test rendering** with `boilerplate new my-template test-output --force --templates-dir <parent-dir>`.
 - **Inspect composition** with `boilerplate compose` and `boilerplate graph` before publishing multi-layer templates.
 

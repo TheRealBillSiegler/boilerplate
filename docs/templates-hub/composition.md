@@ -34,14 +34,14 @@ Rules:
 | Base template | A template that does not declare parents, e.g., `project`. |
 | Derived template | A template that declares one or more parents via `extends`, e.g., `streamlit`. |
 | Layer | A concrete node in the dependency graph representing one template's contribution: name@version + filesystem path. |
-| Execution sequence | Deterministic order the layers apply (dependencies first, target last). |
-| Dependency graph | Nodes, edges, and computed sequence describing template dependencies. |
+| Layer order | The order the layers apply (dependencies first, target last). |
+| Dependency graph | Nodes, edges, and the layer order describing template dependencies. |
 | Merged configuration | The merged configuration after all layers; a questions-only view is also available. |
 | Delta | Per-layer change set: subset of keys this layer adds or overrides relative to previous state. |
 
 Concept → class: a layer is `CompositionLayer` and its changes are `CompositionLayer.delta`; the sequence and graph are `Composition.sequence` and `CompositionGraph`; the merged configuration is `Composition.final`, with `Composition.merged_questions_schema` as the questions-only view; templates are `TemplateInfo` with parents in `TemplateMeta.extends`. Field-level detail: [Data models § Composition Domain Models](../design/02-data-models.md#composition-domain-models).
 
-## Execution order
+## Layer order
 
 Layering supports multiple parents (a dependency graph) and always executes linearized, dependencies first and the target template last; sibling ordering and conflict precedence follow the rules under [Extending a template](#extending-a-template) above.
 
@@ -65,7 +65,7 @@ Each layer's own `.copier-answers.<layer>.yml` records the full merged answer se
 
 ## Merge & delta semantics
 
-Query full composition:
+Show the full composition:
 
 ```powershell
 uv run boilerplate compose streamlit --all --format yaml
