@@ -402,9 +402,9 @@ class TestTopLevelHelp:
         )
         # Help should include app description, command groups, and all commands
         assert "boilerplate" in result.output.lower()
-        assert "Project commands" in result.output
-        assert "Template commands" in result.output
-        assert "System commands" in result.output
+        assert "Use a template" in result.output
+        assert "Author a template" in result.output
+        assert "About" in result.output
         for cmd in ("version", "list", "new", "graph", "compose"):
             assert cmd in result.output
 
