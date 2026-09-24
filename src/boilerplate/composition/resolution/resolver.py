@@ -53,6 +53,8 @@ class Resolver:
 
         Raises:
             DependencyNotFoundError: If any referenced template cannot be found.
+            InvalidTemplateSpecifierError: If any ``extends`` reference is a
+                malformed ``name@version`` string.
             VersionConflictError: If the same template name resolves to two
                 different versions in the graph (diamond dependency with
                 version disagreement).
@@ -193,6 +195,8 @@ class Resolver:
 
         Raises:
             DependencyNotFoundError: If the template cannot be resolved.
+            InvalidTemplateSpecifierError: If ``reference`` is a malformed
+                ``name@version`` string.
         """
         _logger.debug("Loading template: %s", reference)
 
@@ -200,13 +204,13 @@ class Resolver:
         if "@" not in reference:
             template = registry.resolve_latest(reference)
         else:
-            # Versioned reference: must parse successfully; otherwise, surface
-            # a clear not-found error without silently changing semantics.
+            # Versioned reference: must parse successfully; a malformed one is
+            # bad input, not a missing template.
             try:
                 specifier = TemplateSpecifier.from_string(reference)
             except InvalidTemplateSpecifierError as exc:
-                raise DependencyNotFoundError(
-                    f"Invalid template specifier: {reference}"
+                raise InvalidTemplateSpecifierError(
+                    f"Invalid template reference in extends: {reference}"
                 ) from exc
             template = registry.resolve(specifier.name, specifier.version)
 

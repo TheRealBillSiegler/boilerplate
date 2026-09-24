@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from boilerplate.catalog import TemplateCatalog
+from boilerplate.common.exceptions import InvalidTemplateSpecifierError
 from boilerplate.composition import Resolver
 from boilerplate.composition.graph import DependencyNotFoundError, VersionConflictError
 from boilerplate.composition.resolution import Resolution
@@ -69,6 +70,17 @@ def test_resolver_raises_for_missing_dependency(
     registry.register(a)
 
     with pytest.raises(DependencyNotFoundError):
+        Resolver().resolve("a@1.0.0", registry)
+
+
+def test_resolver_raises_invalid_specifier_for_malformed_extends(
+    template_factory: Callable[..., TemplateInfo],
+) -> None:
+    registry = TemplateCatalog()
+    a = template_factory("a", "1.0.0", extends=["b@not-a-version"])  # malformed
+    registry.register(a)
+
+    with pytest.raises(InvalidTemplateSpecifierError):
         Resolver().resolve("a@1.0.0", registry)
 
 
