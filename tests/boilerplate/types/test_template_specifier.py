@@ -11,14 +11,14 @@ from boilerplate.types.template_specifier import TemplateSpecifier
 
 
 def test_invalid_name_raises_invalid_template_specifier_error() -> None:
-    with pytest.raises(
-        InvalidTemplateSpecifierError, match="Invalid template name format"
-    ):
+    with pytest.raises(InvalidTemplateSpecifierError, match="Invalid template name"):
         TemplateSpecifier("bad name with spaces", "1.0.0")
 
 
 def test_invalid_specifier_string_raises_invalid_template_specifier_error() -> None:
-    with pytest.raises(InvalidTemplateSpecifierError, match="Invalid specifier format"):
+    with pytest.raises(
+        InvalidTemplateSpecifierError, match="Invalid template reference"
+    ):
         TemplateSpecifier.from_string("missing_at_separator")
 
 

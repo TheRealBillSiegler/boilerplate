@@ -207,7 +207,7 @@ def test_new_rejects_a_missing_templates_directory(
 
     assert result.exit_code == ExitCode.CONFIG_ERROR, result.output
     # Rich hard-wraps output at console width, which can split the message.
-    assert "does not exist or is invalid" in " ".join(result.output.split())
+    assert "does not exist" in " ".join(result.output.split())
 
 
 @pytest.mark.parametrize(
@@ -1082,8 +1082,8 @@ class TestDestination:
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
         assert "Dry run" in result.output
-        # Dry run: "would render <layers> to ." when no destination is given.
-        assert "to ." in " ".join(result.output.split())
+        # Dry run: "would create . from <layers>" when no destination is given.
+        assert "create ." in " ".join(result.output.split())
 
 
 class TestStdinSupportsPrompts:

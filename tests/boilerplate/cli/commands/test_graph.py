@@ -106,7 +106,7 @@ def test_graph_output_validation_behavior(
         ],
     )
     # Focus on behavior: validation error message
-    assert "Output option requires JSON format" in r.output
+    assert "--output only works with --format json" in r.output
 
 
 def test_render_graph_list_output_snapshot(

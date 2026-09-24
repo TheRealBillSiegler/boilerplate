@@ -278,7 +278,7 @@ def compose(
     if not quiet:
         # Show what templates are being composed together
         sequence_text = " → ".join(composition.sequence)
-        display.info(f"Composing: {sequence_text}")
+        display.info(f"Layers: {sequence_text}")
 
         section_data = format_sections(composition, chosen_sections, format)
 

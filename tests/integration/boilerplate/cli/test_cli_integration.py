@@ -147,7 +147,7 @@ class TestCLIExitCodeBehavior:
             ],
         )
         assert result.exit_code == ExitCode.VALIDATION_ERROR
-        assert "Output option requires JSON format" in result.output
+        assert "--output only works with --format json" in result.output
 
     def test_graph_command_json_file_output(
         self,

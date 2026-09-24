@@ -313,12 +313,10 @@ class TestReconfigureStdioEncoding:
         cli._reconfigure_stdio_encoding()
 
         sequence_text = " → ".join(["project", "streamlit"])
-        sys.stdout.write(f"Composing: {sequence_text}\n")
+        sys.stdout.write(f"Layers: {sequence_text}\n")
         sys.stdout.flush()
 
-        assert "Composing: project → streamlit" in stdout_buffer.getvalue().decode(
-            "utf-8"
-        )
+        assert "Layers: project → streamlit" in stdout_buffer.getvalue().decode("utf-8")
 
     def test_stream_already_utf8_is_left_untouched(
         self, monkeypatch: pytest.MonkeyPatch

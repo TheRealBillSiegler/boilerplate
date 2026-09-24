@@ -250,8 +250,8 @@ def _check_no_custom_yaml_tags(meta: _MetaFile) -> _CheckResult:
         return _CheckResult(
             name,
             _STATUS_WARN,
-            "Custom YAML tags detected (!! syntax) in a Boilerplate-owned"
-            " file. May be a security concern.",
+            "boilerplate.yml uses custom YAML tags (!! syntax). Remove them;"
+            " --strict treats this as an error.",
         )
     return _CheckResult(name, _STATUS_PASS)
 

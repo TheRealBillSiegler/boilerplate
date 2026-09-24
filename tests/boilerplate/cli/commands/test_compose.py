@@ -29,7 +29,7 @@ def test_subcommand_quiet_with_global_verbose_exits_validation_error(
 def test_compose_sequence_prints_header(typer_cli_runner: CliRunner):
     result = typer_cli_runner.invoke(cli.app, ["compose", "streamlit"])
     assert result.exit_code == 0, result.output
-    assert "Composing:" in result.output
+    assert "Layers:" in result.output
 
 
 def test_compose_per_layer_stdout_first_values(typer_cli_runner: CliRunner):
