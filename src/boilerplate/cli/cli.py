@@ -85,8 +85,9 @@ app = typer.Typer(
     help=(
         "Composable project scaffolder with template layering on top of Copier."
         "\n\nGet started:\n\n"
-        "    boilerplate list               # browse templates\n"
-        "    boilerplate new project my-app # scaffold a project"
+        "    boilerplate list\n"
+        "    boilerplate new project my-app\n"
+        "    boilerplate new streamlit my-dashboard"
     ),
     rich_markup_mode="rich",
     pretty_exceptions_enable=True,
@@ -235,9 +236,9 @@ def main(
 
 
 # Register commands with grouping for help output
-app.command("new", rich_help_panel="Project commands")(new.new)
-app.command("list", rich_help_panel="Template commands")(templates.list_templates)
-app.command("graph", rich_help_panel="Template commands")(graph.graph)
-app.command("compose", rich_help_panel="Template commands")(compose.compose)
-app.command("validate", rich_help_panel="Template commands")(validate.validate)
-app.command("version", rich_help_panel="System commands")(version.version)
+app.command("list", rich_help_panel="Use a template")(templates.list_templates)
+app.command("new", rich_help_panel="Use a template")(new.new)
+app.command("graph", rich_help_panel="Author a template")(graph.graph)
+app.command("compose", rich_help_panel="Author a template")(compose.compose)
+app.command("validate", rich_help_panel="Author a template")(validate.validate)
+app.command("version", rich_help_panel="About")(version.version)
