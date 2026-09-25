@@ -1,5 +1,5 @@
 """Settings for the Boilerplate CLI."""
-# Spec: docs/design/02-data-models.md §Settings
+# Spec: docs/design/09-settings-and-configuration.md §Settings
 
 from functools import cached_property
 from pathlib import Path
