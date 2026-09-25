@@ -7,8 +7,8 @@ Boilerplate's runtime dependencies are declared in pyproject.toml and are
 distributed separately, each under its own license. No third-party source code
 is vendored into the distributed Python package.
 
-The repository vendors one third-party file, serving the documentation site
-and its downloadable offline bundle:
+The repository vendors third-party files, serving the documentation site and
+its downloadable offline bundle:
 
   docs/assets/mermaid.min.js — the pre-built browser distribution of Mermaid
   10.9.1 (https://github.com/mermaid-js/mermaid), MIT License, redistributed
@@ -42,12 +42,14 @@ and the offline bundle keeps working from file://:
 
 Boilerplate makes no modifications to either font.
 
+The repository also vendors two files serving the home page's
+terminal-recording demo, so it plays with no external fetch at view time and
+the offline bundle keeps working:
+
   docs/assets/asciinema/asciinema-player.min.js
   docs/assets/asciinema/asciinema-player.css — asciinema-player 3.17.0
   (https://github.com/asciinema/asciinema-player), Apache License 2.0,
-  redistributed byte-for-byte as published on npm, so the home page's
-  terminal-recording demo plays with no external fetch at view time and the
-  offline bundle keeps working. License text:
+  redistributed byte-for-byte as published on npm. License text:
   docs/assets/asciinema/asciinema-player.LICENSE. Boilerplate makes no
   modifications.
 
