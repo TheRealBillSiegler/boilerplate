@@ -35,7 +35,7 @@ description: Short description of what this template scaffolds.
 
 | Field            | Required | Description                                      |
 |------------------|----------|--------------------------------------------------|
-| `schema_version` | Yes      | Always `"1"` for now.                            |
+| `schema_version` | No       | Schema version of `boilerplate.yml`. Defaults to `"1.0"`; `"1"` is the same version. |
 | `name`           | Yes      | Template identifier, used in CLI commands.        |
 | `version`        | Yes      | PEP 440 version string (`boilerplate validate` enforces this). |
 | `description`    | No       | One-line description shown in `boilerplate list`. Defaults to `""`. |

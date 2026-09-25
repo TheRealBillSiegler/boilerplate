@@ -10,7 +10,7 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
 
 ## Environment variables
 
-Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, and `BOILERPLATE_ACCESSIBLE` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory.
+Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, and `BOILERPLATE_ACCESSIBLE` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory. `PYTHONIOENCODING` is forced to `utf-8` while a template renders and restored afterward — it's not read as a setting.
 
 | Variable | Effect | Where it's read |
 | --- | --- | --- |
@@ -23,6 +23,8 @@ Every environment variable the CLI reads. The generic `CI` variable is never rea
 | `BOILERPLATE_DEFAULT_TEMPLATES_DIR` | Overrides the bundled templates directory searched first. | `boilerplate.settings.Settings` |
 | `BOILERPLATE_EXTRA_TEMPLATE_DIRS` | Adds directories searched after the default, as a JSON array: `["C:/tpls","D:/more"]`. | `boilerplate.settings.Settings` |
 | `BOILERPLATE_LOG_DIR`, `BOILERPLATE_FILE_LOGGING_ENABLED` | Parsed and validated at startup (an invalid value exits 2); no command consumes them yet. | `boilerplate.settings.Settings` |
+| `APPDATA` | Locates the config directory holding `profile.toml` on Windows (`%APPDATA%\boilerplate\`). | `boilerplate.settings.paths` |
+| `XDG_CONFIG_HOME` | Locates the config directory holding `profile.toml` on POSIX (`$XDG_CONFIG_HOME/boilerplate/`, falling back to `~/.config/boilerplate/`). | `boilerplate.settings.paths` |
 
 ## Exit codes
 

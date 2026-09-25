@@ -1,0 +1,193 @@
+"""Compare documentation claims against the source they describe.
+
+Each test class targets one documented claim: a prompt count, an environment
+variable table, a required-field table, or a `# Spec:` pointer. A test fails
+when the doc and the source it describes disagree, and passes once the doc
+is corrected to match the source.
+"""
+
+import re
+from pathlib import Path
+from typing import Final
+
+import yaml
+
+from boilerplate.models.template_meta import TemplateMeta
+
+REPO_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
+SRC_ROOT: Final[Path] = REPO_ROOT / "src" / "boilerplate"
+
+# Forced to utf-8 while a template renders and restored afterward; not a setting.
+_ENV_ALLOWLIST: Final[frozenset[str]] = frozenset({"PYTHONIOENCODING"})
+
+_ENV_HELPER_NAME: Final[str] = "env_flag"
+
+_ENV_LITERAL_PATTERNS: Final[tuple[re.Pattern[str], ...]] = (
+    re.compile(r'os\.environ\.get\(\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']'),
+    re.compile(r'os\.environ\[\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']\s*\]'),
+    re.compile(r'os\.getenv\(\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']'),
+    re.compile(rf'\b{_ENV_HELPER_NAME}\(\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']'),
+)
+
+_SPEC_POINTER_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"^\s*# Spec: (?P<path>\S+?)(?: §(?P<section>.+))?\s*$"
+)
+_HEADING_PATTERN: Final[re.Pattern[str]] = re.compile(r"^#{1,6} (?P<text>.+)$")
+_TRAILING_QUALIFIER_PATTERN: Final[re.Pattern[str]] = re.compile(r"\s*\([^()]*\)$")
+
+
+def _iter_source_files() -> list[Path]:
+    """Return every `.py` file under `src/boilerplate`, sorted for stable output."""
+    return sorted(SRC_ROOT.rglob("*.py"))
+
+
+class TestQuickstartPromptCount:
+    def test_quickstart_prompt_count_matches_project_template(self) -> None:
+        quickstart_text = (REPO_ROOT / "docs" / "quickstart.md").read_text(
+            encoding="utf-8"
+        )
+        match = re.search(r"answer the (\d+) prompts", quickstart_text)
+        assert match is not None, (
+            "docs/quickstart.md no longer says 'answer the N prompts'"
+        )
+        documented_count = int(match.group(1))
+
+        copier_config = yaml.safe_load(
+            (SRC_ROOT / "templates" / "project" / "copier.yml").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert isinstance(copier_config, dict)
+
+        actual_count = sum(
+            1
+            for key, value in copier_config.items()
+            if not key.startswith("_")
+            and isinstance(value, dict)
+            and "type" in value
+            and value.get("when") is not False
+        )
+
+        assert documented_count == actual_count, (
+            f"docs/quickstart.md says {documented_count} prompts, but "
+            f"src/boilerplate/templates/project/copier.yml asks {actual_count}"
+        )
+
+
+class TestCliEnvironmentTable:
+    def test_env_table_lists_every_literal_environ_read(self) -> None:
+        scanned: set[str] = set()
+        for source_file in _iter_source_files():
+            text = source_file.read_text(encoding="utf-8")
+            for pattern in _ENV_LITERAL_PATTERNS:
+                scanned.update(pattern.findall(text))
+        scanned -= _ENV_ALLOWLIST
+
+        cli_md_text = (REPO_ROOT / "docs" / "cli.md").read_text(encoding="utf-8")
+        section_start = cli_md_text.index("## Environment variables")
+        next_heading = cli_md_text.find("\n## ", section_start + 1)
+        section = cli_md_text[
+            section_start : next_heading if next_heading != -1 else len(cli_md_text)
+        ]
+
+        documented: set[str] = set()
+        for line in section.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("|") or "---" in stripped:
+                continue
+            cells = stripped.split("|")
+            if len(cells) < 2:
+                continue
+            documented.update(re.findall(r"`([A-Z][A-Z0-9_]*)`", cells[1]))
+
+        missing = scanned - documented
+        assert not missing, (
+            f"docs/cli.md's Environment variables table is missing: {sorted(missing)}"
+        )
+
+
+class TestAuthoringFieldTable:
+    def test_required_column_matches_template_meta(self) -> None:
+        authoring_text = (
+            REPO_ROOT / "docs" / "templates-hub" / "authoring.md"
+        ).read_text(encoding="utf-8")
+        lines = authoring_text.splitlines()
+
+        header_index = next(
+            i
+            for i, line in enumerate(lines)
+            if re.match(r"\|\s*Field\s*\|\s*Required\s*\|\s*Description\s*\|", line)
+        )
+
+        rows: list[tuple[str, str]] = []
+        for line in lines[header_index + 1 :]:
+            stripped = line.strip()
+            if not stripped.startswith("|"):
+                break
+            if "---" in stripped:
+                continue
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            name_match = re.match(r"`([A-Za-z0-9_]+)`", cells[0])
+            if name_match is None:
+                continue
+            rows.append((name_match.group(1), cells[1]))
+
+        assert rows, "docs/templates-hub/authoring.md's Field table has no data rows"
+
+        mismatches: list[str] = []
+        for name, required_cell in rows:
+            field = TemplateMeta.model_fields.get(name)
+            assert field is not None, f"TemplateMeta has no field named {name!r}"
+            documented_required = required_cell == "Yes"
+            if field.is_required() != documented_required:
+                mismatches.append(
+                    f"{name}: table says Required={required_cell!r}, "
+                    f"TemplateMeta.model_fields[{name!r}].is_required()="
+                    f"{field.is_required()}"
+                )
+
+        assert not mismatches, "\n".join(mismatches)
+
+
+class TestSpecPointers:
+    def test_spec_comments_point_at_existing_headings(self) -> None:
+        failures: list[str] = []
+
+        for source_file in _iter_source_files():
+            lines = source_file.read_text(encoding="utf-8").splitlines()
+            for line_number, line in enumerate(lines, start=1):
+                match = _SPEC_POINTER_PATTERN.match(line)
+                if match is None:
+                    continue
+
+                relative_source = source_file.relative_to(REPO_ROOT).as_posix()
+                target_path = REPO_ROOT / match.group("path")
+                if not target_path.is_file():
+                    failures.append(
+                        f"{relative_source}:{line_number} points at "
+                        f"{match.group('path')}, which does not exist"
+                    )
+                    continue
+
+                section = match.group("section")
+                if section is None:
+                    continue
+
+                target_text = target_path.read_text(encoding="utf-8")
+                headings: set[str] = set()
+                for target_line in target_text.splitlines():
+                    heading_match = _HEADING_PATTERN.match(target_line)
+                    if heading_match is None:
+                        continue
+                    text = heading_match.group("text")
+                    headings.add(text)
+                    # A trailing parenthetical qualifies the heading; the
+                    # section name is the text before it.
+                    headings.add(_TRAILING_QUALIFIER_PATTERN.sub("", text))
+                if section not in headings:
+                    failures.append(
+                        f"{relative_source}:{line_number} points at "
+                        f"{match.group('path')} §{section}, which has no such heading"
+                    )
+
+        assert not failures, "\n".join(failures)
