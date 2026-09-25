@@ -7,7 +7,7 @@ mutating the on-disk template.
 All behavior is deterministic and side-effect free except for file I/O
 performed by Copier.
 """
-# Spec: docs/design/04-composition-engine.md §Stage 4 — Render Engine
+# Spec: docs/design/04-composition-engine.md §Stage 4 — RenderEngine
 
 import contextlib
 import os
