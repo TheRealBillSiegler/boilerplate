@@ -290,6 +290,36 @@ def test_table_unicode_content_snapshot(
     assert result == snapshot
 
 
+class TestMessagesPrintAsTyped:
+    """info, success, warning, and error print their text without parsing markup.
+
+    Messages carry names and paths the user typed. Rich reads ``[bold]`` as a
+    style tag, so parsed as markup it would vanish from the line, and an
+    unmatched ``[/bold]`` would raise MarkupError instead of printing.
+    """
+
+    @pytest.mark.parametrize("method_name", ["info", "success", "warning", "error"])
+    @pytest.mark.parametrize(
+        "message",
+        [
+            pytest.param("Created [bold]dest.", id="open-tag"),
+            pytest.param("Template not found: [/bold]dest", id="unmatched-close-tag"),
+        ],
+    )
+    def test_bracketed_text_prints_verbatim(
+        self,
+        captured_display: tuple[Display, io.StringIO],
+        method_name: str,
+        message: str,
+    ) -> None:
+        """Bracketed text in a message reaches the terminal exactly as given."""
+        display, output = captured_display
+
+        getattr(display, method_name)(message)
+
+        assert output.getvalue() == message + "\n"
+
+
 class TestWriteByteExact:
     """write() reaches stdout byte-exact for machine-readable payloads.
 

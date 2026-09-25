@@ -43,7 +43,12 @@ def _resolve_color_system(color: ColorMode) -> ColorSystem | None:
 
 
 class Display:
-    """Provides styled printing helpers for CLI output."""
+    """Provides styled printing helpers for CLI output.
+
+    The message methods (info, success, warning, error) style the whole line
+    and print its text as given, without parsing Rich markup: messages carry
+    names and paths the user typed, and a ``[`` in them is literal text.
+    """
 
     theme: Theme
     console: Console
@@ -118,7 +123,7 @@ class Display:
         """
         if self.quiet:
             return
-        self.console.print(message, style="info")
+        self.console.print(message, style="info", markup=False)
 
     def success(self, message: str) -> None:
         """Print a success message using the 'success' style.
@@ -130,15 +135,15 @@ class Display:
         """
         if self.quiet:
             return
-        self.console.print(message, style="success")
+        self.console.print(message, style="success", markup=False)
 
     def warning(self, message: str) -> None:
         """Print a warning message using the 'warning' style."""
-        self.error_console.print(message, style="warning")
+        self.error_console.print(message, style="warning", markup=False)
 
     def error(self, message: str) -> None:
         """Print an error message using the 'error' style."""
-        self.error_console.print(message, style="error")
+        self.error_console.print(message, style="error", markup=False)
 
     def write(self, content: str, *, end: str = "\n") -> None:
         """Low-level print that preserves exact endings.
