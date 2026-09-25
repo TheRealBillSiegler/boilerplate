@@ -3,7 +3,10 @@
 Each test class targets one documented claim: a prompt count, an environment
 variable table, a required-field table, or a `# Spec:` pointer. A test fails
 when the doc and the source it describes disagree, and passes once the doc
-is corrected to match the source.
+is corrected to match the source. The source side is read from the
+`boilerplate` package as it was actually imported, not from this checkout's
+`src/` directory, so a package substituted ahead of it on `PYTHONPATH` is
+what the docs get checked against.
 """
 
 import re
@@ -12,10 +15,12 @@ from typing import Final
 
 import yaml
 
+import boilerplate
 from boilerplate.models.template_meta import TemplateMeta
+from boilerplate.settings.settings import Settings
 
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
-SRC_ROOT: Final[Path] = REPO_ROOT / "src" / "boilerplate"
+SRC_ROOT: Final[Path] = Path(str(boilerplate.__file__)).resolve().parent
 
 # Forced to utf-8 while a template renders and restored afterward; not a setting.
 _ENV_ALLOWLIST: Final[frozenset[str]] = frozenset({"PYTHONIOENCODING"})
@@ -27,6 +32,8 @@ _ENV_LITERAL_PATTERNS: Final[tuple[re.Pattern[str], ...]] = (
     re.compile(r'os\.environ\[\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']\s*\]'),
     re.compile(r'os\.getenv\(\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']'),
     re.compile(rf'\b{_ENV_HELPER_NAME}\(\s*["\']([A-Za-z_][A-Za-z0-9_]*)["\']'),
+    # The containment form: "NAME" in os.environ / "NAME" not in os.environ.
+    re.compile(r'["\']([A-Za-z_][A-Za-z0-9_]*)["\']\s+(?:not\s+)?in\s+os\.environ\b'),
 )
 
 _SPEC_POINTER_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -39,6 +46,12 @@ _TRAILING_QUALIFIER_PATTERN: Final[re.Pattern[str]] = re.compile(r"\s*\([^()]*\)
 def _iter_source_files() -> list[Path]:
     """Return every `.py` file under `src/boilerplate`, sorted for stable output."""
     return sorted(SRC_ROOT.rglob("*.py"))
+
+
+def _settings_env_names() -> set[str]:
+    """Return every environment variable name `Settings` reads via its prefix."""
+    prefix = Settings.model_config.get("env_prefix", "")
+    return {f"{prefix}{name}".upper() for name in Settings.model_fields}
 
 
 class TestQuickstartPromptCount:
@@ -59,13 +72,14 @@ class TestQuickstartPromptCount:
         )
         assert isinstance(copier_config, dict)
 
+        # Mirrors Copier's own filter_config: every non-underscore key is a
+        # question (simplified `key: default` form included), unless it is
+        # explicitly disabled with `when: false`.
         actual_count = sum(
             1
             for key, value in copier_config.items()
             if not key.startswith("_")
-            and isinstance(value, dict)
-            and "type" in value
-            and value.get("when") is not False
+            and (not isinstance(value, dict) or value.get("when") is not False)
         )
 
         assert documented_count == actual_count, (
@@ -75,12 +89,13 @@ class TestQuickstartPromptCount:
 
 
 class TestCliEnvironmentTable:
-    def test_env_table_lists_every_literal_environ_read(self) -> None:
+    def test_env_table_lists_every_environ_read(self) -> None:
         scanned: set[str] = set()
         for source_file in _iter_source_files():
             text = source_file.read_text(encoding="utf-8")
             for pattern in _ENV_LITERAL_PATTERNS:
                 scanned.update(pattern.findall(text))
+        scanned.update(_settings_env_names())
         scanned -= _ENV_ALLOWLIST
 
         cli_md_text = (REPO_ROOT / "docs" / "cli.md").read_text(encoding="utf-8")
@@ -160,7 +175,10 @@ class TestSpecPointers:
                 if match is None:
                     continue
 
-                relative_source = source_file.relative_to(REPO_ROOT).as_posix()
+                # Relative to SRC_ROOT.parent, not REPO_ROOT: when another
+                # package copy is imported (scripts/new_tests_go_red.py puts
+                # the base commit's src/ first), the file is outside the repo.
+                relative_source = source_file.relative_to(SRC_ROOT.parent).as_posix()
                 target_path = REPO_ROOT / match.group("path")
                 if not target_path.is_file():
                     failures.append(
@@ -175,7 +193,13 @@ class TestSpecPointers:
 
                 target_text = target_path.read_text(encoding="utf-8")
                 headings: set[str] = set()
+                in_code_block = False
                 for target_line in target_text.splitlines():
+                    if target_line.startswith("```"):
+                        in_code_block = not in_code_block
+                        continue
+                    if in_code_block:
+                        continue
                     heading_match = _HEADING_PATTERN.match(target_line)
                     if heading_match is None:
                         continue
