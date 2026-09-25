@@ -27,7 +27,7 @@ Expected: creates my-first-project/ with:
 - `__init__.py` with a version string
 - additional files
 
-Want to set the project name, description, dependencies, and author yourself? Drop `--non-interactive` and answer the 7 prompts interactively (each has a sensible default — press Enter to accept it):
+Want to set the project name, description, dependencies, and author yourself? Drop `--non-interactive` and answer the 8 prompts interactively (each has a sensible default — press Enter to accept it):
 
 ```bash
 boilerplate new project my-first-project

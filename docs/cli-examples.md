@@ -47,10 +47,10 @@ boilerplate graph streamlit --format tree
 - JSON written to file:
 
 ```powershell
-boilerplate graph project --format json -o graph.json
+boilerplate graph streamlit --format json -o graph.json
 ```
 
-The JSON payload's shape (`streamlit` example — the `streamlit` template extends `project`):
+The JSON payload's shape (the `streamlit` template extends `project`, so its graph has two layers):
 
 ```json
 {
