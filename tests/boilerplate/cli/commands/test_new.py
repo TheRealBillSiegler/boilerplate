@@ -1085,6 +1085,42 @@ class TestDestination:
         # Dry run: "would create . from <layers>" when no destination is given.
         assert "create ." in " ".join(result.output.split())
 
+    @pytest.mark.parametrize(
+        ("args", "literal"),
+        [
+            pytest.param(
+                ["mytpl", "[bold]dest"], "create [bold]dest", id="destination"
+            ),
+            pytest.param(
+                ["[bold]mytpl", "dest"], "Resolving [bold]mytpl", id="template"
+            ),
+            pytest.param(
+                ["[/bold]mytpl", "dest"],
+                "Template not found: [/bold]mytpl",
+                id="error-line",
+            ),
+        ],
+    )
+    def test_user_supplied_text_prints_as_typed(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        args: list[str],
+        literal: str,
+    ) -> None:
+        """Square brackets in an argument print literally, not as Rich markup.
+
+        Rich reads "[bold]" as a style tag, so parsed as markup it would
+        vanish from the line the user reads, and an unmatched "[/bold]" would
+        crash the error line instead of printing it.
+        """
+        result = typer_cli_runner.invoke(
+            app,
+            ["new", *args, "--dry-run", "--templates-dir", str(fake_template_dir)],
+        )
+
+        assert literal in " ".join(result.output.split())
+
 
 class TestStdinSupportsPrompts:
     """The real seam body: TTY yes/no, absent stdin, and a raising isatty."""
