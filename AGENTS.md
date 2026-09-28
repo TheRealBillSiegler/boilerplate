@@ -102,7 +102,7 @@ Registered in `pyproject.toml`:
 
 - Tests document behavior, not implementation details.
 - Prefer parametrized tests and fixtures; avoid global state.
-- Add a regression test for every fixed bug.
+- Add a regression test for every fixed bug in code.
 - Control time, randomness, and external I/O (deterministic seeds, freeze time, stub network/disk).
 
 ## Security
