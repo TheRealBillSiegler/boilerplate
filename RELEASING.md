@@ -47,6 +47,8 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 Releases are cut from `main`: release-please only watches `main`, so merging
 `develop` into `main` **is** the release step.
 
+`0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository. Everything below describes the automated flow starting with the next release.
+
 - [ ] Merging the release-please PR cuts the tag + GitHub release
 - [ ] The offline-docs bundle is attached to the release. Caveat: releases created by the
       default `GITHUB_TOKEN` do not trigger downstream `release:`-event workflows, so
