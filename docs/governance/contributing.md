@@ -1,7 +1,5 @@
 # Contributing
 
-Contributions are welcome! Here's how to get started.
-
 Please review our [Security policy](./security.md) and [Code of Conduct](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CODE_OF_CONDUCT.md) before contributing.
 
 ## Development setup
@@ -12,13 +10,7 @@ Follow [Development environment setup](https://github.com/TheRealBillSiegler/boi
 
 ### Code quality
 
-Run the local gate before pushing — it mirrors CI's lint, typecheck, test, and docs jobs (the package smoke test, ShellCheck, and the new-tests-go-red check are CI-only):
-
-```powershell
-uv run python scripts/check.py
-```
-
-For the individual ruff, pyright, and pytest commands, see [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking). The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
+Run the local gate before pushing; [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) has the command, and [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking) has the individual ruff, pyright and pytest commands. The gate mirrors CI's lint, typecheck, test and docs jobs; the package smoke test, ShellCheck and the new-tests-go-red check run only in CI. The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
 
 ### Mutation score ratchet
 
