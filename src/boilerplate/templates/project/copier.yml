@@ -23,6 +23,15 @@ _jinja_extensions:
   - copier_template_extensions.TemplateExtensionLoader
   - _extensions/context.py:ContextUpdater
 
+# Project-owned: the project is expected to rewrite and keep these, so a
+# release never merges into them again once they exist. Deleting one brings
+# it back on the next update (Copier still recreates a deleted
+# `_skip_if_exists` file), which is why a file meant to be deleted instead
+# (module.py) is not listed here.
+_skip_if_exists:
+  - "README.md"
+  - "src/{{ package_name }}/__init__.py"
+
 project_name:
   type: str
   help: "The (human-readable) name of the project (e.g. My Project)"
