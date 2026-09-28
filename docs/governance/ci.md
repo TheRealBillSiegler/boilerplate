@@ -1,6 +1,6 @@
 # CI Pipeline
 
-How a change travels from your working tree to `develop`, what runs at each step, and why the pipeline is shaped the way it is. The pipeline lives in [`.github/workflows/ci.yml`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/ci.yml); a companion workflow validates PR titles against conventional-commit types, and a third builds the downloadable offline docs bundle.
+How a change travels from your working tree to `develop`, what runs at each step, and why the pipeline is shaped the way it is. The pipeline lives in [`.github/workflows/ci.yml`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/ci.yml); a companion workflow lints every commit in the PR against conventional-commit types, and a third builds the downloadable offline docs bundle.
 
 ## The whole flow
 
@@ -91,6 +91,6 @@ Run before every push:
 uv run python scripts/check.py
 ```
 
-It mirrors the billable gate — ruff check `--no-fix`, `ruff format --check`, pyright, the pytest suite without the scenarios, doctests, and both strict docs builds. It runs the scenarios too when a composition path differs from the merge base with `origin/develop`, or when it cannot find that merge base, and prints which it chose and why. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
+It mirrors the billable gate — ruff check `--no-fix`, `ruff format --check`, the commit-range lint, pyright, the pytest suite without the scenarios, doctests, and both strict docs builds. It runs the scenarios too when a composition path differs from the merge base with `origin/develop`, or when it cannot find that merge base, and prints which it chose and why. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
 
 Next: [Versioning & Compatibility](versioning.md) — how releases are numbered and what compatibility they promise.
