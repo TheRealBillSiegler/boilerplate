@@ -79,10 +79,10 @@ def process_svg(svg_content: str) -> str:
 
 
 def main() -> None:
-    r"""Process the SVG file and save the modified version.
+    """Process the SVG file and save the modified version.
 
     The input path is passed as an argument (defaulting to
-    docs\\assets\\boilerplate-cli-logo.svg). The output file is saved in
+    docs/assets/boilerplate-cli-logo.svg). The output file is saved in
     the same directory with '_modified' appended to the file stem.
     """
     parser = argparse.ArgumentParser(
@@ -91,8 +91,8 @@ def main() -> None:
     parser.add_argument(
         "input_path",
         nargs="?",
-        default=r"docs\assets\boilerplate-cli-logo.svg",
-        help="Path to the input SVG file (default: docs\\assets\\boilerplate-cli-logo.svg)",
+        default="docs/assets/boilerplate-cli-logo.svg",
+        help="Path to the input SVG file (default: docs/assets/boilerplate-cli-logo.svg)",
     )
     parser.add_argument(
         "--output",
