@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Boilerplate! This guide will help you get started.
 
-## Development Environment Setup
+## Development environment setup
 
 1. Install [uv](https://docs.astral.sh/uv/) (the project's package manager).
 2. Clone the repository and install dependencies:
@@ -13,15 +13,15 @@ Thank you for your interest in contributing to Boilerplate! This guide will help
    uv sync
    ```
 
-3. Verify your setup by running tests and linting:
+3. Verify your setup with the local gate:
 
    ```bash
-   uv run pytest
-   uv run ruff check .
-   uv run pyright
+   uv run python scripts/check.py
    ```
 
-## Code Standards
+   It mirrors the CI gate documented in [CI Pipeline](docs/governance/ci.md#the-local-gate); a failure here is a failure there.
+
+## Code standards
 
 Key points, enforced by ruff and pyright in CI:
 
@@ -32,9 +32,9 @@ Key points, enforced by ruff and pyright in CI:
 - **Pydantic `BaseModel`** at boundaries; dataclasses or plain classes for internals.
 - Stdlib **`logging.getLogger(__name__)`** for logging, never `print`.
 
-See the [Contributing guide](docs/governance/contributing.md) on the docs site for the full development workflow, versioning policy, and breaking-change process.
+Full conventions: [AGENTS.md](AGENTS.md). See the [Contributing guide](docs/governance/contributing.md) on the docs site for the full development workflow, versioning policy, and breaking-change process.
 
-## Running Tests
+## Running tests
 
 ```bash
 uv run pytest                 # Run all tests
@@ -44,17 +44,17 @@ uv run pytest -m "not slow"   # Skip slow tests
 Tests must mirror the `src/` directory structure under `tests/`. For example:
 `src/boilerplate/cli/cli.py` -> `tests/boilerplate/cli/test_cli.py`
 
-## Running Linting and Type Checking
+## Running linting and type checking
 
 ```bash
-uv run ruff check .    # Lint
-uv run ruff format .   # Format
-uv run pyright         # Type check (strict mode)
+uv run ruff check --no-fix .   # Lint, CI-equivalent (drop --no-fix to auto-fix locally)
+uv run ruff format --check .   # Format check, CI-equivalent (drop --check to reformat locally)
+uv run pyright                 # Type check (strict mode)
 ```
 
-All code must pass ruff and pyright cleanly before submission.
+All code must pass ruff and pyright cleanly before submission. `uv run python scripts/check.py` runs all of the above plus the full test suite and the docs build in one step.
 
-## Branch Model
+## Branch model
 
 `develop` is the integration branch: all feature and fix branches are cut from it and merged back into it. It is the default branch for day-to-day work.
 
@@ -64,26 +64,19 @@ Cutting a branch from `main` instead of `develop` is incorrect and will cause yo
 
 ## Decisions
 
-Decision authority rests with the maintainers listed in [CODEOWNERS](CODEOWNERS).
+Decision authority rests with the project's maintainer, listed in [CODEOWNERS](CODEOWNERS).
 
-## Pull Request Process
+## Pull request process
 
 1. **Create a feature branch** from `develop`.
-2. **Use conventional commits** for all commit messages:
-
-   ```text
-   <type>[optional scope]: <description>
-   ```
-
-   Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-
+2. **Use conventional commits** for commit messages. See [AGENTS.md § Commits](AGENTS.md#commits) for the format and type list.
 3. **Include tests** for new functionality. Tests should document behavior, not implementation.
 4. **Ensure CI passes** -- all linting, type checking, and tests must be green. Run the same checks locally first with `uv run python scripts/check.py`; the pipeline itself is documented in [docs/governance/ci.md](docs/governance/ci.md).
 5. **Keep PRs focused** -- one feature or fix per PR.
 
-## Reporting Issues
+## Reporting issues
 
-Open a GitHub issue with a clear description, steps to reproduce, and expected vs. actual behavior.
+See [Reporting bugs and requesting features](docs/governance/contributing.md#reporting-bugs-and-requesting-features) on the docs site.
 
 ## License
 
