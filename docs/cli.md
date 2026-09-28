@@ -8,6 +8,16 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
      :prog_name: boilerplate
      :depth: 1
 
+## Option notes
+
+Detail cut from an option's own help text to keep it short.
+
+| Option | Note |
+| --- | --- |
+| `--color auto` | Colors output only when stdout is a terminal, and honors `NO_COLOR`. |
+| `list --format wide` | Adds each template's path as a column. |
+| `new --format json` | One JSON object with `template`, `destination`, and `layers`; `--dry-run` adds `dry_run: true`. |
+
 ## Environment variables
 
 Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, and `BOILERPLATE_ACCESSIBLE` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory. `PYTHONIOENCODING` is forced to `utf-8` while a template renders and restored afterward — it's not read as a setting.
