@@ -22,7 +22,7 @@ uv run pyright        # type-check src/ in strict mode
 {{ project_slug }}/
 ├── pyproject.toml            # metadata, dependencies, and the Ruff, Pyright, and pytest configuration
 ├── uv.lock                   # the resolved dependency set; commit it
-├── src/{{ package_name }}/   # the package{% if sample_module %}; module.py is a sample to replace{% endif %}
+├── src/{{ package_name }}/   # the package{% if sample_module %}; module.py is a sample to delete{% endif %}
 ├── tests/{{ package_name }}/ # mirrors src/, one test module per source module{% if not sample_module %} (empty until you add one){% endif %}
 ├── notebooks/                # a starter notebook; ipykernel is in the dev group
 ├── .vscode/                  # workspace settings and recommended extensions
