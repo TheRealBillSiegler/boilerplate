@@ -39,7 +39,7 @@ body:
     attributes:
       label: Boilerplate version
       description: Output of `boilerplate version`
-      placeholder: "boilerplate 0.2.0"
+      placeholder: "boilerplate x.y.z"
     validations:
       required: true
   - type: dropdown
