@@ -30,23 +30,23 @@ Push-Location $PSScriptRoot\..
 try {
     switch ($Mode) {
         "fast" {
-            Write-Host "🚀 Running fast tests..." -ForegroundColor Green
+            Write-Host "Running fast tests..." -ForegroundColor Green
             uv run pytest
         }
         "slow" {
-            Write-Host "🐌 Running slow tests..." -ForegroundColor Red
+            Write-Host "Running slow tests..." -ForegroundColor Red
             uv run pytest -m slow
         }
         "integration" {
-            Write-Host "🧪 Running integration tests..." -ForegroundColor Blue
+            Write-Host "Running integration tests..." -ForegroundColor Blue
             uv run pytest tests/integration/
         }
         "all" {
-            Write-Host "🔄 Running all tests..." -ForegroundColor Yellow  
+            Write-Host "Running all tests..." -ForegroundColor Yellow
             uv run pytest -m ""
         }
         "benchmark" {
-            Write-Host "⏱️ Running tests with performance analysis..." -ForegroundColor Cyan
+            Write-Host "Running tests with performance analysis..." -ForegroundColor Cyan
             uv run pytest -m "" --durations=0
         }
         default {
