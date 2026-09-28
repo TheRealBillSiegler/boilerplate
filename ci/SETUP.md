@@ -8,9 +8,7 @@ One-time Azure DevOps configuration required before the multi-stage pipeline
 ## Quick start for new projects
 
 1. Copy the `ci/` folder into your repository.
-2. Edit `ci/settings.yml` — set the five variables to match your project:
-   `feedName`, `serviceConnection`, `publishUrl`, `checkUrl`,
-   `pythonVersion`.
+2. Edit `ci/settings.yml` — set the six variables to match your project: `feedName`, `serviceConnection`, `publishUrl`, `checkUrl`, `pythonVersion`, `uvVersion`.
 3. If `pyproject.toml` declares a `[[tool.uv.index]]`, its `name` must equal `feedName`.
 4. Complete the portal configuration described below.
 
