@@ -155,19 +155,23 @@ Use conventional commits:
 <type>[optional scope]: <description>
 ```
 
-| Type       | Purpose                   |
-| ---------- | ------------------------- |
-| `feat`     | New feature               |
-| `fix`      | Bug fix                   |
-| `docs`     | Documentation only        |
-| `style`    | Formatting (no logic)     |
-| `refactor` | Refactor (no feature/fix) |
-| `perf`     | Performance improvement   |
-| `test`     | Add/update tests          |
-| `build`    | Build system/dependencies |
-| `ci`       | CI/config changes         |
-| `chore`    | Maintenance/misc          |
+| Type       | Purpose                   | In the changelog |
+| ---------- | ------------------------- | ----------------- |
+| `feat`     | New feature               | Yes                |
+| `fix`      | Bug fix                   | Yes                |
+| `perf`     | Performance improvement   | Yes                |
+| `revert`   | Revert a previous commit  | No                 |
+| `docs`     | Documentation only        | No                 |
+| `style`    | Formatting (no logic)     | No                 |
+| `refactor` | Refactor (no feature/fix) | No                 |
+| `test`     | Add/update tests          | No                 |
+| `build`    | Build system/dependencies | No                 |
+| `ci`       | CI/config changes         | No                 |
+| `chore`    | Maintenance/misc          | No                 |
 
 - Present tense, imperative mood: "add feature" not "added feature".
-- Description under 72 characters.
+- First line at most 72 characters (type, scope and description together).
 - Include issue references in commit messages when applicable.
+- A commit-range lint (`scripts/commit_lint.py`, run in CI and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request, not just its title.
+- The "In the changelog" column above is `release-please-config.json`'s `changelog-sections`; that file decides visibility, this table mirrors it.
+- Mark a commit `!` (or add a `BREAKING CHANGE:` footer) when it renames or removes a CLI command, option, or exit code; changes a default a user relies on; or deletes or renames a file a bundled template renders. Breaking is measured against the last release tag, not the parent commit. A `!`/`BREAKING CHANGE:` commit surfaces in the changelog regardless of type.
