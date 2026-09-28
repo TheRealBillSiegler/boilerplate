@@ -1,6 +1,7 @@
 """Tests for the project template's customization Questions."""
 
 import json
+import re
 import subprocess
 from functools import partial
 from pathlib import Path
@@ -117,6 +118,22 @@ class TestRenderedListsAndReadme:
         dest = _render_project(tmp_path)
         readme = (dest / "README.md").read_text(encoding="utf-8")
         assert "Packages resolve from PyPI" in readme
+
+    def test_readme_quick_start_runs_tests_with_sample_module(self, tmp_path: Path):
+        dest = _render_project(tmp_path, context_data={"sample_module": True})
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert re.search(r"^uv run pytest\s+# run the tests$", readme, re.MULTILINE)
+
+    def test_readme_quick_start_notes_empty_suite_without_sample_module(
+        self, tmp_path: Path
+    ):
+        dest = _render_project(tmp_path, context_data={"sample_module": False})
+        readme = (dest / "README.md").read_text(encoding="utf-8")
+        assert re.search(
+            r"^uv run pytest\s+# run the tests \(empty until you add one\)$",
+            readme,
+            re.MULTILINE,
+        )
 
 
 class TestLineEndings:
