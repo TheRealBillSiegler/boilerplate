@@ -316,7 +316,15 @@ A migration test does three things:
 
 ## Terminology
 
-This page uses the project's terms as `CONTEXT.md` and [design 01's glossary](../design/01-overview.md#glossary) define them — Template, Question, Copier Migration, Extends, and the rest. "Template Variable" above is a **Question**.
+Template, Question, Copier, `copier.yml`, and `boilerplate.yml` follow the definitions in [design 01's glossary](../design/01-overview.md#glossary). A "template variable" above is a **Question**. Migration-specific terms used on this page:
+
+**Copier Migration**: An entry under `_migrations` in `copier.yml` — a command, gated by an optional `version` and `when` — that transforms a rendered project during `copier update`.
+
+**Extends**: A dependency on a base template, pinned to an exact version (e.g., `project@1.0.0`) or left unversioned.
+
+**Migration-First**: The principle that a breaking change is acceptable when an automated Copier migration handles it.
+
+**Three-Way Merge**: Copier's merge algorithm, combining old template files, the user's customized project files, and new template files into a result that preserves user customizations.
 
 ## Where next
 
