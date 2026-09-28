@@ -222,6 +222,6 @@ The runtime is configured by a `Settings` object loaded from environment variabl
 
 ## Glossary
 
-Core terms used throughout this document suite. For data model details see [02-data-models.md](02-data-models.md); for composition details see [04-composition-engine.md](04-composition-engine.md). Canonical definitions live in `CONTEXT.md` at the repository root; this section pulls them in unchanged.
+Core terms used throughout this document suite. For data model details see [02-data-models.md](02-data-models.md); for composition details see [04-composition-engine.md](04-composition-engine.md). Canonical definitions live in `CONTEXT.md` at the repository root.
 
 --8<-- "CONTEXT.md:language"
