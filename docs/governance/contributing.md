@@ -2,23 +2,23 @@
 
 Contributions are welcome! Here's how to get started.
 
-Please review our [Security policy](./security.md) before contributing.
+Please review our [Security policy](./security.md) and [Code of Conduct](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CODE_OF_CONDUCT.md) before contributing.
 
 ## Development setup
 
-Follow [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) in the repository root's CONTRIBUTING.md: clone the repository, install dependencies with `uv sync`, and verify with the local gate.
+Follow [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) in the repository root's CONTRIBUTING.md.
 
 ## Development workflow
 
 ### Code quality
 
-Run the local gate before pushing — the same steps CI runs:
+Run the local gate before pushing — it mirrors CI's lint, typecheck, test, and docs jobs (the package smoke test, ShellCheck, and the new-tests-go-red check are CI-only):
 
 ```powershell
 uv run python scripts/check.py
 ```
 
-For the individual ruff, pyright, and pytest commands, see [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking) in the repository root's CONTRIBUTING.md. The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
+For the individual ruff, pyright, and pytest commands, see [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking). The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
 
 ### Mutation score ratchet
 
@@ -40,7 +40,7 @@ When you add a test alongside a `src/` change, make it fail against the old code
 
 ## Submitting changes
 
-Follow the [Pull request process](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#pull-request-process) in the repository root's CONTRIBUTING.md: branch from `develop`, commit with conventional commits, include tests, and run the local gate before pushing.
+Follow the [Pull request process](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#pull-request-process).
 
 When you open the pull request:
 
@@ -50,7 +50,7 @@ When you open the pull request:
 
 ## Code guidelines
 
-See [Code standards](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#code-standards) in the repository root's CONTRIBUTING.md.
+See [Code standards](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#code-standards).
 
 ## Breaking changes and versioning
 
