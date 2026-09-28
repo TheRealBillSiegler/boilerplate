@@ -8,6 +8,7 @@ The project's domain vocabulary, one definition per term: templates, composition
 **Template**:
 A directory containing `boilerplate.yml` (name, version, `extends`) and `copier.yml` that boilerplate renders into a project — a Copier scaffold. Its filesystem location is the **template root**.
 _Avoid_: generator, skeleton, blueprint
+_Carve-out_: "template skeleton" names the `init-template` command's scaffold output, not this term.
 
 **Template Specifier**:
 A `name@version` string uniquely identifying a template — the resolved form.
@@ -26,6 +27,7 @@ _Avoid_: typed Profile model, org profile, config
 **Layer**:
 A Template that `extends` another to add or override files in the composed result — one rendered node in the composition graph, each with its own answers file.
 _Avoid_: plugin, overlay, mixin
+_Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.
 
 **Task**:
 A command declared in a Template's `_tasks` that runs after rendering — the escape hatch for arbitrary edits.
