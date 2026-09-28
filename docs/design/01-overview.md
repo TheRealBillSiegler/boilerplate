@@ -13,7 +13,7 @@ These problems compound at organizational scale, where dozens of repositories ea
 
 ## What Boilerplate is
 
-A curated scaffolder paired with a managed development environment. Lock files keep both reproducible.
+A catalog of golden paths, Python first. Each derived template is one kind of project done the textbook way — a Typer CLI, a Streamlit or React web app, an MCP server — on a base layer its ecosystem shares, which carries the common standards. A template brings the toolchain its kind of project needs, secondary ones included (a containerized app declares Docker); patterns with a marked place for your code; and its ecosystem's published standards, the PEPs for Python. The environment installs and verifies what the template declares, so a secondary toolchain needs no setup script of its own. Templates compose by `extends`, and a project created from them updates layer by layer as the templates move.
 
 > **Start fast. Stay consistent. Reproduce anywhere.**
 
