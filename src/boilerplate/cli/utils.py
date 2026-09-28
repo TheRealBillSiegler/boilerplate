@@ -62,18 +62,19 @@ def _display_error_and_exit(
     """Display error message with optional error code and remediation, then exit.
 
     The ``Error:`` line carries the stable ``BP_*`` code as a bracketed
-    suffix, per docs/design/07-operational-quality.md §Error Message Format.
+    suffix, and the remediation line reads ``Fix:``, per
+    docs/design/07-operational-quality.md §Error Message Format.
     """
     display = _current_display()
     suffix = f"   [{error_code}]" if error_code else ""
     if display:
         display.error(f"Error: {message}{suffix}")
         if remediation:
-            display.info(f"  Hint: {remediation}")
+            display.info(f"  Fix: {remediation}")
     else:
         typer.echo(f"Error: {message}{suffix}", err=True)
         if remediation:
-            typer.echo(f"  Hint: {remediation}", err=True)
+            typer.echo(f"  Fix: {remediation}", err=True)
     raise typer.Exit(code=exit_code)
 
 

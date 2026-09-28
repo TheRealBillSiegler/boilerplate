@@ -384,3 +384,22 @@ class TestCliErrorHandler:
         assert "Error: destination /tmp/out is not empty" in captured.err
         assert "[BP_RENDER_DEST_NOT_EMPTY]" in captured.err
         assert "Use --force to overwrite." in captured.err
+
+    def test_remediation_line_uses_the_fix_label(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """The remediation line reads 'Fix:', matching design 07's own label.
+
+        Regression: the boundary shipped 'Hint:' where design
+        07-operational-quality.md §Error Message Format specifies 'Fix:'.
+        """
+        wrapped = self._decorate_raiser(
+            DestinationNotEmptyError("destination /tmp/out is not empty")
+        )
+
+        with pytest.raises(typer.Exit):
+            wrapped()
+
+        captured = capsys.readouterr()
+        assert "Fix: Use --force to overwrite." in captured.err
+        assert "Hint:" not in captured.err
