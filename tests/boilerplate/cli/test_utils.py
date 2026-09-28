@@ -341,19 +341,26 @@ class TestCliErrorHandler:
         assert exc_info.value is exception
 
     def test_error_renders_through_context_display_without_a_ctx_argument(
-        self, capsys: pytest.CaptureFixture[str], renderer: Renderer
+        self,
+        capsys: pytest.CaptureFixture[str],
+        renderer: Renderer,
+        mocker: MockerFixture,
     ) -> None:
         """The Display comes from the active Click context, not from the arguments.
 
         Regression: the handler scanned ``*args`` for an object exposing
         ``.obj.display``, so a decorated helper invoked with keyword arguments
-        only bypassed the command's Display entirely. A quiet Display proves
-        which path ran: it suppresses the hint, the bare-echo fallback does not.
+        only bypassed the command's Display entirely and fell through to the
+        bare ``typer.echo`` fallback. Both paths print the same text (the
+        ``Fix:`` line no longer depends on ``quiet``, see
+        ``test_remediation_line_survives_quiet``), so a spy on ``typer.echo``
+        is what proves the context path ran instead of the fallback.
         """
+        echo_spy = mocker.patch("typer.echo")
         ctx = typer.Context(TyperCommand("stub"))
         ctx.obj = CliContext(
             settings=Settings(),
-            display=Display(color=ColorMode.NEVER, quiet=True),
+            display=Display(color=ColorMode.NEVER, quiet=False),
             renderer=renderer,
         )
         wrapped = self._decorate_raiser(
@@ -363,9 +370,9 @@ class TestCliErrorHandler:
         with ctx, pytest.raises(typer.Exit):
             wrapped()
 
+        echo_spy.assert_not_called()
         captured = capsys.readouterr()
         assert "Error: destination /tmp/out is not empty" in captured.err
-        assert "Use --force to overwrite." not in captured.out + captured.err
 
     def test_validation_error_propagates_error_code_and_remediation(
         self, capsys: pytest.CaptureFixture[str]
@@ -403,3 +410,57 @@ class TestCliErrorHandler:
         captured = capsys.readouterr()
         assert "Fix: Use --force to overwrite." in captured.err
         assert "Hint:" not in captured.err
+
+    def test_remediation_line_goes_to_stderr_through_display(
+        self, capsys: pytest.CaptureFixture[str], renderer: Renderer
+    ) -> None:
+        """The Fix: line prints to stderr, never stdout, through a real Display.
+
+        Regression: the boundary printed the Fix: line via ``Display.info``,
+        which writes to stdout. docs/design/05-cli-reference.md §Output
+        Display requires errors, and their remediation, on stderr only.
+        """
+        ctx = typer.Context(TyperCommand("stub"))
+        ctx.obj = CliContext(
+            settings=Settings(),
+            display=Display(color=ColorMode.NEVER, quiet=False),
+            renderer=renderer,
+        )
+        wrapped = self._decorate_raiser(
+            DestinationNotEmptyError("destination /tmp/out is not empty")
+        )
+
+        with ctx, pytest.raises(typer.Exit):
+            wrapped()
+
+        captured = capsys.readouterr()
+        assert "Fix: Use --force to overwrite." in captured.err
+        assert "Fix:" not in captured.out
+
+    def test_remediation_line_survives_quiet(
+        self, capsys: pytest.CaptureFixture[str], renderer: Renderer
+    ) -> None:
+        """--quiet leaves the Fix: line in place; it is part of the error.
+
+        Regression: ``Display.info`` suppresses its message under ``quiet``,
+        but docs/design/05-cli-reference.md §Quiet Mode permits only error
+        messages (to stderr) under ``--quiet``, and the Fix: line is a
+        component of the error per design 07 §Error Message Format, not
+        suppressible progress output.
+        """
+        ctx = typer.Context(TyperCommand("stub"))
+        ctx.obj = CliContext(
+            settings=Settings(),
+            display=Display(color=ColorMode.NEVER, quiet=True),
+            renderer=renderer,
+        )
+        wrapped = self._decorate_raiser(
+            DestinationNotEmptyError("destination /tmp/out is not empty")
+        )
+
+        with ctx, pytest.raises(typer.Exit):
+            wrapped()
+
+        captured = capsys.readouterr()
+        assert "Fix: Use --force to overwrite." in captured.err
+        assert captured.out == ""
