@@ -63,14 +63,15 @@ def _display_error_and_exit(
 
     The ``Error:`` line carries the stable ``BP_*`` code as a bracketed
     suffix, and the remediation line reads ``Fix:``, per
-    docs/design/07-operational-quality.md §Error Message Format.
+    docs/design/07-operational-quality.md §Error Message Format. Both lines
+    are the error, so both go to stderr and both print under ``--quiet``.
     """
     display = _current_display()
     suffix = f"   [{error_code}]" if error_code else ""
     if display:
         display.error(f"Error: {message}{suffix}")
         if remediation:
-            display.info(f"  Fix: {remediation}")
+            display.error_detail(f"  Fix: {remediation}")
     else:
         typer.echo(f"Error: {message}{suffix}", err=True)
         if remediation:
