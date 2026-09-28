@@ -1,12 +1,15 @@
-"""Shared rendering helpers for the bundled-template test modules.
+"""Shared rendering and git helpers for the bundled-template test modules.
 
 Every module under this package renders one of the bundled layers through the
 real composition and rendering pipeline (no mocked Copier Worker) and then
-asserts on the output. Centralizing the layer-discovery glob and the
-``ExecutionContext`` wiring here keeps them from drifting across modules that
-render the same templates.
+asserts on the output, or drives vanilla ``copier update`` against a tagged
+git checkout of one. Centralizing the layer-discovery glob, the
+``ExecutionContext`` wiring, and the git-repo-building helpers here keeps them
+from drifting across modules that render or update the same templates.
 """
 
+import shutil
+import subprocess
 from pathlib import Path
 
 import boilerplate
@@ -61,3 +64,49 @@ def render(
     )
     RenderEngine().render(composition, ctx)
     return dest
+
+
+def git(repo: Path, *args: str) -> str:
+    """Run a git command in `repo` with a fixed test identity, returning stdout.
+
+    Args:
+        repo: The git working tree to run in.
+        args: Arguments passed to the ``git`` executable.
+
+    Returns:
+        The command's stdout.
+    """
+    return subprocess.run(
+        ["git", "-c", "user.name=tests", "-c", "user.email=tests@example.com", *args],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout
+
+
+def commit_all(repo: Path, message: str, tag: str | None = None) -> None:
+    """Stage and commit every change in `repo`, optionally tagging the commit.
+
+    Args:
+        repo: The git working tree to commit in.
+        message: The commit message.
+        tag: A tag name to apply to the new commit, or `None` for no tag.
+    """
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", message)
+    if tag:
+        git(repo, "tag", tag)
+
+
+def copy_layer_into(layer: Path, repo: Path) -> None:
+    """Copy a bundled layer's tree into `repo`, ready for `git init`.
+
+    Args:
+        layer: The bundled layer directory to copy.
+        repo: The destination directory (need not exist yet).
+    """
+    shutil.copytree(
+        layer, repo, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__")
+    )
