@@ -205,6 +205,35 @@ class TestPytestMarkersTable:
         )
 
 
+class TestCiSetupVariableCount:
+    def test_quick_start_variable_count_matches_settings_yml(self) -> None:
+        setup_text = (REPO_ROOT / "ci" / "SETUP.md").read_text(encoding="utf-8")
+        match = re.search(r"set the (\w+) variables", setup_text)
+        assert match is not None, "ci/SETUP.md no longer says 'set the N variables'"
+        number_words = {
+            "four": 4,
+            "five": 5,
+            "six": 6,
+            "seven": 7,
+            "eight": 8,
+        }
+        word = match.group(1)
+        assert word in number_words or word.isdigit(), (
+            f"ci/SETUP.md count {word!r} is not a number this test reads"
+        )
+        documented_count = int(word) if word.isdigit() else number_words[word]
+
+        settings = yaml.safe_load(
+            (REPO_ROOT / "ci" / "settings.yml").read_text(encoding="utf-8")
+        )
+        actual_count = len(settings["variables"])
+
+        assert documented_count == actual_count, (
+            f"ci/SETUP.md says {match.group(1)} variables, but ci/settings.yml "
+            f"has {actual_count}"
+        )
+
+
 class TestSpecPointers:
     def test_spec_comments_point_at_existing_headings(self) -> None:
         failures: list[str] = []
