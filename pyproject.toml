@@ -64,6 +64,7 @@ dev = [
     "pexpect>=4.9.0",
     "pyte>=0.8.2",
     "mkdocs-llmstxt>=0.5.0",
+    "commitizen>=4.19,<5",
 ]
 # Separate from dev: mutmut needs os.fork, which native Windows does not have (it
 # refuses to even start there), so Windows contributors must not be forced to resolve
@@ -217,6 +218,19 @@ executionEnvironments = [
     { root = "src" },
     { root = "tests", reportUnknownLambdaType = "none", reportMissingParameterType = "none", reportUnknownParameterType = "none" },
 ]
+
+[tool.commitizen]
+# cz_customize lets the type set and pattern below match AGENTS.md's Commits
+# table exactly; the stock cz_conventional_commits schema also accepts `bump`,
+# which AGENTS.md does not list. The 72-character limit is not set here:
+# `cz check` reads its `-l` CLI flag ahead of this file's own
+# `message_length_limit` even when the flag is not passed (commitizen 4.19
+# always populates it, as `None`, from argparse) — scripts/commit_lint.py
+# passes `-l` explicitly instead.
+name = "cz_customize"
+
+[tool.commitizen.customize]
+schema_pattern = "(?s)(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\([a-z0-9 ._/-]+\\))?!?: ([^\\n\\r]+)((\\n\\n.*)|(\\s*))?$"
 
 # Mutation testing (scripts/mutation_ratchet.py, .github/workflows/mutation.yml) scores
 # only the pure algorithmic core. `cli/` is excluded because its behaviour is exercised
