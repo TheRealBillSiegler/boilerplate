@@ -4,6 +4,8 @@ description: Why Boilerplate exists — the ethos it encodes, the environment it
 
 # Why Boilerplate?
 
+Boilerplate takes care of the parts around writing code — a working toolchain and a configured project — so a new Python project starts on one golden path and you start at the work. A golden path is the supported, opinionated way to build one kind of project.
+
 Boilerplate is an ethos made executable: engineering judgment — which tools, how they're configured, how a project is laid out — encoded as software that runs, so a new project inherits the discipline instead of being advised toward it. It is two things at once: a particular Python development environment, and the scaffolder that stamps out projects configured for it.
 
 ## Yak shaving
@@ -73,6 +75,7 @@ Platform teams and template maintainers who own more than one template and want 
 
 ## Where next
 
+- **[The vision](design/01-overview.md#what-boilerplate-is)** — the target catalog and environment, in design terms.
 - **[Implementation status](status.md)** — what is implemented, partial, or planned.
 - **[Quickstart](quickstart.md)** — install and scaffold your first project.
 - **[Template composition](templates-hub/composition.md)** — the `extends` mechanics in depth.
