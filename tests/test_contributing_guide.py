@@ -6,6 +6,7 @@ against the files that actually decide them -- the CI workflow and
 `CODEOWNERS` -- so the guide cannot silently drift from either.
 """
 
+import re
 from pathlib import Path
 from typing import Final
 
@@ -69,20 +70,25 @@ class TestLintCommandsMatchCiWorkflow:
 
 
 class TestDecisionAuthorityMatchesCodeowners:
-    """CONTRIBUTING.md's decision-authority claim must match CODEOWNERS."""
+    """CONTRIBUTING.md's decision-authority wording must track CODEOWNERS' count."""
 
-    def test_root_contributing_names_the_single_maintainer(self) -> None:
+    def test_maintainer_plurality_matches_codeowners_count(self) -> None:
         owners = [
             line.strip()
             for line in CODEOWNERS.read_text(encoding="utf-8").splitlines()
             if line.strip() and not line.strip().startswith("#")
         ]
-        assert len(owners) == 1, (
-            "CODEOWNERS now lists more than one owner; CONTRIBUTING.md's "
-            "singular 'maintainer' wording needs revisiting"
-        )
-
         contributing_text = CONTRIBUTING_MD.read_text(encoding="utf-8")
-        assert "maintainers listed in" not in contributing_text, (
-            "CONTRIBUTING.md claims plural maintainers, but CODEOWNERS lists one"
-        )
+        has_singular = re.search(r"\bmaintainer\b", contributing_text) is not None
+        has_plural = re.search(r"\bmaintainers\b", contributing_text) is not None
+
+        if len(owners) == 1:
+            assert has_singular and not has_plural, (
+                "CODEOWNERS lists one owner, but CONTRIBUTING.md doesn't say "
+                "'maintainer' (singular) or still says 'maintainers' (plural)"
+            )
+        else:
+            assert has_plural, (
+                "CODEOWNERS lists more than one owner, but CONTRIBUTING.md "
+                "doesn't say 'maintainers' (plural)"
+            )
