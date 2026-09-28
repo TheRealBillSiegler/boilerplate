@@ -51,7 +51,7 @@ _templates_suffix: .jinja
 
 project_name:
   type: str
-  help: "What is the name of the project?"
+  help: "What is the (human-readable) name of the project? (e.g. My Project)"
   default: "{{ _folder_name }}"
 
 package_name:
@@ -60,7 +60,7 @@ package_name:
 
 description:
   type: str
-  help: "Brief project description."
+  help: "What is a brief description of the project?"
   default: "A new Python project."
 
 _tasks:
