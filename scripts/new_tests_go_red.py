@@ -1,12 +1,7 @@
 """Checks that a PR's added tests actually discriminate the change they ship with.
 
-Rule: when a PR changes anything under ``src/`` and adds test functions under
-``tests/``, at least one added test must fail or error when run against the
-base commit's ``src/``. If every added test already passes on the base, none
-of them ever went red, so none of them proves the change does anything — this
-is the mechanical form of red-first (write the failing test first, then make
-it pass): a regression test only counts once it has been watched to fail
-against the code it is meant to guard.
+See ``docs/governance/ci.md`` § New tests go red for the rule this script
+enforces.
 
 Everywhere in this script, "base" means the merge base — the commit where
 head forked from the base ref, from ``git merge-base <base> <head>`` —

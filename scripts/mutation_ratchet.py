@@ -1,19 +1,9 @@
 """Enforces the mutation-score ratchet: a package's score may rise, never fall.
 
-Mutation testing (mutmut, via ``.github/workflows/mutation.yml``) only scores the pure
-algorithmic core under ``src/boilerplate``: ``composition``, ``common``, ``models``,
-``types``, ``repository``, ``settings``, ``catalog``, and ``integrations``. ``cli/`` is
-excluded because its behaviour is exercised end-to-end through subprocesses that mutmut
-cannot instrument, so mutating it would yield mostly no-tests noise; ``templates/`` is
-excluded because Jinja and ``copier.yml`` are not Python. See the comment above
-``[tool.mutmut]`` in ``pyproject.toml``.
-
-The ratchet: each package's mutation score (killed / total, from ``mutmut results
---all``) is checked against a stored baseline in ``tests/mutation-baseline.json``. A
-score may rise freely; a fall of more than ``tolerance`` fails the check. Raising the
-baseline is a human step, done in an ordinary PR by copying the workflow's uploaded
-``mutation-scores.json`` over ``tests/mutation-baseline.json`` (or via this module's
-``update`` subcommand) — see ``docs/governance/contributing.md``.
+Compares each package's mutation score (killed / total, from ``mutmut results
+--all``) against the stored baseline in ``tests/mutation-baseline.json``; a fall of
+more than ``tolerance`` fails the check. What this scores, when it runs, and how to
+raise the baseline are documented in ``docs/governance/contributing.md``.
 
 The baseline is first established with an empty JSON object (``{}``): every package is
 then "new" (see ``compare``), the check passes, and the workflow's first real run
