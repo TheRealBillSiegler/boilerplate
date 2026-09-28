@@ -32,16 +32,16 @@ RED="\033[0;31m"
 # ------------------------------------------------------------------------------
 # Pre-checks
 # ------------------------------------------------------------------------------
-echo -e "${BLUE}${BOLD}🚧 Starting WSL environment setup...${RESET}"
+echo -e "${BLUE}${BOLD}Starting WSL environment setup...${RESET}"
 
 if ! sudo -v >/dev/null 2>&1; then
-    echo -e "${RED}❌ This script requires sudo privileges.${RESET}"
+    echo -e "${RED}This script requires sudo privileges.${RESET}"
     exit 1
 fi
 
 if ! command -v curl >/dev/null 2>&1; then
-    echo -e "${RED}❌ 'curl' is required but not installed.${RESET}"
-    echo -e "${YELLOW}➡️  Run: sudo apt install -y curl${RESET}"
+    echo -e "${RED}'curl' is required but not installed.${RESET}"
+    echo -e "${YELLOW}Run: sudo apt install -y curl${RESET}"
     exit 1
 fi
 
@@ -50,11 +50,11 @@ fi
 # ------------------------------------------------------------------------------
 install_docker() {
     if command -v docker >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ Docker is already installed.${RESET}"
+        echo -e "${GREEN}Docker is already installed.${RESET}"
         return
     fi
 
-    echo -e "${BLUE}${BOLD}🐳 Installing Docker...${RESET}"
+    echo -e "${BLUE}${BOLD}Installing Docker...${RESET}"
 
     sudo apt update
     sudo apt install -y ca-certificates gnupg lsb-release apt-transport-https
@@ -71,9 +71,9 @@ https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_C
 
     sudo apt update
     if sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
-        echo -e "${GREEN}✅ Docker installed successfully.${RESET}"
+        echo -e "${GREEN}Docker installed successfully.${RESET}"
     else
-        echo -e "${RED}❌ Docker installation failed.${RESET}"
+        echo -e "${RED}Docker installation failed.${RESET}"
         exit 1
     fi
 }
@@ -83,11 +83,11 @@ https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_C
 # ------------------------------------------------------------------------------
 install_azure_cli() {
     if command -v az >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ Azure CLI is already installed.${RESET}"
+        echo -e "${GREEN}Azure CLI is already installed.${RESET}"
         return
     fi
 
-    echo -e "${BLUE}${BOLD}🔷 Installing Azure CLI...${RESET}"
+    echo -e "${BLUE}${BOLD}Installing Azure CLI...${RESET}"
 
     curl -sL https://packages.microsoft.com/keys/microsoft.asc |
         gpg --dearmor |
@@ -100,9 +100,9 @@ https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |
 
     sudo apt update
     if sudo apt install -y azure-cli; then
-        echo -e "${GREEN}✅ Azure CLI installed successfully.${RESET}"
+        echo -e "${GREEN}Azure CLI installed successfully.${RESET}"
     else
-        echo -e "${RED}❌ Azure CLI installation failed.${RESET}"
+        echo -e "${RED}Azure CLI installation failed.${RESET}"
         exit 1
     fi
 }
@@ -112,24 +112,24 @@ https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" |
 # ------------------------------------------------------------------------------
 install_uv() {
     if command -v uv >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ uv is already installed.${RESET}"
+        echo -e "${GREEN}uv is already installed.${RESET}"
         return
     fi
 
-    echo -e "${BLUE}${BOLD}🔧 Installing uv (via Astral’s official install script)...${RESET}"
+    echo -e "${BLUE}${BOLD}Installing uv (via Astral's official install script)...${RESET}"
 
     if curl -LsSf https://astral.sh/uv/install.sh | sh; then
-        echo -e "${GREEN}✅ uv installed successfully.${RESET}"
+        echo -e "${GREEN}uv installed successfully.${RESET}"
     else
-        echo -e "${RED}❌ uv installation failed.${RESET}"
-        echo -e "${YELLOW}➡️  Try manually: curl -LsSf https://astral.sh/uv/install.sh | sh${RESET}"
+        echo -e "${RED}uv installation failed.${RESET}"
+        echo -e "${YELLOW}Try manually: curl -LsSf https://astral.sh/uv/install.sh | sh${RESET}"
         exit 1
     fi
 
     # Confirm uv is now in PATH
     if ! command -v uv >/dev/null 2>&1; then
-        echo -e "${RED}❌ uv installed but not found in PATH.${RESET}"
-        echo -e "${YELLOW}➡️  Try restarting your shell or running: source ~/.profile${RESET}"
+        echo -e "${RED}uv installed but not found in PATH.${RESET}"
+        echo -e "${YELLOW}Try restarting your shell or running: source ~/.profile${RESET}"
         exit 1
     fi
 }
@@ -144,6 +144,6 @@ install_uv
 # ------------------------------------------------------------------------------
 # Post-installation Security Notes
 # ------------------------------------------------------------------------------
-echo -e "${YELLOW}⚠️  Do NOT add your user to the 'docker' group — it grants root-level access.${RESET}"
-echo -e "${YELLOW}🔐 Always use 'sudo' with Docker commands in WSL2.${RESET}"
-echo -e "${GREEN}${BOLD}✅ Environment setup completed successfully!${RESET}"
+echo -e "${YELLOW}Do NOT add your user to the 'docker' group — it grants root-level access.${RESET}"
+echo -e "${YELLOW}Always use 'sudo' with Docker commands in WSL2.${RESET}"
+echo -e "${GREEN}${BOLD}Environment setup completed successfully.${RESET}"

@@ -270,7 +270,7 @@ function Update-Path {
 # Script Execution
 ################################################################################
 
-Write-Host "=== Boilerplate environment setup starting ===" -ForegroundColor Magenta
+Write-Host "Starting Boilerplate environment setup..." -ForegroundColor Magenta
 
 try {
     # 1. Install VS Code
@@ -290,17 +290,17 @@ try {
     Install-Tool -ToolId "Git.Git"
 
     # 4. Install uv
-    Write-Host "Installing UV..." -ForegroundColor Cyan
+    Write-Host "Installing uv (via Astral's official install script)..." -ForegroundColor Cyan
     try {
         $ScriptUrl = "https://astral.sh/uv/install.ps1"
         $ScriptContent = Invoke-RestMethod -Uri $ScriptUrl
         Invoke-Expression $ScriptContent
-        Write-Host "UV installed." -ForegroundColor Green
+        Write-Host "uv installed successfully." -ForegroundColor Green
         Write-Host "Ignore the message about adding to PATH. It is not needed." -ForegroundColor Yellow
         Update-Path
     }
     catch {
-        Write-Host "Failed to install UV. Error: $_" -ForegroundColor Red
+        Write-Host "Failed to install uv. Error: $_" -ForegroundColor Red
         throw
     }
 
@@ -316,7 +316,7 @@ try {
         throw
     }
 
-    Write-Host "=== Boilerplate environment setup completed successfully ===" -ForegroundColor Magenta
+    Write-Host "Boilerplate environment setup completed successfully." -ForegroundColor Magenta
 }
 catch {
     Write-Host "Script encountered a critical error and will exit. Error: $_" -ForegroundColor Red
