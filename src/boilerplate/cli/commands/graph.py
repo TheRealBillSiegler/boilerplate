@@ -34,7 +34,7 @@ class GraphFormat(StrEnum):
 FORMAT_OPTION = typer.Option(
     GraphFormat.TABLE,
     "--format",
-    help="Output format: table, tree, or json.",
+    help="Output format.",
 )
 
 OUTPUT_OPTION = typer.Option(

@@ -98,7 +98,7 @@ app = typer.Typer(
 COLOR_OPTION = typer.Option(
     ColorMode.AUTO,
     "--color",
-    help="Color output. auto colors a terminal only and honors NO_COLOR.",
+    help="Color output.",
 )
 
 
@@ -199,7 +199,7 @@ def main(
     ci: bool = typer.Option(
         False,
         "--ci",
-        help="CI mode: never prompt (implies --non-interactive on new) and log JSON to stderr.",
+        help="Never prompt and log JSON to stderr. Implies --non-interactive on new.",
     ),
     _version: bool = typer.Option(
         False,

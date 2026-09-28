@@ -32,18 +32,12 @@ from boilerplate.types import TemplateSpecifier
 
 DESTINATION_ARG = typer.Argument(
     None,
-    help=(
-        "Destination directory for the new project. Prompted for when omitted "
-        "interactively; required otherwise."
-    ),
+    help="Destination directory. Required unless a terminal can prompt for it.",
 )
 DATA_OPTION = typer.Option(
     None,
     "--data",
-    help=(
-        "Answer to one question, as key=value (repeatable). Skips the "
-        "prompt and counts as answered in non-interactive mode."
-    ),
+    help="Answer for one question, as key=value. May be repeated.",
 )
 DATA_FILE_OPTION = typer.Option(
     None,
@@ -53,7 +47,7 @@ DATA_FILE_OPTION = typer.Option(
 FORMAT_OPTION = typer.Option(
     TextFormat.TEXT,
     "--format",
-    help="Output format: text, or one JSON object with template, destination and layers.",
+    help="Output format.",
 )
 
 _logger = getLogger(__name__)
@@ -303,15 +297,12 @@ def new(
         False,
         "--force",
         "-f",
-        help="Overwrite the destination if it already exists. Does not imply --non-interactive.",
+        help="Overwrite an existing destination. Does not imply --non-interactive.",
     ),
     non_interactive: bool = typer.Option(
         False,
         "--non-interactive",
-        help=(
-            "Use defaults for all unanswered questions without prompting; "
-            "fail if a required question has none."
-        ),
+        help="Use defaults without prompting; fail when a required question has none.",
     ),
     dry_run: bool = typer.Option(
         False,
