@@ -5,17 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
-
-### Changed
-
-- `--ci` and `BOILERPLATE_CI` no longer skip post-generation tasks; they imply `--non-interactive` only. Pass `--no-tasks` to skip tasks in a pipeline
-- `new -n` is now the short form of `--dry-run`; `--non-interactive` and `--no-tasks` have no short form
-
-### Removed
-
-- `new --yes`/`-y`: it only implied `--non-interactive`; pass `--non-interactive` instead
-
 ## [0.3.0] - 2026-09-04
 
 ### Added
