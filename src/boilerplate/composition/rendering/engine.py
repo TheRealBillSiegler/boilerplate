@@ -233,6 +233,7 @@ class RenderEngine:
                 merged_questions=questions_schema,
                 tasks_value=layer_tasks_value,
                 extensions_value=extensions_value,
+                is_first_layer=is_first_layer,
             )
 
             skip_tasks_flag = (not is_final_layer) or bool(ctx.skip_tasks)
@@ -334,6 +335,7 @@ class RenderEngine:
         merged_questions: dict[str, object],
         tasks_value: list[JSON],
         extensions_value: list[str],
+        is_first_layer: bool,
     ) -> CopierTemplate:
         """Construct a `MergedTemplate` with questions, tasks, and extensions.
 
@@ -344,6 +346,12 @@ class RenderEngine:
             extensions_value: Union of every layer's ``_jinja_extensions``;
                 injected so this layer's Worker can render merged questions
                 and tasks that use sibling layers' filters.
+            is_first_layer: Whether this is the composition's first layer.
+                A non-first layer's own declared `_skip_if_exists` is cleared
+                for this render — later layers overlay this render's own
+                output (docs/design/04-composition-engine.md §Per-Layer
+                Render Loop) — and continues to govern only that layer's own
+                `copier update`.
 
         Returns:
             A template object suitable for `copier.Worker`.
@@ -353,6 +361,10 @@ class RenderEngine:
             cfg["tasks"] = tasks_value
         if extensions_value:
             cfg["jinja_extensions"] = extensions_value
+        # A later layer overlays this render's own output (design 04 §Per-Layer
+        # Render Loop); its declared list still governs its own `copier update`.
+        if not is_first_layer:
+            cfg["skip_if_exists"] = []
         # No `ref`: Copier's default resolution (latest tag for a git-backed
         # layer, plain copy otherwise) is the provenance contract of
         # docs/design/adr-015-idiomatic-artifacts.md — a render must record a
