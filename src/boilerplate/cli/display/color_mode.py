@@ -10,7 +10,8 @@ class ColorMode(StrEnum):
     (docs/design/05-cli-reference.md §Global Options).
 
     Attributes:
-        AUTO: Color only when stdout is a terminal, and never when
+        AUTO: Colors stdout and stderr independently, each only when
+            that stream is itself a terminal, and never when
             ``NO_COLOR`` or ``BOILERPLATE_ACCESSIBLE`` is set.
         ALWAYS: Force color on, even when piped.
         NEVER: Force color off.

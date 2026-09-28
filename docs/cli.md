@@ -12,7 +12,7 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
 
 | Option | Note |
 | --- | --- |
-| `--color auto` | Colors output only when stdout is a terminal, and honors `NO_COLOR`. |
+| `--color auto` | Colors stdout and stderr independently, each only when that stream is itself a terminal; turns color off on both when `NO_COLOR` or `BOILERPLATE_ACCESSIBLE` is set. |
 | `list --format wide` | Adds each template's path as a column. |
 | `new --format json` | One JSON object with `template`, `destination`, and `layers`; `--dry-run` adds `dry_run: true`. |
 
