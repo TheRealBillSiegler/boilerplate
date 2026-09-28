@@ -23,19 +23,7 @@ Create standardized, semantic git commits using the Conventional Commits specifi
 
 ## Commit Types
 
-| Type       | Purpose                        |
-| ---------- | ------------------------------ |
-| `feat`     | New feature                    |
-| `fix`      | Bug fix                        |
-| `docs`     | Documentation only             |
-| `style`    | Formatting/style (no logic)    |
-| `refactor` | Code refactor (no feature/fix) |
-| `perf`     | Performance improvement        |
-| `test`     | Add/update tests               |
-| `build`    | Build system/dependencies      |
-| `ci`       | CI/config changes              |
-| `chore`    | Maintenance/misc               |
-| `revert`   | Revert commit                  |
+See [AGENTS.md § Commits](../../../AGENTS.md#commits) for the type table and which types the changelog shows.
 
 ## Breaking Changes
 
@@ -88,7 +76,7 @@ Analyze the diff to determine:
 
 - **Type**: What kind of change is this?
 - **Scope**: What area/module is affected?
-- **Description**: One-line summary of what changed (present tense, imperative mood, <72 chars)
+- **Description**: One-line summary of what changed (present tense, imperative mood; length limit in [AGENTS.md § Commits](../../../AGENTS.md#commits))
 
 ### 4. Execute Commit
 
@@ -113,7 +101,7 @@ EOF
 - Present tense: "add" not "added"
 - Imperative mood: "fix bug" not "fixes bug"
 - Reference issues: `Closes #123`, `Refs #456`
-- Keep description under 72 characters
+- Length limit in [AGENTS.md § Commits](../../../AGENTS.md#commits)
 
 ## Git Safety Protocol
 
