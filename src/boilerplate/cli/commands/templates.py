@@ -27,9 +27,7 @@ class ListFormat(StrEnum):
     WIDE = "wide"
 
 
-FORMAT_OPTION = typer.Option(
-    ListFormat.TABLE, "--format", help="Output format. wide adds each template's path."
-)
+FORMAT_OPTION = typer.Option(ListFormat.TABLE, "--format", help="Output format.")
 
 
 @cli_error_handler

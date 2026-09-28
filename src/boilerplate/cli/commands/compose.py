@@ -206,9 +206,7 @@ SECTIONS_OPTION = typer.Option(
 )
 ALL_OPTION = typer.Option(False, "--all", help="Show every section.")
 STATS_OPTION = typer.Option(False, "--stats", help="Show only the summary.")
-FORMAT_OPTION = typer.Option(
-    DataFormat.YAML, "--format", help="Output format: yaml or json."
-)
+FORMAT_OPTION = typer.Option(DataFormat.YAML, "--format", help="Output format.")
 OUTPUT_OPTION = typer.Option(
     None, "--output", "-o", help="Directory to write the sections into."
 )
