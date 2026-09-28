@@ -38,10 +38,12 @@ _MODE_LABEL = re.compile(r"\b\w+ mode:", re.IGNORECASE)
 
 # Tenet 8: an option that behaves differently on one command may read
 # differently there instead of forcing a shared text across every command
-# that binds it. ``--quiet`` suppresses more on `compose` than the global
-# flag does; `compose --output` writes a directory, `graph --output` writes
-# one file.
-_ALLOWED_DIVERGENT_OPTIONS = frozenset({"--quiet", "--output"})
+# that binds it. ``compose --quiet`` suppresses more than the global flag
+# does; ``compose --output`` writes a directory, unlike other commands'
+# ``--output``. The exemption names these two bindings, not the flags at
+# large, so a third command later binding ``--quiet``/``--output`` is still
+# checked for consistency against every other binding of that flag.
+_ALLOWED_DIVERGENT_LOCATIONS = frozenset({"compose --quiet", "compose --output"})
 
 
 class _CommandLike(Protocol):
@@ -200,38 +202,50 @@ def _violations(item: _HelpString) -> list[str]:
     return violations
 
 
-def test_every_help_string_follows_house_style() -> None:
-    """Every option, argument, and one-liner passes every tenet the guide tests.
+class TestHouseStyleConformance:
+    """Every collected help string obeys every tenet the guide enforces."""
 
-    See .claude/rules/cli-help.md for the tenets this enforces.
+    def test_every_help_string_follows_house_style(self) -> None:
+        """Every option, argument, and one-liner passes every tenet the guide tests.
+
+        See .claude/rules/cli-help.md for the tenets this enforces.
+        """
+        failures = {}
+        for item in _HELP_STRINGS:
+            reasons = _violations(item)
+            if reasons:
+                failures[item.location] = reasons
+
+        assert not failures, "\n".join(
+            f"{location}: {'; '.join(reasons)}"
+            for location, reasons in failures.items()
+        )
+
+
+class TestSharedOptionConsistency:
+    """An option's text matches across every command that binds it.
+
+    Tenet 8's two named exceptions (``compose --quiet``, ``compose
+    --output``) aside; see .claude/rules/cli-help.md.
     """
-    failures = {}
-    for item in _HELP_STRINGS:
-        reasons = _violations(item)
-        if reasons:
-            failures[item.location] = reasons
 
-    assert not failures, "\n".join(
-        f"{location}: {'; '.join(reasons)}" for location, reasons in failures.items()
-    )
+    def test_shared_option_text_is_consistent_across_commands(self) -> None:
+        by_flag: dict[str, dict[str, str]] = {}
+        for item in _HELP_STRINGS:
+            if item.flag is None:
+                continue
+            by_flag.setdefault(item.flag, {})[item.location] = item.text
 
+        inconsistent = {}
+        for flag, texts in by_flag.items():
+            checked = {
+                location: text
+                for location, text in texts.items()
+                if location not in _ALLOWED_DIVERGENT_LOCATIONS
+            }
+            if len(set(checked.values())) > 1:
+                inconsistent[flag] = texts
 
-def test_shared_option_text_is_consistent_across_commands() -> None:
-    """An option bound on several commands reads the same, tenet 8's exceptions aside.
-
-    See .claude/rules/cli-help.md for the tenets this enforces.
-    """
-    by_flag: dict[str, dict[str, str]] = {}
-    for item in _HELP_STRINGS:
-        if item.flag is None:
-            continue
-        by_flag.setdefault(item.flag, {})[item.location] = item.text
-
-    inconsistent = {
-        flag: texts
-        for flag, texts in by_flag.items()
-        if flag not in _ALLOWED_DIVERGENT_OPTIONS and len(set(texts.values())) > 1
-    }
-    assert not inconsistent, (
-        f"these options read differently on different commands: {inconsistent}"
-    )
+        assert not inconsistent, (
+            f"these options read differently on different commands: {inconsistent}"
+        )
