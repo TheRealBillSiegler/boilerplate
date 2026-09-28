@@ -3,10 +3,7 @@
 Use this template when documenting breaking changes in **Boilerplate templates**. Boilerplate leverages Copier's automated template update mechanism to handle migrations. Migration guides focus on what the automation does, edge cases requiring manual intervention, and validation procedures.
 
 !!! info "Important"
-    This template is for **template migrations** (projects updating to new template versions via `copier update`).
-
-    - For **CLI tool** migration guides (command renames, option changes), see the [Versioning & Compatibility Policy](../governance/versioning.md).
-    - For context on both template and CLI migration approaches, see [Versioning & Compatibility Policy § Two Breaking-Change Paths](../governance/versioning.md#two-breaking-change-paths).
+    This template is for **template migrations** (projects updating to new template versions via `copier update`). CLI breaking changes have no migration guide — they're communicated through the changelog's **BREAKING** entry and the release notes; see [Versioning & Compatibility Policy § Two Breaking-Change Paths](../governance/versioning.md#two-breaking-change-paths).
 
 **Reference**: [Versioning and migration](./versioning.md)
 
