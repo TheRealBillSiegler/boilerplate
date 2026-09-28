@@ -6,52 +6,19 @@ Please review our [Security policy](./security.md) before contributing.
 
 ## Development setup
 
-1. **Clone the repository**:
-
-    ```powershell
-    git clone https://github.com/TheRealBillSiegler/boilerplate.git
-    cd boilerplate
-    ```
-
-2. **Install dependencies**:
-
-    ```powershell
-    uv sync --group dev
-    ```
-
-3. **Run tests**:
-
-    ```powershell
-    uv run pytest
-    ```
+Follow [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) in the repository root's CONTRIBUTING.md: clone the repository, install dependencies with `uv sync`, and verify with the local gate.
 
 ## Development workflow
 
 ### Code quality
 
-All code must pass quality checks:
-
-```powershell
-# Format code
-uv run ruff format
-
-# Lint code
-uv run ruff check
-
-# Type check
-uv run pyright
-
-# Run tests
-uv run pytest
-```
-
-Or run everything at once — the same steps CI runs — with the local gate:
+Run the local gate before pushing — the same steps CI runs:
 
 ```powershell
 uv run python scripts/check.py
 ```
 
-The pipeline these checks feed into is documented in [CI Pipeline](./ci.md).
+For the individual ruff, pyright, and pytest commands, see [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking) in the repository root's CONTRIBUTING.md. The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
 
 ### Mutation score ratchet
 
@@ -73,39 +40,17 @@ When you add a test alongside a `src/` change, make it fail against the old code
 
 ## Submitting changes
 
-1. **Create a feature branch**:
+Follow the [Pull request process](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#pull-request-process) in the repository root's CONTRIBUTING.md: branch from `develop`, commit with conventional commits, include tests, and run the local gate before pushing.
 
-    ```powershell
-    git checkout -b feature/your-feature-name
-    ```
+When you open the pull request:
 
-2. **Make your changes**:
-    - Follow existing code patterns
-    - Include tests
-    - Update documentation
-
-3. **Run quality checks**: `uv run python scripts/check.py` (see [Code quality](#code-quality) for the individual commands)
-
-4. **Commit and push**:
-
-    ```powershell
-    git add .
-    git commit -m "feat: your feature description"
-    git push origin feature/your-feature-name
-    ```
-
-5. **Create a pull request**:
-    - Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md)
-    - Explain the changes
-    - Reference any related issues
+- Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md).
+- Explain the changes.
+- Reference any related issues.
 
 ## Code guidelines
 
-- Use type hints consistently
-- Follow PEP 8 (enforced by Ruff)
-- Prefer composition over inheritance
-- Write clear, descriptive names
-- Keep functions focused and small
+See [Code standards](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#code-standards) in the repository root's CONTRIBUTING.md.
 
 ## Breaking changes and versioning
 
