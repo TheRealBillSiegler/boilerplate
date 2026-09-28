@@ -25,7 +25,7 @@ A user's default answers for Template Questions, read from `profile.toml` and me
 _Avoid_: typed Profile model, org profile, config
 
 **Layer**:  
-One template rendered at a node of the composition graph, each with its own answers file; a derived Layer `extends` another Template to add or override its files.  
+One template rendered at a node of the composition graph, each with its own answers file; a derived Layer (also "derived template" in prose) `extends` another Template to add or override its files.  
 _Avoid_: plugin, overlay, mixin  
 _Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.
 
@@ -104,6 +104,10 @@ Templates Boilerplate publishes as their own git repositories, extracted from th
 
 **gating scaffolding**:  
 See **first-party gating scaffolding**.
+
+**golden path**:  
+The supported, opinionated way to build one kind of project, from creating it through running it; a template is where a project starts on it.  
+_Avoid_: de facto
 
 **Guardrails**:  
 Where quality is enforced across a **Development Environment** — dev-time (format-on-save, live type-checking) and CI. A part of the Development Environment; see the Development Environment guide.
