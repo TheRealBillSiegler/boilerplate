@@ -1,6 +1,6 @@
 # Contributing to Boilerplate
 
-Thank you for your interest in contributing to Boilerplate! This guide will help you get started.
+This file covers environment setup, code standards, tests, branching, and the pull request process.
 
 ## Development environment setup
 
@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Boilerplate! This guide will help
 2. Clone the repository and install dependencies:
 
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/TheRealBillSiegler/boilerplate.git
    cd boilerplate
    uv sync
    ```
@@ -41,8 +41,7 @@ uv run pytest                 # Run all tests
 uv run pytest -m "not slow"   # Skip slow tests
 ```
 
-Tests must mirror the `src/` directory structure under `tests/`. For example:
-`src/boilerplate/cli/cli.py` -> `tests/boilerplate/cli/test_cli.py`
+Tests must mirror the `src/` directory structure under `tests/` -- for example, `src/boilerplate/cli/cli.py` maps to `tests/boilerplate/cli/test_cli.py`.
 
 ## Running linting and type checking
 
