@@ -25,7 +25,7 @@ A user's default answers for Template Questions, read from `profile.toml` and me
 _Avoid_: typed Profile model, org profile, config
 
 **Layer**:
-A Template that `extends` another to add or override files in the composed result — one rendered node in the composition graph, each with its own answers file.
+One template rendered at a node of the composition graph, each with its own answers file; a derived Layer `extends` another Template to add or override its files.
 _Avoid_: plugin, overlay, mixin
 _Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.
 
