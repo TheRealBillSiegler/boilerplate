@@ -194,7 +194,7 @@ log_cli_level = "WARNING"
 addopts = "-v --import-mode=importlib --doctest-modules -n auto --dist loadgroup"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "integration: auto-applied to tests under tests/integration/ (conftest hook); deselect with '-m \"not integration\"'",
     "snapshot: marks tests as snapshot tests",
 ]
 filterwarnings = ["ignore:.*Importing .* from `copier` is deprecated.*:DeprecationWarning"]
