@@ -109,6 +109,30 @@ def test_graph_output_validation_behavior(
     assert "--output only works with --format json" in r.output
 
 
+def test_graph_output_validation_error_carries_the_error_prefix(
+    tmp_path: Path, typer_cli_runner: CliRunner
+) -> None:
+    """The --output/--format conflict reads Error:, like every other error.
+
+    Regression: this message skipped the Error: prefix that design 07's
+    Error Message Format requires on every error line, even one raised
+    outside the BP-coded boundary.
+    """
+    _write_tpl(tmp_path, "alpha", "1.0.0")
+    r = typer_cli_runner.invoke(
+        app,
+        [
+            "graph",
+            "alpha",
+            "--templates-dir",
+            str(tmp_path),
+            "--output",
+            str(tmp_path / "x.json"),
+        ],
+    )
+    assert "Error: --output only works with --format json." in r.output
+
+
 def test_render_graph_list_output_snapshot(
     captured_display: tuple[Display, io.StringIO],
     snapshot: "SnapshotAssertion",
