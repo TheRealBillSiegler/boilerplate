@@ -303,3 +303,34 @@ class TestFormatOption:
         assert "Invalid value for '--format'" in " ".join(
             re.sub(r"\x1b\[[0-9;]*m", "", result.output).split()
         )
+
+
+class TestNotADirectory:
+    """`template_dir` naming something other than a directory fails fast."""
+
+    def test_reports_the_error_prefix(
+        self, typer_cli_runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """The message reads Error:, like every other error (design 07).
+
+        Regression: this message skipped the Error: prefix that design 07's
+        Error Message Format requires on every error line, even one raised
+        outside the BP-coded boundary.
+        """
+        # A space in the path (e.g. from a username with a space) is a
+        # regression case: the expected string must be stripped the same
+        # way as the captured output, not just the captured output.
+        not_a_dir = tmp_path / "dir with space" / "not-a-dir.txt"
+        not_a_dir.parent.mkdir()
+        not_a_dir.write_text("", encoding="utf-8")
+
+        result = typer_cli_runner.invoke(app, ["validate", str(not_a_dir)])
+        # Strip whitespace entirely (not just collapse it): a long temp path
+        # is one unbroken "word" that Rich's soft-wrap can fold mid-path at
+        # this console width, inserting a newline with no space around it.
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+        output = re.sub(r"\s+", "", plain)
+        expected = re.sub(r"\s+", "", f"Error: Not a directory: {not_a_dir}")
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR
+        assert expected in output
