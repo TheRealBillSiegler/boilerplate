@@ -16,6 +16,7 @@ Note: Snapshot tests are automatically grouped to run serially to avoid file
 
 import io
 import json
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -87,6 +88,15 @@ class TestColorMode:
 
         assert display.console.no_color
         assert display.error_console.no_color
+
+    def test_auto_detects_each_stream_independently(self) -> None:
+        """Stdout and stderr each color by their own terminal-ness, not stdout's."""
+        display = Display(color=ColorMode.AUTO)
+        display.console.file = SimpleNamespace(isatty=lambda: True)
+        display.error_console.file = SimpleNamespace(isatty=lambda: False)
+
+        assert display.console.is_terminal
+        assert not display.error_console.is_terminal
 
     def test_never_turns_color_off_on_both_consoles(self) -> None:
         display = Display(color=ColorMode.NEVER)
