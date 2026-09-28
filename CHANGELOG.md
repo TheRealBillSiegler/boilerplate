@@ -66,23 +66,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Docs site repo link points at GitHub
 - Quickstart code examples changed from PowerShell to cross-platform bash
 - Installation reduced to the single public path: `scripts/install.ps1` installs uv and boilerplate from the public git URL; organizations layer their own configuration on top
-- `validate` now checks `boilerplate.yml` against the `TemplateMeta` model instead of its own hand-rolled schema, so the two can no longer drift: a missing `description` now passes (`TemplateMeta` has always declared it optional), and schema and version failure messages carry pydantic's wording
 
 ### Fixed
 
 - The bundled templates update layer by layer with vanilla `copier update` from a git-backed clone: `project` restates Copier's default exclusions (a declared `_exclude` replaces them, so the clone's `.git` was copied over the project's), and `streamlit` declares the inherited answers its files use (`project_name`, `package_name`, `package_index_url`), so its per-layer re-render no longer conflicts
 - Composed templates' `_tasks` now keep Copier's native shapes: plain-string tasks retain shell execution (previously wrapped into argv form, breaking any multi-word command), and mapping-form tasks keep their `when:` condition and `working_directory` (previously dropped from execution or made unconditional); malformed entries are dropped with a warning instead of silently
-- Composed renders now write a `.copier-answers.yml` that records the template the user actually requested (the final layer) instead of the base dependency, with the full merged answers — previously any answers-file-driven tooling or reader was told the project came from the bare base template
 - The merged `_jinja_extensions` union now reaches every layer's Worker, so a question default or task using a sibling layer's filter renders instead of crashing with `No filter named ...`; alongside this, Copier's `unsafe` grant is now scoped per layer to what that Worker actually loads instead of blanket-`True`
 - A layer declaring its own `_exclude` no longer forfeits Copier's built-in `DEFAULT_EXCLUDE`, so `__pycache__/`, `*.py[co]`, `.DS_Store`, `~*` backups, and `.git` can no longer leak from template sources into generated projects
-- Non-interactive renders no longer abort with a false "missing required answers" error for questions whose `when:` is a Jinja expression — the pre-flight now defers those to Copier, which skips them exactly when their condition is false
 - `--format json`/`yaml` output is byte-exact on every command: Rich no longer hard-wraps long lines at the console width, interprets `[...]` spans as markup (YAML flow sequences were silently swallowed), or injects ANSI codes under `--color always`
 - One malformed template directory no longer breaks the whole catalog: invalid candidates are skipped with a warning naming the offending `boilerplate.yml`, a non-mapping YAML document produces a clean validation error instead of a `TypeError`, and non-permission `OSError`s are reported with their real text instead of a fabricated "Permission denied"
 - The project template's post-generation summary now tells the truth: a failed `uv sync` or `git init` suppresses the success banner and exits non-zero, a cosmetic `_scripts` cleanup failure warns and continues instead of failing the whole render, and subprocess output is decoded as UTF-8 regardless of the OS locale codepage
 - Templates declaring `_min_copier_version` no longer crash `compose`/`new` with a `TypeError`: the version is stringified at the Copier config extraction boundary, which also makes the merger's version-intersection strategy reachable
 - License inconsistency: CONTRIBUTING.md referenced MIT but LICENSE is Apache-2.0
 - structlog/stdlib logging inconsistency: CLAUDE.md and CONTRIBUTING.md now match actual stdlib usage
-- `--ci` flag now actually implies `--non-interactive --yes --no-tasks` as documented. The flag was advertised with these implications but only set `--quiet`; subcommand behaviors did not change. `--no-tasks` is now consumed end-to-end (`ExecutionContext.skip_tasks` → `Worker.skip_tasks`).
 - Composition engine: non-first layers always overwrite. Composition is defined as layers overlaying previous output (`extends: [project]` means "write my files on top of project's"), but the engine was passing user's `--force` uniformly, so Copier prompted "Overwrite <file>?" for every file a non-first layer wrote. The user's `--force` now only governs the first layer; subsequent layers are orchestrated overlays and always overwrite.
 - Composition ordering is deterministic and honors precedence: siblings apply in `extends` declaration order (later-declared siblings win file and config conflicts), with lexicographic order only across independent roots; previously sibling order could vary run to run under hash randomization
 - Template metadata reads and writes pass explicit UTF-8 encoding instead of depending on the platform locale
@@ -94,7 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Freshly generated projects pass their own `ruff format --check` and lint gates out of the box
 - The project template no longer hardcodes a Windows-specific Python interpreter path in its VS Code guidance
 - `install.ps1` run under Windows PowerShell 5.1 now installs and relaunches under PowerShell 7 instead of printing a false success banner; winget steps hardened for unattended fresh-machine runs
-- `--verbose` and `--quiet` are mutually exclusive; combining them exits 3 (VALIDATION_ERROR) instead of being silently accepted
 - `extends` declaration order is preserved in the composition graph's serialized edges; they were previously emitted lexicographically, misrepresenting the sibling file-precedence order that toposort itself already honored
 - A dependency diamond that resolves the same template name at two different versions now fails resolution with `BP_RESOLVE_VERSION_CONFLICT` instead of silently rendering both versions with an order-dependent result
 - Git-backed template layers render and read config at Copier's own default ref (the latest tag, or a plain copy when the template isn't a git repository) instead of a dirty `HEAD`, so a layer's merged schema and its rendered files provably come from the same revision recorded in `.copier-answers.yml`; the temporary clone Copier makes for a git-backed layer is now cleaned up on every path (render and catalog/config reads), where it previously leaked one clone per read
@@ -104,8 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
-- **BREAKING:** the `boilerplate config` command group and its settings files. The typed Profile model, its CLI/env/profile/defaults resolution chain, and the profiles directory and `settings.toml` under the boilerplate config root are no longer read; per-user customization is `profile.toml` (see Added)
-- The macOS/Linux installer script; `scripts/install.ps1` is the single public installer until a cross-platform bootstrap ships
 - `-f` short flag from `compose --format` and `graph --format` to avoid conflict with `new --force`
 - `-t` short flag from `--templates-dir` to reserve for future `--target-version`
 
