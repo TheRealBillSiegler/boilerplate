@@ -8,7 +8,7 @@ A CLI can expose either a rich set of numeric exit codes or a coarse set plus a 
 
 ## Decision
 
-The CLI defines exactly six exit codes — `SUCCESS=0, FAILURE=1, CONFIG_ERROR=2, VALIDATION_ERROR=3, ACTION_REQUIRED=4, USER_CANCELLED=130` (`constants.py`; the canonical table is [02-data-models](02-data-models.md) §Exit Codes) — and maps the `BoilerplateError` exception hierarchy onto them in one place, the `cli_error_handler` decorator (`cli/utils.py`). Fine-grained diagnosis is carried by per-exception `BP*` codes and `remediation` hints (surfaced as `Hint:` lines), not by additional exit codes.
+The CLI defines exactly six exit codes — `SUCCESS=0, FAILURE=1, CONFIG_ERROR=2, VALIDATION_ERROR=3, ACTION_REQUIRED=4, USER_CANCELLED=130` (`constants.py`; the canonical table is [02-data-models](02-data-models.md) §Exit Codes) — and maps the `BoilerplateError` exception hierarchy onto them in one place, the `cli_error_handler` decorator (`cli/utils.py`). Fine-grained diagnosis is carried by per-exception `BP*` codes and `remediation` hints (surfaced as `Fix:` lines), not by additional exit codes.
 
 ## Options considered
 
