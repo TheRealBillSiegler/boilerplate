@@ -29,4 +29,6 @@ Applies to every `help=` string on a `typer.Option` or `typer.Argument`, and to 
 - An Enum-typed option names none of its own members.
 - An option name carries one text across every command that binds it, except the tenet 8 exceptions the test names.
 
-Provenance: tenets drawn from a survey of 273 options across 77 commands in 25 popular CLI tools (uv, ruff, git, kubectl, and others). Full evidence table: the pull request that landed this guide.
+Provenance: tenets drawn from a survey of help text across 25 widely used CLI tools (uv, ruff, git, kubectl, and others).
+
+273 options across 77 commands were read by hand against these tenets.
