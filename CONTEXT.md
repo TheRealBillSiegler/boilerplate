@@ -1,6 +1,6 @@
-# Boilerplate — Template Customization
+# Boilerplate — Domain Glossary
 
-How a user customizes the projects boilerplate generates — the values, structure, and behavior they layer onto a template's output. Covers the generation pipeline and its customization taps.
+The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time.
 
 ## Language
 
