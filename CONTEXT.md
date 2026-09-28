@@ -1,6 +1,6 @@
 # Boilerplate — Domain Glossary
 
-The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time.
+The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time. Definitions follow the design suite (`docs/design/`), so some name commands and files that are not built yet; `docs/status.md` maps what exists.
 
 ## Language
 
