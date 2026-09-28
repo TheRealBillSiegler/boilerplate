@@ -404,3 +404,105 @@ class TestCopierVersionLine:
         _render(dirty_git_template, tmp_path / "out")
 
         assert "Copying from template version 1.0.0\n" in capsys.readouterr().err
+
+
+@pytest.fixture()
+def base_layer_protecting_shared(tmp_path: Path) -> Path:
+    """Build a plain first layer that writes `shared.txt`.
+
+    Returns:
+        Path to the template directory.
+    """
+    layer = tmp_path / "catalog" / "base"
+    layer.mkdir(parents=True)
+    (layer / "boilerplate.yml").write_text(
+        'schema_version: "1"\nname: base\nversion: 0.1.0\ndescription: layer\n',
+        encoding="utf-8",
+    )
+    (layer / "shared.txt.jinja").write_text("base content", encoding="utf-8")
+    return layer
+
+
+@pytest.fixture()
+def final_layer_protecting_shared(tmp_path: Path) -> Path:
+    """Build a final, plain layer overlaying `shared.txt`, declaring it project-owned.
+
+    Returns:
+        Path to the template directory.
+    """
+    layer = tmp_path / "catalog" / "final"
+    layer.mkdir(parents=True)
+    (layer / "boilerplate.yml").write_text(
+        'schema_version: "1"\nname: final\nversion: 0.1.0\ndescription: layer\n',
+        encoding="utf-8",
+    )
+    (layer / "copier.yml").write_text(
+        "_skip_if_exists:\n  - shared.txt\n", encoding="utf-8"
+    )
+    (layer / "shared.txt.jinja").write_text("final content", encoding="utf-8")
+    return layer
+
+
+def _two_layer_composition(base: Path, final: Path) -> Composition:
+    """Wrap `base` then `final` as a two-layer composition.
+
+    Args:
+        base: The first layer to render.
+        final: The second (final) layer, overlaying `base`.
+
+    Returns:
+        A composition whose layers are `base` then `final`, in that order.
+    """
+    base_spec = "base@0.1.0"
+    final_spec = "final@0.1.0"
+    return Composition(
+        graph=CompositionGraph(
+            nodes={
+                base_spec: GraphNode(name="base", version="0.1.0", path=base),
+                final_spec: GraphNode(name="final", version="0.1.0", path=final),
+            },
+            edges={final_spec: [base_spec]},
+            sequence=[base_spec, final_spec],
+        ),
+        sequence=[base_spec, final_spec],
+        layers=[
+            CompositionLayer(name="base", version="0.1.0", path=base, values={}),
+            CompositionLayer(name="final", version="0.1.0", path=final, values={}),
+        ],
+        final={"project_name": {"type": "str", "default": "demo"}},
+    )
+
+
+class TestNonFirstLayerSkipIfExistsIsCleared:
+    """Only the first layer's own `_skip_if_exists` applies in a composed render.
+
+    docs/design/04-composition-engine.md §Per-Layer Render Loop: a later
+    layer overlays this render's own output regardless of what its own
+    `_skip_if_exists` declares — that list still governs the layer's own
+    `copier update`, never this composed render.
+    """
+
+    def test_absent_shared_file_is_overlaid_by_the_final_layer(
+        self,
+        base_layer_protecting_shared: Path,
+        final_layer_protecting_shared: Path,
+        tmp_path: Path,
+    ) -> None:
+        destination = tmp_path / "out"
+
+        RenderEngine().render(
+            _two_layer_composition(
+                base_layer_protecting_shared, final_layer_protecting_shared
+            ),
+            ExecutionContext(
+                destination=destination,
+                context_data={"project_name": "demo"},
+                overwrite=True,
+                interactive=False,
+                skip_tasks=True,
+            ),
+        )
+
+        assert (destination / "shared.txt").read_text(encoding="utf-8") == (
+            "final content"
+        )
