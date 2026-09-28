@@ -323,7 +323,7 @@ def validate(
     display = cli_context.display
 
     if not template_dir.is_dir():
-        display.error(f"Not a directory: {template_dir}")
+        display.error(f"Error: Not a directory: {template_dir}")
         raise typer.Exit(code=ExitCode.VALIDATION_ERROR)
 
     meta = _read_meta(template_dir)
