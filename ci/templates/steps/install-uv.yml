@@ -84,7 +84,7 @@ steps:
   - ${{ if parameters.sync }}:
       - script: |
           if [ -z "${{ parameters.feedName }}" ]; then
-            echo "##vso[task.logissue type=error]install-uv: feedName is required when sync is true"
+            echo "##vso[task.logissue type=error]feedName is required when sync is true"
             exit 1
           fi
         displayName: Validate feedName
