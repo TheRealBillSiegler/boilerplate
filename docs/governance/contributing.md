@@ -36,7 +36,7 @@ Follow the [Pull request process](https://github.com/TheRealBillSiegler/boilerpl
 
 When you open the pull request:
 
-- Title it as a conventional commit (`type: description`) — a workflow validates PR titles against [conventional-commit types](./ci.md).
+- Write each commit as a conventional commit (`type: description`) — a workflow validates every commit in the PR, not just its title, against [conventional-commit types](./ci.md).
 - Explain the changes.
 - Reference any related issues.
 
