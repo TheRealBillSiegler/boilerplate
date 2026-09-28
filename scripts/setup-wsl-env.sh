@@ -121,8 +121,7 @@ install_uv() {
     if curl -LsSf https://astral.sh/uv/install.sh | sh; then
         echo -e "${GREEN}uv installed successfully.${RESET}"
     else
-        echo -e "${RED}uv installation failed.${RESET}"
-        echo -e "${YELLOW}Try manually: curl -LsSf https://astral.sh/uv/install.sh | sh${RESET}"
+        echo -e "${RED}Failed to install uv.${RESET}"
         exit 1
     fi
 
