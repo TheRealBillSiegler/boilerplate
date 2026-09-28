@@ -296,7 +296,7 @@ try {
 
     if ($Uninstall) {
         Remove-NodeUserEnvironment -InstallDir $installDir -NpmPrefix $NpmPrefix
-        Write-Host "✅ Node.js $resolvedVersion uninstalled for current user." -ForegroundColor Green
+        Write-Host "Node.js $resolvedVersion uninstalled for current user." -ForegroundColor Green
         exit 0
     }
 
@@ -304,22 +304,22 @@ try {
         Remove-Item $installDir -Recurse -Force
     }
 
-    Write-Host "⏬ Downloading Node.js $resolvedVersion ($Architecture)..."
+    Write-Host "Downloading Node.js $resolvedVersion ($Architecture)..."
     Invoke-NodeDownload -Url (Get-NodeDownloadUrl -Version $resolvedVersion -Arch $Architecture) -OutFile $zipPath
 
-    Write-Host "🔑 Verifying checksum..."
+    Write-Host "Verifying checksum..."
     Test-NodeChecksum -FilePath $zipPath -Version $resolvedVersion -Arch $Architecture
 
-    Write-Host "📦 Extracting..."
+    Write-Host "Extracting..."
     Expand-NodeArchive -ZipPath $zipPath -InstallDir $installDir
 
     Remove-Item $zipPath -Force
 
-    Write-Host "🔧 Updating user environment..."
+    Write-Host "Updating user environment..."
     Set-NodeUserEnvironment -InstallDir $installDir -NpmPrefix $NpmPrefix
 
     if (Test-NodeUserInstall -InstallDir $installDir -Version $resolvedVersion) {
-        Write-Host "`n✅ Node.js $resolvedVersion installed for current user." -ForegroundColor Green
+        Write-Host "`nNode.js $resolvedVersion installed for current user." -ForegroundColor Green
         Write-Host "   Install location: $installDir"
         Write-Host "   Npm global prefix: $NpmPrefix"
         Write-Host "   Please reopen your terminal for PATH changes to take effect."
@@ -329,6 +329,6 @@ try {
         exit 1
     }
 } catch {
-    Write-Host "`n❌ ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`nERROR: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
