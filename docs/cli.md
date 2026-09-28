@@ -10,8 +10,6 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
 
 ## Option notes
 
-Detail cut from an option's own help text to keep it short.
-
 | Option | Note |
 | --- | --- |
 | `--color auto` | Colors output only when stdout is a terminal, and honors `NO_COLOR`. |
