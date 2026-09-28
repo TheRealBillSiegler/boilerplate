@@ -148,7 +148,7 @@ An ignored file never enters the index, so the merge cannot see it: no conflict 
 
 ### Say who owns each file
 
-A file your template keeps changing is template-owned: a project that edits it risks a conflict whenever a release touches the same lines, and on a file small enough that one diff hunk spans it, any release at all. A file the project should own after the first render belongs in `_skip_if_exists`: the template writes it once and never touches it again. Choose per file and say which; silence means template-owned. The choice matters most for the files users are expected to rewrite — the README, the entry point, a sample module.
+A file your template keeps changing is template-owned: a project that edits it risks a conflict whenever a release touches the same lines, and on a file small enough that one diff hunk spans it, any release at all. A file the project should own after the first render belongs in `_skip_if_exists`: the template never merges into it again once the project has its own copy. Choose per file and say which; silence means template-owned. `_skip_if_exists` only stops a merge into an existing file — Copier still recreates one the project deleted — so a file meant to be deleted (a sample module) stays template-owned; project-owned is for the files users are expected to keep and rewrite instead, like the README or the entry point. Both bundled templates' `copier.yml` declare that split.
 
 ## Bundled examples
 
