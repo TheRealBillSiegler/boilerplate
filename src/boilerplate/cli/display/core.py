@@ -145,6 +145,19 @@ class Display:
         """Print an error message using the 'error' style."""
         self.error_console.print(message, style="error", markup=False)
 
+    def error_detail(self, message: str) -> None:
+        """Print an indented continuation line following an ``Error:`` line.
+
+        Used for an error's ``Fix:``/``Reason:`` lines: they are components
+        of the error itself (docs/design/07-operational-quality.md §Error
+        Message Format), not separate progress output, so unlike ``info``
+        this always goes to stderr and always prints, ``quiet`` included.
+
+        Args:
+            message: The indented continuation text to print.
+        """
+        self.error_console.print(message, style="info", markup=False)
+
     def write(self, content: str, *, end: str = "\n") -> None:
         """Low-level print that preserves exact endings.
 
