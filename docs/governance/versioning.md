@@ -59,11 +59,11 @@ Applies to the manual (CLI / API / config) path. From 1.0, never remove a featur
 
     ```text
     ⚠️  'boilerplate <old>' is deprecated and will be removed in v2.0.0. Use 'boilerplate <new>' instead.
-        See: <migration-guide-url>
+        See: <release-notes-url>
     ```
 
 2. **Document.** Show both the current and deprecated approaches in the docs; mark the deprecation in the changelog.
-3. **Remove (major release).** Remove the feature; the error message MUST reference the migration guide.
+3. **Remove (major release).** Remove the feature; the error message MUST reference the release notes entry that announced the removal.
 
 **Minimum window:** at least one minor version with the warning in place before removal; 2–3 minor versions preferred. A good deprecation message states *what* is deprecated, *when* it is removed, *what to use instead*, and *where to learn more*.
 
@@ -73,7 +73,7 @@ Template breaking changes accompanied by a Copier migration do **not** require t
 
 ## Breaking-change approval
 
-Every breaking change requires: (1) a proposal stating the rationale, (2) discussion/feedback, (3) a migration path (automated for templates, documented for CLI/API), (4) deprecation in a prior minor version where applicable, and (5) Core Team approval. Proposal skeleton:
+Every breaking change requires: (1) a proposal stating the rationale, (2) discussion/feedback, (3) a migration path (automated for templates, documented for CLI/API), (4) deprecation in a prior minor version where applicable, and (5) the maintainer's approval. Proposal skeleton:
 
 ```markdown
 ## Breaking Change Proposal
@@ -106,7 +106,7 @@ Every release should keep a backward-compatibility suite that pins the surfaces 
 - New `compose` command for template composition
 
 ### Changed
-- **BREAKING:** renamed a command (old name removed — see migration guide)
+- **BREAKING:** renamed a command (old name removed)
 
 ### Deprecated
 - A flag superseded by a clearer alias
@@ -121,7 +121,7 @@ Every release should keep a backward-compatibility suite that pins the surfaces 
 - Bumped a dependency to address a CVE
 ```
 
-For a CLI breaking change, also publish a migration guide — what changed, why, and how to update scripts — using the [Migration Guide Template](../templates-hub/migration-guide-template.md).
+A CLI breaking change is communicated through its changelog **BREAKING** entry and the release PR's release notes — no separate migration guide. A template breaking change publishes one using the [Migration Guide Template](../templates-hub/migration-guide-template.md).
 
 ---
 
