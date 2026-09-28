@@ -1,6 +1,6 @@
 # Boilerplate — Domain Glossary
 
-The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time. Definitions follow the design suite (`docs/design/`), so some name commands and files that are not built yet; `docs/status.md` maps what exists.
+The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time. Definitions name the design's concepts; `docs/status.md` records which are built.
 
 ## Language
 
@@ -34,7 +34,7 @@ A command declared in a Template's `_tasks` that runs after rendering — the es
 _Avoid_: hook, script, post-gen step
 
 **Answer Preset**:  
-A YAML file supplying answers to template questions declaratively for CI/CD. Passed via `--answers`.
+A set of answers applied to a render declaratively, as a YAML file — for CI/CD use.
 
 **Answers File**:  
 Records answers given during render. Owned by Copier; Boilerplate MUST NOT write to it. See design 04 §Render behavior for the per-layer `_answers_file:` contract.
@@ -64,7 +64,7 @@ Copier questionnaire file. Declares questions (variables) and tasks. Owned by Co
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
 
 **Development Environment**:  
-The setup a developer works in — its **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), **Project Layout**, **Workflow**, and **Guardrails**. What a generated project ships with (INT-001). Distinct from **Environment Provisioning**, the subsystem that installs and pins it.
+The setup a developer works in — its **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), **Project Layout**, **Workflow**, and **Guardrails**. What a generated project ships with. Distinct from **Environment Provisioning**, the subsystem that installs and pins it.
 
 **enforced substrate**:  
 The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a `BP_*` code; there is no opt-out.
@@ -73,7 +73,7 @@ The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate
 The problem domain — a developer's setup and its tendency to diverge across machines and time ("environment drift"). Umbrella over **Development Environment** (the thing) and **Environment Provisioning** (the subsystem); in prose, avoid the bare word where one specific sense is meant.
 
 **Environment Provisioning**:  
-The subsystem that installs and version-pins a **Development Environment** — the `env apply` flow, providers, and the `EnvironmentProfile`. Target design (INT-004; see design 08). Supersedes the informal label "Environment(s) Pillar."
+The subsystem that installs and version-pins a **Development Environment** — the `env apply` flow, providers, and the `EnvironmentProfile`. See design 08. Supersedes the informal label "Environment(s) Pillar."
 
 **EnvironmentProfile**:  
 `boilerplate-env.yml` — the declarative input to **Environment Provisioning** (tool versions + configuration). Not **Profile** (`profile.toml`, a user's default answers to template questions — see ADR-010); the two are unrelated despite the shared word.
