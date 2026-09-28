@@ -314,30 +314,9 @@ A migration test does three things:
 
 `tests/boilerplate/templates/test_streamlit_update_migration.py` drives exactly this against the streamlit layer's smoke-test rename and is the worked example for a new migration test.
 
-## Terminology glossary (template-specific)
+## Terminology
 
-Key terms used in template versioning:
-
-**Boilerplate.yml**: Template metadata file declaring template name, version, and composition details.
-
-**Copier**: 3rd-party templating tool using `.yml` files for project generation with smart migrations.
-
-**copier.yml**: Copier configuration file declaring template questions (variables) and their types.
-
-**Copier Migration**: An entry under `_migrations` in `copier.yml` — a command, gated by an optional `version` and `when` — that transforms a rendered project during `copier update`.
-
-**Extends**: Template composition constraint specifying dependency on a base template with an exact version pin (e.g., `project@1.0.0`) or an unversioned reference.
-
-**Migration-First**: Principle that breaking changes are acceptable IF automated migration via Copier handles them.
-
-**Three-Way Merge**: Copier's merge algorithm combining:
-
-1. Old template files
-2. User-customized files (from current project)
-3. New template files
-Produces merge result preserving user customizations.
-
-**Template Variable**: Question in `copier.yml` that users answer; value stored in the layer's `.copier-answers.<layer>.yml`.
+This page uses the project's terms as `CONTEXT.md` and [design 01's glossary](../design/01-overview.md#glossary) define them — Template, Question, Copier Migration, Extends, and the rest. "Template Variable" above is a **Question**.
 
 ## Where next
 
