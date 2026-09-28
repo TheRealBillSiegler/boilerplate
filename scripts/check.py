@@ -2,7 +2,8 @@
 
 A failure caught here costs seconds; the same failure in CI costs a full
 billed run plus the rerun after the fix. Mirrors the lint, typecheck, test,
-scenarios, and docs jobs in ``.github/workflows/ci.yml`` (the package smoke
+scenarios, and docs jobs in ``.github/workflows/ci.yml``, and the
+commit-message lint in ``.github/workflows/pr-checks.yml`` (the package smoke
 test, ShellCheck, and the new-tests-go-red check are CI-only). The composition
 scenarios run only when a composition path differs from the merge base with
 ``origin/develop``, the way CI runs them only when its diff touches one; the
@@ -46,6 +47,7 @@ _SCENARIOS: Final = ["uv", "run", "pytest", "-m", "scenario"]
 _STEPS: Final[list[tuple[list[str], dict[str, str]]]] = [
     (["uv", "run", "ruff", "check", "--no-fix", "."], {}),
     (["uv", "run", "ruff", "format", "--check", "."], {}),
+    (["uv", "run", "python", "scripts/commit_lint.py"], {}),
     (["uv", "run", "pyright"], {}),
     (["uv", "run", "pytest", "-m", "not scenario"], {}),
     (["uv", "run", "pytest", "--doctest-modules", "src", "-n0"], {}),
