@@ -15,7 +15,7 @@ Applies to every `help=` string on a `typer.Option` or `typer.Argument`, and to 
 4. **Relations take one of five forms.** "Implies --x." "Does not imply --x." "Cannot be combined with --x." "Requires --x." "Equivalent to --x." A value or a command may follow ("Equivalent to --sections stats.", "Implies --non-interactive on new."). No backticks, which rich markup prints literally, and no parenthesised relation.
 5. **Leave to Typer what Typer prints.** Defaults, env vars, and Enum choices already render in brackets or the metavar, so restating them prints them twice. Prefer an Enum to a str with a value list.
 6. **Present tense, effects only.** No "will", "now", "currently", "soon", "planned", "allows", no version history, no marketing adjectives, no "mode" as a label ("CI mode:").
-7. **A one-liner is a verb and its object.** Imperative, one sentence, under 70 characters, no option names ("List the templates you can create a project from.").
+7. **A one-liner is a verb and its object.** Imperative, one sentence, at most 70 characters, no option names ("List the templates you can create a project from.").
 8. **One text per behavior.** An option bound on several commands reads the same everywhere it does the same thing. Where it behaves differently on one command, it reads differently there instead of forcing a shared text (`--quiet` and `--output` read differently on `compose` than elsewhere).
 
 ## Test contract
