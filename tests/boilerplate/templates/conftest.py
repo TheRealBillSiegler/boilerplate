@@ -1,16 +1,24 @@
-"""Shared rendering and git helpers for the bundled-template test modules.
+"""Shared rendering, update and git helpers for the bundled-template test modules.
 
 Every module under this package renders one of the bundled layers through the
 real composition and rendering pipeline (no mocked Copier Worker) and then
-asserts on the output, or drives vanilla ``copier update`` against a tagged
-git checkout of one. Centralizing the layer-discovery glob, the
-``ExecutionContext`` wiring, and the git-repo-building helpers here keeps them
-from drifting across modules that render or update the same templates.
+asserts on the output, or updates one layer of a composed project through the
+composition's merged view against a tagged git checkout of that layer.
+Centralizing the layer-discovery glob, the ``ExecutionContext`` wiring, the
+update harness and the git-repo-building helpers here keeps them from drifting
+across modules that render or update the same templates.
 """
 
 import shutil
 import subprocess
+from dataclasses import field
+from functools import cached_property
 from pathlib import Path
+from typing import Any
+
+import yaml
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 import boilerplate
 from boilerplate.cli.utils import build_template_catalog
@@ -19,7 +27,9 @@ from boilerplate.composition.rendering.engine import RenderEngine
 from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
 )
+from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.resolution import Resolver
+from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
 
 TEMPLATES = Path(boilerplate.__file__).parent / "templates"
@@ -33,6 +43,7 @@ def render(
     context_data: dict[str, object] | None = None,
     profile: dict[str, object] | None = None,
     skip_tasks: bool = True,
+    templates_dir: Path | None = None,
 ) -> Path:
     """Render the bundled layer `name` into `tmp_path / "out"` with the given answers.
 
@@ -46,11 +57,14 @@ def render(
             interactive prompts, overridden by an interactive answer or a
             forced `context_data` value.
         skip_tasks: Whether to skip post-generation tasks (`--no-tasks`).
+        templates_dir: An extra directory searched ahead of the bundled
+            templates, the way `--templates-dir` is; a layer there shadows a
+            bundled layer of the same name and version.
 
     Returns:
         The rendered project's destination directory.
     """
-    registry = build_template_catalog(None, Settings())
+    registry = build_template_catalog(templates_dir, Settings())
     resolution = Resolver().resolve(name, registry)
     composition = Composer().compose(resolution)
     dest = tmp_path / "out"
@@ -64,6 +78,101 @@ def render(
     )
     RenderEngine().render(composition, ctx)
     return dest
+
+
+def _merged_view(
+    name: str, templates_dir: Path | None
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return the merged questions and extension union of the composition at `name`."""
+    registry = build_template_catalog(templates_dir, Settings())
+    composition = Composer().compose(Resolver().resolve(name, registry))
+    raw = composition.final.get("_jinja_extensions")
+    # Filepath-style specs resolve inside the declaring layer's own tree, so
+    # they stay layer-local; module-path specs travel to every layer.
+    extensions = (
+        [str(e) for e in raw if not str(e).split(":", 1)[0].endswith(".py")]
+        if isinstance(raw, list)
+        else []
+    )
+    config: dict[str, Any] = {"jinja_extensions": extensions} if extensions else {}
+    return dict(composition.merged_questions_schema), config
+
+
+@dataclass(config=ConfigDict(extra="forbid"))
+class ComposedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGeneralTypeIssues]
+    """A Copier Worker that renders its layer from the composition's merged view.
+
+    Copier's update rebuilds its old-copy and new-copy workers with
+    ``dataclasses.replace``, so a template primed on one worker instance never
+    reaches those renders. A merged view held in fields of the class travels
+    with ``replace`` into every render an update performs; each layer then
+    answers the whole questionnaire while writing only its own files, which is
+    design 04's update walk (Safe Update). The engine adopts this shape when
+    `boilerplate update` ships; until then it is the rehearsal harness for
+    per-layer updates of the bundled templates.
+    """
+
+    merged_questions: dict[str, Any] = field(default_factory=dict)
+    merged_config: dict[str, Any] = field(default_factory=dict)
+
+    @cached_property
+    def template(self) -> Template:  # pyright: ignore[reportIncompatibleVariableOverride]
+        url = self.src_path
+        if not url:
+            assert self.subproject.template is not None
+            url = str(self.subproject.template.url)
+        result = MergedTemplate(
+            str(url),
+            dict(self.merged_questions),
+            dict(self.merged_config) or None,
+            ref=self.resolved_vcs_ref,
+        )
+        self._cleanup_hooks.append(result._cleanup)  # pyright: ignore[reportPrivateUsage]
+        return result
+
+
+def update_layer(
+    project: Path,
+    *,
+    root: str,
+    layer: str,
+    source: Path,
+    ref: str,
+    templates_dir: Path | None = None,
+) -> None:
+    """Update one layer of a composed project to `ref` through the merged view.
+
+    Args:
+        project: The composed project, a git repository with a clean tree.
+        root: The composition's root template, whose graph gives the merged view.
+        layer: The layer to update; names its `.copier-answers.<layer>.yml`.
+        source: The layer's git-backed template source.
+        ref: The git ref of the target template version.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates when computing the merged view.
+    """
+    questions, config = _merged_view(root, templates_dir)
+    answers: dict[str, Any] = {}
+    for answers_file in sorted(project.glob(".copier-answers.*.yml")):
+        recorded = yaml.safe_load(answers_file.read_text(encoding="utf-8")) or {}
+        answers.update(
+            {k: v for k, v in recorded.items() if not str(k).startswith("_")}
+        )
+    with ComposedWorker(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
+        src_path=str(source),
+        dst_path=project,
+        answers_file=f".copier-answers.{layer}.yml",
+        data=answers,
+        vcs_ref=ref,
+        defaults=True,
+        overwrite=True,
+        quiet=True,
+        unsafe=True,
+        skip_tasks=True,
+        merged_questions=questions,
+        merged_config=config,
+    ) as worker:
+        worker.run_update()
 
 
 def git(repo: Path, *args: str) -> str:
