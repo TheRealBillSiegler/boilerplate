@@ -9,7 +9,7 @@ Policy: `docs/templates-hub/versioning.md` §Authoring rules. How-to, with the w
 
 Neither the policy nor the how-to auto-loads when you edit a template. These two carry the most cost if missed:
 
-- **Rehearse the update before you change any rendered path.** Build the layer as a tagged git repository, render a project from the old tag, edit a rendered file, then run vanilla `copier update`. A rename with no staged-move migration deletes that edit at exit 0, silently.
+- **Rehearse the update before you change any rendered path.** Build the layer as a tagged git repository, compose a project from the old tag, edit a rendered file, then update the layer through the composition's merged view (`update_layer` in `tests/boilerplate/templates/conftest.py`; a child layer declares only its own questions, so a vanilla `copier update` of it alone renders the parent's derived answers empty). A rename with no staged-move migration deletes that edit at exit 0, silently.
 - **A renamed or relocated path ships its `before`-stage migration in the same change**, with a test driving a real update from the previous tag. `tests/boilerplate/templates/test_streamlit_update_migration.py` is the worked example.
 
 ## Voice
