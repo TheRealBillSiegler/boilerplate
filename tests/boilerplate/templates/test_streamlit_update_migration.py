@@ -5,21 +5,26 @@ by name and without checking whether the project changed it, and its merge sees
 a renamed file as added on both sides (docs/design/adr-007-update-model.md). The
 layer's before-stage migration moves the old smoke test to its new name with
 ``git mv`` so the update surfaces the project's copy as a conflict carrying both
-versions instead of deleting it. These tests drive vanilla ``copier update``
-against a tagged repository of the layer, the way ADR-015's per-layer model does.
+versions instead of deleting it. These tests compose a project from a tagged
+repository of the layer and update that layer through the composition's merged
+view, the way design 04's update walk does (Safe Update): the layer declares
+only its own questions, so its paths and files take `project`'s answers from
+the merged schema on every render an update performs.
 """
 
+import shutil
 from pathlib import Path
 
 import pytest
 import yaml
-from copier import run_copy, run_update
 
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     commit_all,
     copy_layer_into,
     git,
+    render,
+    update_layer,
 )
 
 LAYER = TEMPLATES / "streamlit"
@@ -40,21 +45,33 @@ USER_TEST = '\n\ndef test_user_added_this() -> None:\n    """Written in the proj
 
 
 @pytest.fixture(scope="module")
-def layer_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """Build the streamlit layer as a git repo: previous release, then shipped one.
+def previous_release(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Build the layer's previous release as a plain directory in a templates dir.
 
     The previous release rendered the smoke test as ``tests_app.py`` and shipped
-    no migrations; the shipped release is the layer as it exists in the tree.
+    no migrations. The parent directory stands in for ``--templates-dir``, so a
+    compose resolves this copy ahead of the bundled layer.
     """
-    repo = tmp_path_factory.mktemp("tpl-streamlit")
-    copy_layer_into(LAYER, repo)
-    git(repo, "init", "-q", "-b", "main")
-    test_dir = repo / TEMPLATE_TEST_DIR
+    layer = tmp_path_factory.mktemp("previous") / "streamlit"
+    copy_layer_into(LAYER, layer)
+    test_dir = layer / TEMPLATE_TEST_DIR
     (test_dir / "test_app.py.jinja").rename(test_dir / "tests_app.py.jinja")
-    config_path = repo / "copier.yml"
+    config_path = layer / "copier.yml"
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
     config.pop("_migrations", None)
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+    return layer
+
+
+@pytest.fixture(scope="module")
+def layer_repo(
+    previous_release: Path, tmp_path_factory: pytest.TempPathFactory
+) -> Path:
+    """Build the layer's git history: the previous release, then the shipped one."""
+    repo = tmp_path_factory.mktemp("repo") / "streamlit"
+    shutil.copytree(previous_release, repo)
+    git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "core.longpaths", "true")
     commit_all(repo, "previous release", OLD_TAG)
     git(repo, "rm", "-r", "-q", ".")
     copy_layer_into(LAYER, repo)
@@ -62,48 +79,54 @@ def layer_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return repo
 
 
-def _project_at_previous_release(layer_repo: Path, dest: Path) -> Path:
-    run_copy(
-        str(layer_repo),
-        dest,
-        data=ANSWERS,
-        defaults=True,
-        overwrite=True,
-        quiet=True,
-        skip_tasks=True,
-        unsafe=True,
-        vcs_ref=OLD_TAG,
+def _project_at_previous_release(
+    previous_release: Path, layer_repo: Path, tmp_path: Path
+) -> Path:
+    """Compose `project` with the previous release, then point the layer at its history.
+
+    A plain-directory render records no ``_commit``; rehoming the layer to a
+    git source is the one-line ``_src_path`` edit ADR-015 point 5 documents,
+    with the tag the directory's content matches.
+    """
+    project = render(
+        "streamlit",
+        tmp_path,
+        context_data=ANSWERS,
+        templates_dir=previous_release.parent,
     )
-    git(dest, "init", "-q", "-b", "main")
-    return dest
+    answers_path = project / ANSWERS_FILE
+    rehomed: list[str] = []
+    for line in answers_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("_src_path:"):
+            rehomed.append(f"_commit: {OLD_TAG}")
+            rehomed.append(f"_src_path: {layer_repo.as_posix()}")
+        else:
+            rehomed.append(line)
+    answers_path.write_text("\n".join(rehomed) + "\n", encoding="utf-8")
+    git(project, "init", "-q", "-b", "main")
+    git(project, "config", "core.longpaths", "true")
+    return project
 
 
-def _update_to_shipped_release(project: Path) -> None:
-    run_update(
-        project,
-        answers_file=ANSWERS_FILE,
-        defaults=True,
-        overwrite=True,
-        quiet=True,
-        skip_tasks=True,
-        unsafe=True,
-        vcs_ref=NEW_TAG,
+def _update_to_shipped_release(project: Path, layer_repo: Path) -> None:
+    update_layer(
+        project, root="streamlit", layer="streamlit", source=layer_repo, ref=NEW_TAG
     )
 
 
 @pytest.mark.slow
 class TestRenamedSmokeTestMigration:
     def test_edited_smoke_test_survives_the_rename_as_a_conflict(
-        self, layer_repo: Path, tmp_path: Path
+        self, previous_release: Path, layer_repo: Path, tmp_path: Path
     ) -> None:
-        project = _project_at_previous_release(layer_repo, tmp_path / "project")
+        project = _project_at_previous_release(previous_release, layer_repo, tmp_path)
         old_test = project / RENDERED_TEST_DIR / "tests_app.py"
         old_test.write_text(
             old_test.read_text(encoding="utf-8") + USER_TEST, encoding="utf-8"
         )
         commit_all(project, "render plus a test written in the project")
 
-        _update_to_shipped_release(project)
+        _update_to_shipped_release(project, layer_repo)
 
         new_test = project / RENDERED_TEST_DIR / "test_app.py"
         assert not old_test.exists()
@@ -114,9 +137,9 @@ class TestRenamedSmokeTestMigration:
         assert git(project, "ls-files", "-u", "--", RENDERED_TEST_DIR.as_posix())
 
     def test_migration_leaves_a_project_that_already_renamed_the_file_alone(
-        self, layer_repo: Path, tmp_path: Path
+        self, previous_release: Path, layer_repo: Path, tmp_path: Path
     ) -> None:
-        project = _project_at_previous_release(layer_repo, tmp_path / "project")
+        project = _project_at_previous_release(previous_release, layer_repo, tmp_path)
         commit_all(project, "render")
         git(
             project,
@@ -126,7 +149,7 @@ class TestRenamedSmokeTestMigration:
         )
         commit_all(project, "renamed by hand ahead of the template")
 
-        _update_to_shipped_release(project)
+        _update_to_shipped_release(project, layer_repo)
 
         assert (project / RENDERED_TEST_DIR / "test_app.py").exists()
         assert not (project / RENDERED_TEST_DIR / "tests_app.py").exists()
