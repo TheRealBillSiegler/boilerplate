@@ -34,4 +34,21 @@ Funnel all coupling to Copier internals through one module, `src/boilerplate/int
 
 ## Amendment (2026-07-28)
 
-[ADR-015](adr-015-idiomatic-artifacts.md) narrows this shim's charter: it is sanctioned only for the compose-time merged question flow described above. The update path (`boilerplate update`) MUST stay on Copier's public API (`run_update` via per-layer `copier update` invocations) and MUST NOT touch `copier_types.py` or the internals it wraps — see [ADR-015 point 2](adr-015-idiomatic-artifacts.md).
+[ADR-015](adr-015-idiomatic-artifacts.md) narrows this shim's charter: it is sanctioned only for the compose-time merged question flow described above. The update path (`boilerplate update`) MUST stay on Copier's public API (`run_update` via per-layer `copier update` invocations) and MUST NOT touch `copier_types.py` or the internals it wraps — see [ADR-015 point 2](adr-015-idiomatic-artifacts.md). *[Superseded 2026-09-30 by the [Amendment (2026-09-30)](#amendment-2026-09-30-the-shim-serves-compose-and-update): the shim serves the update path as well as compose.]*
+
+## Amendment (2026-09-30): the shim serves compose and update
+
+The update path imports `Worker` from `copier_types.py`, subclasses it, and hands each layer's instance the merged schema, the same view compose hands each layer. `boilerplate update` runs Copier's update once per layer, and every use of Copier internals on that path MUST go through the shim.
+
+The merged view lives in fields of a `Worker` subclass, and the subclass's `template` property builds the merged template from those fields. Copier's update builds its three renders (the old copy, the in-place render and the new copy) with `dataclasses.replace`, which constructs each new worker from dataclass fields. A template primed on a worker instance with `object.__setattr__` reaches none of the three renders; `replace` copies a view held in fields into all of them.
+
+A relocation of `Worker` or `Template` inside Copier breaks compose and update in `copier_types.py` alone, where the guard test (`tests/boilerplate/integrations/test_copier_types.py`) reports it, and the `copier>=9.15,<10` pin bounds the Copier versions both paths run on. A test MUST drive one per-layer update through the subclass, since a symbol check does not see the `dataclasses.replace` contract the update walk depends on.
+
+### Verification (2026-09-30)
+
+Empirical run against the bundled `project` and `streamlit` templates (Copier 9.18.1, Windows, local git clones, `--defaults`, `skip_tasks`): both layers cloned into tagged git repositories, a project composed by `boilerplate new` and rehomed to the clones. Each new tag edited the README line that renders `project_name` and appended a file rendering seven inherited answers; a user line appended to the README before the first update had to survive.
+
+| Mechanism | Orders | Result |
+|---|---|---|
+| A `Worker` subclass holding the merged questions and the extension union in fields, `template` built from them; `Worker.run_update()` called on the subclass instance per layer with the union of the per-layer answers files as `data` | `project` then `streamlit`, and `streamlit` then `project`; v2 then v3 | All 8 updates exit 0, with no conflict markers, no `.rej` files and no unmerged paths; the five inherited answers that Copier records persist in `streamlit`'s answers file after every update; the two derived values render (`widget_co`, `widget-co`); the package directory and the user line survive |
+| `worker.template` primed with the merged template on the instance | Both orders | The first `streamlit` update exits 0 but its answers file loses the five inherited answers and the derived values render empty; the second update pauses with conflict markers in `README.md` and the probe file |
