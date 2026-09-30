@@ -754,7 +754,7 @@ A base template for any Python project. Collects standard project metadata (name
 
 ### `streamlit` template
 
-A Streamlit data application template that **extends** `project`. Overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition — at compose time only; a per-layer `copier update` sees only the layer's own `copier.yml`, so a layer must redeclare any inherited question its files reference ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
+A Streamlit data application template that **extends** `project`. Overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition and reach the layer through the merged schema at every render, compose and update alike ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
 
 ---
 
