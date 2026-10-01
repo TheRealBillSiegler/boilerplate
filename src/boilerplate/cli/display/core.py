@@ -45,9 +45,9 @@ def _resolve_color_system(color: ColorMode) -> ColorSystem | None:
 class Display:
     """Provides styled printing helpers for CLI output.
 
-    The message methods (info, success, warning, error) style the whole line
-    and print its text as given, without parsing Rich markup: messages carry
-    names and paths the user typed, and a ``[`` in them is literal text.
+    The message methods (info, success, warning, error, error_detail) style the
+    whole line and print its text as given, without parsing Rich markup: messages
+    carry names and paths the user typed, and a ``[`` in them is literal text.
     """
 
     theme: Theme
@@ -148,7 +148,7 @@ class Display:
     def error_detail(self, message: str) -> None:
         """Print an indented continuation line following an ``Error:`` line.
 
-        Used for an error's ``Fix:``/``Reason:`` lines: they are components
+        Used for an error's indented reason and ``Fix:`` lines: they are components
         of the error itself (docs/design/07-operational-quality.md §Error
         Message Format), not separate progress output, so unlike ``info``
         this always goes to stderr and always prints, ``quiet`` included.
