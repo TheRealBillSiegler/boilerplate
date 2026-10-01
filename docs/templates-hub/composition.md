@@ -61,7 +61,7 @@ Output (abridged):
 
 Layers apply in this order: each layer's question schema and internal directives (`_jinja_extensions`, `_tasks`) merge into the accumulated result. See [CLI examples § Inspect a template graph](../cli-examples.md#inspect-a-template-graph) for the full `--format json` payload.
 
-A layer's `copier.yml` declares its own questions and the parent questions it overrides; the merged schema supplies every other answer its files and paths use. `streamlit` declares `container_registry` and overrides `dependencies` and `sample_module`, and its files render `project_name`, `package_name` and `package_index_url` from `project`'s declarations without restating them. Each layer's own `.copier-answers.<layer>.yml` records the full merged answer set visible at that layer's render. See the [Authoring guide](authoring.md#template-composition) for the `_answers_file` how-to.
+A layer's `copier.yml` declares its own questions and the parent questions it overrides; the merged schema supplies every other answer its files and paths use. `streamlit` declares `container_registry` and overrides `dependencies` and `sample_module`, and its files render `project_name`, `project_slug`, `package_name`, `description`, `author_name`, `author_email` and `package_index_url` from `project`'s declarations without restating them. Each layer's own `.copier-answers.<layer>.yml` records the full merged answer set visible at that layer's render. See the [Authoring guide](authoring.md#template-composition) for the `_answers_file` how-to.
 
 ## Merge & delta semantics
 
