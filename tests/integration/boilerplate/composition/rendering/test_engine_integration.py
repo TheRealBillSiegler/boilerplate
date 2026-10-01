@@ -149,15 +149,15 @@ def _single_layer_composition(template: Path) -> Composition:
     )
 
 
-def _render(template: Path, destination: Path) -> None:
-    """Render ``template`` into ``destination`` non-interactively.
+def _render_composition(composition: Composition, destination: Path) -> None:
+    """Render ``composition`` into ``destination`` non-interactively.
 
     Args:
-        template: Template directory to render.
+        composition: Composition to render, layers in order.
         destination: Directory to render into.
     """
     RenderEngine().render(
-        _single_layer_composition(template),
+        composition,
         ExecutionContext(
             destination=destination,
             context_data={"project_name": "demo"},
@@ -166,6 +166,16 @@ def _render(template: Path, destination: Path) -> None:
             skip_tasks=True,
         ),
     )
+
+
+def _render(template: Path, destination: Path) -> None:
+    """Render ``template`` into ``destination`` non-interactively.
+
+    Args:
+        template: Template directory to render.
+        destination: Directory to render into.
+    """
+    _render_composition(_single_layer_composition(template), destination)
 
 
 def _catalog_config(catalog: Path) -> dict[str, Any]:
@@ -293,16 +303,7 @@ class TestMultiLayerPerLayerAnswers:
             final={"project_name": {"type": "str", "default": "demo"}},
         )
 
-        RenderEngine().render(
-            composition,
-            ExecutionContext(
-                destination=destination,
-                context_data={"project_name": "demo"},
-                overwrite=True,
-                interactive=False,
-                skip_tasks=True,
-            ),
-        )
+        _render_composition(composition, destination)
 
         base_answers = yaml.safe_load(
             (destination / ".copier-answers.baselayer.yml").read_text(encoding="utf-8")
@@ -423,17 +424,11 @@ class TestNonFirstLayerSkipIfExistsIsCleared:
     ) -> None:
         destination = tmp_path / "out"
 
-        RenderEngine().render(
+        _render_composition(
             _two_layer_composition(
                 base_layer_writing_shared, final_layer_protecting_shared
             ),
-            ExecutionContext(
-                destination=destination,
-                context_data={"project_name": "demo"},
-                overwrite=True,
-                interactive=False,
-                skip_tasks=True,
-            ),
+            destination,
         )
 
         assert (destination / "shared.txt").read_text(encoding="utf-8") == (
