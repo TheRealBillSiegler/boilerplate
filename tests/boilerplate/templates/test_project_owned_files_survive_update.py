@@ -2,10 +2,11 @@
 
 A file listed in a layer's own `_skip_if_exists` is never merged into again
 once the project has its own copy (docs/templates-hub/versioning.md §Authoring rules).
-These tests drive vanilla `copier update` against a tagged repository of each
-bundled layer, the way `test_streamlit_update_migration.py` drives the
-smoke-test rename: render at a release, let the project rewrite its
-project-owned files, ship a release that changes those same files, then
+These tests compose a project from the bundled templates, point the layer
+under test at a tagged repository of it, and update that layer through the
+composition's merged view, the way `test_streamlit_update_migration.py`
+drives the smoke-test rename: render at a release, let the project rewrite
+its project-owned files, ship a release that changes those same files, then
 update and check the project's text survived byte for byte.
 
 A companion class pins the corollary fact: `_skip_if_exists` only stops a
@@ -18,17 +19,17 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from copier import run_copy, run_update
 
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     commit_all,
     copy_layer_into,
     git,
+    rehome_layer,
+    render,
+    update_layer,
 )
 
-PROJECT_LAYER = TEMPLATES / "project"
-STREAMLIT_LAYER = TEMPLATES / "streamlit"
 PACKAGE = "rehearsal_app"
 OLD_TAG = "v0.1.0"
 NEW_TAG = "v0.2.0"
@@ -65,8 +66,7 @@ STREAMLIT_ANSWERS: dict[str, object] = {
 
 LAYER_CASES = [
     pytest.param(
-        PROJECT_LAYER,
-        ".copier-answers.project.yml",
+        "project",
         PROJECT_ANSWERS,
         (
             README,
@@ -77,8 +77,7 @@ LAYER_CASES = [
         id="project",
     ),
     pytest.param(
-        STREAMLIT_LAYER,
-        ".copier-answers.streamlit.yml",
+        "streamlit",
         STREAMLIT_ANSWERS,
         (
             README,
@@ -105,12 +104,12 @@ def _bump_release(repo: Path, project_owned: tuple[ProjectOwnedFile, ...]) -> No
 
 
 def _build_layer_repo(
-    layer: Path, tmp_path: Path, project_owned: tuple[ProjectOwnedFile, ...]
+    layer: str, tmp_path: Path, project_owned: tuple[ProjectOwnedFile, ...]
 ) -> Path:
-    """Build a tagged git repo for `layer`: `OLD_TAG`, then a `NEW_TAG` release.
+    """Build a tagged git repo for the bundled `layer`: `OLD_TAG`, then `NEW_TAG`.
 
     Args:
-        layer: The bundled layer directory to copy into the repo.
+        layer: The bundled layer's name.
         tmp_path: Pytest's per-test temp directory to build the repo under.
         project_owned: Files a release at `NEW_TAG` changes.
 
@@ -118,84 +117,54 @@ def _build_layer_repo(
         The git working tree, tagged at both `OLD_TAG` and `NEW_TAG`.
     """
     repo = tmp_path / "layer_repo"
-    copy_layer_into(layer, repo)
+    copy_layer_into(TEMPLATES / layer, repo)
     git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "core.longpaths", "true")
     commit_all(repo, "release", OLD_TAG)
     _bump_release(repo, project_owned)
     commit_all(repo, "next release", NEW_TAG)
     return repo
 
 
-def _render_at_old_release(
-    repo: Path, answers: dict[str, object], tmp_path: Path
+def _project_at_release(
+    layer: str, repo: Path, answers: dict[str, object], tmp_path: Path
 ) -> Path:
-    """Render `repo` at `OLD_TAG` into a fresh git-initialized project.
+    """Compose a project rooted at `layer`, then point that layer at `repo`.
 
-    Args:
-        repo: The layer's git working tree, tagged at `OLD_TAG`.
-        answers: Copier answers for the render.
-        tmp_path: Pytest's per-test temp directory to render under.
-
-    Returns:
-        The rendered project, a git working tree with no commits yet.
+    The bundled layer and the repository at `OLD_TAG` are the same content, so
+    the composition renders the release the project is later updated from.
     """
-    project = tmp_path / "project"
-    run_copy(
-        str(repo),
-        project,
-        data=answers,
-        defaults=True,
-        overwrite=True,
-        quiet=True,
-        skip_tasks=True,
-        unsafe=True,
-        vcs_ref=OLD_TAG,
-    )
+    project = render(layer, tmp_path, context_data=answers)
+    rehome_layer(project, layer=layer, source=repo, commit=OLD_TAG)
     git(project, "init", "-q", "-b", "main")
+    git(project, "config", "core.longpaths", "true")
     return project
 
 
-def _update_to_new_release(project: Path, answers_file: str) -> None:
-    """Run vanilla `copier update` on `project` to `NEW_TAG`.
-
-    Args:
-        project: The rendered project's git working tree.
-        answers_file: The per-layer answers file `copier update` reads.
-    """
-    run_update(
-        project,
-        answers_file=answers_file,
-        defaults=True,
-        overwrite=True,
-        quiet=True,
-        skip_tasks=True,
-        unsafe=True,
-        vcs_ref=NEW_TAG,
-    )
+def _update_to_next_release(project: Path, layer: str, repo: Path) -> None:
+    update_layer(project, root=layer, layer=layer, source=repo, ref=NEW_TAG)
 
 
 @pytest.mark.slow
 class TestProjectOwnedFilesSurviveUpdate:
-    @pytest.mark.parametrize(
-        ("layer", "answers_file", "answers", "project_owned"), LAYER_CASES
-    )
+    @pytest.mark.parametrize(("layer", "answers", "project_owned"), LAYER_CASES)
     def test_rewritten_project_owned_files_survive_update(
         self,
-        layer: Path,
-        answers_file: str,
+        layer: str,
         answers: dict[str, object],
         project_owned: tuple[ProjectOwnedFile, ...],
         tmp_path: Path,
     ) -> None:
         repo = _build_layer_repo(layer, tmp_path, project_owned)
-
-        project = _render_at_old_release(repo, answers, tmp_path)
+        project = _project_at_release(layer, repo, answers, tmp_path)
 
         for owned in project_owned:
-            (project / owned.rendered).write_text(REWRITTEN_TEXT, encoding="utf-8")
+            rendered = project / owned.rendered
+            assert rendered.exists(), f"{owned.rendered} is rendered at {OLD_TAG}"
+            rendered.write_text(REWRITTEN_TEXT, encoding="utf-8")
         commit_all(project, "project rewrites its owned files")
 
-        _update_to_new_release(project, answers_file)
+        _update_to_next_release(project, layer, repo)
 
         for owned in project_owned:
             content = (project / owned.rendered).read_text(encoding="utf-8")
@@ -216,14 +185,13 @@ class TestDeletedProjectOwnedFileReturnsOnUpdate:
     """
 
     def test_deleted_readme_reappears_after_update(self, tmp_path: Path) -> None:
-        repo = _build_layer_repo(PROJECT_LAYER, tmp_path, (README,))
-
-        project = _render_at_old_release(repo, PROJECT_ANSWERS, tmp_path)
+        repo = _build_layer_repo("project", tmp_path, (README,))
+        project = _project_at_release("project", repo, PROJECT_ANSWERS, tmp_path)
 
         (project / "README.md").unlink()
         commit_all(project, "project deletes its README")
 
-        _update_to_new_release(project, ".copier-answers.project.yml")
+        _update_to_next_release(project, "project", repo)
 
         assert (project / "README.md").exists(), (
             "Copier recreates a deleted skip_if_exists file on update; if this "
