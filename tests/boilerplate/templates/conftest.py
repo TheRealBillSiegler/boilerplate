@@ -124,7 +124,7 @@ class ComposedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportG
             assert self.subproject.template is not None
             url = str(self.subproject.template.url)
         result = MergedTemplate(
-            str(url),
+            url,
             dict(self.merged_questions),
             dict(self.merged_config) or None,
             ref=self.resolved_vcs_ref,
@@ -239,10 +239,10 @@ def commit_all(repo: Path, message: str, tag: str | None = None) -> None:
 
 
 def copy_layer_into(layer: Path, repo: Path) -> None:
-    """Copy a bundled layer's tree into `repo`, ready for `git init`.
+    """Copy a layer's tree into `repo`, ready for `git init`.
 
     Args:
-        layer: The bundled layer directory to copy.
+        layer: The layer directory to copy.
         repo: The destination directory (need not exist yet).
     """
     shutil.copytree(
