@@ -36,6 +36,21 @@ def _git(cwd: Path, *args: str) -> None:
     )
 
 
+def _init_repo(path: Path, branch: str) -> None:
+    """Initialise a repo on `branch` with a committer identity."""
+    path.mkdir()
+    _git(path, "init", "-b", branch)
+    _git(path, "config", "user.email", "test@example.com")
+    _git(path, "config", "user.name", "Test")
+
+
+def _commit_file(repo: Path, name: str, message: str) -> None:
+    """Write `name`, stage it and commit with `message`."""
+    (repo / name).write_text(name, encoding="utf-8")
+    _git(repo, "add", name)
+    _git(repo, "commit", "-m", message)
+
+
 def _rev_parse(repo: Path, ref: str) -> str:
     """Return the SHA `ref` resolves to in `repo`."""
     return subprocess.run(
@@ -56,13 +71,8 @@ def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
         share (what ``resolve_base`` should return).
     """
     remote = tmp_path / "remote"
-    remote.mkdir()
-    _git(remote, "init", "-b", "develop")
-    _git(remote, "config", "user.email", "test@example.com")
-    _git(remote, "config", "user.name", "Test")
-    (remote / "a.txt").write_text("a", encoding="utf-8")
-    _git(remote, "add", "a.txt")
-    _git(remote, "commit", "-m", "chore: seed")
+    _init_repo(remote, "develop")
+    _commit_file(remote, "a.txt", "chore: seed")
     shared_sha = _rev_parse(remote, "HEAD")
 
     local = tmp_path / "local"
@@ -70,9 +80,7 @@ def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
     _git(local, "config", "user.email", "test@example.com")
     _git(local, "config", "user.name", "Test")
     _git(local, "checkout", "-b", "feature", "--track", "origin/develop")
-    (local / "b.txt").write_text("b", encoding="utf-8")
-    _git(local, "add", "b.txt")
-    _git(local, "commit", "-m", "feat: add b")
+    _commit_file(local, "b.txt", "feat: add b")
 
     return local, shared_sha
 
@@ -89,13 +97,8 @@ def repo_with_remote_develop_and_no_upstream(tmp_path: Path) -> tuple[Path, str]
         share (what ``resolve_base`` should return).
     """
     remote = tmp_path / "remote"
-    remote.mkdir()
-    _git(remote, "init", "-b", "develop")
-    _git(remote, "config", "user.email", "test@example.com")
-    _git(remote, "config", "user.name", "Test")
-    (remote / "a.txt").write_text("a", encoding="utf-8")
-    _git(remote, "add", "a.txt")
-    _git(remote, "commit", "-m", "chore: seed")
+    _init_repo(remote, "develop")
+    _commit_file(remote, "a.txt", "chore: seed")
     shared_sha = _rev_parse(remote, "HEAD")
 
     local = tmp_path / "local"
@@ -103,9 +106,7 @@ def repo_with_remote_develop_and_no_upstream(tmp_path: Path) -> tuple[Path, str]
     _git(local, "config", "user.email", "test@example.com")
     _git(local, "config", "user.name", "Test")
     _git(local, "checkout", "-b", "feature")  # no --track: no upstream at all
-    (local / "b.txt").write_text("b", encoding="utf-8")
-    _git(local, "add", "b.txt")
-    _git(local, "commit", "-m", "feat: add b")
+    _commit_file(local, "b.txt", "feat: add b")
 
     return local, shared_sha
 
@@ -122,13 +123,8 @@ def repo_with_own_remote_copy_as_upstream(tmp_path: Path) -> tuple[Path, str]:
         share (what ``resolve_base`` should return).
     """
     remote = tmp_path / "remote"
-    remote.mkdir()
-    _git(remote, "init", "-b", "develop")
-    _git(remote, "config", "user.email", "test@example.com")
-    _git(remote, "config", "user.name", "Test")
-    (remote / "a.txt").write_text("a", encoding="utf-8")
-    _git(remote, "add", "a.txt")
-    _git(remote, "commit", "-m", "chore: seed")
+    _init_repo(remote, "develop")
+    _commit_file(remote, "a.txt", "chore: seed")
     shared_sha = _rev_parse(remote, "HEAD")
 
     local = tmp_path / "local"
@@ -136,9 +132,7 @@ def repo_with_own_remote_copy_as_upstream(tmp_path: Path) -> tuple[Path, str]:
     _git(local, "config", "user.email", "test@example.com")
     _git(local, "config", "user.name", "Test")
     _git(local, "checkout", "-b", "feature")
-    (local / "b.txt").write_text("b", encoding="utf-8")
-    _git(local, "add", "b.txt")
-    _git(local, "commit", "-m", "feat: add b")
+    _commit_file(local, "b.txt", "feat: add b")
     # Simulate `git push -u origin feature` without a real remote round trip.
     _git(local, "update-ref", "refs/remotes/origin/feature", "HEAD")
     _git(local, "config", "branch.feature.remote", "origin")
@@ -168,13 +162,8 @@ class TestResolveBase:
         self, tmp_path: Path
     ) -> None:
         repo = tmp_path / "orphan"
-        repo.mkdir()
-        _git(repo, "init", "-b", "main")
-        _git(repo, "config", "user.email", "test@example.com")
-        _git(repo, "config", "user.name", "Test")
-        (repo / "a.txt").write_text("a", encoding="utf-8")
-        _git(repo, "add", "a.txt")
-        _git(repo, "commit", "-m", "chore: seed")
+        _init_repo(repo, "main")
+        _commit_file(repo, "a.txt", "chore: seed")
 
         with pytest.raises(commit_lint.NoUpstreamError, match="--base"):
             commit_lint.resolve_base(None, repo_root=repo)
@@ -198,13 +187,8 @@ class TestResolveBase:
     ) -> None:
         local, shared_sha = repo_with_remote_develop_and_no_upstream
         unrelated = local.parent / "unrelated_remote"
-        unrelated.mkdir()
-        _git(unrelated, "init", "-b", "develop")
-        _git(unrelated, "config", "user.email", "test@example.com")
-        _git(unrelated, "config", "user.name", "Test")
-        (unrelated / "z.txt").write_text("z", encoding="utf-8")
-        _git(unrelated, "add", "z.txt")
-        _git(unrelated, "commit", "-m", "chore: seed")
+        _init_repo(unrelated, "develop")
+        _commit_file(unrelated, "z.txt", "chore: seed")
         _git(local, "remote", "add", "unrelated", str(unrelated))
         _git(local, "fetch", "unrelated")
 
@@ -220,16 +204,12 @@ class TestResolveBase:
         _git(local.parent, "clone", str(local.parent / "remote"), str(upstream))
         _git(upstream, "config", "user.email", "test@example.com")
         _git(upstream, "config", "user.name", "Test")
-        (upstream / "c.txt").write_text("c", encoding="utf-8")
-        _git(upstream, "add", "c.txt")
-        _git(upstream, "commit", "-m", "feat: add c")
+        _commit_file(upstream, "c.txt", "feat: add c")
         newer_develop = _rev_parse(upstream, "HEAD")
         _git(local, "remote", "add", "upstream", str(upstream))
         _git(local, "fetch", "upstream")
         _git(local, "checkout", "--no-track", "-b", "from-upstream", "upstream/develop")
-        (local / "d.txt").write_text("d", encoding="utf-8")
-        _git(local, "add", "d.txt")
-        _git(local, "commit", "-m", "feat: add d")
+        _commit_file(local, "d.txt", "feat: add d")
 
         assert commit_lint.resolve_base(None, repo_root=local) == newer_develop
 
@@ -239,9 +219,7 @@ class TestResolveBase:
         local, _ = repo_with_remote_develop_and_no_upstream
         _git(local, "checkout", "--orphan", "unrelated")
         _git(local, "rm", "-rf", ".")
-        (local / "z.txt").write_text("z", encoding="utf-8")
-        _git(local, "add", "z.txt")
-        _git(local, "commit", "-m", "chore: unrelated root")
+        _commit_file(local, "z.txt", "chore: unrelated root")
 
         with pytest.raises(commit_lint.NoUpstreamError, match="--base"):
             commit_lint.resolve_base(None, repo_root=local)
@@ -253,9 +231,7 @@ class TestResolveBase:
         # A commit with no history in common with develop at all.
         _git(local, "checkout", "--orphan", "unrelated")
         _git(local, "rm", "-rf", ".")
-        (local / "z.txt").write_text("z", encoding="utf-8")
-        _git(local, "add", "z.txt")
-        _git(local, "commit", "-m", "chore: unrelated root")
+        _commit_file(local, "z.txt", "chore: unrelated root")
         unrelated_sha = _rev_parse(local, "HEAD")
         _git(local, "checkout", "feature")  # local HEAD is an ancestor of develop again
 
@@ -275,10 +251,7 @@ class TestAllowedPrefixes:
 
     def test_a_fixup_commit_fails_the_project_schema(self, tmp_path: Path) -> None:
         repo = tmp_path / "repo"
-        repo.mkdir()
-        _git(repo, "init", "-b", "develop")
-        _git(repo, "config", "user.email", "test@example.com")
-        _git(repo, "config", "user.name", "Test")
+        _init_repo(repo, "develop")
         (repo / "pyproject.toml").write_text(
             (_REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
             encoding="utf-8",
