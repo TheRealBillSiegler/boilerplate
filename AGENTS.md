@@ -174,4 +174,4 @@ Use conventional commits:
 - Include issue references in commit messages when applicable.
 - A commit-range lint (`scripts/commit_lint.py`, run in CI and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request, not just its title.
 - The "In the changelog" column above is `release-please-config.json`'s `changelog-sections`; that file decides visibility, this table mirrors it.
-- Mark a commit `!` (or add a `BREAKING CHANGE:` footer) when it renames or removes a CLI command, option, or exit code; changes a default a user relies on; or deletes or renames a file a bundled template renders. Breaking is measured against the last release tag, not the parent commit. A `!`/`BREAKING CHANGE:` commit surfaces in the changelog regardless of type.
+- Mark a commit `!` (or add a `BREAKING CHANGE:` footer) when it is breaking per [Versioning § What qualifies as breaking](docs/governance/versioning.md#what-qualifies-as-breaking). Breaking is measured against the last release tag, not the parent commit. A `!`/`BREAKING CHANGE:` commit surfaces in the changelog regardless of type.
