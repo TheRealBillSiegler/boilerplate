@@ -7,9 +7,10 @@ own job is resolving which commits to check.
 
 In CI, the range is the pull request's base SHA to its head SHA, both known
 from the event — see ``.github/workflows/pr-checks.yml``. Locally, the
-remote holding the public repository is not always named ``origin`` (see
-AGENTS.md's Commits section), so the base defaults to the integration
-branch's remote-tracking ref (``refs/remotes/*/develop``), never a
+remote holding the public repository is not always named ``origin`` (a
+fork or an archive clone carries its own ``develop``), so the base
+defaults to the integration branch's remote-tracking ref
+(``refs/remotes/*/develop``), never a
 hard-coded remote name: the current branch's own upstream is used only when
 it already points at that branch, since otherwise it is the branch's own
 pushed copy, not something to diff against. Pass ``--base`` to override.
