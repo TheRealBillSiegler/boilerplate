@@ -26,12 +26,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from boilerplate.cli.utils import build_template_catalog
-from boilerplate.composition import Composer
-from boilerplate.composition.resolution import Resolver
 from boilerplate.integrations.copier_types import DEFAULT_EXCLUDE
-from boilerplate.settings import Settings
-from tests.boilerplate.templates.conftest import LAYERS, TEMPLATES
+from tests.boilerplate.templates.conftest import LAYERS, TEMPLATES, compose
 
 AUTHORING_METADATA = "/boilerplate.yml"
 # Names Copier itself provides to every render.
@@ -56,9 +52,7 @@ def _parents(layer: Path) -> list[Path]:
 
 def _merged_questions(layer: Path) -> set[str]:
     """Question names the composition rooted at `layer` asks, per the merger."""
-    registry = build_template_catalog(None, Settings())
-    composition = Composer().compose(Resolver().resolve(layer.name, registry))
-    return set(composition.merged_questions_schema)
+    return set(compose(layer.name).merged_questions_schema)
 
 
 def _leading_name(expression: str) -> set[str]:

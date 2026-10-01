@@ -23,6 +23,7 @@ from pydantic.dataclasses import dataclass
 import boilerplate
 from boilerplate.cli.utils import build_template_catalog
 from boilerplate.composition import Composer
+from boilerplate.composition.models.composition import Composition
 from boilerplate.composition.rendering.engine import RenderEngine
 from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
@@ -34,6 +35,12 @@ from boilerplate.settings import Settings
 
 TEMPLATES = Path(boilerplate.__file__).parent / "templates"
 LAYERS = sorted(p.parent for p in TEMPLATES.glob("*/copier.yml"))
+
+
+def compose(name: str, templates_dir: Path | None = None) -> Composition:
+    """Resolve and compose layer `name`, searching `templates_dir` first."""
+    registry = build_template_catalog(templates_dir, Settings())
+    return Composer().compose(Resolver().resolve(name, registry))
 
 
 def render(
@@ -64,9 +71,7 @@ def render(
     Returns:
         The rendered project's destination directory.
     """
-    registry = build_template_catalog(templates_dir, Settings())
-    resolution = Resolver().resolve(name, registry)
-    composition = Composer().compose(resolution)
+    composition = compose(name, templates_dir)
     dest = tmp_path / "out"
     ctx = ExecutionContext(
         destination=dest,
@@ -84,8 +89,7 @@ def _merged_view(
     name: str, templates_dir: Path | None
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return the merged questions and extension union of the composition at `name`."""
-    registry = build_template_catalog(templates_dir, Settings())
-    composition = Composer().compose(Resolver().resolve(name, registry))
+    composition = compose(name, templates_dir)
     raw = composition.final.get("_jinja_extensions")
     # Filepath-style specs resolve inside the declaring layer's own tree, so
     # they stay layer-local; module-path specs travel to every layer.
