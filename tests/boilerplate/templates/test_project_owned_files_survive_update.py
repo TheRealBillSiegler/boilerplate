@@ -1,7 +1,7 @@
 """Project-owned files stay exactly as the project left them across an update.
 
 A file listed in a layer's own `_skip_if_exists` is never merged into again
-once the project has its own copy (docs/design/04-composition-engine.md).
+once the project has its own copy (docs/templates-hub/versioning.md §Authoring rules).
 These tests drive vanilla `copier update` against a tagged repository of each
 bundled layer, the way `test_streamlit_update_migration.py` drives the
 smoke-test rename: render at a release, let the project rewrite its
@@ -181,7 +181,7 @@ class TestProjectOwnedFilesSurviveUpdate:
 
 @pytest.mark.slow
 class TestDeletedProjectOwnedFileReturnsOnUpdate:
-    """Pins fact 3: Copier recreates a deleted `_skip_if_exists` file on update.
+    """Pins that Copier recreates a deleted `_skip_if_exists` file on update.
 
     `_skip_if_exists` only stops a merge into an *existing* file; it does not
     make a deletion stick. This is why a sample meant to be deleted (unlike a
