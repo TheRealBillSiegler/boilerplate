@@ -40,9 +40,9 @@ class ProjectOwnedFile(NamedTuple):
 
     Attributes:
         rendered: Its path in a rendered project, package name resolved.
-        source: Its `.jinja`-suffixed path in the template source, package
-            name still the literal `{{ package_name }}` directory Copier
-            renders.
+        source: Its path in the template source without the `.jinja`
+            suffix, package name still the literal `{{ package_name }}`
+            directory Copier renders.
     """
 
     rendered: str
