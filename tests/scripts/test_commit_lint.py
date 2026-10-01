@@ -25,15 +25,15 @@ commit_lint = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(commit_lint)
 
 
-def _git(cwd: Path, *args: str) -> None:
-    """Run a git command in ``cwd``, raising on failure."""
-    subprocess.run(
+def _git(cwd: Path, *args: str) -> str:
+    """Run a git command in ``cwd`` and return its stripped stdout."""
+    return subprocess.run(
         ["git", *args],
         cwd=cwd,
         check=True,
         capture_output=True,
         text=True,
-    )
+    ).stdout.strip()
 
 
 def _init_repo(path: Path, branch: str) -> None:
@@ -53,13 +53,7 @@ def _commit_file(repo: Path, name: str, message: str) -> None:
 
 def _rev_parse(repo: Path, ref: str) -> str:
     """Return the SHA `ref` resolves to in `repo`."""
-    return subprocess.run(
-        ["git", "rev-parse", ref],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    return _git(repo, "rev-parse", ref)
 
 
 @pytest.fixture
