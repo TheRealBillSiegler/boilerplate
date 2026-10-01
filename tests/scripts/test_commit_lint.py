@@ -160,8 +160,8 @@ class TestResolveBase:
         self, repo_with_own_remote_copy_as_upstream: tuple[Path, str]
     ) -> None:
         local, shared_sha = repo_with_own_remote_copy_as_upstream
-        # The buggy behaviour used `origin/feature` (== HEAD) as the base,
-        # returning HEAD itself instead of the shared ancestor.
+        # Using origin/feature (== HEAD) as the base would return HEAD itself
+        # rather than the shared ancestor.
         assert commit_lint.resolve_base(None, repo_root=local) == shared_sha
 
     def test_a_remote_develop_with_no_shared_history_is_skipped(
