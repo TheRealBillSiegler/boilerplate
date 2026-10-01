@@ -9,7 +9,7 @@ per-layer update renders from that layer's own ``copier.yml`` alone, so every
 answer a layer's files or paths use must be declared there, inherited or not.
 A third rule guards ``_skip_if_exists`` itself: a pattern naming no path the
 layer renders can never protect anything and is dead authoring, most likely a
-typo (docs/templates-hub/authoring.md §Say who owns each file).
+typo; this is a convention of the bundled layers, pinned here.
 """
 
 import re
