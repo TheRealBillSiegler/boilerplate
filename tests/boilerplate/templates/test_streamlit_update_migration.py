@@ -23,6 +23,7 @@ from tests.boilerplate.templates.conftest import (
     commit_all,
     copy_layer_into,
     git,
+    init_repo,
     rehome_layer,
     render,
     update_layer,
@@ -70,8 +71,7 @@ def layer_repo(
     """Build the layer's git history: the previous release, then the shipped one."""
     repo = tmp_path_factory.mktemp("repo") / "streamlit"
     shutil.copytree(previous_release, repo)
-    git(repo, "init", "-q", "-b", "main")
-    git(repo, "config", "core.longpaths", "true")
+    init_repo(repo)
     commit_all(repo, "previous release", OLD_TAG)
     git(repo, "rm", "-r", "-q", ".")
     copy_layer_into(LAYER, repo)
@@ -90,8 +90,7 @@ def _project_at_previous_release(
         templates_dir=previous_release.parent,
     )
     rehome_layer(project, layer="streamlit", source=layer_repo, commit=OLD_TAG)
-    git(project, "init", "-q", "-b", "main")
-    git(project, "config", "core.longpaths", "true")
+    init_repo(project)
     return project
 
 
