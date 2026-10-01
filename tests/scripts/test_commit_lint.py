@@ -36,6 +36,17 @@ def _git(cwd: Path, *args: str) -> None:
     )
 
 
+def _rev_parse(repo: Path, ref: str) -> str:
+    """Return the SHA `ref` resolves to in `repo`."""
+    return subprocess.run(
+        ["git", "rev-parse", ref],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
 @pytest.fixture
 def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
     """Build a local repo with a remote-tracking branch two commits ahead.
@@ -52,13 +63,7 @@ def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
     (remote / "a.txt").write_text("a", encoding="utf-8")
     _git(remote, "add", "a.txt")
     _git(remote, "commit", "-m", "chore: seed")
-    shared_sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=remote,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    shared_sha = _rev_parse(remote, "HEAD")
 
     local = tmp_path / "local"
     _git(tmp_path, "clone", str(remote), str(local))
@@ -70,17 +75,6 @@ def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
     _git(local, "commit", "-m", "feat: add b")
 
     return local, shared_sha
-
-
-def _rev_parse(repo: Path, ref: str) -> str:
-    """Return the SHA `ref` resolves to in `repo`."""
-    return subprocess.run(
-        ["git", "rev-parse", ref],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
 
 
 @pytest.fixture
