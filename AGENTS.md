@@ -156,18 +156,18 @@ Use conventional commits:
 ```
 
 | Type       | Purpose                   | In the changelog |
-| ---------- | ------------------------- | ----------------- |
-| `feat`     | New feature               | Yes                |
-| `fix`      | Bug fix                   | Yes                |
-| `perf`     | Performance improvement   | Yes                |
-| `revert`   | Revert a previous commit  | No                 |
-| `docs`     | Documentation only        | No                 |
-| `style`    | Formatting (no logic)     | No                 |
-| `refactor` | Refactor (no feature/fix) | No                 |
-| `test`     | Add/update tests          | No                 |
-| `build`    | Build system/dependencies | No                 |
-| `ci`       | CI/config changes         | No                 |
-| `chore`    | Maintenance/misc          | No                 |
+| ---------- | ------------------------- | ---------------- |
+| `feat`     | New feature               | Yes              |
+| `fix`      | Bug fix                   | Yes              |
+| `perf`     | Performance improvement   | Yes              |
+| `revert`   | Revert a previous commit  | No               |
+| `docs`     | Documentation only        | No               |
+| `style`    | Formatting (no logic)     | No               |
+| `refactor` | Refactor (no feature/fix) | No               |
+| `test`     | Add/update tests          | No               |
+| `build`    | Build system/dependencies | No               |
+| `ci`       | CI/config changes         | No               |
+| `chore`    | Maintenance/misc          | No               |
 
 - Present tense, imperative mood: "add feature" not "added feature".
 - First line at most 72 characters (type, scope and description together).
