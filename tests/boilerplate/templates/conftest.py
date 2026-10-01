@@ -109,8 +109,7 @@ class ComposedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportG
     reaches those renders. A merged view held in fields of the class travels
     with ``replace`` into every render an update performs; each layer then
     answers the whole questionnaire while writing only its own files, which is
-    design 04's update walk (Safe Update). The engine adopts this shape when
-    `boilerplate update` ships; until then it is the rehearsal harness for
+    design 04's update walk (Safe Update). It is the test harness for
     per-layer updates of the bundled templates.
     """
 
