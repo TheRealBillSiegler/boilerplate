@@ -21,7 +21,7 @@ With `--format json`, the error is a field (`error`) of the single JSON object t
 
 ## No markup in dynamic text
 
-`Display.info`/`success`/`warning`/`error` print with `markup=False` (`src/boilerplate/cli/display/core.py`): messages carry names and paths the user typed, and a `[` in them is literal text, never parsed as Rich markup.
+`Display.info`/`success`/`warning`/`error`/`error_detail` print with `markup=False` (`src/boilerplate/cli/display/core.py`): messages carry names and paths the user typed, and a `[` in them is literal text, never parsed as Rich markup.
 
 ## Warning line shape
 
