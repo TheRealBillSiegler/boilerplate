@@ -58,6 +58,22 @@ def _run(argv: Sequence[str], *, repo_root: Path) -> str:
     return result.stdout.strip()
 
 
+def _run_or_none(argv: Sequence[str], *, repo_root: Path) -> str | None:
+    """Run a git command and return its stripped stdout, or None if it fails.
+
+    Args:
+        argv: The command and its arguments.
+        repo_root: The working directory to run it in.
+
+    Returns:
+        The stripped stdout, or None when the command exits non-zero.
+    """
+    try:
+        return _run(argv, repo_root=repo_root)
+    except subprocess.CalledProcessError:
+        return None
+
+
 def _upstream_ref(repo_root: Path) -> str | None:
     """Return the current branch's upstream tracking ref, or None if unset.
 
@@ -68,13 +84,10 @@ def _upstream_ref(repo_root: Path) -> str | None:
         The short name of the upstream ref (e.g. ``origin/feature``), or
         None when the current branch has no upstream configured.
     """
-    try:
-        return _run(
-            ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
-            repo_root=repo_root,
-        )
-    except subprocess.CalledProcessError:
-        return None
+    return _run_or_none(
+        ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+        repo_root=repo_root,
+    )
 
 
 def _merge_base(ref: str, head: str, *, repo_root: Path) -> str | None:
@@ -88,15 +101,7 @@ def _merge_base(ref: str, head: str, *, repo_root: Path) -> str | None:
     Returns:
         The merge base's SHA, or None when the two share no history.
     """
-    result = subprocess.run(
-        ["git", "merge-base", ref, head],
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=False,
-    )
-    return result.stdout.strip() if result.returncode == 0 else None
+    return _run_or_none(["git", "merge-base", ref, head], repo_root=repo_root)
 
 
 def _find_integration_ref(repo_root: Path, *, head: str) -> str:
