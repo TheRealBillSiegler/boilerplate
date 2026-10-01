@@ -26,7 +26,11 @@ _SPEC.loader.exec_module(commit_lint)
 
 
 def _git(cwd: Path, *args: str) -> str:
-    """Run a git command in ``cwd`` and return its stripped stdout."""
+    """Run a git command in ``cwd`` and return its stripped stdout.
+
+    Raises:
+        subprocess.CalledProcessError: If git exits non-zero.
+    """
     return subprocess.run(
         ["git", *args],
         cwd=cwd,
