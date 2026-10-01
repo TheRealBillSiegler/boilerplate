@@ -361,8 +361,6 @@ class RenderEngine:
             cfg["tasks"] = tasks_value
         if extensions_value:
             cfg["jinja_extensions"] = extensions_value
-        # A later layer overlays this render's own output (design 04 §Per-Layer
-        # Render Loop); its declared list still governs its own `copier update`.
         if not is_first_layer:
             cfg["skip_if_exists"] = []
         # No `ref`: Copier's default resolution (latest tag for a git-backed
