@@ -6,6 +6,8 @@ import subprocess
 from functools import partial
 from pathlib import Path
 
+import pytest
+
 from tests.boilerplate.templates.conftest import render
 
 _render_project = partial(render, "project")
@@ -119,20 +121,21 @@ class TestRenderedListsAndReadme:
         readme = (dest / "README.md").read_text(encoding="utf-8")
         assert "Packages resolve from PyPI" in readme
 
-    def test_readme_quick_start_runs_tests_with_sample_module(self, tmp_path: Path):
-        dest = _render_project(tmp_path, context_data={"sample_module": True})
-        readme = (dest / "README.md").read_text(encoding="utf-8")
-        assert re.search(r"^uv run pytest\s+# run the tests$", readme, re.MULTILINE)
-
-    def test_readme_quick_start_notes_empty_suite_without_sample_module(
-        self, tmp_path: Path
+    @pytest.mark.parametrize(
+        ("sample_module", "comment"),
+        [
+            (True, "# run the tests"),
+            (False, "# run the tests (empty until you add one)"),
+        ],
+        ids=["with-sample-module", "without-sample-module"],
+    )
+    def test_readme_quick_start_pytest_comment(
+        self, tmp_path: Path, sample_module: bool, comment: str
     ):
-        dest = _render_project(tmp_path, context_data={"sample_module": False})
+        dest = _render_project(tmp_path, context_data={"sample_module": sample_module})
         readme = (dest / "README.md").read_text(encoding="utf-8")
         assert re.search(
-            r"^uv run pytest\s+# run the tests \(empty until you add one\)$",
-            readme,
-            re.MULTILINE,
+            rf"^uv run pytest\s+{re.escape(comment)}$", readme, re.MULTILINE
         )
 
 
