@@ -85,11 +85,9 @@ def render(
     return dest
 
 
-def _merged_view(
-    name: str, templates_dir: Path | None
-) -> tuple[dict[str, Any], dict[str, Any]]:
+def _merged_view(name: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return the merged questions and extension union of the composition at `name`."""
-    composition = compose(name, templates_dir)
+    composition = compose(name)
     raw = composition.final.get("_jinja_extensions")
     # Filepath-style specs resolve inside the declaring layer's own tree, so
     # they stay layer-local; module-path specs travel to every layer.
@@ -142,7 +140,6 @@ def update_layer(
     layer: str,
     source: Path,
     ref: str,
-    templates_dir: Path | None = None,
 ) -> None:
     """Update one layer of a composed project to `ref` through the merged view.
 
@@ -152,10 +149,8 @@ def update_layer(
         layer: The layer to update; names its `.copier-answers.<layer>.yml`.
         source: The layer's git-backed template source.
         ref: The git ref of the target template version.
-        templates_dir: An extra directory searched ahead of the bundled
-            templates when computing the merged view.
     """
-    questions, config = _merged_view(root, templates_dir)
+    questions, config = _merged_view(root)
     answers: dict[str, Any] = {}
     for answers_file in sorted(project.glob(".copier-answers.*.yml")):
         recorded = yaml.safe_load(answers_file.read_text(encoding="utf-8")) or {}
