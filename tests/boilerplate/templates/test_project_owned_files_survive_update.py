@@ -126,6 +126,54 @@ def _build_layer_repo(
     return repo
 
 
+def _render_at_old_release(
+    repo: Path, answers: dict[str, object], tmp_path: Path
+) -> Path:
+    """Render `repo` at `OLD_TAG` into a fresh git-initialized project.
+
+    Args:
+        repo: The layer's git working tree, tagged at `OLD_TAG`.
+        answers: Copier answers for the render.
+        tmp_path: Pytest's per-test temp directory to render under.
+
+    Returns:
+        The rendered project, a git working tree with no commits yet.
+    """
+    project = tmp_path / "project"
+    run_copy(
+        str(repo),
+        project,
+        data=answers,
+        defaults=True,
+        overwrite=True,
+        quiet=True,
+        skip_tasks=True,
+        unsafe=True,
+        vcs_ref=OLD_TAG,
+    )
+    git(project, "init", "-q", "-b", "main")
+    return project
+
+
+def _update_to_new_release(project: Path, answers_file: str) -> None:
+    """Run vanilla `copier update` on `project` to `NEW_TAG`.
+
+    Args:
+        project: The rendered project's git working tree.
+        answers_file: The per-layer answers file `copier update` reads.
+    """
+    run_update(
+        project,
+        answers_file=answers_file,
+        defaults=True,
+        overwrite=True,
+        quiet=True,
+        skip_tasks=True,
+        unsafe=True,
+        vcs_ref=NEW_TAG,
+    )
+
+
 @pytest.mark.slow
 class TestProjectOwnedFilesSurviveUpdate:
     @pytest.mark.parametrize(
@@ -141,34 +189,13 @@ class TestProjectOwnedFilesSurviveUpdate:
     ) -> None:
         repo = _build_layer_repo(layer, tmp_path, project_owned)
 
-        project = tmp_path / "project"
-        run_copy(
-            str(repo),
-            project,
-            data=answers,
-            defaults=True,
-            overwrite=True,
-            quiet=True,
-            skip_tasks=True,
-            unsafe=True,
-            vcs_ref=OLD_TAG,
-        )
-        git(project, "init", "-q", "-b", "main")
+        project = _render_at_old_release(repo, answers, tmp_path)
 
         for owned in project_owned:
             (project / owned.rendered).write_text(REWRITTEN_TEXT, encoding="utf-8")
         commit_all(project, "project rewrites its owned files")
 
-        run_update(
-            project,
-            answers_file=answers_file,
-            defaults=True,
-            overwrite=True,
-            quiet=True,
-            skip_tasks=True,
-            unsafe=True,
-            vcs_ref=NEW_TAG,
-        )
+        _update_to_new_release(project, answers_file)
 
         for owned in project_owned:
             content = (project / owned.rendered).read_text(encoding="utf-8")
@@ -192,33 +219,12 @@ class TestDeletedProjectOwnedFileReturnsOnUpdate:
     def test_deleted_readme_reappears_after_update(self, tmp_path: Path) -> None:
         repo = _build_layer_repo(PROJECT_LAYER, tmp_path, (README,))
 
-        project = tmp_path / "project"
-        run_copy(
-            str(repo),
-            project,
-            data=PROJECT_ANSWERS,
-            defaults=True,
-            overwrite=True,
-            quiet=True,
-            skip_tasks=True,
-            unsafe=True,
-            vcs_ref=OLD_TAG,
-        )
-        git(project, "init", "-q", "-b", "main")
+        project = _render_at_old_release(repo, PROJECT_ANSWERS, tmp_path)
 
         (project / "README.md").unlink()
         commit_all(project, "project deletes its README")
 
-        run_update(
-            project,
-            answers_file=".copier-answers.project.yml",
-            defaults=True,
-            overwrite=True,
-            quiet=True,
-            skip_tasks=True,
-            unsafe=True,
-            vcs_ref=NEW_TAG,
-        )
+        _update_to_new_release(project, ".copier-answers.project.yml")
 
         assert (project / "README.md").exists(), (
             "Copier recreates a deleted skip_if_exists file on update; if this "
