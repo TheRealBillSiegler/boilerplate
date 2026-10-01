@@ -223,6 +223,12 @@ def git(repo: Path, *args: str) -> str:
     ).stdout
 
 
+def init_repo(repo: Path) -> None:
+    """Initialize a git repo in `repo` on `main` with long paths enabled (Windows)."""
+    git(repo, "init", "-q", "-b", "main")
+    git(repo, "config", "core.longpaths", "true")
+
+
 def commit_all(repo: Path, message: str, tag: str | None = None) -> None:
     """Stage and commit every change in `repo`, optionally tagging the commit.
 

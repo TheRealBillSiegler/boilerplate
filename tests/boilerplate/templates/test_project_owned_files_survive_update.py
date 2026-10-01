@@ -24,7 +24,7 @@ from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     commit_all,
     copy_layer_into,
-    git,
+    init_repo,
     rehome_layer,
     render,
     update_layer,
@@ -118,8 +118,7 @@ def _build_layer_repo(
     """
     repo = tmp_path / "layer_repo"
     copy_layer_into(TEMPLATES / layer, repo)
-    git(repo, "init", "-q", "-b", "main")
-    git(repo, "config", "core.longpaths", "true")
+    init_repo(repo)
     commit_all(repo, "release", OLD_TAG)
     _bump_release(repo, project_owned)
     commit_all(repo, "next release", NEW_TAG)
@@ -136,8 +135,7 @@ def _project_at_release(
     """
     project = render(layer, tmp_path, context_data=answers)
     rehome_layer(project, layer=layer, source=repo, commit=OLD_TAG)
-    git(project, "init", "-q", "-b", "main")
-    git(project, "config", "core.longpaths", "true")
+    init_repo(project)
     return project
 
 
