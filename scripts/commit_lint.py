@@ -5,8 +5,9 @@ Delegates the message-format and length rules to commitizen's ``cz check``
 exactly AGENTS.md's Commits table and its 72-character limit); this script's
 own job is resolving which commits to check.
 
-In CI, the range is the pull request's base SHA to its head SHA, both known
-from the event — see ``.github/workflows/pr-checks.yml``. Locally, the
+In CI, the range runs from the merge base of the pull request's base and head
+SHAs to the head SHA, both SHAs known from the event — see
+``.github/workflows/pr-checks.yml``. Locally, the
 remote holding the public repository is not always named ``origin`` (a
 fork or an archive clone carries its own ``develop``), so the base
 defaults to the integration branch's remote-tracking ref
@@ -179,7 +180,8 @@ def resolve_base(
 
     Raises:
         NoUpstreamError: No ``--base`` was given and the integration
-            branch's remote-tracking ref cannot be resolved unambiguously.
+            branch's remote-tracking ref does not exist or shares no history
+            with ``head``.
             See ``_find_integration_ref``.
     """
     if explicit_base is not None:
