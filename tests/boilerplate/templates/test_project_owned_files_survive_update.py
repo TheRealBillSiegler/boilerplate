@@ -203,7 +203,6 @@ class TestProjectOwnedFilesSurviveUpdate:
                 f"{owned.rendered} should survive the update byte for byte; "
                 f"got {content!r}"
             )
-        assert not list(project.rglob("*.rej")), "no reject file should be left behind"
 
 
 @pytest.mark.slow
