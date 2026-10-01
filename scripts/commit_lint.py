@@ -211,7 +211,6 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--base",
-        default=None,
         help=(
             "Git ref to diff against (default: the integration branch's "
             "remote-tracking ref)."
