@@ -12,7 +12,6 @@ only its own questions, so its paths and files take `project`'s answers from
 the merged schema on every render an update performs.
 """
 
-import shutil
 from pathlib import Path
 
 import pytest
@@ -70,7 +69,7 @@ def layer_repo(
 ) -> Path:
     """Build the layer's git history: the previous release, then the shipped one."""
     repo = tmp_path_factory.mktemp("repo") / "streamlit"
-    shutil.copytree(previous_release, repo)
+    copy_layer_into(previous_release, repo)
     init_repo(repo)
     commit_all(repo, "previous release", OLD_TAG)
     git(repo, "rm", "-r", "-q", ".")
