@@ -56,6 +56,18 @@ def _rev_parse(repo: Path, ref: str) -> str:
     return _git(repo, "rev-parse", ref)
 
 
+def _clone_of_seeded_remote(tmp_path: Path) -> tuple[Path, str]:
+    """Clone a seeded `develop` remote and return the clone and the seed SHA."""
+    remote = tmp_path / "remote"
+    _init_repo(remote, "develop")
+    _commit_file(remote, "a.txt", "chore: seed")
+    local = tmp_path / "local"
+    _git(tmp_path, "clone", str(remote), str(local))
+    _git(local, "config", "user.email", "test@example.com")
+    _git(local, "config", "user.name", "Test")
+    return local, _rev_parse(remote, "HEAD")
+
+
 @pytest.fixture
 def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
     """Build a local repo with a remote-tracking branch two commits ahead.
@@ -64,15 +76,7 @@ def repo_with_upstream(tmp_path: Path) -> tuple[Path, str]:
         The repo's working directory and the SHA of the commit both branches
         share (what ``resolve_base`` should return).
     """
-    remote = tmp_path / "remote"
-    _init_repo(remote, "develop")
-    _commit_file(remote, "a.txt", "chore: seed")
-    shared_sha = _rev_parse(remote, "HEAD")
-
-    local = tmp_path / "local"
-    _git(tmp_path, "clone", str(remote), str(local))
-    _git(local, "config", "user.email", "test@example.com")
-    _git(local, "config", "user.name", "Test")
+    local, shared_sha = _clone_of_seeded_remote(tmp_path)
     _git(local, "checkout", "-b", "feature", "--track", "origin/develop")
     _commit_file(local, "b.txt", "feat: add b")
 
@@ -90,15 +94,7 @@ def repo_with_remote_develop_and_no_upstream(tmp_path: Path) -> tuple[Path, str]
         The repo's working directory and the SHA of the commit both branches
         share (what ``resolve_base`` should return).
     """
-    remote = tmp_path / "remote"
-    _init_repo(remote, "develop")
-    _commit_file(remote, "a.txt", "chore: seed")
-    shared_sha = _rev_parse(remote, "HEAD")
-
-    local = tmp_path / "local"
-    _git(tmp_path, "clone", str(remote), str(local))
-    _git(local, "config", "user.email", "test@example.com")
-    _git(local, "config", "user.name", "Test")
+    local, shared_sha = _clone_of_seeded_remote(tmp_path)
     _git(local, "checkout", "-b", "feature")  # no --track: no upstream at all
     _commit_file(local, "b.txt", "feat: add b")
 
@@ -116,15 +112,7 @@ def repo_with_own_remote_copy_as_upstream(tmp_path: Path) -> tuple[Path, str]:
         The repo's working directory and the SHA of the commit both branches
         share (what ``resolve_base`` should return).
     """
-    remote = tmp_path / "remote"
-    _init_repo(remote, "develop")
-    _commit_file(remote, "a.txt", "chore: seed")
-    shared_sha = _rev_parse(remote, "HEAD")
-
-    local = tmp_path / "local"
-    _git(tmp_path, "clone", str(remote), str(local))
-    _git(local, "config", "user.email", "test@example.com")
-    _git(local, "config", "user.name", "Test")
+    local, shared_sha = _clone_of_seeded_remote(tmp_path)
     _git(local, "checkout", "-b", "feature")
     _commit_file(local, "b.txt", "feat: add b")
     # Simulate `git push -u origin feature` without a real remote round trip.
