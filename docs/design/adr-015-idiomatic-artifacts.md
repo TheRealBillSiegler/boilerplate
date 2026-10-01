@@ -92,7 +92,7 @@ Empirical run against the bundled `project` and `streamlit` templates (Copier 9.
 
 ## Relationship to other ADRs
 
-- [ADR-001](adr-001-build-vs-adopt.md) — "orchestrate, don't reimplement"; Boilerplate drives vanilla Copier's `copy` and `update` per layer and adds one thing, the merged schema, which reaches every render through the [ADR-002](adr-002-copier-internals-shim.md) shim. Boilerplate implements no merge, update or answers-file algorithm of its own.
+- [ADR-001](adr-001-build-vs-adopt.md) — "orchestrate, don't reimplement"; Boilerplate drives Copier's own `copy` and `update` per layer and adds one thing, the merged schema, which reaches every render through the [ADR-002](adr-002-copier-internals-shim.md) shim. Boilerplate implements no merge, update or answers-file algorithm of its own.
 - [ADR-002](adr-002-copier-internals-shim.md) — the shim's charter covers compose and update: both run each layer through the merged schema, which is a property of the worker class, and the guard test reports a relocation of `Worker` or `Template` while the version pin bounds the Copier versions both paths run on.
 - [ADR-006](adr-006-template-distribution.md) — distribution must satisfy the answers-file-as-contract constraints; amended accordingly.
 - [ADR-007](adr-007-update-model.md) — the conflict-pause contract is how point 3's collisions surface; its non-git two-way mode is superseded by point 5.
