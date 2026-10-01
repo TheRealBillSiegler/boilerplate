@@ -340,7 +340,7 @@ class TestGitTemplateCleanup:
 
 
 @pytest.fixture()
-def base_layer_protecting_shared(tmp_path: Path) -> Path:
+def base_layer_writing_shared(tmp_path: Path) -> Path:
     """Build a plain first layer that writes `shared.txt`.
 
     Returns:
@@ -415,9 +415,9 @@ class TestNonFirstLayerSkipIfExistsIsCleared:
     `copier update`, never this composed render.
     """
 
-    def test_absent_shared_file_is_overlaid_by_the_final_layer(
+    def test_final_layer_overlays_shared_file_it_declares_project_owned(
         self,
-        base_layer_protecting_shared: Path,
+        base_layer_writing_shared: Path,
         final_layer_protecting_shared: Path,
         tmp_path: Path,
     ) -> None:
@@ -425,7 +425,7 @@ class TestNonFirstLayerSkipIfExistsIsCleared:
 
         RenderEngine().render(
             _two_layer_composition(
-                base_layer_protecting_shared, final_layer_protecting_shared
+                base_layer_writing_shared, final_layer_protecting_shared
             ),
             ExecutionContext(
                 destination=destination,
