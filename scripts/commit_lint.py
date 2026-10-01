@@ -1,20 +1,20 @@
 """Lint every commit in a range against AGENTS.md's Commits rules.
 
-Delegates the message-format and length rules to commitizen's ``cz check``
-(configured in ``pyproject.toml``'s ``[tool.commitizen]`` section to accept
-exactly AGENTS.md's Commits table and its 72-character limit); this script's
-own job is resolving which commits to check.
+Delegates the message-format and length rules to commitizen's ``cz check``:
+``pyproject.toml``'s ``[tool.commitizen]`` section pins the type set to
+AGENTS.md's Commits table and empties ``allowed_prefixes``, and this script
+passes the 72-character limit (``_MESSAGE_LENGTH_LIMIT``) on the command line;
+its own job is resolving which commits to check.
 
 In CI, the range runs from the merge base of the pull request's base and head
 SHAs to the head SHA, both SHAs known from the event — see
-``.github/workflows/pr-checks.yml``. Locally, the
-remote holding the public repository is not always named ``origin`` (a
-fork or an archive clone carries its own ``develop``), so the base
-defaults to the integration branch's remote-tracking ref
-(``refs/remotes/*/develop``), never a
-hard-coded remote name: the current branch's own upstream is used only when
-it already points at that branch, since otherwise it is the branch's own
-pushed copy, not something to diff against. Pass ``--base`` to override.
+``.github/workflows/pr-checks.yml``. Locally, the remote holding the public
+repository is not always named ``origin`` (a fork or an archive clone carries
+its own ``develop``), so the base defaults to the integration branch's
+remote-tracking ref (``refs/remotes/*/develop``), never a hard-coded remote
+name: the current branch's own upstream is used only when it already points at
+that branch, since otherwise it is the branch's own pushed copy, not something
+to diff against. Pass ``--base`` to override.
 
 Usage:
     uv run python scripts/commit_lint.py [--base REF] [--head REF]
@@ -144,7 +144,7 @@ def _find_integration_ref(repo_root: Path, *, head: str) -> str:
             f"explicitly."
         )
     candidates: list[tuple[int, str]] = []
-    for ref in sorted(refs):
+    for ref in refs:
         base = _merge_base(ref, head, repo_root=repo_root)
         if base is not None:
             count = _run(
@@ -181,8 +181,7 @@ def resolve_base(
     Raises:
         NoUpstreamError: No ``--base`` was given and the integration
             branch's remote-tracking ref does not exist or shares no history
-            with ``head``.
-            See ``_find_integration_ref``.
+            with ``head``. See ``_find_integration_ref``.
     """
     if explicit_base is not None:
         base_ref = explicit_base
