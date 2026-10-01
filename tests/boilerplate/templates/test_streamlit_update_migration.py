@@ -23,12 +23,12 @@ from tests.boilerplate.templates.conftest import (
     commit_all,
     copy_layer_into,
     git,
+    rehome_layer,
     render,
     update_layer,
 )
 
 LAYER = TEMPLATES / "streamlit"
-ANSWERS_FILE = ".copier-answers.streamlit.yml"
 TEMPLATE_TEST_DIR = Path("tests/integration/{{ package_name }}")
 RENDERED_TEST_DIR = Path("tests/integration/rehearsal_app")
 OLD_TAG = "v0.1.0"
@@ -82,27 +82,14 @@ def layer_repo(
 def _project_at_previous_release(
     previous_release: Path, layer_repo: Path, tmp_path: Path
 ) -> Path:
-    """Compose `project` with the previous release, then point the layer at its history.
-
-    A plain-directory render records no ``_commit``; rehoming the layer to a
-    git source is the one-line ``_src_path`` edit ADR-015 point 5 documents,
-    with the tag the directory's content matches.
-    """
+    """Compose with the previous release, then point the layer at its history."""
     project = render(
         "streamlit",
         tmp_path,
         context_data=ANSWERS,
         templates_dir=previous_release.parent,
     )
-    answers_path = project / ANSWERS_FILE
-    rehomed: list[str] = []
-    for line in answers_path.read_text(encoding="utf-8").splitlines():
-        if line.startswith("_src_path:"):
-            rehomed.append(f"_commit: {OLD_TAG}")
-            rehomed.append(f"_src_path: {layer_repo.as_posix()}")
-        else:
-            rehomed.append(line)
-    answers_path.write_text("\n".join(rehomed) + "\n", encoding="utf-8")
+    rehome_layer(project, layer="streamlit", source=layer_repo, commit=OLD_TAG)
     git(project, "init", "-q", "-b", "main")
     git(project, "config", "core.longpaths", "true")
     return project

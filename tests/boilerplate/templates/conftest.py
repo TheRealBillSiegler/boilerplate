@@ -175,6 +175,30 @@ def update_layer(
         worker.run_update()
 
 
+def rehome_layer(project: Path, *, layer: str, source: Path, commit: str) -> None:
+    """Point a composed project's `layer` at the git-backed `source` at `commit`.
+
+    A plain-directory render records only ``_src_path`` in the layer's answers
+    file; rehoming the layer to a git source is the one-line edit ADR-015
+    point 5 documents, with the tag the directory's content matches.
+
+    Args:
+        project: The composed project.
+        layer: The layer whose `.copier-answers.<layer>.yml` to rewrite.
+        source: The layer's git-backed template source.
+        commit: The tag or commit in `source` whose content the render matches.
+    """
+    answers_path = project / f".copier-answers.{layer}.yml"
+    rehomed: list[str] = []
+    for line in answers_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("_src_path:"):
+            rehomed.append(f"_commit: {commit}")
+            rehomed.append(f"_src_path: {source.as_posix()}")
+        else:
+            rehomed.append(line)
+    answers_path.write_text("\n".join(rehomed) + "\n", encoding="utf-8")
+
+
 def git(repo: Path, *args: str) -> str:
     """Run a git command in `repo` with a fixed test identity, returning stdout.
 
