@@ -164,7 +164,7 @@ def _bootstrap_runtime(
     try:
         settings = Settings()
     except Exception as e:  # CLI boundary: keep user message concise
-        display.error(str(e))
+        display.error(f"Error: {e}")
         raise typer.Exit(code=ExitCode.CONFIG_ERROR) from e
 
     # Precedence: CLI flag wins; otherwise fall back to config
