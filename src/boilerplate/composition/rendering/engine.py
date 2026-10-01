@@ -339,7 +339,7 @@ class RenderEngine:
         is_first_layer: bool,
         fallback_version: str | None = None,
     ) -> CopierTemplate:
-        """Construct a `MergedTemplate` with questions, tasks, and extensions.
+        """Construct a `MergedTemplate`: questions, tasks, extensions, skip list.
 
         Args:
             template_path: Path to the template layer on disk.
