@@ -90,7 +90,7 @@ For detailed configuration and usage, see:
 
 ## The golden path
 
-The golden path is the recommended sequence of developer activities from project creation through operation — the term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
+A golden path is the supported, opinionated way to build one kind of project, from creating it through running it; each starter template is one, and a step along the way can have its own ([glossary](../../design/01-overview.md#glossary)). The development workflow below is one, for a general Python project. The term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
 
 The path is not mandatory — developers may diverge when circumstances warrant — but it's the most-supported, lowest-friction route, and platform investment (documentation, templates, CI automation) centers on it.
 
