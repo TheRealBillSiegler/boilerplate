@@ -14,7 +14,7 @@ Neither the policy nor the how-to auto-loads when you edit a template. These two
 
 ## Voice
 
-Two voices, never mixed. Boilerplate speaks in its own voice wherever the person is talking to Boilerplate, not to their project: every `copier.yml` `help:` string and `_scripts/post_generation.py`'s console narration. Every rendered file speaks in the generated project's own neutral voice instead — `README.md.jinja`, `app.py.jinja`, deploy scripts, scaffold comments — because the reader is now working in their own project, not running the scaffolder. The one exception is the closing provenance line naming the template and its answers file; nothing else in a rendered file names Boilerplate.
+Two voices, never mixed. Boilerplate speaks in its own voice wherever the person is talking to Boilerplate, not to their project: every `copier.yml` `help:` string and `_scripts/post_generation.py`'s console narration. Every rendered file speaks in the generated project's own neutral voice instead — `README.md.jinja`, `app.py.jinja`, deploy scripts, scaffold comments — because the reader is now working in their own project, not running the scaffolder. A rendered file never names Boilerplate, the tool, but it MAY say which template a file comes from (for example, that the base template contributes .gitignore); the closing provenance line naming the template and its answers file is one such mention.
 
 A `help:` change also updates the `copier.yml` example in `docs/templates-hub/authoring.md`.
 
