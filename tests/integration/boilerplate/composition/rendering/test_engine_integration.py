@@ -337,3 +337,69 @@ class TestGitTemplateCleanup:
 
         assert "project_name" in config, "config read produced nothing"
         assert list(temp_root.glob("copier*")) == []
+
+
+def _plain_single_layer_composition(template: Path) -> Composition:
+    """Wrap a plain template as a one-layer composition.
+
+    Args:
+        template: Template directory to render.
+
+    Returns:
+        A composition whose only layer is ``template``.
+    """
+    spec = "baselayer@0.1.0"
+    return Composition(
+        graph=CompositionGraph(
+            nodes={spec: GraphNode(name="baselayer", version="0.1.0", path=template)},
+            edges={},
+            sequence=[spec],
+        ),
+        sequence=[spec],
+        layers=[
+            CompositionLayer(
+                name="baselayer", version="0.1.0", path=template, values={}
+            )
+        ],
+        final={"base_question": {"type": "str", "default": "base"}},
+    )
+
+
+class TestCopierVersionLine:
+    """Copier's "Copying from template version" line names a real version.
+
+    Seam: the progress line Copier writes to stderr when a layer renders.
+    Source of truth: the layer's ``boilerplate.yml`` version (``0.1.0`` in the
+    fixtures) for a plain folder, and the git tag (``v1.0.0``) for a
+    git-backed template, whose version Copier uses to choose migrations.
+    Breaks if the engine stops supplying the version, or overrides a git one.
+    """
+
+    def test_plain_folder_reports_its_boilerplate_yml_version(
+        self,
+        plain_base_template: Path,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        RenderEngine().render(
+            _plain_single_layer_composition(plain_base_template),
+            ExecutionContext(
+                destination=tmp_path / "out",
+                context_data={},
+                overwrite=True,
+                interactive=False,
+                skip_tasks=True,
+            ),
+        )
+
+        assert "Copying from template version 0.1.0\n" in capsys.readouterr().err
+
+    def test_git_backed_template_keeps_its_git_version(
+        self,
+        dirty_git_template: Path,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        _render(dirty_git_template, tmp_path / "out")
+
+        assert "Copying from template version 1.0.0\n" in capsys.readouterr().err

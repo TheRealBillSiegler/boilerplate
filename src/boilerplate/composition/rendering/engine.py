@@ -233,6 +233,7 @@ class RenderEngine:
                 merged_questions=questions_schema,
                 tasks_value=layer_tasks_value,
                 extensions_value=extensions_value,
+                fallback_version=layer.version,
             )
 
             skip_tasks_flag = (not is_final_layer) or bool(ctx.skip_tasks)
@@ -334,6 +335,7 @@ class RenderEngine:
         merged_questions: dict[str, object],
         tasks_value: list[JSON],
         extensions_value: list[str],
+        fallback_version: str | None = None,
     ) -> CopierTemplate:
         """Construct a `MergedTemplate` with questions, tasks, and extensions.
 
@@ -344,6 +346,9 @@ class RenderEngine:
             extensions_value: Union of every layer's ``_jinja_extensions``;
                 injected so this layer's Worker can render merged questions
                 and tasks that use sibling layers' filters.
+            fallback_version: The layer's ``boilerplate.yml`` version, reported
+                as the template version when the layer is not a git
+                repository; a git-derived version takes precedence.
 
         Returns:
             A template object suitable for `copier.Worker`.
@@ -360,7 +365,12 @@ class RenderEngine:
         # records a hash that only ever existed inside Copier's throwaway
         # clone. `MergedTemplate` still accepts a ref so an explicit
         # author-loop opt-in can supply one; nothing does today.
-        return MergedTemplate(str(template_path), dict(merged_questions), cfg or None)
+        return MergedTemplate(
+            str(template_path),
+            dict(merged_questions),
+            cfg or None,
+            fallback_version=fallback_version,
+        )
 
     @staticmethod
     @contextlib.contextmanager
