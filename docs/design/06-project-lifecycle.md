@@ -246,7 +246,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 
 **Safe update**:
 
-- **Single-layer projects** (no `extends`): Delegate the entire update to Copier's built-in `copier update`. Boilerplate invokes Copier with the correct parameters and writes `boilerplate.lock` afterward.
+- **Single-layer projects** (no `extends`): Run the one layer's update through the same `Worker` subclass; its merged schema is the layer's own. Boilerplate writes `boilerplate.lock` afterward.
 
 - **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in topological order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the merged schema ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate manages the cross-layer rollback envelope (see [Pre-Merge Backup](#pre-merge-backup) and the `update --continue` / `update --abort` semantics below).
 
