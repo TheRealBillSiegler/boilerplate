@@ -80,8 +80,8 @@ uv sync
 ### Run checks
 
 ```bash
-uv run ruff check .  # lint
-uv run pytest        # test
+uv run ruff check --fix .  # lint
+uv run pytest              # test
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full contribution guidelines.
