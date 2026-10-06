@@ -407,14 +407,41 @@ def _two_layer_composition(base: Path, final: Path) -> Composition:
     )
 
 
-class TestNonFirstLayerSkipIfExistsIsCleared:
-    """Only the first layer's own `_skip_if_exists` applies in a composed render.
+class TestComposedRenderIgnoresSkipIfExists:
+    """No layer's `_skip_if_exists` applies in a composed render.
 
-    docs/design/04-composition-engine.md §Per-Layer Render Loop: a later
-    layer overlays this render's own output regardless of what its own
-    `_skip_if_exists` declares — that list still governs the layer's own
-    `copier update`, never this composed render.
+    docs/design/04-composition-engine.md §Per-Layer Render Loop: a composed
+    render writes every layer's files regardless of what its own
+    `_skip_if_exists` declares — that list governs only the layer's own
+    `copier update`.
     """
+
+    def test_forced_render_overwrites_file_first_layer_declares_project_owned(
+        self, final_layer_protecting_shared: Path, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+        destination.mkdir()
+        (destination / "shared.txt").write_text("existing content", encoding="utf-8")
+        layer = final_layer_protecting_shared
+        spec = "final@0.1.0"
+        composition = Composition(
+            graph=CompositionGraph(
+                nodes={spec: GraphNode(name="final", version="0.1.0", path=layer)},
+                edges={spec: []},
+                sequence=[spec],
+            ),
+            sequence=[spec],
+            layers=[
+                CompositionLayer(name="final", version="0.1.0", path=layer, values={})
+            ],
+            final={"project_name": {"type": "str", "default": "demo"}},
+        )
+
+        _render_composition(composition, destination)
+
+        assert (destination / "shared.txt").read_text(encoding="utf-8") == (
+            "final content"
+        )
 
     def test_final_layer_overlays_shared_file_it_declares_project_owned(
         self,
