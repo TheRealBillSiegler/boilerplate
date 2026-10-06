@@ -25,7 +25,7 @@ _jinja_extensions:
 
 project_name:
   type: str
-  help: "What is the (human-readable) name of the project? (e.g. My Project)"
+  help: "The (human-readable) name of the project (e.g. My Project)"
   default: "{{ _folder_name }}"
 
 project_slug:
@@ -38,7 +38,7 @@ package_name:
 
 description:
   type: str
-  help: "What is a brief description of the project?"
+  help: "A brief description of the project"
   default: "A new Python project."
 
 dependencies:
@@ -59,17 +59,17 @@ dev_dependencies:
 
 sample_module:
   type: bool
-  help: "Include the sample module and its test (module.py, test_module.py) as a starting point?"
+  help: "Whether to include the sample module and its test (module.py, test_module.py) as a starting point"
   default: true
 
 author_name:
   type: str
-  help: "Your first and last name?"
+  help: "Your first and last name"
   default: "Your Name"
 
 author_email:
   type: str
-  help: "Your email address?"
+  help: "Your email address"
   default: "username@domain.com"
 
 package_index_url:
