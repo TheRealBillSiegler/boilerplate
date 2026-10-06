@@ -173,7 +173,7 @@ Each entry runs a `command` (a string run through the shell, or a list run direc
 
 ### Authoring rules
 
-A migration is fix-up code, not replayed history: an update may cross several versions at once, and every crossed migration runs against one of two trees — the pre-update tree for `before`-stage entries, the target tree for `after`-stage ones (the default) — never an intermediate one. Four rules follow, specified in [ADR-007](../design/adr-007-update-model.md#amendment-2026-07-28-version-jumps-stay-single-pass-migrations-are-jump-safe-by-authoring-contract):
+A migration is fix-up code, not replayed history: an update may cross several versions at once, and every crossed migration runs against one of two trees — the pre-update tree for `before`-stage entries, the target tree for `after`-stage ones (the default) — never an intermediate one. Four rules follow, specified in [ADR-007](../design/adr-007-update-model.md#version-jumps-stay-single-pass-migrations-are-jump-safe-by-authoring-contract):
 
 1. **Jump-safe.** Inspect state before acting and stay idempotent — "if the old path exists, move it," never "the tree is at the previous version, so move it."
 2. **Carried forward.** Keep every historical `_migrations` entry in every later release, in ascending version order — Copier reads the list only from the version being updated *to*, and executes it in declaration order rather than sorting by version.
