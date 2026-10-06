@@ -280,7 +280,6 @@ The RenderEngine delegates actual file generation to Copier via the `run_worker`
 - When `run_tasks=false`, the worker MUST skip task execution.
 - When `unsafe=true`, Copier permits Jinja2 extensions and task execution. Because the merged `_jinja_extensions` union (see [merge strategies](#merge-strategies)) is injected into every layer's `merged_template`, Boilerplate MUST set `unsafe=true` on every layer's Worker whenever the composition's merged `_jinja_extensions` union is non-empty, and additionally on a layer that executes tasks this invocation ([ADR-003](adr-003-permissive-execution.md) records this permissive posture). Extension-free compositions keep `unsafe=false` on layers contributing no tasks.
 - The worker MUST NOT modify `source_path` in any way.
-- Per-layer Copier `update` invocations (see [Safe Update](#safe-update)) MUST use the Copier version recorded in `boilerplate.lock` (`copier_version` field), not the currently installed version. If the recorded version is not available in the current environment, Boilerplate MUST fail with a clear error specifying the required version and remediation (e.g., `uv tool install copier==9.4.1`).
 
 **Assumed Copier behavior**: The `run_worker` contract assumes Copier operates synchronously and single-threaded — it blocks until rendering is complete and does not spawn background processes. If Copier's concurrency model changes in a future version, the worker interface MUST serialize invocations to preserve the sequential layer-rendering guarantee. Copier is also assumed to be non-interactive when `interactive=false` — it MUST NOT prompt on stdin.
 
@@ -335,7 +334,7 @@ Boilerplate does not perform content-level merging of individual files. This is 
 The RenderEngine iterates layers in topological order. For each layer:
 
 1. Resolve the layer's source path (filesystem directory, or a Git working tree — the published first-party repository, an org-local clone or mirror, or, once the deferred seed cache exists, a wheel-bundle cache directory). A cache path MUST NEVER be recorded as `_src_path` in the answers file: Copier records the source it actually used, and masking a local cache path behind a canonical URL would mean rewriting Copier's own answers file, which [ADR-015](adr-015-idiomatic-artifacts.md) forbids ([ADR-006](adr-006-template-distribution.md)).
-2. Invoke `run_worker` against the destination directory with the merged questions as pre-seeded answers, the layer's own `copier.yml` as the configuration, and the resolved Copier version.
+2. Invoke `run_worker` against the destination directory with the merged questions as pre-seeded answers and the layer's own `copier.yml` as the configuration.
 3. Copier writes the rendered files into the destination directory and produces the layer's `.copier-answers.<layer>.yml` (by rendering the layer's answers-file stub at the path named by its `_answers_file:` directive).
 
 The source template directories on disk are never modified. The destination directory is the same across all layer invocations — file collisions are resolved by overwrite (later layers win), implementing file-level composition.

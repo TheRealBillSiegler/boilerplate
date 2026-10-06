@@ -727,14 +727,6 @@ Runs health checks and reports issues with remediation guidance.
 
 **Checks**: Settings loadable, template directories exist, Copier available, Git available, catalog sources reachable, environment profiles valid, Windows `core.longpaths` enabled (Windows only), WSL2 proto binary not from Windows host (WSL2 only).
 
-**Options**:
-
-| Flag | Description |
-| --- | --- |
-| `--clean` | Deferred (Copier version cache/prune tier): enumerate and offer to remove unused Copier version environments from the Boilerplate cache. Not yet supported; doctor currently records `copier_version` and fails closed with a `uv tool install copier==X` hint when the required Copier is unavailable. |
-
-When the version cache/prune tier ships, the cache directory is `{user_data_dir}/boilerplate/copier-envs/`.
-
 **Output** (unified check-result format):
 
 ```text
@@ -1190,7 +1182,6 @@ The following table summarizes flag availability across commands. **Global flags
 | `--fixture` | | | | | | | | | | | | X | | | |
 | `--match` | | | | | | | | | | | | X | | | |
 | `--update-snapshots` | | | | | | | | | | | | X | | | |
-| `--clean` | | | | | | | | | | X | | | | | |
 
 **Short flag assignment**: `-f` is assigned to `--force` (on `new`, `update`, and `env apply`), matching universal CLI convention (`rm -f`, `cp -f`, `docker rm -f`). `--format` uses long-form only.
 
