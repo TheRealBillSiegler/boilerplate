@@ -262,9 +262,7 @@ The refusal Boilerplate is working around here is Copier's existing behavior; th
 
 ### Copier version management for update
 
-`copier update` MUST use the Copier version recorded in `boilerplate.lock`. If the current installation does not match, Boilerplate fails closed with `BP_RENDER_COPIER_UNAVAILABLE`, with remediation guidance including a `uv tool install copier==X` hint. Deferred (Copier version cache/prune tier): automatically obtaining the required version via `uv` into an isolated cache (`{user_data_dir}/boilerplate/copier-envs/copier-{version}/`) and pruning it with `boilerplate doctor --clean` (see [§05](05-cli-reference.md) `--clean`).
-
-**Copier version upgrade path**: `boilerplate update` invokes the locked Copier version (recorded in `boilerplate.lock.copier_version`) so that Copier's per-layer three-way merge behaves consistently with the version that originally rendered the project. The new lock records the Copier version used at this update. Downgrading Copier after a lock file records a newer version is NOT supported.
+`boilerplate.lock` records the Copier version the project was last rendered or updated with (`copier_version`). `boilerplate update` runs with the installed Copier. When the installed Copier version differs from the recorded one, `boilerplate update` MUST emit a warning naming both versions, then proceed. The new lock records the Copier version this update ran with.
 
 ### Source repository unavailability
 
