@@ -106,8 +106,8 @@ Templates Boilerplate publishes as their own git repositories, extracted from th
 See **first-party gating scaffolding**.
 
 **golden path**:  
-The supported, opinionated way to build one kind of project, from creating it through running it; a template is where a project starts on it.  
-_Avoid_: de facto
+The supported, opinionated way to build one kind of project, from creating it through running it. Each template is one, and a project created from it starts on that path. Steps along the way can have golden paths of their own, such as Boilerplate's own workflow for creating, developing and updating a project, which the Quickstart walks through.  
+_Avoid_: paved road, paved path
 
 **Guardrails**:  
 Where quality is enforced across a **Development Environment** — dev-time (format-on-save, live type-checking) and CI. A part of the Development Environment; see the Development Environment guide.
