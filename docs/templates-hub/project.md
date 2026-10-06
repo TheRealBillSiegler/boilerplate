@@ -46,12 +46,11 @@ With `--no-tasks`, the cleanup step also never runs, so `_scripts/post_generatio
 boilerplate new project ./my-app
 cd my-app
 
-# Sync dependencies
-uv sync
-
 # Run tests
 uv run pytest
 ```
+
+The post-generation tasks already ran `uv sync`, so the environment is ready. If you passed `--no-tasks`, run `uv sync` before the first `uv run`.
 
 Add dependencies with `uv add <pkg>` (see [Add a dependency](../environment/index.md#1-start-or-clone-a-project)); `pyproject.toml` holds project metadata, entry points and scripts, and the tool configuration described under [Configuration](../environment/index.md#configuration).
 
