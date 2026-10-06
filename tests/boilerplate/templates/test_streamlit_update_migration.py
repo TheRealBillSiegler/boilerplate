@@ -28,7 +28,10 @@ from tests.boilerplate.templates.conftest import (
     update_layer,
 )
 
-LAYER = TEMPLATES / "streamlit"
+# Boilerplate finds a template by its folder name and names the layer's answers
+# file after it, so every folder these tests build for the layer uses this name.
+LAYER_NAME = "streamlit"
+LAYER = TEMPLATES / LAYER_NAME
 TEMPLATE_TEST_DIR = Path("tests/integration/{{ package_name }}")
 RENDERED_TEST_DIR = Path("tests/integration/rehearsal_app")
 OLD_TAG = "v0.1.0"
@@ -52,7 +55,7 @@ def previous_release(tmp_path_factory: pytest.TempPathFactory) -> Path:
     no migrations. The parent directory stands in for ``--templates-dir``, so a
     compose resolves this copy ahead of the bundled layer.
     """
-    layer = tmp_path_factory.mktemp("previous") / "streamlit"
+    layer = tmp_path_factory.mktemp("previous") / LAYER_NAME
     copy_layer_into(LAYER, layer)
     test_dir = layer / TEMPLATE_TEST_DIR
     (test_dir / "test_app.py.jinja").rename(test_dir / "tests_app.py.jinja")
@@ -68,7 +71,7 @@ def layer_repo(
     previous_release: Path, tmp_path_factory: pytest.TempPathFactory
 ) -> Path:
     """Build the layer's git history: the previous release, then the shipped one."""
-    repo = tmp_path_factory.mktemp("repo") / "streamlit"
+    repo = tmp_path_factory.mktemp("repo") / LAYER_NAME
     copy_layer_into(previous_release, repo)
     init_repo(repo)
     commit_all(repo, "previous release", OLD_TAG)
@@ -83,19 +86,19 @@ def _project_at_previous_release(
 ) -> Path:
     """Compose with the previous release, then point the layer at its history."""
     project = render(
-        "streamlit",
+        LAYER_NAME,
         tmp_path,
         context_data=ANSWERS,
         templates_dir=previous_release.parent,
     )
-    rehome_layer(project, layer="streamlit", source=layer_repo, commit=OLD_TAG)
+    rehome_layer(project, layer=LAYER_NAME, source=layer_repo, commit=OLD_TAG)
     init_repo(project)
     return project
 
 
 def _update_to_shipped_release(project: Path, layer_repo: Path) -> None:
     update_layer(
-        project, root="streamlit", layer="streamlit", source=layer_repo, ref=NEW_TAG
+        project, root=LAYER_NAME, layer=LAYER_NAME, source=layer_repo, ref=NEW_TAG
     )
 
 
