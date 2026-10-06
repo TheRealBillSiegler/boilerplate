@@ -1,13 +1,12 @@
-"""In a composed render, only the first layer's own `_skip_if_exists` applies.
+"""In a composed render, no layer's `_skip_if_exists` applies.
 
 Composition overlays layers in order: `new streamlit` renders `project` then
 `streamlit` into the same destination, and the streamlit layer's file at a
 shared path (`README.md`) is meant to win (docs/design/04-composition-engine.md
-§Per-Layer Render Loop). A later layer overlays this render's own output
-regardless of what it declares; its `_skip_if_exists` list still governs
-that layer's own `copier update`, never a composed render. Without this
-rule, overlay stops working the moment both layers declare the shared file
-project-owned.
+§Per-Layer Render Loop). A composed render writes every layer's files
+regardless of what it declares; a layer's `_skip_if_exists` list governs only
+that layer's own `copier update`. Without this rule, overlay stops working the
+moment both layers declare the shared file project-owned.
 """
 
 from pathlib import Path
