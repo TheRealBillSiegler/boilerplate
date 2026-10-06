@@ -165,7 +165,7 @@ Before starting the update pipeline, Boilerplate MUST check the project working 
 ### Step 1: Load Current State
 
 - Read `boilerplate.lock` to determine the current template versions, dependency graph, and per-layer answers-file hashes.
-- Read each layer's `.copier-answers.<layer>.yml` to retrieve the answers used for the current project state. The per-layer answers files together supply the answers for every layer's `copier update` invocation.
+- Read each layer's `.copier-answers.<layer>.yml` to retrieve the answers used for the current project state. Each layer's answers file records that layer's answers; the walk passes the other layers' recorded answers as data to each layer's `copier update` invocation.
 - For each layer, compute the SHA-256 hash of the raw `.copier-answers.<layer>.yml` file contents and compare against the corresponding entry in `copier_answers_file_hashes` in `boilerplate.lock`. If any layer's hash differs, emit a WARNING: `"Answer state for layer '{layer}' may have been externally modified since the last Boilerplate operation. The update will use the current .copier-answers.{layer}.yml contents."`. The update proceeds despite the mismatch — the warning is informational, not blocking.
 - If any required answers file is missing or corrupted, fail with a clear error before proceeding.
 
@@ -250,7 +250,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 
 - **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in topological order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the merged schema ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate manages the cross-layer rollback envelope (see [Pre-Merge Backup](#pre-merge-backup) and the `update --continue` / `update --abort` semantics below).
 
-The per-layer answers files (`.copier-answers.<layer>.yml`) together supply the answers for each layer's update, and the merged schema of the target versions, built once before the walk starts, supplies the questionnaire for every render of every layer ([design 04 §Safe Update](04-composition-engine.md#safe-update)). The answers files are written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior).
+The per-layer answers files (`.copier-answers.<layer>.yml`) record the answers each layer's update starts from, with the other layers' recorded answers passed as data, and the merged schema of the target versions, built once before the walk starts, supplies the questionnaire for every render of every layer ([design 04 §Safe Update](04-composition-engine.md#safe-update)). The answers files are written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior).
 
 **Non-git template sources**: If any locked template layer's source is a non-git source type (`filesystem` without a `.git/` directory, or `archive`), it has no commit for Copier to diff against — Copier has no three-way *or* two-way fallback for it ([ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28)). Boilerplate surfaces this:
 
