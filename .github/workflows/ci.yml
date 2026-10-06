@@ -227,6 +227,27 @@ jobs:
           DOCS_OFFLINE: "true"
         run: uv run mkdocs build --strict --site-dir site-offline
 
+  commit-lint:
+    name: Lint commit messages
+    # PR-only: a push event has no PR range to lint. No `needs`, so it carries
+    # its own draft term, like `docs`. Rebase merges land every commit on
+    # develop and release-please parses each one, so every commit in the PR is
+    # checked.
+    if: github.event_name == 'pull_request' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          # Full history: the range spans the whole PR.
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen
+      - run: |
+          uv run python scripts/commit_lint.py \
+            --base "${{ github.event.pull_request.base.sha }}" \
+            --head "${{ github.event.pull_request.head.sha }}"
+
   gate:
     name: CI gate
     # Single required status check. Passes when no needed job failed or was
@@ -234,7 +255,7 @@ jobs:
     # protection to require ONLY this "gate" check. Skipped on drafts so a
     # draft never shows a vacuously green gate.
     if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
-    needs: [changes, lint, shellcheck, typecheck, test, scenarios, package, docs, tests-go-red]
+    needs: [changes, lint, shellcheck, typecheck, test, scenarios, package, docs, tests-go-red, commit-lint]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -249,7 +270,8 @@ jobs:
             "${{ needs.scenarios.result }}" \
             "${{ needs.package.result }}" \
             "${{ needs.docs.result }}" \
-            "${{ needs['tests-go-red'].result }}"; do
+            "${{ needs['tests-go-red'].result }}" \
+            "${{ needs['commit-lint'].result }}"; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
               echo "::error::A required job did not pass (result: $r)"; exit 1
             fi
