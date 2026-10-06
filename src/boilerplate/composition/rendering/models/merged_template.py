@@ -8,6 +8,8 @@ files on disk.
 from functools import cached_property
 from typing import Any
 
+from packaging.version import InvalidVersion, Version
+
 from boilerplate.integrations.copier_types import Template
 
 
@@ -20,6 +22,7 @@ class MergedTemplate(Template):
         merged_questions: dict[str, Any],
         extra_config: dict[str, Any] | None = None,
         ref: str | None = None,
+        fallback_version: str | None = None,
     ) -> None:
         """Initialize a merged template wrapper.
 
@@ -35,10 +38,31 @@ class MergedTemplate(Template):
                 throwaway clone, per
                 docs/design/adr-015-idiomatic-artifacts.md. The parameter
                 exists for an explicit author-loop opt-in.
+            fallback_version: Version to report when Copier derives none, as it
+                does for a template that is a plain folder rather than a git
+                repository. A git-derived version always wins, because Copier
+                uses it to choose migrations during updates.
         """
         super().__init__(url=url, ref=ref)
         self._merged_questions = merged_questions
         self._extra_config = extra_config or {}
+        self._fallback_version = fallback_version
+
+    @cached_property
+    def version(self) -> Version | None:
+        """Return Copier's git-derived version, else the fallback version.
+
+        Returns:
+            The git-derived version when there is one; otherwise the parsed
+            fallback version, or ``None`` when that is unset or not PEP 440.
+        """
+        git_version = super().version
+        if git_version is not None or self._fallback_version is None:
+            return git_version
+        try:
+            return Version(self._fallback_version)
+        except InvalidVersion:
+            return None
 
     @cached_property
     def questions_data(self) -> dict[str, Any]:
