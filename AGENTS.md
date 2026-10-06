@@ -8,7 +8,7 @@
 - Do not circumvent the linter. Do not change linting rules.
 - Dependencies are managed via `uv`. See `pyproject.toml` for index configuration.
 - Run tests: `uv run pytest` (from repo root; `testpaths = ["tests"]` resolves relative to root)
-- Run lint: `uv run ruff check .`
+- Run lint: `uv run ruff check --fix .`
 - Before every push, run the local gate: `uv run python scripts/check.py`. It mirrors the CI gate; a failure caught locally saves a billed CI run.
 
 ## Python

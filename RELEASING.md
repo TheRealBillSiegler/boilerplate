@@ -20,7 +20,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 ## Quality
 
 - [ ] CI green on the OS matrix (ubuntu / macos / windows × 3.12 / 3.13)
-- [ ] `uv run pytest` passes from the repo root; `uv run ruff check .` clean; pyright strict clean
+- [ ] `uv run pytest` passes from the repo root; `uv run ruff check --no-fix .` clean; pyright strict clean
 
 ## Packaging metadata (before the first PyPI publish/tag)
 

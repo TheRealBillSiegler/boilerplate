@@ -85,7 +85,7 @@ Launch a fully configured editor with linting, auto-formatting, type checks, etc
 
     ```powershell
     uv run ruff format .
-    uv run ruff check .
+    uv run ruff check --fix .
     ```
 
 - **Pyright** highlights type issues as you code — or run it yourself:
