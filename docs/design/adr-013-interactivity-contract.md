@@ -1,6 +1,6 @@
 # ADR-013: The Interactivity Contract
 
-**Status**: Accepted (amended 2026-09-21)
+**Status**: Accepted
 
 **Date**: 2026-07-14 **Deciders**: Project team (Bill Siegler)
 
@@ -8,7 +8,7 @@
 
 `boilerplate new` renders in one of two modes: interactive (Copier prompts for unanswered questions) or non-interactive (`--non-interactive` / `--ci`, where every answer must come from a default, `profile.toml`, or a forced answer). Prompting has a failure mode with no natural backstop: when stdin cannot host a real terminal session, Copier's prompt layer (`questionary` / `prompt_toolkit`) does not always raise cleanly on EOF — it can retry-loop, growing memory without bound instead of exiting. This is not hypothetical: an equivalent failure was confirmed live on this project (Windows, stdin redirected from `NUL`, which `isatty()` misreports as a terminal) reaching the prompt layer and hanging before the guard was hardened. It is also a category-wide problem — see Evidence.
 
-This ADR records the decision rationale for the interactivity contract implemented in `boilerplate new` (`src/boilerplate/cli/commands/new.py`, `src/boilerplate/composition/rendering/engine.py`) and its error codes (design [07-operational-quality.md](07-operational-quality.md) §Error Code Registry; design [02-data-models.md](02-data-models.md) §Error Hierarchy). The behavior shipped ahead of this document; the "why" — surveyed against primary sources across CLI standards and peer tools, July 2026 — did not, and would otherwise be lost.
+This ADR records the decision rationale for the interactivity contract of `boilerplate new` (`src/boilerplate/cli/commands/new.py`, `src/boilerplate/composition/rendering/engine.py`) and its error codes (design [07-operational-quality.md](07-operational-quality.md) §Error Code Registry; design [02-data-models.md](02-data-models.md) §Error Hierarchy), surveyed against primary sources across CLI standards and peer tools, July 2026.
 
 ## Decision
 
@@ -37,6 +37,8 @@ No template question is reachable only through a prompt:
 - **Defaults** (`--non-interactive`) — accept the template's declared `default:` for every question.
 - **Persistent pre-fills** (`profile.toml`) — per-user `[defaults]` and `[templates.<name>]` tables that ride Copier's `user_defaults` channel; an interactive answer, or a forced answer, overrides them.
 - **A per-invocation answers channel** (`--data` / `--data-file`) — forced answers for a single invocation, on Copier's `data` channel.
+
+`--non-interactive` (and `BOILERPLATE_NON_INTERACTIVE`) is the only defaults-accepting mode for questions; `--yes` governs confirmation prompts only ([05-cli-reference.md](05-cli-reference.md)).
 
 ### 5. Read-only operations are exempt
 
@@ -81,10 +83,6 @@ Verified against primary sources, July 2026.
 - CI pipelines and other non-interactive callers must pass an explicit flag (`--non-interactive` or `--ci`). Ambient `CI=true` has no effect on `boilerplate`'s behavior, by design; the tool-scoped env-var equivalents (`BOILERPLATE_NON_INTERACTIVE`, `BOILERPLATE_CI`) do not change this — they are explicit opt-ins, not a CI-identity heuristic.
 - The TTY check and the prompt-layer translator are two independent code paths (`new.py` and `engine.py`) with different failure signatures and different exit codes (`BP_INPUT_TTY_REQUIRED` is 3; `BP_RENDER_PROMPT_FAILED` is 1). A future refactor MUST NOT collapse them into a single check without re-verifying both failure modes — `isatty()` lying, and prompt-layer failures the proactive gate cannot anticipate — stay covered.
 - Clause 4's substitute set is complete: defaults via `--non-interactive`, persistent pre-fills via `profile.toml`, and per-invocation forced answers via `--data` / `--data-file`, plus the env-var equivalents (`BOILERPLATE_NON_INTERACTIVE`, `BOILERPLATE_CI`) for the flags themselves.
-
-## Amendment (2026-09-21): `--yes` is not the defaults switch
-
-The clauses above originally named `--yes` beside `--non-interactive` as a way to accept every question's default. That reading contradicted design [05-cli-reference.md](05-cli-reference.md), which reserves `--yes` for confirmation prompts (task execution and extension loading) and states it does not affect question prompts. `--non-interactive` (and `BOILERPLATE_NON_INTERACTIVE`) is the only defaults-accepting mode for questions; `--ci` desugars to `--non-interactive --yes`. The clauses above now read accordingly.
 
 ## Sources
 
