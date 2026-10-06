@@ -4,7 +4,7 @@
 
 ## Context
 
-`boilerplate update` performs a per-layer `copier update`; Copier performs the only merge (INT-003, [04 §Safe Update](04-composition-engine.md)). Two questions were unresolved or internally contradictory in the design: (1) what happens on a merge conflict, and (2) what happens when the template's `extends` chain changed since lock time (the [ADR-001](adr-001-build-vs-adopt.md) HIGH-severity gap). On (1) the design is already consistent: [06 §Step 4](06-project-lifecycle.md) specifies leave-markers, pause at exit 4 (`ACTION_REQUIRED`), and resume via `--continue`/`--abort` over a pre-merge backup, and [02](02-data-models.md) records it as the `conflict` MigrationRecord state. The `MergeConflictError → exit 1` row in the [02] Error-Hierarchy table is a *different* condition — the composition-time config-merge error (two layers declaring incompatible values for one key, per [04](04-composition-engine.md)) — unrelated to the update file-conflict. This ADR **affirms** the existing model; what it settles is (2) plus an issue-split correction.
+`boilerplate update` performs a per-layer `copier update`; Copier performs the only merge (INT-003, [04 §Safe Update](04-composition-engine.md)). Three questions bear on the update model: (1) what happens on a merge conflict, (2) what happens when the template's `extends` chain changed since lock time (the [ADR-001](adr-001-build-vs-adopt.md) HIGH-severity gap), and (3) whether `update` must walk one version at a time within a layer when a template version can carry a migration. On (1), [06 §Step 4](06-project-lifecycle.md) specifies leave-markers, pause at exit 4 (`ACTION_REQUIRED`), and resume via `--continue`/`--abort` over a pre-merge backup, and [02](02-data-models.md) records it as the `conflict` MigrationRecord state. The `MergeConflictError → exit 1` row in the [02](02-data-models.md) Error-Hierarchy table is a *different* condition — the composition-time config-merge error (two layers declaring incompatible values for one key, per [04](04-composition-engine.md)) — unrelated to the update file-conflict. This ADR states the model on (1) and decides (2) and (3).
 
 ## Decision
 
@@ -13,7 +13,7 @@
 **A changed `extends` chain is handled by author migrations, not provenance inference.**
 
 - *Added* layer → fresh `copier copy` overlay + new answers file, folded into the lock.
-- *Removed* layer → Boilerplate drops it from the managed set; **file cleanup is the job of a Copier `_migrations` script in the template that removed the dependency** (the removed layer's own migrations never run, because it is no longer in the chain). Copier runs migrations across the version range in a single pass — Boilerplate does not loop.
+- *Removed* layer → Boilerplate drops it from the managed set; **file cleanup is the job of a Copier `_migrations` script in the template that removed the dependency** (the removed layer's own migrations never run, because it is no longer in the chain). Copier runs migrations across the version range in a single pass — Boilerplate does not loop (see [§Version jumps](#version-jumps-stay-single-pass-migrations-are-jump-safe-by-authoring-contract)).
 - *No migration provided* → **safe-orphan + WARN**: leave the files in place (now unmanaged), name them, and give guidance. Boilerplate **never infers file provenance and never auto-deletes.**
 - Dry-run preview cannot predict migration file effects (they are arbitrary scripts — Copier's `--pretend` has the same limit); the plan shows version/layer deltas and *which* migrations will run.
 
@@ -21,22 +21,11 @@
 
 **`commit: null` costs a ref to check out, not recoverable information — but it does not heal itself.** The lock records the layer's *version* even when `commit` is null, and Copier reconstructs the three-way merge base by *re-rendering* the old version rather than storing one, so nothing needed for a later merge is lost. What a null commit does withhold is the ref Copier checks out to do that re-render, and Copier resolves that ref from `_commit`/`_src_path` in its own answers file — which [ADR-015](adr-015-idiomatic-artifacts.md) forbids Boilerplate from rewriting. A first-party layer created before [ADR-006](adr-006-template-distribution.md)'s published repositories exist therefore stays **copy-only** until its `_src_path` is rehomed to the published repository by hand: the documented one-line edit of [ADR-015](adr-015-idiomatic-artifacts.md) point 5. After that edit the recorded version resolves to a tag, Copier reconstructs the base by re-render, and the three-way merge proceeds normally. Copy-only is permanent **only** for *genuinely* non-git sources (a user's plain local directory, which never gains a tag). Recording the real `commit` at creation stays strictly stronger (an immutable pin vs. a mutable tag) and remains the target.
 
-## Options considered
+**Git-backed distribution ([ADR-006](adr-006-template-distribution.md)) is not a prerequisite of lock creation.** Because a `commit: null` lock withholds only a ref and no recoverable information (above), `new` / `lock` / `verify` / `adopt` do not wait on the published distribution; what they cannot promise for a layer created before it is a clean three-way `update`, which needs the one-line `_src_path` rehome first. The rehome is a user-run edit, so the distribution work gates the clean-three-way quality of update-apply and does not block lock creation. Where it lands in the sequence is the roadmap's call.
 
-- **Rollback-on-conflict** — simpler (drops the `--continue` machinery), but it throws away the merge attempt and hands the user nothing to resolve; it fights Copier's native model. Rejected.
-- **Pause-with-markers (chosen)** — Copier-native, preserves work, costs the continuation slice.
-- Removed layers: **auto-delete uniquely-owned files** (needs a per-layer file manifest in the lock; carries deletion risk) vs **migrations + safe-orphan (chosen)** — author-declared, no data-loss risk.
+### Version jumps stay single-pass; migrations are jump-safe by authoring contract
 
-## Consequences
-
-- The update CLI is `update` / `update --continue` / `update --abort` (git/Copier idiom); `--dry-run` (preferred over Copier's `--pretend` where git and Copier idioms clash); `--prereleases` (Copier's name). Operationally-scoped flags may be set per-layer via an allowlisted params object; answers stay merged (the singular-template experience).
-- Migrations are arbitrary code — fine for first-party templates (ADR-003), gated behind the trust model before untrusted templates run them.
-- Authoring guidance (removed-layer cleanup migration, breaking-change migration) is an INT-009 docs follow-up; `init-template` may scaffold a commented `_migrations` stub.
-- **Amendment (2026-06-22, premise revised 2026-07-28): git-backed distribution (ADR-006) is not a prerequisite of lock creation.** Because a `commit: null` lock withholds only a ref and no recoverable information (above), `new` / `lock` / `verify` / `adopt` do not wait on the published distribution; what they cannot promise for a layer created before it is a clean three-way `update`, which needs the one-line `_src_path` rehome first. The earlier "split the distribution work into provenance-early / packaging-late" idea is **dropped** — the rehome is a user-run edit, not the legacy-`commit:null`-lock migration debt that was the split's sole motivation. The distribution work's "blocks lock creation" framing should read "gates the clean-three-way quality of update-apply," not "blocks creation." Where it lands in the sequence is the roadmap's call.
-
-## Amendment (2026-07-28): version jumps stay single-pass; migrations are jump-safe by authoring contract
-
-The per-layer walk raised a follow-on question: if a template version can carry a migration, must `update` also walk **one version at a time** within each layer? Empirical answer (Copier 9.15.0, fixtures with per-version probes; see [ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28) for the companion per-layer run): **no — a single pass per layer remains the model**, and the line above ("Copier runs migrations across the version range in a single pass") is affirmed, now on evidence rather than inference. What the run established:
+`update` crosses a layer's version range in a single pass and does not walk one version at a time, even when the crossed versions carry migrations. The evidence is in [§Verification](#verification-2026-07-28); [ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28) records the companion per-layer run. The evidence in [§Verification](#verification-2026-07-28) established:
 
 - **Copier's migration model is fix-up, not replay.** A migration's `version:` key is a *gate* (`target ≥ version > source`), not a checkpoint. In a v1→v3 jump every crossed migration runs exactly once, in list order, all against the same tree — the pre-update tree for `before`-stage entries, the fully rendered target tree for `after`-stage ones (the default stage). **No intermediate tree is ever materialized.** A migration that assumes it sees the tree as of the version it names is therefore wrong under any jump.
 - **The migration list comes only from the target version's `copier.yml`.** Nothing is read from intermediate tags. Two consequences bind template authors: every historical migration entry MUST be carried forward in every later release, or jumpers silently skip it; and a stepped walk executes each intermediate tag's *own copy* of a migration, so stepping and jumping can run **different code** for the same nominal migration — stepping is not a safer subset of jumping, it is a different execution.
@@ -56,7 +45,19 @@ The per-layer walk raised a follow-on question: if a template version can carry 
 
 **Deferred, not rejected:** an opt-in `--via <version>` stepped walk, if a first-party migration is ever found that cannot be made jump-safe. That is a template-authoring failure with a tooling escape hatch, not the default model; building it before such a case exists would add a version-walking loop with no demonstrated need.
 
-### Verification (2026-07-28)
+## Options considered
+
+- **Rollback-on-conflict** — simpler (drops the `--continue` machinery), but it throws away the merge attempt and hands the user nothing to resolve; it fights Copier's native model. Rejected.
+- **Pause-with-markers (chosen)** — Copier-native, preserves work, costs the continuation slice.
+- Removed layers: **auto-delete uniquely-owned files** (needs a per-layer file manifest in the lock; carries deletion risk) vs **migrations + safe-orphan (chosen)** — author-declared, no data-loss risk.
+
+## Consequences
+
+- The update CLI is `update` / `update --continue` / `update --abort` (git/Copier idiom); `--dry-run` (preferred over Copier's `--pretend` where git and Copier idioms clash); `--prereleases` (Copier's name). Operationally-scoped flags may be set per-layer via an allowlisted params object; answers stay merged (the singular-template experience).
+- Migrations are arbitrary code — fine for first-party templates (ADR-003), gated behind the trust model before untrusted templates run them.
+- Authoring guidance (removed-layer cleanup migration, breaking-change migration) is owned by INT-009; `init-template` may scaffold a commented `_migrations` stub.
+
+## Verification (2026-07-28)
 
 Copier 9.15.0 on Windows, git 2.55. Fixtures: a single-template repo tagged v1/v2/v3, each tag changing a probe file whose content names its version, with version-gated `_migrations` entries whose commands append a JSON record of the migration id, stage, `VERSION_FROM`/`VERSION_TO`/`VERSION_CURRENT`, and the probe file's content as read at execution time — so the log proves which tree each migration saw. Two-layer variants added an overlay template overwriting a base-rendered file. An independent adversarial run repeated the two load-bearing claims with differently shaped fixtures and a marker distinguishing each tag's copy of a migration.
 
@@ -74,6 +75,6 @@ Read from Copier's source rather than exercised: `_migrations` executes in decla
 ## Relationship to other ADRs
 
 - [ADR-006](adr-006-template-distribution.md) — supplies the per-template git history that update diffs against.
-- [ADR-015](adr-015-idiomatic-artifacts.md) — the per-layer walk this ADR's update model executes; its verification records the companion per-layer run, while the migration evidence is recorded in the amendment above.
+- [ADR-015](adr-015-idiomatic-artifacts.md) — the per-layer walk this ADR's update model executes; its verification records the companion per-layer run, while the migration evidence is recorded in [§Verification](#verification-2026-07-28) above.
 - [ADR-003](adr-003-permissive-execution.md) — migrations share the task/extension trust surface.
-- Affirms (does not change) the conflict model in [02-data-models.md](02-data-models.md) and [06-project-lifecycle.md](06-project-lifecycle.md): `MergeConflictError` (composition) stays exit 1, distinct from the update `conflict` state (exit 4).
+- [02-data-models.md](02-data-models.md) and [06-project-lifecycle.md](06-project-lifecycle.md) — own the conflict model this ADR states: the update `conflict` state exits 4.
