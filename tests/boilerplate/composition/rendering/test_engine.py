@@ -890,7 +890,6 @@ class TestMergedExtensionInjection:
             merged_questions={},
             tasks_value=[],
             extensions_value=["probe_ext.ProbeExtension"],
-            is_first_layer=True,
         )
 
         assert tuple(template.jinja_extensions) == ("probe_ext.ProbeExtension",)
@@ -939,7 +938,6 @@ class TestMergedExtensionInjection:
                 "copier_template_extensions.TemplateExtensionLoader",
                 "probe_ext.ProbeExtension",
             ],
-            is_first_layer=True,
         )
 
         assert tuple(template.jinja_extensions) == (
