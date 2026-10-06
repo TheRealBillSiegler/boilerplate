@@ -403,6 +403,65 @@ class TestCiModeAndNoTasks:
         )
         assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
+
+@pytest.mark.usefixtures("interactive_tty")
+class TestNextStepsListsOnlyWhatIsLeft:
+    """Seam: `new` output. Source: design 05 §Post-Action Guidance.
+
+    The project template's setup tasks run `uv sync`, so `uv sync` is a next
+    step only when the tasks were skipped. Breaks if `new` prints `uv sync`
+    unconditionally, or drops it under `--no-tasks`.
+    """
+
+    @staticmethod
+    def _next_steps(
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        seams: Seams,
+        extra_args: list[str],
+    ) -> str:
+        """Return the part of `new`'s output after the "Next steps:" heading."""
+        result = typer_cli_runner.invoke(
+            app,
+            [
+                "new",
+                "project",
+                str(temp_project_dir),
+                "--templates-dir",
+                str(fake_template_dir),
+                *extra_args,
+            ],
+            obj=seams,
+        )
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+        assert "Next steps:" in result.output
+        return result.output.split("Next steps:", 1)[1]
+
+    def test_uv_sync_absent_when_tasks_ran(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        seams: Seams,
+    ) -> None:
+        steps = self._next_steps(
+            typer_cli_runner, fake_template_dir, temp_project_dir, seams, []
+        )
+        assert "uv sync" not in steps
+
+    def test_uv_sync_listed_when_tasks_skipped(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        seams: Seams,
+    ) -> None:
+        steps = self._next_steps(
+            typer_cli_runner, fake_template_dir, temp_project_dir, seams, ["--no-tasks"]
+        )
+        assert "uv sync" in steps
+
     def test_ci_env_var_alone_sets_non_interactive_and_leaves_tasks_running(
         self,
         typer_cli_runner: CliRunner,
