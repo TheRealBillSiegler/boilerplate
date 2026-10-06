@@ -1,0 +1,3 @@
+# Every issue opened on GitHub goes through a form, so each one gets the
+# needs-triage label the forms apply.
+blank_issues_enabled: false
