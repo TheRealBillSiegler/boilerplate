@@ -240,7 +240,7 @@ _tasks:
   - ["python", "_scripts/post_generation.py"]
 ```
 
-**Overriding a question in a derived template:** A derived template's `copier.yml` MAY redeclare any question key. When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
+**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the merged schema already hands every inherited question to every render ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
 
 ```yaml
 # streamlit/copier.yml — overrides the default for 'dependencies'

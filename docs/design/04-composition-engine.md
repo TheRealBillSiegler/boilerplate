@@ -321,7 +321,7 @@ The RenderEngine takes the merged questions schema (no underscore-prefixed keys)
 
 When multiple layers need to contribute to the same file (e.g., `pyproject.toml`), full-file replacement means only the last layer's version survives. Template authors SHOULD use one of these patterns:
 
-1. **Single-owner pattern** (recommended): Designate one layer as the owner of the shared file. That layer's template renders the complete file from the merged schema, so the file MAY reference any question of the composition, whichever layer declares it; other layers contribute their values via questions with `merge_questions` but do not include the shared file in their own template content.
+1. **Single-owner pattern** (recommended): Designate one layer as the owner of the shared file. That layer's template renders the complete file from the merged schema, so the file MAY use any question its own layer or a parent layer declares, a parent layer being any layer its `extends` chain reaches, directly or transitively; other layers contribute their values via questions with `merge_questions` but do not include the shared file in their own template content. The owning layer MUST come, in topological order, at or after every layer that declares a question the shared file uses; the last layer of the composition always qualifies.
 
 2. **Post-render task**: Use a `_tasks` entry in the final layer to programmatically merge content (e.g., merge TOML sections). This approach is flexible but couples the template to specific tooling. The task runs once against the finished project with the merged answers in scope ([ADR-014](adr-014-deferred-task-execution.md)).
 
@@ -389,7 +389,7 @@ The `boilerplate update` pipeline does not re-render the old composition itself.
 
 The walk MUST build the merged schema once, before the first layer's update, from the target versions of all layers' `copier.yml` files, and MUST hand that one schema to every render Copier makes for every layer during the update: the old copy, rendered at the `_commit` the layer's answers file records and `boilerplate.lock` mirrors; the in-place render that writes the layer's files and its answers file; and the new copy, rendered at the target version. The walk MUST also hand each layer's `update` the union of the per-layer answers files as data. A question the target version removes therefore still has its recorded answer passed as data, so the old copy, whose template still uses that question, renders the same as it did when the answer was recorded. A renamed question is a removal plus an addition; carrying the recorded value to the new name is the template's own job, through Copier `_migrations`.
 
-A layer's answers file therefore records the full merged answer set after every update, and a layer's files MAY reference any question of the composition without redeclaring it.
+A layer's answers file therefore records the full merged answer set after every update, and a layer's files MAY use any question its own layer or a parent layer declares.
 
 See [06-project-lifecycle.md](06-project-lifecycle.md) for the full update workflow, including Copier version management and non-git source fallback.
 
