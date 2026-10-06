@@ -67,12 +67,11 @@ With `--no-tasks`, the inherited cleanup task never runs either, so `_scripts/po
 boilerplate new streamlit ./my-data-app
 cd my-data-app
 
-# Install dependencies
-uv sync
-
 # Run the app locally (package name derives from the project name)
 uv run streamlit run src/my_data_app/app.py
 ```
+
+The inherited post-generation tasks already ran `uv sync`. If you passed `--no-tasks`, run `uv sync` before the first `uv run`.
 
 For container deployment, see [container deployment](deployment/containers/index.md).
 

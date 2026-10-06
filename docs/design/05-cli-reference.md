@@ -994,7 +994,7 @@ All `update`, `env apply`, and `eject` invocations show a plan and prompt for co
 
 After completing an operation, the CLI MUST print contextual next steps. Guidance sources, in display order:
 
-1. **Default**: Always `cd {destination}`.
+1. **Default**: Always `cd {destination}`. `uv sync` follows it only when the template's setup tasks were skipped (`--no-tasks`); otherwise the tasks already installed dependencies and Next steps lists only what is left to do.
 2. **Profile-derived**: If the template declares `requires_profile`, include `boilerplate env apply`.
 3. **Template-declared**: `post_create_message` from `boilerplate.yml`, accumulated from all layers in topological order, labeled "From the template author:".
 4. **`Tip:` block**: Save-answers hint for CI reproducibility (suppressed when `--answers` or `--ci` was used).
@@ -1008,7 +1008,6 @@ Created my-project in 3.2s (2 layers, 47 files)
 
 Next steps:
   cd my-project
-  uv sync
 
 From the template author:
   This template uses FastAPI. Start the dev server with:
