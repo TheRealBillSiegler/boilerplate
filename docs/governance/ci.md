@@ -1,6 +1,6 @@
 # CI Pipeline
 
-How a change travels from your working tree to `develop`, what runs at each step, and why the pipeline is shaped the way it is. The pipeline lives in [`.github/workflows/ci.yml`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/ci.yml); a companion workflow lints every commit in the PR against conventional-commit types, and a third builds the downloadable offline docs bundle.
+How a change travels from your working tree to `develop`, what runs at each step, and why the pipeline is shaped the way it is. The pipeline lives in [`.github/workflows/ci.yml`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/ci.yml); a separate workflow builds the downloadable offline docs bundle.
 
 ## The whole flow
 
@@ -15,6 +15,8 @@ flowchart TD
         changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: ubuntu-only on PRs, diagonal on pushes<br>tests-go-red: pull_request events only"]
         changes -- "composition paths" --> scen["scenarios<br>ubuntu, latest Python"]
         docsjob["docs build<br>always runs, no needs"]
+        lint["commit-lint<br>pull_request events only"]
+        lint --> gate
         code --> gate["gate<br>the single pass/fail signal"]
         scen --> gate
         skip --> gate
@@ -52,7 +54,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Draft PRs cost nothing
 
-`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
+`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`; `commit-lint` carries the same draft term inside its PR-only condition. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
 
 ## Test matrix policy
 
@@ -71,13 +73,17 @@ The scenarios rerun the composition design's evidence against real Copier and gi
 
 A PR that changes `src/` and adds tests must show at least one added test failing against the base commit's `src/` — otherwise none of them ever went red and the job fails, naming them. It runs on `pull_request` events only: a push has no base commit to diff added tests against. Script: [`scripts/new_tests_go_red.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/new_tests_go_red.py).
 
+## Commit messages
+
+Every commit in a PR must be a conventional commit under 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of the gate, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; the gate treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
+
 ## The docs job
 
 The strict docs build (both the online config and the `DOCS_OFFLINE` release-bundle config) has no `needs` and ignores the path filter: mkdocstrings and autorefs build API pages from source, so a code-only change can break the docs build. Its only guard is the draft skip. It is a single cheap ubuntu runner.
 
 ## The gate
 
-`gate` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter don't break it. Configure required checks against `gate` alone, never against individual jobs.
+`gate` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter, or by event (`commit-lint` and `tests-go-red` on pushes), don't break it. Configure required checks against `gate` alone, never against individual jobs.
 
 ## Timeouts
 
