@@ -4,15 +4,15 @@
 
 ## Context
 
-Copier does not expose `Template` or `Worker` in its public API (`copier.__all__` is `load_settings, run_copy, run_recopy, run_update, Phase, Settings, VcsRef`). Boilerplate's composition engine is built on these internal classes: `MergedTemplate` subclasses `Template` to present the consolidated question schema, and `RenderEngine` drives a `Worker` directly (injecting the merged template via `object.__setattr__`) rather than calling Copier's public `run_copy`/`run_update`. These are private symbols Copier may relocate without a deprecation cycle.
+Copier does not expose `Template` or `Worker` in its public API (`copier.__all__` is `load_settings, run_copy, run_recopy, run_update, Phase, Settings, VcsRef`). Boilerplate's composition engine is built on these internal classes: `MergedTemplate` subclasses `Template` to present the consolidated question schema, and every layer's render, at compose and at update, runs through a `Worker` subclass that exposes it, rather than through Copier's public `run_copy`/`run_update`. These are private symbols Copier may relocate without a deprecation cycle.
 
 ## Decision
 
 Funnel all coupling to Copier internals through one module, `src/boilerplate/integrations/copier_types.py`, importing from the modules where Copier actually defines them (`copier._main.Worker`, `copier._template.Template`), and pin Copier to a tested range (`copier>=9.15,<10` in `pyproject.toml`). A relocation of these symbols then breaks one file, loudly, via the guard test (`tests/boilerplate/integrations/test_copier_types.py`) during CI rather than at render time for a user.
 
-**The shim serves compose and update.** The update path imports `Worker` from `copier_types.py`, subclasses it, and hands each layer's instance the merged schema, the same view compose hands each layer. `boilerplate update` runs Copier's update once per layer, and every use of Copier internals on that path MUST go through the shim.
+**Compose and update share one way in.** Both hand Copier the merged view through the same `Worker` subclass, built on the `Worker` that `copier_types.py` imports. Compose renders every layer through it, `boilerplate update` runs Copier's update once per layer through it, and every use of Copier internals on either path MUST go through the shim.
 
-**The merged view lives in fields of a `Worker` subclass**, and the subclass's `template` property builds the merged template from those fields. Copier's update builds its three renders (the old copy, the in-place render and the new copy) with `dataclasses.replace`, which constructs each new worker from dataclass fields. A template primed on a worker instance with `object.__setattr__` reaches none of the three renders; `replace` copies a view held in fields into all of them.
+**The merged view lives in fields of a `Worker` subclass**, and the subclass's `template` property builds the merged template from those fields. Copier's update builds its three renders (the old copy, the in-place render and the new copy) with `dataclasses.replace`, which constructs each new worker from dataclass fields. A template set on one worker instance reaches none of the three renders; `replace` copies a view held in fields into all of them.
 
 A relocation of `Worker` or `Template` inside Copier breaks compose and update in `copier_types.py` alone, where the guard test reports it, and the `copier>=9.15,<10` pin bounds the Copier versions both paths run on. A test MUST drive one per-layer update through the subclass, since a symbol check does not see the `dataclasses.replace` contract the update walk depends on.
 
@@ -22,7 +22,7 @@ A relocation of `Worker` or `Template` inside Copier breaks compose and update i
 - **Reimplement Copier's render/merge** — large, duplicates Copier, contradicts ADR-001.
 - **Vendor/fork Copier** — maintenance burden out of proportion to the need.
 - **Single audited import shim + version pin** (chosen) — one change point on upgrade; the deep `_main`/`_template` paths avoid the deprecation warning.
-- **A merged template primed on the worker instance** — rejected for the update path: `dataclasses.replace` rebuilds the update renders without it ([Verification (2026-09-30)](#verification-2026-09-30)).
+- **A merged template set on one worker instance** — rejected: `dataclasses.replace` rebuilds the update renders without it ([Verification (2026-09-30)](#verification-2026-09-30)).
 
 ## Consequences
 
@@ -33,7 +33,7 @@ A relocation of `Worker` or `Template` inside Copier breaks compose and update i
 
 ## Verification (2026-06-09)
 
-`copier_types.py` is the only site importing Copier internals (grep); `MergedTemplate` subclasses the shim's `Template` (`composition/rendering/models/merged_template.py:14`); `RenderEngine` injects it into `Worker` (`composition/rendering/engine.py:256-259`); the guard test is present.
+`copier_types.py` is the only site importing Copier internals (grep); `MergedTemplate` subclasses the shim's `Template` (`composition/rendering/models/merged_template.py:14`); the guard test is present.
 
 ## Verification (2026-09-30)
 
@@ -42,7 +42,7 @@ Empirical run against the bundled `project` and `streamlit` templates (Copier 9.
 | Mechanism | Orders | Result |
 |---|---|---|
 | A `Worker` subclass holding the merged questions and the extension union in fields, `template` built from them; `Worker.run_update()` called on the subclass instance per layer with the union of the per-layer answers files as `data` | `project` then `streamlit`, and `streamlit` then `project`; v2 then v3 | All 8 updates exit 0, with no conflict markers, no `.rej` files and no unmerged paths; the five inherited answers that Copier records persist in `streamlit`'s answers file after every update; the two derived values render (`widget_co`, `widget-co`); the package directory and the user line survive |
-| `worker.template` primed with the merged template on the instance | Both orders | The first `streamlit` update exits 0 but its answers file loses the five inherited answers and the derived values render empty; the second update pauses with conflict markers in `README.md` and the probe file |
+| `worker.template` set to the merged template on one instance | Both orders | The first `streamlit` update exits 0 but its answers file loses the five inherited answers and the derived values render empty; the second update pauses with conflict markers in `README.md` and the probe file |
 
 ## Relationship to other ADRs
 
