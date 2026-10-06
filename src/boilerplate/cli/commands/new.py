@@ -425,7 +425,10 @@ def new(
         display.write("")
         display.info("Next steps:")
         display.write(f"  cd {dest_dir}")
-        display.write("  uv sync")
+        if no_tasks:
+            # The base template's setup task runs `uv sync`; only a skipped
+            # task run leaves the install for the user.
+            display.write("  uv sync")
     _logger.debug("New command completed: template '%s'", template_info.name)
 
 
