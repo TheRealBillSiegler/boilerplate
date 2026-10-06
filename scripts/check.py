@@ -2,13 +2,12 @@
 
 A failure caught here costs seconds; the same failure in CI costs a full
 billed run plus the rerun after the fix. Mirrors the lint, typecheck, test,
-scenarios, and docs jobs in ``.github/workflows/ci.yml``, and the
-commit-message lint in ``.github/workflows/pr-checks.yml`` (the package smoke
-test, ShellCheck, and the new-tests-go-red check are CI-only). The composition
-scenarios run only when a composition path differs from the merge base with
-``origin/develop``, the way CI runs them only when its diff touches one; the
-gate prints which choice it made and why. Contributor instructions:
-``docs/governance/ci.md``.
+scenarios, docs, and commit-lint jobs in ``.github/workflows/ci.yml`` (the
+package smoke test, ShellCheck, and the new-tests-go-red check are CI-only).
+The composition scenarios run only when a composition path differs from the
+merge base with ``origin/develop``, the way CI runs them only when its diff
+touches one; the gate prints which choice it made and why. Contributor
+instructions: ``docs/governance/ci.md``.
 
 Usage:
     uv run python scripts/check.py

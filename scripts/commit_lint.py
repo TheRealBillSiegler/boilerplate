@@ -8,7 +8,8 @@ its own job is resolving which commits to check.
 
 In CI, the range runs from the merge base of the pull request's base and head
 SHAs to the head SHA, both SHAs known from the event — see
-``.github/workflows/pr-checks.yml``. Locally, the remote holding the public
+``.github/workflows/ci.yml`` (the ``commit-lint`` job, a need of the required
+CI gate). Locally, the remote holding the public
 repository is not always named ``origin`` (a fork or an archive clone carries
 its own ``develop``), so the base defaults to the integration branch's
 remote-tracking ref (``refs/remotes/*/develop``), never a hard-coded remote
