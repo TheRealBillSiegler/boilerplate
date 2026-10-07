@@ -29,6 +29,12 @@ One template rendered at a node of the composition graph, each with its own answ
 _Avoid_: plugin, overlay, mixin  
 _Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.
 
+**Scoped View**:  
+A Layer's merged questions, secret-question list and Jinja extensions over itself and its ancestors; every render of that Layer, at compose and at update, uses it. See design 04 §Scoped view.
+
+**Full Merged Schema**:  
+Every Layer's questions joined; the questionnaire at compose and before an update walk uses it. See design 04 §Scoped view.
+
 **Task**:  
 A command declared in a Template's `_tasks` that runs after rendering — the escape hatch for arbitrary edits.  
 _Avoid_: hook, script, post-gen step
