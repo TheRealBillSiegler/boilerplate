@@ -240,7 +240,7 @@ _tasks:
   - ["python", "_scripts/post_generation.py"]
 ```
 
-**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the merged schema already hands every inherited question to every render ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
+**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the layer's scoped view already hands every ancestor's question to every render of the layer ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
 
 ```yaml
 # streamlit/copier.yml — overrides the default for 'dependencies'
@@ -754,7 +754,7 @@ A base template for any Python project. Collects standard project metadata (name
 
 ### `streamlit` template
 
-A Streamlit data application template that **extends** `project`. Overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition and reach the layer through the merged schema at every render, compose and update alike ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
+A Streamlit data application template that **extends** `project`. Overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition and reach the layer through its scoped view at every render, compose and update alike ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
 
 ---
 
