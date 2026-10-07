@@ -1,6 +1,6 @@
 # ADR-002: Depend on Copier's internal Template/Worker via a single audited shim
 
-**Status**: Accepted (retroactively documented 2026-06-09) **Date**: 2026-06-07 (centralized into the shim; the underlying dependency on Copier internals predates it); revised 2026-09-30 **Deciders**: Project team
+**Status**: Accepted (retroactively documented 2026-06-09) **Date**: 2026-06-07 (centralized into the shim; the underlying dependency on Copier internals predates it); revised 2026-09-30 and 2026-10-06 **Deciders**: Project team
 
 ## Context
 
