@@ -102,6 +102,8 @@ Probe scenarios against Copier 9.18.1 (`tests/integration/boilerplate/compositio
 
 - **A questionnaire pass run before the walk forced a renamed question's default over the migrated answer.** `project` v2 renamed `author_name` to `maintainer_name` behind a before-migration. The pass ran before that migration, found `maintainer_name` unanswered, and its forced default `Your Name` replaced the migrated value in both layers and both orders (`test_question_changes.py::TestRenamedQuestion`).
 
+[Why composition works this way](composition-rationale.md) sets these runs and the later probes beside each design choice they informed.
+
 ## Relationship to other ADRs
 
 - [ADR-001](adr-001-build-vs-adopt.md) — "orchestrate, don't reimplement"; Boilerplate drives Copier's own `copy` and `update` per layer and adds one thing, the join: the full merged schema the questionnaire asks, and each layer's scoped view, which reaches every render of that layer through the [ADR-002](adr-002-copier-internals-shim.md) shim. Boilerplate implements no merge, update or answers-file algorithm of its own.
