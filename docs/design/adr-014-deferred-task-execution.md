@@ -1,6 +1,6 @@
 # ADR-014: Deferred task execution — accumulate per layer, run once on the final layer
 
-**Status**: Accepted (documents implemented behavior) **Date**: 2026-07-16 **Deciders**: Project team
+**Status**: Accepted (documents implemented behavior) **Date**: 2026-07-16; revised 2026-10-06 **Deciders**: Project team
 
 ## Context
 
