@@ -8,7 +8,7 @@
 
 `boilerplate update` orchestrates `copier update`, which performs the three-way merge. Copier's update is **git-only**: it computes the merge base by diffing the template's old git ref against the new ref. Templates authored as subdirectories of the package have no per-template git history and no version tags, and a `pip install`-ed wheel carries no `.git` at all, so a layer rendered from the wheel cannot be updated by `copier update`.
 
-[ADR-015](adr-015-idiomatic-artifacts.md) sharpens what a distribution channel has to satisfy: the per-layer answers file is the **distribution contract**. Whatever Copier records there as `_src_path` and `_commit` must stay resolvable by vanilla Copier, on any machine, indefinitely — that is what keeps every git-backed layer updatable, by `boilerplate update` and by the escape hatch, a hand-run vanilla `copier update -a .copier-answers.<layer>.yml` per layer with the other layers' answers passed as data ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). A channel that cannot be named in an answers file and re-resolved later is not a channel.
+[ADR-015](adr-015-idiomatic-artifacts.md) sharpens what a distribution channel has to satisfy: the per-layer answers file is the **distribution contract**. Whatever Copier records there as `_src_path` and `_commit` must stay resolvable by vanilla Copier, on any machine, indefinitely — that is what keeps every git-backed layer updatable, by `boilerplate update` and by the escape hatch, a hand-run vanilla `copier update -a .copier-answers.<layer>.yml` per layer with its ancestors' answers passed as data ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). A channel that cannot be named in an answers file and re-resolved later is not a channel.
 
 ## Decision
 
