@@ -292,7 +292,7 @@ Before the three-way merge modifies any project files, Boilerplate MUST create a
 
 **Per-file merge behavior**: Per-file merge semantics (clean updates for unchanged files, conflict-marker insertion for text-file conflicts, binary-conflict reporting for binary files, modify/delete handling, etc.) are owned by Copier's `update` mechanism. Boilerplate does not specify or implement these semantics; they are documented in Copier's own update reference.
 
-**Cross-layer ordering**: Per-layer Copier `update` invocations are issued in topological order (same as creation): dependencies before dependents. A failure or conflict in any layer halts the cross-layer envelope; subsequent layers are not invoked.
+**Cross-layer ordering**: Per-layer Copier `update` invocations are always issued in topological order (same as creation): dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it ([design 04 §Safe Update](04-composition-engine.md#safe-update)). A failure or conflict in any layer halts the cross-layer envelope; subsequent layers are not invoked.
 
 **Conflict handling (cross-layer envelope)**:
 
