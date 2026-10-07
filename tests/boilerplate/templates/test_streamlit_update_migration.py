@@ -6,10 +6,10 @@ a renamed file as added on both sides (docs/design/adr-007-update-model.md). The
 layer's before-stage migration moves the old smoke test to its new name with
 ``git mv`` so the update surfaces the project's copy as a conflict carrying both
 versions instead of deleting it. These tests compose a project from a tagged
-repository of the layer and update that layer through the composition's merged
-view, the way design 04's update walk does (Safe Update): the layer declares
-only its own questions, so its paths and files take `project`'s answers from
-the merged schema on every render an update performs.
+repository of the layer and update that layer under its scoped view, the
+merged questions of the layer and its ancestors at each release: the layer
+declares only its own questions, so its paths and files take `project`'s
+answers from that view on every render an update performs.
 """
 
 from pathlib import Path
@@ -20,11 +20,11 @@ import yaml
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     commit_all,
+    compose_project,
     copy_layer_into,
     git,
     init_repo,
     rehome_layer,
-    render,
     update_layer,
 )
 
@@ -85,20 +85,23 @@ def _project_at_previous_release(
     previous_release: Path, layer_repo: Path, tmp_path: Path
 ) -> Path:
     """Compose with the previous release, then point the layer at its history."""
-    project = render(
-        LAYER_NAME,
-        tmp_path,
-        context_data=ANSWERS,
-        templates_dir=previous_release.parent,
-    )
+    project = tmp_path / "out"
+    compose_project(LAYER_NAME, project, ANSWERS, previous_release.parent)
     rehome_layer(project, layer=LAYER_NAME, source=layer_repo, commit=OLD_TAG)
     init_repo(project)
     return project
 
 
-def _update_to_shipped_release(project: Path, layer_repo: Path) -> None:
+def _update_to_shipped_release(
+    project: Path, previous_release: Path, layer_repo: Path
+) -> None:
     update_layer(
-        project, root=LAYER_NAME, layer=LAYER_NAME, source=layer_repo, ref=NEW_TAG
+        project,
+        root=LAYER_NAME,
+        layer=LAYER_NAME,
+        source=layer_repo,
+        ref=NEW_TAG,
+        templates={OLD_TAG: previous_release.parent, NEW_TAG: None},
     )
 
 
@@ -114,7 +117,7 @@ class TestRenamedSmokeTestMigration:
         )
         commit_all(project, "render plus a test written in the project")
 
-        _update_to_shipped_release(project, layer_repo)
+        _update_to_shipped_release(project, previous_release, layer_repo)
 
         new_test = project / RENDERED_TEST_DIR / "test_app.py"
         assert not old_test.exists()
@@ -137,7 +140,7 @@ class TestRenamedSmokeTestMigration:
         )
         commit_all(project, "renamed by hand ahead of the template")
 
-        _update_to_shipped_release(project, layer_repo)
+        _update_to_shipped_release(project, previous_release, layer_repo)
 
         assert (project / RENDERED_TEST_DIR / "test_app.py").exists()
         assert not (project / RENDERED_TEST_DIR / "tests_app.py").exists()
