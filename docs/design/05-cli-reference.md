@@ -318,6 +318,8 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 **`--non-interactive`**: When the target template version introduces new questions, use their declared defaults without prompting. Existing answers from each layer's `.copier-answers.<layer>.yml` are always reused.
 
+**`--answers` and `--set`**: Both are laid over the questionnaire pass's data and over each layer's data, as Copier's own `--data` is laid over the answers it reads.
+
 **Default behavior**: Compute the update plan, display it, then prompt the user for confirmation before applying. This is one command, one flow — not a two-step dry-run-then-apply cycle.
 
 **Interactive flow** (TTY output):
