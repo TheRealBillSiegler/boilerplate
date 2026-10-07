@@ -38,7 +38,7 @@ Composition gives "the experience of a singular template, built from many varian
 
 Python is the right choice because Boilerplate builds directly on Copier (a Python library) — Rust would force subprocess invocation, losing type safety, shared error handling, and direct use of Copier's `Template`/`Worker` objects. Performance is not a concern: operations are I/O-bound (YAML, files, git), not CPU-bound.
 
-**Copier integration mechanism.** Boilerplate depends on Copier's *internal* `Template`/`Worker` classes (not its public API): it subclasses `Template` to present the merged question schema and hands that schema to Copier, at compose and at update, through a `Worker` subclass that holds the merged view in its fields. This coupling is deliberate and contained behind a single audited import shim — see [ADR-002](adr-002-copier-internals-shim.md) for the mechanism, rationale, and version pin. (An earlier design proposed a file-based merged-template approach to avoid the internal dependency; it was evaluated and not adopted.)
+**Copier integration mechanism.** Boilerplate depends on Copier's *internal* `Template`/`Worker` classes (not its public API): it subclasses `Template` to present a merged question schema and hands each layer's scoped view, the merged schema of the layer and its ancestors, to Copier, at compose and at update, through a `Worker` subclass that holds that view in its fields. This coupling is deliberate and contained behind a single audited import shim — see [ADR-002](adr-002-copier-internals-shim.md) for the mechanism, rationale, and version pin. (An earlier design proposed a file-based merged-template approach to avoid the internal dependency; it was evaluated and not adopted.)
 
 ## Supply Chain Decisions
 
