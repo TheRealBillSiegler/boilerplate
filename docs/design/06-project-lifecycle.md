@@ -240,7 +240,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 > **Why per-layer Copier `update`?** Copier enforces a "1 template = 1 Git repository" rule, so the documented mechanism for multi-template projects is one `copier update -a <answers-file>` invocation per template. Boilerplate MUST NOT reimplement three-way merge — Copier already provides three-way semantics per layer via that template's own Git history; Boilerplate only orchestrates the per-layer invocations.
 
 **Merge inputs (per layer, owned by Copier)**:
-- **Base**: The layer's template content at the `_commit` the layer's answers file records for that layer, which `boilerplate.lock` mirrors.
+- **Base**: The layer's old copy, rendered under its scoped view at the recorded versions from the `_commit` its answers file records, which `boilerplate.lock` mirrors.
 - **Theirs**: The layer's template content at the target version (the new commit).
 - **Ours**: The current project files (potentially modified by the user since last render).
 
