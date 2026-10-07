@@ -10,6 +10,7 @@ Copier's contract runs `_tasks` after generating a project, in the destination d
 
 - **Merge**: `_tasks` accumulates across layers by ordered concatenation — topological order across layers (dependencies first, target last), declaration order within a layer, no deduplication. Tasks are effects; repetition and order are meaningful, so the append-only strategy is deliberate even though files use last-layer-wins.
 - **Execution**: every non-final layer renders with `skip_tasks=True` (a public Copier flag); the final layer executes the full accumulated list exactly once, after all layers' files exist. Conditions are evaluated by the final layer's worker against the merged answers.
+- **Update**: the update walk renders with `skip_tasks=True` in every render Copier makes during a layer's update (the old copy, the in-place render and the new copy), and the accumulated list runs exactly once against the finished project after the last layer's update ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Copier would otherwise run each updated layer's own `_tasks` three times per update, twice in temporary directories, and never the merged list.
 - **Shapes**: task entries keep Copier's native forms end-to-end — plain string (shell execution), argv list (no shell), mapping with `command` and optional `when`/`working_directory` — so Copier, not Boilerplate, interprets execution semantics. Entries that match none of these shapes are dropped with a warning.
 
 ## Options considered
@@ -28,3 +29,4 @@ Copier's contract runs `_tasks` after generating a project, in the destination d
 
 - [ADR-003](adr-003-permissive-execution.md) governs the permissive `unsafe` trust posture the deferred execution runs under.
 - [ADR-002](adr-002-copier-internals-shim.md) localizes the `Template`/`Worker` coupling this mechanism drives; `skip_tasks` itself is public Copier API.
+- [ADR-015](adr-015-idiomatic-artifacts.md) — the update walk whose renders skip tasks; its [Verification (2026-10-06)](adr-015-idiomatic-artifacts.md#verification-2026-10-06) records where Copier runs a layer's tasks during an update.
