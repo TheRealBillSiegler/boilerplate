@@ -4,7 +4,7 @@ A file listed in a layer's own `_skip_if_exists` is never merged into again
 once the project has its own copy (docs/templates-hub/versioning.md §Authoring rules).
 These tests compose a project from the bundled templates, point the layer
 under test at a tagged repository of it, and update that layer through the
-composition's merged view, the way `test_streamlit_update_migration.py`
+layer's scoped view, the way `test_streamlit_update_migration.py`
 drives the smoke-test rename: render at a release, let the project rewrite
 its project-owned files, ship a release that changes those same files, then
 update and check the project's text survived byte for byte.
@@ -23,10 +23,10 @@ import pytest
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     commit_all,
+    compose_project,
     copy_layer_into,
     init_repo,
     rehome_layer,
-    render,
     update_layer,
 )
 
@@ -133,14 +133,23 @@ def _project_at_release(
     The bundled layer and the repository at `OLD_TAG` are the same content, so
     the composition renders the release the project is later updated from.
     """
-    project = render(layer, tmp_path, context_data=answers)
+    project = tmp_path / "out"
+    compose_project(layer, project, answers)
     rehome_layer(project, layer=layer, source=repo, commit=OLD_TAG)
     init_repo(project)
     return project
 
 
 def _update_to_next_release(project: Path, layer: str, repo: Path) -> None:
-    update_layer(project, root=layer, layer=layer, source=repo, ref=NEW_TAG)
+    # Both releases declare the bundled questions; only file contents change.
+    update_layer(
+        project,
+        root=layer,
+        layer=layer,
+        source=repo,
+        ref=NEW_TAG,
+        templates={OLD_TAG: None, NEW_TAG: None},
+    )
 
 
 @pytest.mark.slow

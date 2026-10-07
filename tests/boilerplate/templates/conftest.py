@@ -2,19 +2,34 @@
 
 Every module under this package renders one of the bundled layers through the
 real composition and rendering pipeline (no mocked Copier Worker) and then
-asserts on the output, or updates one layer of a composed project through the
-composition's merged view against a tagged git checkout of that layer.
-Centralizing the layer-discovery glob, the ``ExecutionContext`` wiring, the
-update harness and the git-repo-building helpers here keeps them from drifting
-across modules that render or update the same templates.
+asserts on the output, or composes a project and updates one of its layers
+against a tagged git checkout of that layer. Centralizing the layer-discovery
+glob, the ``ExecutionContext`` wiring, the compose and update harness and the
+git-repo-building helpers here keeps them from drifting across modules that
+render or update the same templates.
+
+Two views of a composition drive a layer's render:
+
+- The *full* view is the whole composition's merged questionnaire and
+  extension union, which ``RenderEngine`` gives every layer (``render``).
+- The *scoped* view of a layer is the merged questionnaire and extension
+  union of that layer and its ancestors only (``layer_view``). The harness
+  composes a project by asking the full questionnaire once and rendering each
+  layer under its scoped view (``compose_project``), and updates one layer
+  through ``ScopedWorker``, which renders every copy Copier's update makes
+  under the scoped view of the ref that copy renders at (``update_layer``).
+
+``probes/composition`` reuses this harness for its scenario tests.
 """
 
 import shutil
 import subprocess
+import tempfile
+from collections.abc import Mapping, Sequence
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import yaml
 from pydantic import ConfigDict
@@ -24,12 +39,17 @@ import boilerplate
 from boilerplate.cli.utils import build_template_catalog
 from boilerplate.composition import Composer
 from boilerplate.composition.models.composition import Composition
-from boilerplate.composition.rendering.engine import RenderEngine
+from boilerplate.composition.rendering.engine import (
+    _WORKER_EXCLUDES,  # pyright: ignore[reportPrivateUsage]
+    RenderEngine,
+    _is_layer_local_extension,  # pyright: ignore[reportPrivateUsage]
+)
 from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
 )
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.resolution import Resolver
+from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
 
@@ -41,6 +61,48 @@ def compose(name: str, templates_dir: Path | None = None) -> Composition:
     """Resolve and compose layer `name`, searching `templates_dir` first."""
     registry = build_template_catalog(templates_dir, Settings())
     return Composer().compose(Resolver().resolve(name, registry))
+
+
+def render_full_view(
+    name: str,
+    dest: Path,
+    *,
+    context_data: Mapping[str, object] | None = None,
+    profile: Mapping[str, object] | None = None,
+    skip_tasks: bool = True,
+    templates_dir: Path | None = None,
+) -> Path:
+    """Render the composition rooted at `name` into `dest` through ``RenderEngine``.
+
+    ``RenderEngine`` renders every layer under the composition's full view,
+    which is what ``boilerplate new`` does.
+
+    Args:
+        name: The composition's root layer, e.g. "project" or "streamlit".
+        dest: The destination directory.
+        context_data: Copier's forced `data` channel: values taken as-is and
+            never prompted.
+        profile: Copier's overridable `user_defaults` channel: pre-fills
+            interactive prompts, overridden by an interactive answer or a
+            forced `context_data` value.
+        skip_tasks: Whether to skip post-generation tasks (`--no-tasks`).
+        templates_dir: An extra directory searched ahead of the bundled
+            templates, the way `--templates-dir` is; a layer there shadows a
+            bundled layer of the same name and version.
+
+    Returns:
+        The rendered project's destination directory.
+    """
+    ctx = ExecutionContext(
+        destination=dest,
+        context_data=dict(context_data or {}),
+        profile=dict(profile or {}),
+        overwrite=True,
+        interactive=False,
+        skip_tasks=skip_tasks,
+    )
+    RenderEngine().render(compose(name, templates_dir), ctx)
+    return dest
 
 
 def render(
@@ -71,65 +133,325 @@ def render(
     Returns:
         The rendered project's destination directory.
     """
-    composition = compose(name, templates_dir)
-    dest = tmp_path / "out"
-    ctx = ExecutionContext(
-        destination=dest,
-        context_data=context_data or {},
-        profile=profile or {},
-        overwrite=True,
-        interactive=False,
+    return render_full_view(
+        name,
+        tmp_path / "out",
+        context_data=context_data,
+        profile=profile,
         skip_tasks=skip_tasks,
+        templates_dir=templates_dir,
     )
-    RenderEngine().render(composition, ctx)
-    return dest
 
 
-def _merged_view(name: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Return the merged questions and extension union of the composition at `name`."""
-    composition = compose(name)
+class LayerView(NamedTuple):
+    """The questionnaire and extensions one layer renders under.
+
+    Attributes:
+        questions: The merged question schema, keyed by question name.
+        extensions: Importable ``_jinja_extensions`` specs, in merge order.
+            Filepath-style specs resolve inside the declaring layer's own
+            tree, so they stay layer-local and never appear here; Copier
+            still loads them from the layer's own ``copier.yml``.
+    """
+
+    questions: Mapping[str, Any]
+    extensions: tuple[str, ...]
+
+
+def layer_view(name: str, templates_dir: Path | None = None) -> LayerView:
+    """Return the merged view of the composition rooted at layer `name`.
+
+    Rooted at a layer, the composition holds that layer and its ancestors, so
+    this is the layer's scoped view; rooted at the composition's final layer,
+    it is the full view.
+
+    Args:
+        name: The layer to compose.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates.
+
+    Returns:
+        The merged questions and importable extension union.
+    """
+    composition = compose(name, templates_dir)
     raw = composition.final.get("_jinja_extensions")
-    # Filepath-style specs resolve inside the declaring layer's own tree, so
-    # they stay layer-local; module-path specs travel to every layer.
     extensions = (
-        [str(e) for e in raw if not str(e).split(":", 1)[0].endswith(".py")]
+        tuple(str(e) for e in raw if not _is_layer_local_extension(str(e)))
         if isinstance(raw, list)
-        else []
+        else ()
     )
-    config: dict[str, Any] = {"jinja_extensions": extensions} if extensions else {}
-    return dict(composition.merged_questions_schema), config
+    return LayerView(dict(composition.merged_questions_schema), extensions)
+
+
+def layer_chain(name: str, templates_dir: Path | None = None) -> list[str]:
+    """Return `name`'s ancestors in topological order, `name` itself last."""
+    return [layer.name for layer in compose(name, templates_dir).layers]
+
+
+def _view_config(
+    view: LayerView, extra: Sequence[str] = (), **config: object
+) -> dict[str, object]:
+    extensions = [*view.extensions, *extra]
+    if extensions:
+        config["jinja_extensions"] = extensions
+    return config
+
+
+def _primed_worker(template: Template, **options: object) -> Worker:
+    """Return a Worker whose `template` is `template`, cleanup registered."""
+    worker = Worker(**options)  # pyright: ignore[reportCallIssue]
+    object.__setattr__(worker, "template", template)
+    worker._cleanup_hooks.append(template._cleanup)  # pyright: ignore[reportPrivateUsage]
+    return worker
+
+
+class QuestionnaireAnswers(NamedTuple):
+    """The answers one questionnaire pass produced.
+
+    Attributes:
+        user: Every question's answer, hidden (``when: false``) ones included.
+        metadata: Copier's own ``_``-prefixed answers.
+        hidden: Names of the questions that were never shown.
+    """
+
+    user: dict[str, Any]
+    metadata: dict[str, Any]
+    hidden: frozenset[str]
+
+
+def ask_merged_questionnaire(
+    root: str,
+    data: Mapping[str, Any],
+    templates_dir: Path | None = None,
+    *,
+    defaults: bool = True,
+) -> QuestionnaireAnswers:
+    """Run one questionnaire pass over the full merged view of `root`.
+
+    The first layer's Worker asks the merged questionnaire, the way
+    ``RenderEngine`` does, into a scratch destination that is discarded.
+
+    Args:
+        root: The composition's root layer.
+        data: Copier's forced `data` channel for the pass.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates.
+        defaults: Whether to accept every default instead of prompting.
+
+    Returns:
+        The pass's answers.
+    """
+    composition = compose(root, templates_dir)
+    view = layer_view(root, templates_dir)
+    first = composition.layers[0]
+    template = MergedTemplate(
+        str(first.path), dict(view.questions), _view_config(view, skip_if_exists=[])
+    )
+    with (
+        tempfile.TemporaryDirectory() as scratch,
+        _primed_worker(
+            template,
+            src_path=str(first.path),
+            dst_path=Path(scratch),
+            data=dict(data),
+            user_defaults={},
+            defaults=defaults,
+            unsafe=True,
+            quiet=True,
+        ) as worker,
+    ):
+        worker._ask()  # pyright: ignore[reportPrivateUsage]
+        return QuestionnaireAnswers(
+            dict(worker.answers.user),
+            dict(worker.answers.metadata),
+            frozenset(worker.answers.hidden),
+        )
+
+
+def compose_project(
+    root: str,
+    dest: Path,
+    answers: Mapping[str, Any],
+    templates_dir: Path | None = None,
+    *,
+    skip_tasks: bool = True,
+    extra_extensions: Mapping[str, Sequence[str]] | None = None,
+) -> dict[str, Any]:
+    """Compose the project rooted at `root` into `dest` under scoped views.
+
+    One questionnaire pass over the full merged view answers every question;
+    each layer then renders, in topological order, under its own scoped view
+    with those answers pre-seeded, so it records only the answers its scoped
+    view asks. The merged tasks run once, on the final layer.
+
+    Args:
+        root: The composition's root layer.
+        dest: The destination directory.
+        answers: Answers forced into the questionnaire pass.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates.
+        skip_tasks: Whether to skip the merged post-generation tasks.
+        extra_extensions: Extension specs to add to a layer's render, keyed
+            by layer name.
+
+    Returns:
+        The questionnaire pass's public answers.
+    """
+    composition = compose(root, templates_dir)
+    asked = ask_merged_questionnaire(root, answers, templates_dir)
+    seeded = {**asked.user, **asked.metadata}
+    tasks = normalize_tasks(composition.final)
+    for index, layer in enumerate(composition.layers):
+        run_tasks = (
+            index == len(composition.layers) - 1 and not skip_tasks and bool(tasks)
+        )
+        view = layer_view(layer.name, templates_dir)
+        config = _view_config(
+            view, (extra_extensions or {}).get(layer.name, ()), skip_if_exists=[]
+        )
+        if run_tasks:
+            config["tasks"] = tasks
+        template = MergedTemplate(str(layer.path), dict(view.questions), config)
+        with _primed_worker(
+            template,
+            src_path=str(layer.path),
+            dst_path=dest,
+            data=dict(seeded),
+            user_defaults={},
+            unsafe=True,
+            overwrite=True,
+            defaults=True,
+            skip_tasks=not run_tasks,
+            exclude=_WORKER_EXCLUDES,
+            quiet=True,
+        ) as worker:
+            worker.run_copy()
+    return {k: v for k, v in seeded.items() if not k.startswith("_")}
 
 
 @dataclass(config=ConfigDict(extra="forbid"))
-class ComposedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGeneralTypeIssues]
-    """A Copier Worker that renders its layer from the composition's merged view.
+class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGeneralTypeIssues]
+    """A Copier Worker that renders its layer under the view of the ref it renders.
 
-    Copier's update rebuilds its old-copy and new-copy workers with
-    ``dataclasses.replace``, so a template primed on one worker instance never
-    reaches those renders. A merged view held in fields of the class travels
-    with ``replace`` into every render an update performs; each layer then
-    answers the whole questionnaire while writing only its own files, which is
-    design 04's update walk (Safe Update). It is the test harness for
-    per-layer updates of the bundled templates.
+    Copier's update renders an old copy at the recorded ref, the project in
+    place and a new copy at the target ref, rebuilding a worker for each with
+    ``dataclasses.replace``; a template primed on one worker instance never
+    reaches those renders. Views held in a field travel with ``replace``, and
+    each rebuilt worker builds its template from the view keyed by the
+    ``vcs_ref`` Copier sets on it, so the old copy renders the questionnaire
+    of the release it reconstructs and the new copy that of the target.
+
+    Attributes:
+        views_by_ref: The view to render under, keyed by template ref.
     """
 
-    merged_questions: dict[str, Any] = field(default_factory=dict)
-    merged_config: dict[str, Any] = field(default_factory=dict)
+    views_by_ref: dict[str, LayerView] = field(default_factory=dict)
+
+    def view_for(self, ref: str | None) -> LayerView:
+        """Return the view this worker renders under at `ref`.
+
+        Args:
+            ref: The template ref Copier set on this worker.
+
+        Returns:
+            The view keyed by `ref`.
+
+        Raises:
+            KeyError: If no view is keyed by `ref`.
+        """
+        if ref is None or ref not in self.views_by_ref:
+            raise KeyError(f"no view for ref {ref!r}; have {sorted(self.views_by_ref)}")
+        return self.views_by_ref[ref]
 
     @cached_property
     def template(self) -> Template:  # pyright: ignore[reportIncompatibleVariableOverride]
+        """Build the template from the view keyed by this worker's ref."""
         url = self.src_path
         if not url:
             assert self.subproject.template is not None
             url = str(self.subproject.template.url)
+        ref = self.resolved_vcs_ref
+        view = self.view_for(ref)
         result = MergedTemplate(
-            url,
-            dict(self.merged_questions),
-            dict(self.merged_config) or None,
-            ref=self.resolved_vcs_ref,
+            url, dict(view.questions), _view_config(view) or None, ref=ref
         )
         self._cleanup_hooks.append(result._cleanup)  # pyright: ignore[reportPrivateUsage]
         return result
+
+
+def recorded_answers(project: Path, layer: str) -> dict[str, Any]:
+    """Return the public answers `layer`'s answers file records in `project`.
+
+    Args:
+        project: The composed project.
+        layer: The layer whose `.copier-answers.<layer>.yml` to read.
+
+    Returns:
+        The recorded answers without Copier's ``_``-prefixed keys; empty when
+        the layer has no answers file.
+    """
+    path = project / f".copier-answers.{layer}.yml"
+    if not path.exists():
+        return {}
+    recorded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return {k: v for k, v in recorded.items() if not str(k).startswith("_")}
+
+
+def _every_recorded_answer(project: Path) -> dict[str, Any]:
+    answers: dict[str, Any] = {}
+    for path in sorted(project.glob(".copier-answers.*.yml")):
+        answers.update(recorded_answers(project, path.name.split(".")[2]))
+    return answers
+
+
+def update_data(
+    project: Path,
+    *,
+    root: str,
+    layer: str,
+    templates_dir: Path | None = None,
+    full_view: bool = False,
+    ask_unanswered: bool = True,
+) -> dict[str, Any]:
+    """Build the forced answers an update of `layer` passes to Copier.
+
+    The recorded answers are the ancestors' in topological order with the
+    layer's own laid on top. The questionnaire pass answers what the layer's
+    view asks at the target release and those files do not record: one pass
+    over the full merged view, forced with every answer the project records,
+    so a new question takes a descendant's override of its default, or the
+    answer a layer updated earlier recorded, whichever layer updates first.
+
+    Args:
+        project: The composed project.
+        root: The composition's root layer.
+        layer: The layer being updated.
+        templates_dir: The templates directory holding the target release.
+        full_view: Whether to read every answers file, merged in file-name
+            order, against the root's full view, instead of `layer`'s chain
+            against its scoped view.
+        ask_unanswered: Whether to run the questionnaire pass.
+
+    Returns:
+        The questionnaire pass's answers with the recorded answers on top.
+    """
+    everything = _every_recorded_answer(project)
+    if full_view:
+        recorded, view_root = everything, root
+    else:
+        recorded, view_root = {}, layer
+        for name in layer_chain(layer, templates_dir):
+            recorded.update(recorded_answers(project, name))
+    if not ask_unanswered:
+        return recorded
+    asks = layer_view(view_root, templates_dir).questions
+    asked = ask_merged_questionnaire(root, everything, templates_dir)
+    unanswered = {
+        k: v
+        for k, v in asked.user.items()
+        if k in asks and k not in recorded and k not in asked.hidden
+    }
+    return {**unanswered, **recorded}
 
 
 def update_layer(
@@ -139,36 +461,67 @@ def update_layer(
     layer: str,
     source: Path,
     ref: str,
+    templates: Mapping[str, Path | None],
+    full_view: bool = False,
+    ask_unanswered: bool = True,
+    data: Mapping[str, Any] | None = None,
+    views_by_ref: Mapping[str, LayerView] | None = None,
+    skip_tasks: bool = True,
+    quiet: bool = True,
+    worker_type: type[ScopedWorker] = ScopedWorker,
 ) -> None:
-    """Update one layer of a composed project to `ref` through the merged view.
+    """Update one layer of a composed project to `ref` under per-ref views.
 
     Args:
         project: The composed project, a git repository with a clean tree.
-        root: The composition's root template, whose graph gives the merged view.
+        root: The composition's root layer.
         layer: The layer to update; names its `.copier-answers.<layer>.yml`.
         source: The layer's git-backed template source.
         ref: The git ref of the target template version.
+        templates: The templates directory holding each release a render of
+            this update reads, keyed by ref (`None` for the bundled
+            templates); the recorded ref and `ref` must both be keys.
+        full_view: Whether to render under the root's full view and pass
+            every answers file's answers, as ``RenderEngine`` would, instead
+            of `layer`'s scoped view and its chain's answers.
+        ask_unanswered: Whether to run a questionnaire pass over the full
+            merged view at `ref` for questions `layer`'s chain has not
+            recorded (``update_data``).
+        data: Forced answers to pass instead of building them; ``{}`` is a
+            vanilla ``copier update``, which reads only the answers file.
+        views_by_ref: Views to render under instead of composing them from
+            `templates`.
+        skip_tasks: Whether to skip the layer's own post-generation tasks.
+        quiet: Whether to silence Copier's progress output.
+        worker_type: The worker class to update with.
     """
-    questions, config = _merged_view(root)
-    answers: dict[str, Any] = {}
-    for answers_file in sorted(project.glob(".copier-answers.*.yml")):
-        recorded = yaml.safe_load(answers_file.read_text(encoding="utf-8")) or {}
-        answers.update(
-            {k: v for k, v in recorded.items() if not str(k).startswith("_")}
+    view_root = root if full_view else layer
+    views = (
+        dict(views_by_ref)
+        if views_by_ref is not None
+        else {r: layer_view(view_root, d) for r, d in templates.items()}
+    )
+    if data is None:
+        data = update_data(
+            project,
+            root=root,
+            layer=layer,
+            templates_dir=templates[ref],
+            full_view=full_view,
+            ask_unanswered=ask_unanswered,
         )
-    with ComposedWorker(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
+    with worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=str(source),
         dst_path=project,
-        answers_file=f".copier-answers.{layer}.yml",
-        data=answers,
+        answers_file=Path(f".copier-answers.{layer}.yml"),
+        data=dict(data),
         vcs_ref=ref,
         defaults=True,
         overwrite=True,
-        quiet=True,
+        quiet=quiet,
         unsafe=True,
-        skip_tasks=True,
-        merged_questions=questions,
-        merged_config=config,
+        skip_tasks=skip_tasks,
+        views_by_ref=views,
     ) as worker:
         worker.run_update()
 
@@ -192,7 +545,7 @@ def rehome_layer(project: Path, *, layer: str, source: Path, commit: str) -> Non
         if line.startswith("_src_path:"):
             rehomed.append(f"_commit: {commit}")
             rehomed.append(f"_src_path: {source.as_posix()}")
-        else:
+        elif not line.startswith("_commit:"):
             rehomed.append(line)
     answers_path.write_text("\n".join(rehomed) + "\n", encoding="utf-8")
 
@@ -232,7 +585,7 @@ def commit_all(repo: Path, message: str, tag: str | None = None) -> None:
         tag: A tag name to apply to the new commit, or `None` for no tag.
     """
     git(repo, "add", "-A")
-    git(repo, "commit", "-q", "-m", message)
+    git(repo, "commit", "-q", "--allow-empty", "-m", message)
     if tag:
         git(repo, "tag", tag)
 
@@ -247,3 +600,31 @@ def copy_layer_into(layer: Path, repo: Path) -> None:
     shutil.copytree(
         layer, repo, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__")
     )
+
+
+def build_layer_repo(repo: Path, releases: Mapping[str, Path]) -> Path:
+    """Build a git history in `repo` with one tagged commit per release.
+
+    Args:
+        repo: The directory to initialize (need not exist yet).
+        releases: Each release's layer directory, keyed by its tag, in
+            release order.
+
+    Returns:
+        The git working tree, tagged at every release.
+    """
+    repo.mkdir(parents=True, exist_ok=True)
+    init_repo(repo)
+    for tag, layer in releases.items():
+        for child in repo.iterdir():
+            if child.name != ".git":
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+        copy_layer_into(layer, repo)
+        # Same-size edits inside one mtime tick can hide from git's stat
+        # cache; dropping the index makes `add` rehash every file.
+        git(repo, "rm", "-r", "-q", "--cached", "--ignore-unmatch", ".")
+        commit_all(repo, f"release {tag}", tag)
+    return repo
