@@ -1,6 +1,7 @@
 """Copy a staging worktree's state back into the user's checkout through git."""
 
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 
 from boilerplate.common.exceptions import UpdateCheckoutChangedError
@@ -50,3 +51,49 @@ def restore_working_tree(project: Path, commit: str) -> None:
     """
     run_git(project, "restore", f"--source={commit}", "--worktree", "--", ":/")
     _logger.debug("Restored %s from %s", project, commit)
+
+
+def list_untracked_paths(project: Path) -> tuple[str, ...]:
+    """List the files in the checkout git does not track and does not ignore.
+
+    Args:
+        project: The user's checkout.
+
+    Returns:
+        The paths relative to the checkout, in git's order.
+    """
+    listing = run_git(project, "ls-files", "--others", "--exclude-standard", "-z")
+    return tuple(path for path in listing.split("\0") if path)
+
+
+def undo_working_tree(project: Path, commit: str, untracked: Sequence[str]) -> None:
+    """Return the checkout to `commit`'s files and remove `untracked`.
+
+    Tracked files, in the working tree and the index, are restored from
+    ``commit``, and the listed files, which the copy back or a task added, are
+    deleted along with the folders that leave empty. A file not listed stays: the
+    caller lists what it saw, so work the user did since is not touched.
+
+    Args:
+        project: The user's checkout.
+        commit: The commit the checkout was at when staging began.
+        untracked: Paths, relative to the checkout, of the files to delete.
+
+    Raises:
+        ValueError: If a listed path escapes the checkout.
+    """
+    root = project.resolve()
+    targets = [(root / relative).resolve() for relative in untracked]
+    for relative, target in zip(untracked, targets, strict=True):
+        if not target.is_relative_to(root):
+            raise ValueError(f"'{relative}' escapes the project.")
+    run_git(
+        project, "restore", f"--source={commit}", "--worktree", "--staged", "--", ":/"
+    )
+    for target in targets:
+        target.unlink(missing_ok=True)
+        for parent in target.parents:
+            if parent == root or any(parent.iterdir()):
+                break
+            parent.rmdir()
+    _logger.debug("Undid the update in %s from %s", project, commit)
