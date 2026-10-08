@@ -69,15 +69,6 @@ class TestShippedNew:
         """S21: the non-interactive compose exits 0."""
         assert new_run.result.returncode == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "`new` renders every layer under the full merged view, so project's "
-            "answers file records streamlit's questions; design 04 (Per-Layer "
-            "Render Loop) and ADR-015 point 4 expect each file to record only "
-            "its own layer's scoped view."
-        ),
-    )
     def test_each_answers_file_records_only_its_layers_scoped_view(
         self, new_run: NewRun
     ) -> None:
