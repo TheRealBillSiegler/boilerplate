@@ -10,6 +10,7 @@ from typing import Self
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_journal import IntentJournal
 from boilerplate.composition.staging.intent_operation import IntentOperation
+from boilerplate.composition.staging.layer_commit import commit_worktree
 from boilerplate.composition.staging.preflight import check_project_ready
 from boilerplate.composition.staging.staging_removal import remove_staging_folder
 
@@ -56,6 +57,7 @@ class StagingWorktree:
         self._temp_root = temp_root
         self._folder: Path | None = None
         self._start_commit: str | None = None
+        self._last_commit: str | None = None
 
     @property
     def folder(self) -> Path:
@@ -76,6 +78,25 @@ class StagingWorktree:
             raise RuntimeError("The staging worktree is not active.")
         return self._start_commit
 
+    @property
+    def last_commit(self) -> str:
+        """The worktree's newest layer commit, or the start commit before any."""
+        if self._last_commit is None:
+            raise RuntimeError("The staging worktree is not active.")
+        return self._last_commit
+
+    def commit_layer(self, message: str) -> str:
+        """Commit everything in the worktree with git's plumbing.
+
+        Args:
+            message: The commit message.
+
+        Returns:
+            The new commit; the worktree is clean afterwards.
+        """
+        self._last_commit = commit_worktree(self.path, message)
+        return self._last_commit
+
     def __enter__(self) -> Self:
         """Check the project, then create the worktree and its journal.
 
@@ -92,6 +113,7 @@ class StagingWorktree:
         self._folder = Path(tempfile.mkdtemp(prefix=STAGING_PREFIX, dir=root))
         try:
             self._start_commit = run_git(self.project, "rev-parse", "HEAD").strip()
+            self._last_commit = self._start_commit
             self._write_journal("staging")
             run_git(self.project, "worktree", "add", "--detach", str(self.path), "HEAD")
         except BaseException:
@@ -125,4 +147,5 @@ class StagingWorktree:
         if self._folder is None:
             return
         folder, self._folder = self._folder, None
+        self._last_commit = None
         remove_staging_folder(self.project, folder, folder / self.project.name)
