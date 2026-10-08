@@ -15,6 +15,7 @@ Root `AGENTS.md` (`## Testing`) holds the structural rules. This file holds the 
 | Logging assertions | stdlib logging only — no `structlog`, no `caplog`. Unit tests inspect handler config directly (`logging.getLogger("boilerplate").level`, `root.handlers[0]`); integration tests scan subprocess output for `[DEBUG]`/`[INFO]` markers. Reset with the `reset_logging` autouse fixture. |
 | Snapshot output | Rich/console output asserted with syrupy: `assert result == snapshot`, module marked `pytestmark = [pytest.mark.snapshot]`, refresh with `--snapshot-update`. For ad-hoc capture, the `captured_display` fixture (a `Display` wired to `StringIO`). |
 | `# noqa: ARG002` | Annotate unused method/fixture parameters required by an interface or for side effects. |
+| Cross-module composition scenarios | `tests/integration/boilerplate/composition/scenarios/`, auto-marked `scenario` (deselect with `-m "not scenario"`). They test the composition design across modules against real Copier and git, so they do not mirror one source module; see the README there. |
 | Scenario class naming | `TestSubjectHappyPath`, `TestSubjectSadPath`, `TestSubjectBoundary`, or a descriptive `TestSubject...` grouping. |
 
 ## Parallelism
