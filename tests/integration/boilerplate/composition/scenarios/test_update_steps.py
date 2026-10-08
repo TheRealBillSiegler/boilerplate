@@ -7,12 +7,14 @@ These scenarios cross layers, so they live here; the pieces they exercise are
 tested beside their source modules.
 """
 
-from collections.abc import Iterator
+import logging
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from boilerplate.common.exceptions import RecordedAnswerRejectedError
 from tests.boilerplate.templates.conftest import recorded_answers
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -149,3 +151,116 @@ class TestInteractivePrompting:
         )
 
         assert (session.finished, session.shown) == (True, ["api_token", "license"])
+
+
+REJECTION_BEFORE = BASE
+REJECTION_AFTER = {**BASE, "docs": "1.1.0"}
+SITE_NAME_REASON = "The site name cannot be empty."
+
+
+class TestRejectedRecordedAnswer:
+    """Docs 1.1.0 rejects an empty `docs_site_name`; service 1.1.0 retypes `port`."""
+
+    def _compose_empty_site_name(self, family: Family, tmp_path: Path) -> Path:
+        return compose_family(family, tmp_path, "app", BASE, {"docs_site_name": ""})
+
+    def _update_docs(
+        self,
+        family: Family,
+        project: Path,
+        work: Path,
+        *,
+        data: Mapping[str, Any] | None = None,
+        interactive: bool = False,
+    ) -> None:
+        update_family_layer(
+            family,
+            project,
+            root="app",
+            layer="docs",
+            before=REJECTION_BEFORE,
+            after=REJECTION_AFTER,
+            work=work,
+            data=data or {},
+            step_views=True,
+            interactive=interactive,
+        )
+
+    def test_non_interactive_step_names_the_layer_question_and_value(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Raise instead of letting Copier silently record the new default."""
+        project = self._compose_empty_site_name(family, tmp_path)
+
+        with pytest.raises(RecordedAnswerRejectedError) as raised:
+            self._update_docs(family, project, tmp_path)
+
+        error = raised.value
+        assert (error.layer, error.question, error.value, error.error_code) == (
+            "docs",
+            "docs_site_name",
+            "",
+            "BP_INPUT_ANSWER_REJECTED",
+        )
+
+    def test_the_reason_is_the_validators_message(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        project = self._compose_empty_site_name(family, tmp_path)
+
+        with pytest.raises(RecordedAnswerRejectedError) as raised:
+            self._update_docs(family, project, tmp_path)
+
+        assert SITE_NAME_REASON in raised.value.reason
+
+    def test_a_supplied_value_replaces_the_rejected_answer(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Let Copier validate the supplied value instead of the recorded one."""
+        project = self._compose_empty_site_name(family, tmp_path)
+
+        self._update_docs(
+            family, project, tmp_path, data={"docs_site_name": "Family docs"}
+        )
+
+        assert recorded_answers(project, "docs")["docs_site_name"] == "Family docs"
+
+    def test_a_retyped_question_passes_when_the_recorded_answer_casts(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Carry a recorded "8000" over as the int 8000 under service 1.1.0."""
+        before = {"core": "1.0.0", "service": "1.0.0"}
+        project = compose_family(family, tmp_path, "service", before)
+
+        update_family_layer(
+            family,
+            project,
+            root="service",
+            layer="service",
+            before=before,
+            after={**before, "service": "1.1.0"},
+            work=tmp_path,
+            data={},
+            step_views=True,
+        )
+
+        assert recorded_answers(project, "service")["port"] == 8000
+
+    def test_an_interactive_step_warns_and_asks_for_a_valid_answer(
+        self, family: Family, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Log why the answer is rejected and let the prompt take a valid one."""
+        project = self._compose_empty_site_name(family, tmp_path)
+
+        with caplog.at_level(logging.WARNING):
+            session = drive_prompts(
+                lambda: self._update_docs(family, project, tmp_path, interactive=True),
+                {"docs_site_name": "Typed docs"},
+            )
+
+        assert (
+            session.finished,
+            session.error,
+            SITE_NAME_REASON in caplog.text,
+            recorded_answers(project, "docs")["docs_site_name"],
+        ) == (True, None, True, "Typed docs")

@@ -10,7 +10,12 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
+from copier._jinja_ext import (
+    SandboxedEnvironment,  # pyright: ignore[reportPrivateUsage]
+)
+
 from boilerplate.integrations.copier_types import (
+    MISSING,
     NEW_COPY_DIR_PREFIX,
     OLD_COPY_DIR_PREFIX,
     AnswersMap,
@@ -90,3 +95,18 @@ class TestUpdateCopyPrefixes:
             OLD_COPY_DIR_PREFIX,
             NEW_COPY_DIR_PREFIX,
         ) == (True, True, f"{module}.old_copy.", f"{module}.new_copy.")
+
+
+class TestQuestionWithoutADefault:
+    """The scoped worker's answer walk tells a missing default by Copier's sentinel."""
+
+    def test_get_default_returns_the_reexported_sentinel(self) -> None:
+        """Pin that the shim's MISSING is the object Copier's get_default returns."""
+        question = Question(
+            var_name="bare",
+            answers=AnswersMap(),
+            context={},
+            jinja_env=SandboxedEnvironment(),
+        )
+
+        assert question.get_default() is MISSING
