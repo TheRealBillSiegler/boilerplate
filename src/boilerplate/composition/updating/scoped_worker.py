@@ -29,6 +29,7 @@ from boilerplate.integrations.copier_types import (
     Question,
     Template,
     Worker,
+    update_operation,
 )
 
 _logger = logging.getLogger(__name__)
@@ -72,12 +73,15 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         old_copy_fill: The answers the declaring ancestors recorded when the
             walk began, for the questions of the old view they declare; the
             old copy takes those its own answers file lacks.
+        tasks: The tasks the template runs, in Copier's shapes, for the
+            post-walk task run (``run_tasks``); empty for a layer's own update.
     """
 
     old_view: LayerView = field(kw_only=True)
     target_view: LayerView = field(kw_only=True)
     layer: str = field(default="", kw_only=True)
     old_copy_fill: Mapping[str, Any] = field(default_factory=dict, kw_only=True)
+    tasks: tuple[Any, ...] = field(default=(), kw_only=True)
 
     def view_for_render(self) -> LayerView:
         """Return the view for the render this worker makes.
@@ -113,6 +117,28 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         """
         with registered_ancestor_extensions(self.render_view.ancestor_extensions):
             super().run_update()
+
+    def run_tasks(self) -> None:
+        """Run the template's tasks against the finished project as an update's.
+
+        The project is the composed whole by now, so the tasks run once against
+        it, as at creation, but under Copier's ``update`` operation: a task's
+        ``when:`` sees ``_copier_operation == "update"`` and a template may guard
+        a creation-only task. Only ``run_copy``, ``run_recopy`` and ``run_update``
+        set the operation, and this run is none of them, so the shim sets it. The
+        questions are asked first, as the task conditions and commands render
+        against the answers; the project's recorded answers and the data the
+        worker holds answer them all.
+
+        Raises:
+            TaskError: If a task exits non-zero; it names the command.
+        """
+        with (
+            registered_ancestor_extensions(self.render_view.ancestor_extensions),
+            update_operation(),
+        ):
+            super()._ask()
+            self._execute_tasks(self.template.tasks)
 
     def _ask(self) -> None:
         """Ask the questions, after rejecting a recorded answer the target cannot take.
@@ -338,9 +364,10 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
         view = self.render_view
-        result = MergedTemplate(
-            url, dict(view.questions), view_config(view) or None, ref=ref
+        config = view_config(
+            view, **({"tasks": list(self.tasks)} if self.tasks else {})
         )
+        result = MergedTemplate(url, dict(view.questions), config or None, ref=ref)
         # Copier registers a template's cleanup only for the template it
         # builds itself; this one it never sees, and a VCS template clones
         # into a temp directory that only `_cleanup` removes.
