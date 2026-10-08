@@ -36,7 +36,7 @@ class TestRelativeProject:
     ) -> None:
         monkeypatch.chdir(project)
 
-        with staging(Path("."), staging_root) as stage:
+        with staging(Path(), staging_root) as stage:
             assert stage.project == project.resolve()
             assert stage.path.name == PROJECT_NAME
             assert not stage.folder.is_relative_to(stage.path)
