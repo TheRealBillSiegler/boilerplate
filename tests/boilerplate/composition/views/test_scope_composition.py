@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.composition.views import build_layer_view, scope_composition
 from tests.boilerplate.templates.conftest import compose
@@ -89,3 +91,11 @@ class TestScopeComposition:
         full = compose("top", tmp_path)
 
         assert scope_composition(full, "top") == full
+
+    def test_a_layer_outside_the_composition_raises_key_error(
+        self, tmp_path: Path
+    ) -> None:
+        _diamond(tmp_path)
+
+        with pytest.raises(KeyError, match="elsewhere"):
+            scope_composition(compose("top", tmp_path), "elsewhere")
