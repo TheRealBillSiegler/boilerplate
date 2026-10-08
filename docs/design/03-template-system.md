@@ -78,7 +78,7 @@ When `requires_profile` is non-null, it MUST be an object with the following fie
 
 When the required profile is not present in the project's environment state (no `.boilerplate/environment.yml`, or its `profile_name` does not match) or its `profile_version` does not satisfy the `version` constraint, the outcome depends on whether the command mutates the project:
 
-- **Mutating commands** (`boilerplate new`, `boilerplate update`, `boilerplate adopt`) MUST fail closed with `BP_RESOLVE_PROFILE_MISSING` and exit code `3` (`VALIDATION_ERROR`). The error message MUST name the required profile, the failing constraint, and the actual environment state (or its absence).
+- **Mutating commands** (`boilerplate new`, `boilerplate update`, `boilerplate add`, `boilerplate adopt`) MUST fail closed with `BP_RESOLVE_PROFILE_MISSING` and exit code `3` (`VALIDATION_ERROR`). The error message MUST name the required profile, the failing constraint, and the actual environment state (or its absence).
 - **Read-only / inspection commands** (`compose`, `graph`, `validate`, `--render-to`, `test`) MUST emit a WARNING naming the same details but MUST NOT fail on this basis alone, so authors can inspect a template before its profile is provisioned.
 
 This keeps the profile contract a hard precondition exactly where it affects on-disk state, while letting inspection remain usable on a not-yet-provisioned environment.
@@ -263,7 +263,7 @@ Boilerplate orchestrates Copier; Copier renders. This section specifies the boun
 | Template submodules | Git | Initialized by Boilerplate before render | MUST exist before YAML parsing |
 | Merged `copier.yml` | Boilerplate composition engine | Derived | `!include` directives processed before Copier sees the file |
 | Rendered project files | Copier | Written to staging during render | Atomically moved on success |
-| `MigrationRecord` entries | Boilerplate | Append-only | Written post-update or post-adopt |
+| `MigrationRecord` entries | Boilerplate | Append-only | Written post-update, post-add or post-adopt |
 
 ### Preconditions (before invoking Copier)
 
