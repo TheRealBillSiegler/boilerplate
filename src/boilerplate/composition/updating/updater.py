@@ -3,26 +3,23 @@
 
 import logging
 import tempfile
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
 from boilerplate import __version__
 from boilerplate.common.exceptions import ActionRequiredError
-from boilerplate.composition.staging import (
-    IntentOperation,
-    StagingWorktree,
-    check_project_ready,
+from boilerplate.composition.staging import check_project_ready
+from boilerplate.composition.updating.task_failure_handler import (
+    TaskFailureHandler,
+    keep_files,
 )
-from boilerplate.composition.updating.layer_updater import update_layer
-from boilerplate.composition.updating.step_inputs import StepInputs
-from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
-from boilerplate.composition.updating.walk.update_lock_writer import write_update_lock
-from boilerplate.composition.updating.walk.update_recorder import UpdateRecorder
-from boilerplate.composition.updating.walk.walk_plan import WalkPlan
+from boilerplate.composition.updating.walk.update_walk import (
+    UpdateWalk,
+    conflict_message,
+)
+from boilerplate.composition.updating.walk.walk_inputs import WalkInputs
 from boilerplate.composition.updating.walk.walk_planner import plan_walk
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
@@ -36,28 +33,32 @@ _PAUSE_REMEDIATION = (
 )
 
 
-def _conflict_message(layer: str, conflicts: Sequence[str]) -> str:
-    """Say which layer's update left conflicts and in which files."""
-    return f"Layer '{layer}' left merge conflicts in: {', '.join(conflicts)}."
-
-
 class Updater:
     """Updates a composed project to newer releases of its layers.
 
-    The walk plans first, with every check that can stop an update before any
-    staging folder exists. It then updates each layer in a detached worktree of
-    the project, ancestors first, committing after each so Copier will update
-    the next, and brings the result back into the user's checkout as the
-    uncommitted changes plain Copier leaves. The lock and the migration record
-    are written last.
+    The update plans first, with every check that can stop it before any staging
+    folder exists. It then updates each layer in a detached worktree of the
+    project, ancestors first, committing after each so Copier will update the
+    next, and brings the result back into the user's checkout as the uncommitted
+    changes plain Copier leaves. The composition's tasks run once after that, and
+    the lock and the migration record are written last.
     """
 
-    def __init__(self, *, boilerplate_version: str = __version__) -> None:
+    def __init__(
+        self,
+        *,
+        on_task_failure: TaskFailureHandler = keep_files,
+        boilerplate_version: str = __version__,
+    ) -> None:
         """Prepare an updater.
 
         Args:
+            on_task_failure: Called with the task that failed after the files
+                were copied back; returns whether to keep the update or undo it.
+                The default keeps it, as a caller that cannot ask does.
             boilerplate_version: The version of the tool, recorded in the lock.
         """
+        self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
 
     def update(
@@ -77,10 +78,11 @@ class Updater:
                 layer to its latest release without prompting.
 
         Returns:
-            What the walk did.
+            What the walk did: updated, or undone after a failed task.
 
         Raises:
             ActionRequiredError: If a layer's update left conflicts.
+            UpdateTaskFailedError: If a task failed and the files were kept.
             UpdateProjectNotReadyError: If the project is dirty or not a
                 repository root.
             UpdateSubmodulesUnsupportedError: If the project has submodules.
@@ -99,7 +101,7 @@ class Updater:
         outcome = self.run(project, request)
         if outcome.status is UpdateStatus.PAUSED:
             raise ActionRequiredError(
-                _conflict_message(outcome.paused_at or "", outcome.conflicts),
+                conflict_message(outcome.paused_at or "", outcome.conflicts),
                 remediation=_PAUSE_REMEDIATION,
             )
         return outcome
@@ -114,9 +116,10 @@ class Updater:
                 layer to its latest release without prompting.
 
         Returns:
-            What the walk did.
+            What the walk did: updated, paused on a conflict or undone.
 
         Raises:
+            UpdateTaskFailedError: If a task failed and the files were kept.
             UpdateProjectNotReadyError: If the project is dirty or not a
                 repository root.
             UpdateSubmodulesUnsupportedError: If the project has submodules.
@@ -144,84 +147,8 @@ class Updater:
             plan = plan_walk(project, request, lock, checkouts, Path(workdir))
             for warning in plan.warnings:
                 _logger.warning(warning)
-            return self._walk(project, request, plan, checkouts)
-
-    def _walk(
-        self,
-        project: Path,
-        request: UpdateRequest,
-        plan: WalkPlan,
-        checkouts: ReleaseCheckouts,
-    ) -> UpdateOutcome:
-        """Run the plan's steps in a staging worktree and finish the update."""
-        options = UpdateOptions(
-            skip_tasks=True,
-            quiet=request.quiet,
-            interactive=request.interactive,
-            skip_answered=request.skip_answered,
-        )
-        secrets: dict[str, Any] = {}
-        ran: list[str] = []
-        with StagingWorktree(
-            project,
-            operation=IntentOperation.UPDATE,
-            template_ref=plan.root_release.ref,
-        ) as staging:
-            for step in plan.steps:
-                secrets.update(
-                    update_layer(
-                        staging.path,
-                        step.release,
-                        step.views,
-                        StepInputs(supplied=request.supplied, secrets=secrets),
-                        options,
-                    )
-                )
-                ran.append(step.layer)
-                conflicts = staging.unmerged_paths()
-                if conflicts:
-                    return self._pause(project, staging, plan, tuple(ran), conflicts)
-                staging.commit_layer(f"Update {step.layer} to {step.release.ref}")
-            staging.copy_back()
-            lock = write_update_lock(
-                project, staging, plan.lock, self._boilerplate_version, checkouts
-            )
-        UpdateRecorder(project, plan.lock).success(lock.root_template)
-        return UpdateOutcome(
-            status=UpdateStatus.UPDATED,
-            updated=tuple(ran),
-            skipped=plan.skipped,
-            warnings=plan.warnings,
-        )
-
-    def _pause(
-        self,
-        project: Path,
-        staging: StagingWorktree,
-        plan: WalkPlan,
-        ran: tuple[str, ...],
-        conflicts: tuple[str, ...],
-    ) -> UpdateOutcome:
-        """Bring the partial update back and record where to resume from.
-
-        The layers finished so far, the paused layer included, are copied back
-        with the paused layer's conflict markers and unmerged index entries. The
-        conflict record names every layer's target and the finished layers; no
-        lock is written.
-        """
-        staging.copy_back(paused=True)
-        paused_at = ran[-1]
-        UpdateRecorder(project, plan.lock).conflict(
-            f"{plan.root}@{plan.targets[plan.root]}",
-            _conflict_message(paused_at, conflicts),
-            targets=plan.targets,
-            finished=(*plan.skipped, *ran),
-        )
-        return UpdateOutcome(
-            status=UpdateStatus.PAUSED,
-            updated=ran,
-            skipped=plan.skipped,
-            paused_at=paused_at,
-            conflicts=conflicts,
-            warnings=plan.warnings,
-        )
+            return UpdateWalk(
+                WalkInputs(project, request, plan, checkouts),
+                on_task_failure=self._on_task_failure,
+                boilerplate_version=self._boilerplate_version,
+            ).execute()
