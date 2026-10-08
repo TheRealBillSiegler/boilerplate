@@ -15,17 +15,24 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+import yaml
 
 from boilerplate.common.exceptions import (
+    AnswersFileIncompleteError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdateTargetMismatchError,
+)
+from boilerplate.composition.updating import (
+    check_answers_complete,
+    read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating.versions import (
     LayerVersions,
     read_layer_versions,
     resolve_versions,
 )
+from boilerplate.composition.views import LayerView
 from boilerplate.models import (
     BoilerplateLock,
     ChangeClassification,
@@ -39,6 +46,7 @@ from tests.boilerplate.templates.conftest import (
     commit_all,
     compose,
     git,
+    layer_view,
     rehome_layer,
 )
 from tests.integration.boilerplate.composition.family import Family
@@ -346,3 +354,49 @@ class TestDowngradesStopBeforeAnyLayerRuns:
             "1.2.0",
             "1.1.0",
         )
+
+
+def _views(project: Project, work: Path) -> dict[str, LayerView]:
+    """Return every layer's scoped view at the BASE versions, in walk order."""
+    templates = templates_at(project.family, work, BASE)
+    return {name: layer_view(name, templates) for name in project.order}
+
+
+def _recorded_keys(project: Project) -> dict[str, set[str]]:
+    return {
+        layer: set(answers)
+        for layer, answers in read_recorded_answers_by_layer(project.root).items()
+    }
+
+
+def _trim_to_own_keys(project: Project, layer: str, own: set[str]) -> None:
+    """Rewrite `layer`'s answers file as a vanilla hand-run update leaves it."""
+    path = project.root / f".copier-answers.{layer}.yml"
+    recorded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    kept = {k: v for k, v in recorded.items() if k.startswith("_") or k in own}
+    path.write_text(yaml.safe_dump(kept), encoding="utf-8", newline="\n")
+
+
+class TestATrimmedAnswersFileStopsTheUpdate:
+    """A vanilla hand-run of service keeps only service's own keys."""
+
+    def test_an_untouched_project_passes(
+        self, project: Project, tmp_path: Path
+    ) -> None:
+        check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+
+    def test_a_trimmed_service_file_stops_listing_the_missing_keys(
+        self, project: Project, tmp_path: Path
+    ) -> None:
+        _trim_to_own_keys(project, "service", {"python_version", "port"})
+
+        with pytest.raises(AnswersFileIncompleteError) as caught:
+            check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+
+        assert caught.value.error_code == "BP_UPDATE_ANSWERS_INCOMPLETE"
+        assert set(caught.value.missing) == {"service"}
+        assert set(caught.value.missing["service"]) == {
+            "project_name",
+            "author_name",
+            "use_tests",
+        }
