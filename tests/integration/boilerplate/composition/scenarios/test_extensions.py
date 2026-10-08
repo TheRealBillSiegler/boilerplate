@@ -23,9 +23,9 @@ import pytest
 import yaml
 from jinja2.exceptions import TemplateAssertionError
 
+from boilerplate.composition.views import LayerView
 from boilerplate.integrations.copier_types import Template
 from tests.boilerplate.templates.conftest import (
-    LayerView,
     ScopedWorker,
     commit_all,
     compose_project,

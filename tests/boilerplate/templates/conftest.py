@@ -42,7 +42,6 @@ from boilerplate.composition.models.composition import Composition
 from boilerplate.composition.rendering.engine import (
     _WORKER_EXCLUDES,  # pyright: ignore[reportPrivateUsage]
     RenderEngine,
-    _is_layer_local_extension,  # pyright: ignore[reportPrivateUsage]
 )
 from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
@@ -50,6 +49,7 @@ from boilerplate.composition.rendering.models.execution_context import (
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
+from boilerplate.composition.views import LayerView, build_layer_view, view_config
 from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
 
@@ -143,21 +143,6 @@ def render(
     )
 
 
-class LayerView(NamedTuple):
-    """The questionnaire and extensions one layer renders under.
-
-    Attributes:
-        questions: The merged question schema, keyed by question name.
-        extensions: Importable ``_jinja_extensions`` specs, in merge order.
-            Filepath-style specs resolve inside the declaring layer's own
-            tree, so they stay layer-local and never appear here; Copier
-            still loads them from the layer's own ``copier.yml``.
-    """
-
-    questions: Mapping[str, Any]
-    extensions: tuple[str, ...]
-
-
 def layer_view(name: str, templates_dir: Path | None = None) -> LayerView:
     """Return the merged view of the composition rooted at layer `name`.
 
@@ -173,28 +158,12 @@ def layer_view(name: str, templates_dir: Path | None = None) -> LayerView:
     Returns:
         The merged questions and importable extension union.
     """
-    composition = compose(name, templates_dir)
-    raw = composition.final.get("_jinja_extensions")
-    extensions = (
-        tuple(str(e) for e in raw if not _is_layer_local_extension(str(e)))
-        if isinstance(raw, list)
-        else ()
-    )
-    return LayerView(dict(composition.merged_questions_schema), extensions)
+    return build_layer_view(compose(name, templates_dir))
 
 
 def layer_chain(name: str, templates_dir: Path | None = None) -> list[str]:
     """Return `name`'s ancestors in topological order, `name` itself last."""
     return [layer.name for layer in compose(name, templates_dir).layers]
-
-
-def _view_config(
-    view: LayerView, extra: Sequence[str] = (), **config: object
-) -> dict[str, object]:
-    extensions = [*view.extensions, *extra]
-    if extensions:
-        config["jinja_extensions"] = extensions
-    return config
 
 
 def _primed_worker(template: Template, **options: object) -> Worker:
@@ -245,7 +214,7 @@ def ask_merged_questionnaire(
     view = layer_view(root, templates_dir)
     first = composition.layers[0]
     template = MergedTemplate(
-        str(first.path), dict(view.questions), _view_config(view, skip_if_exists=[])
+        str(first.path), dict(view.questions), view_config(view, skip_if_exists=[])
     )
     with (
         tempfile.TemporaryDirectory() as scratch,
@@ -306,7 +275,7 @@ def compose_project(
             index == len(composition.layers) - 1 and not skip_tasks and bool(tasks)
         )
         view = layer_view(layer.name, templates_dir)
-        config = _view_config(
+        config = view_config(
             view, (extra_extensions or {}).get(layer.name, ()), skip_if_exists=[]
         )
         if run_tasks:
@@ -373,7 +342,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         ref = self.resolved_vcs_ref
         view = self.view_for(ref)
         result = MergedTemplate(
-            url, dict(view.questions), _view_config(view) or None, ref=ref
+            url, dict(view.questions), view_config(view) or None, ref=ref
         )
         self._cleanup_hooks.append(result._cleanup)  # pyright: ignore[reportPrivateUsage]
         return result
