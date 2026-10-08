@@ -86,6 +86,8 @@ class UpdateWalk:
             UpdateTaskFailedError: If a task failed and the handler kept the
                 files; the lock is written and the failure recorded first.
             UpdateCheckoutChangedError: If the checkout changed during the walk.
+            UpdatePathObstructedError: If a path the walk added already exists
+                in the checkout as a file or directory git ignores.
             RecordedAnswerRejectedError: If a layer's target rejects a recorded
                 answer and the step does not prompt.
         """

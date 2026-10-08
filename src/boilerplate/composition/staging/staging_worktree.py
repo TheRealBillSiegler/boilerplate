@@ -18,6 +18,11 @@ from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_journal import IntentJournal
 from boilerplate.composition.staging.intent_operation import IntentOperation
 from boilerplate.composition.staging.layer_commit import commit_worktree
+from boilerplate.composition.staging.path_obstruction import (
+    list_added_paths,
+    list_uncommitted_paths,
+    require_paths_unobstructed,
+)
 from boilerplate.composition.staging.preflight import check_project_ready
 from boilerplate.composition.staging.staging_removal import remove_staging_folder
 from boilerplate.composition.staging.stale_cleanup import (
@@ -180,8 +185,15 @@ class StagingWorktree:
         Raises:
             UpdateCheckoutChangedError: If the checkout changed during staging;
                 it is left as it is.
+            UpdatePathObstructedError: If a path the walk added already exists
+                in the checkout as a file or directory git ignores; nothing is
+                written.
         """
         require_checkout_unchanged(self.project, self.start_commit, self.operation)
+        added = list_added_paths(self.project, self.start_commit, self.last_commit)
+        if paused:
+            added = (*added, *list_uncommitted_paths(self.path))
+        require_paths_unobstructed(self.project, added)
         self.record_phase("committing")
         restore_working_tree(self.project, self.last_commit)
         if paused:
