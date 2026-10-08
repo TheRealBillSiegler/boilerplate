@@ -176,7 +176,7 @@ A project with submodules (a `.gitmodules` file) MUST stop with `BP_UPDATE_SUBMO
 - Resolve the target version using the same deterministic rules as project creation
 - Default: resolve the latest available version of the root template
 - Support explicit target version: `--target-version <version>`
-- Downgrades MUST be rejected, with no flag to override. Before the walk starts, `update` MUST compare each layer's target version with the version that layer's answers file records in `_commit`, parsed the way Copier parses it (a `git describe` string such as `v2.0.0-3-gabc1234` reads as `2.0.0.post3+abc1234`). When any target is older, `update` MUST stop before any layer changes, with an error naming the layer, its recorded version and the target. The same rule applies when a recorded `_commit` yields no version. The way back from an applied update is reverting the commit that recorded it.
+- Downgrades MUST be rejected, with no flag to override. Before the walk starts, `update` MUST compare each layer's target version with the version that layer's answers file records in `_commit`, parsed the way Copier parses it, with Copier's own `Template.version` (a `git describe` string such as `v2.0.0-3-gabc1234` reads as a post-release of `2.0.0`, which sorts after `2.0.0`). When any target is older, `update` MUST stop before any layer changes with `BP_UPDATE_DOWNGRADE_REJECTED`, naming the layer, its recorded version and the target. The same rule applies when a recorded `_commit` yields no version. The way back from an applied update is reverting the commit that recorded it.
 
 ### Step 3: Build UpdatePlan
 
