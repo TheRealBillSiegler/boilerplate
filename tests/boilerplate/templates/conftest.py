@@ -26,14 +26,10 @@ import shutil
 import subprocess
 import tempfile
 from collections.abc import Mapping, Sequence
-from dataclasses import field
-from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple
 
 import yaml
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
 
 import boilerplate
 from boilerplate.cli.utils import build_template_catalog
@@ -49,6 +45,7 @@ from boilerplate.composition.rendering.models.execution_context import (
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
+from boilerplate.composition.updating import ScopedWorker
 from boilerplate.composition.views import LayerView, build_layer_view, view_config
 from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
@@ -296,56 +293,6 @@ def compose_project(
         ) as worker:
             worker.run_copy()
     return {k: v for k, v in seeded.items() if not k.startswith("_")}
-
-
-@dataclass(config=ConfigDict(extra="forbid"))
-class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGeneralTypeIssues]
-    """A Copier Worker that renders its layer under the view of the ref it renders.
-
-    Copier's update renders an old copy at the recorded ref, the project in
-    place and a new copy at the target ref, rebuilding a worker for each with
-    ``dataclasses.replace``; a template primed on one worker instance never
-    reaches those renders. Views held in a field travel with ``replace``, and
-    each rebuilt worker builds its template from the view keyed by the
-    ``vcs_ref`` Copier sets on it, so the old copy renders the questionnaire
-    of the release it reconstructs and the new copy that of the target.
-
-    Attributes:
-        views_by_ref: The view to render under, keyed by template ref.
-    """
-
-    views_by_ref: dict[str, LayerView] = field(default_factory=dict)
-
-    def view_for(self, ref: str | None) -> LayerView:
-        """Return the view this worker renders under at `ref`.
-
-        Args:
-            ref: The template ref Copier set on this worker.
-
-        Returns:
-            The view keyed by `ref`.
-
-        Raises:
-            KeyError: If no view is keyed by `ref`.
-        """
-        if ref is None or ref not in self.views_by_ref:
-            raise KeyError(f"no view for ref {ref!r}; have {sorted(self.views_by_ref)}")
-        return self.views_by_ref[ref]
-
-    @cached_property
-    def template(self) -> Template:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Build the template from the view keyed by this worker's ref."""
-        url = self.src_path
-        if not url:
-            assert self.subproject.template is not None
-            url = str(self.subproject.template.url)
-        ref = self.resolved_vcs_ref
-        view = self.view_for(ref)
-        result = MergedTemplate(
-            url, dict(view.questions), view_config(view) or None, ref=ref
-        )
-        self._cleanup_hooks.append(result._cleanup)  # pyright: ignore[reportPrivateUsage]
-        return result
 
 
 def recorded_answers(project: Path, layer: str) -> dict[str, Any]:
