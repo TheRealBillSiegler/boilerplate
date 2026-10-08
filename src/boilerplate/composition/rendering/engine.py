@@ -1,39 +1,35 @@
 """RenderEngine: orchestrate Copier runs over a composed template.
 
-This module runs each composition layer through Copier using a `MergedTemplate`
-so merged questions and (optionally) tasks are visible to the Worker without
-mutating the on-disk template.
+The merged questionnaire is asked once; each composition layer then renders
+through Copier under its own scoped view, as a `MergedTemplate`, so the view's
+questions and (on the final layer) the merged tasks are visible to the Worker
+without mutating the on-disk template.
 
 All behavior is deterministic and side-effect free except for file I/O
 performed by Copier.
 """
 # Spec: docs/design/04-composition-engine.md §Stage 4 — RenderEngine
 
-import contextlib
-import os
-from collections.abc import Generator
 from logging import getLogger
 from pathlib import Path
-from typing import TypedDict
 
-from copier.errors import CopierAnswersInterrupt, InteractiveSessionError
-
-from boilerplate.common.exceptions import (
-    InteractiveRenderFailedError,
-    MissingRequiredAnswersError,
-    UserCancelledError,
-)
+from boilerplate.common.exceptions import MissingRequiredAnswersError
 from boilerplate.composition.models.composition import Composition
+from boilerplate.composition.models.composition_layer import CompositionLayer
 from boilerplate.composition.models.json_types import JSON
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
+from boilerplate.composition.rendering.questionnaire import ask_questionnaire
+from boilerplate.composition.rendering.worker_options import WorkerOptions
+from boilerplate.composition.rendering.worker_session import worker_session
 from boilerplate.composition.tasks import normalize_tasks
-from boilerplate.composition.views.layer_view_builder import is_layer_local_extension
-from boilerplate.integrations.copier_types import (
-    DEFAULT_EXCLUDE,
-    Template,  # For test compatibility
-    Worker,
+from boilerplate.composition.views import (
+    LayerView,
+    build_layer_view,
+    scope_composition,
+    view_config,
 )
+from boilerplate.integrations.copier_types import DEFAULT_EXCLUDE
 from boilerplate.integrations.copier_types import Template as CopierTemplate
 from boilerplate.models.template_info import TemplateInfo
 from boilerplate.models.template_meta import TemplateMeta
@@ -116,25 +112,17 @@ def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo
         )
 
 
-class WorkerOptions(TypedDict, total=False):
-    """Type-safe options for copier Worker constructor."""
-
-    src_path: str | None
-    dst_path: Path
-    data: dict[str, object]  # AnyByStrDict equivalent — forced answers
-    user_defaults: dict[str, object]  # overridable prompt pre-fills
-    unsafe: bool
-    overwrite: bool
-    defaults: bool
-    skip_tasks: bool
-    exclude: tuple[str, ...]
-
-
 class RenderEngine:
-    """Runs Copier across composition layers using a merged question schema."""
+    """Asks the merged questionnaire once, then renders each layer under its view."""
 
     def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
         """Render all layers of `composition` into `ctx.destination`.
+
+        One questionnaire pass over the full merged schema answers every
+        question; each layer then renders, in topological order, under its
+        scoped view with those answers as data, so its answers file records
+        only its own and its ancestors' questions. The merged tasks run once, on
+        the last layer.
 
         Args:
             composition: Computed composition (layers and final merged schema).
@@ -146,8 +134,8 @@ class RenderEngine:
         # Build the canonical questionnaire once from the merged schema
         questions_schema: dict[str, object] = dict(composition.merged_questions_schema)
 
-        # Forced answers (Copier `data`) vs overridable pre-fills (Copier
-        # `user_defaults`). Both come from ExecutionContext.
+        # Forced answers (Copier `data`) vs overridable pre-fills
+        # (Copier `user_defaults`). Both come from ExecutionContext.
         base_context: dict[str, object] = dict(ctx.context_data or {})
         profile_answers: dict[str, object] = dict(ctx.profile or {})
 
@@ -170,40 +158,26 @@ class RenderEngine:
                     f"have no default and no supplied value: {', '.join(missing)}."
                 )
 
+        asked = ask_questionnaire(
+            composition,
+            destination=ctx.destination,
+            data=base_context,
+            user_defaults=profile_answers,
+            defaults=not ctx.interactive,
+        )
+        answers: dict[str, object] = {**asked.user, **asked.metadata}
         tasks_value = normalize_tasks(composition.final)
 
-        # The merged questionnaire is asked by the first layer's Worker, so a
-        # question default may reference a filter provided by a sibling
-        # layer's Jinja extension. Every layer therefore renders under the
-        # union of all layers' _jinja_extensions (computed by the merger) in
-        # addition to its own declarations. Filepath-style loader specs
-        # (e.g. `_extensions/file.py:Class`) are excluded: they resolve
-        # relative to the declaring layer's own tree and cannot work from a
-        # sibling layer, so they stay layer-local by construction.
-        raw_extensions = composition.final.get("_jinja_extensions")
-        extensions_value: list[str] = (
-            [
-                str(ext)
-                for ext in raw_extensions
-                if not is_layer_local_extension(str(ext))
-            ]
-            if isinstance(raw_extensions, list)
-            else []
-        )
-
-        collected_answers = base_context
-
-        # Process all layers uniformly
         for idx, layer in enumerate(composition.layers):
             is_first_layer = idx == 0
             is_final_layer = idx == len(composition.layers) - 1
             layer_tasks_value = tasks_value if is_final_layer else []
+            view = self._scoped_view(composition, layer, is_final_layer=is_final_layer)
 
             merged_template = self._build_merged_template(
                 template_path=layer.path,
-                merged_questions=questions_schema,
+                view=view,
                 tasks_value=layer_tasks_value,
-                extensions_value=extensions_value,
                 fallback_version=layer.version,
             )
 
@@ -211,14 +185,11 @@ class RenderEngine:
 
             # `unsafe` bypasses Copier's own consent gate for jinja_extensions
             # and task execution (Worker._check_unsafe); scope it to what
-            # *this* layer's Worker invocation actually needs instead of
-            # granting it unconditionally. Because the merged-extension union
-            # above is injected into every layer, any composition declaring
-            # extensions anywhere runs all its layers with unsafe=True — the
-            # permissive posture of
-            # docs/design/adr-003-permissive-execution.md. Extension-free
-            # compositions keep unsafe=False on layers that contribute no
-            # tasks this invocation.
+            # *this* layer's Worker invocation actually needs: the extensions
+            # of its scoped view, or the tasks it runs. A layer whose scoped
+            # view declares no extension keeps unsafe=False when it runs no
+            # tasks, the permissive posture of
+            # docs/design/adr-003-permissive-execution.md.
             layer_needs_unsafe = bool(merged_template.jinja_extensions) or (
                 bool(layer_tasks_value) and not skip_tasks_flag
             )
@@ -231,25 +202,45 @@ class RenderEngine:
             worker_opts: WorkerOptions = {
                 "src_path": str(layer.path),
                 "dst_path": ctx.destination,
-                "data": collected_answers,
+                "data": answers,
                 "user_defaults": profile_answers,
                 "unsafe": layer_needs_unsafe,
                 "overwrite": bool(ctx.overwrite) if is_first_layer else True,
-                "defaults": not bool(ctx.interactive) if is_first_layer else True,
+                # Every answer is in `data`; no layer prompts.
+                "defaults": True,
                 "skip_tasks": skip_tasks_flag,
                 "exclude": _WORKER_EXCLUDES,
             }
 
-            # First layer collects answers, subsequent layers use collected answers
-            collected_answers = self._render_with_worker(
-                worker_opts=worker_opts,
-                merged_template=merged_template,
-            )
+            with worker_session(worker_opts, merged_template, view) as worker:
+                worker.run_copy()  # Critical operation that can fail silently
 
         final_layer = composition.layers[-1]
         return final_template_info(
             final_path=final_layer.path, fallback_name=final_layer.name
         )
+
+    @staticmethod
+    def _scoped_view(
+        composition: Composition, layer: CompositionLayer, *, is_final_layer: bool
+    ) -> LayerView:
+        """Return the view `layer` renders under: its own and its ancestors' scope.
+
+        Args:
+            composition: The full composition.
+            layer: The layer about to render.
+            is_final_layer: Whether `layer` is the composition's last, whose
+                scope is the whole composition.
+
+        Returns:
+            The layer's scoped view.
+        """
+        scoped = (
+            composition
+            if is_final_layer
+            else scope_composition(composition, layer.name)
+        )
+        return build_layer_view(scoped)
 
     @staticmethod
     def _find_missing_required_answers(
@@ -303,20 +294,18 @@ class RenderEngine:
     def _build_merged_template(
         *,
         template_path: Path,
-        merged_questions: dict[str, object],
+        view: LayerView,
         tasks_value: list[JSON],
-        extensions_value: list[str],
         fallback_version: str | None = None,
     ) -> CopierTemplate:
-        """Construct a `MergedTemplate`: questions, tasks, extensions, skip list.
+        """Construct a `MergedTemplate`: view questions, tasks, extensions, skip list.
 
         Args:
             template_path: Path to the template layer on disk.
-            merged_questions: The merged questionnaire (directive keys removed).
+            view: The layer's scoped view: its questions and the importable
+                extensions of its own layer and its ancestors, which this
+                layer's Worker needs to render them.
             tasks_value: Optional Copier tasks to expose via config.
-            extensions_value: Union of every layer's ``_jinja_extensions``;
-                injected so this layer's Worker can render merged questions
-                and tasks that use sibling layers' filters.
             fallback_version: The layer's ``boilerplate.yml`` version, reported
                 as the template version when the layer is not a git
                 repository; a git-derived version takes precedence.
@@ -329,11 +318,9 @@ class RenderEngine:
         # of a forced render. A layer's declared list governs only that
         # layer's own `copier update`
         # (docs/design/04-composition-engine.md §Per-Layer Render Loop).
-        cfg: dict[str, object] = {"skip_if_exists": []}
+        cfg = view_config(view, skip_if_exists=[])
         if tasks_value:
             cfg["tasks"] = tasks_value
-        if extensions_value:
-            cfg["jinja_extensions"] = extensions_value
         # No `ref`: Copier's default resolution (latest tag for a git-backed
         # layer, plain copy otherwise) is the provenance contract of
         # docs/design/adr-015-idiomatic-artifacts.md — a render must record a
@@ -343,116 +330,10 @@ class RenderEngine:
         # author-loop opt-in can supply one; nothing does today.
         return MergedTemplate(
             str(template_path),
-            dict(merged_questions),
-            cfg or None,
+            dict(view.questions),
+            cfg,
             fallback_version=fallback_version,
         )
 
-    @staticmethod
-    @contextlib.contextmanager
-    def _utf8_env() -> Generator[None, None, None]:
-        """Temporarily forces UTF-8 to avoid encoding glitches in subprocess tasks."""
-        prev_pyio = os.environ.get("PYTHONIOENCODING")
 
-        # Only log when overriding non-UTF8 environment
-        if prev_pyio and prev_pyio != "utf-8":
-            _logger.debug("Overriding PYTHONIOENCODING: %s to utf-8", prev_pyio)
-
-        os.environ["PYTHONIOENCODING"] = "utf-8"
-        try:
-            yield
-        finally:
-            if prev_pyio is None:
-                with contextlib.suppress(KeyError):
-                    del os.environ["PYTHONIOENCODING"]
-            else:
-                os.environ["PYTHONIOENCODING"] = prev_pyio
-
-    def _render_with_worker(
-        self,
-        *,
-        worker_opts: WorkerOptions,
-        merged_template: CopierTemplate,
-    ) -> dict[str, object]:
-        """Run a Copier Worker with the provided merged template.
-
-        Args:
-            worker_opts: Keyword arguments for `copier.Worker`.
-            merged_template: A `MergedTemplate` carrying questions/config.
-
-        Returns:
-            Answers dict combining `user` and `metadata` sections.
-        """
-        template_name = worker_opts.get("src_path", "unknown")
-        destination = worker_opts.get("dst_path", "unknown")
-
-        _logger.debug("Starting file generation: %s to %s", template_name, destination)
-
-        try:
-            # pyright: ignore — pydantic's @dataclass decorator erases
-            # Worker's type to PydanticDataclass, hiding the constructor
-            # signature and context-manager protocol that copier.Worker
-            # correctly implements at runtime.
-            with self._utf8_env(), Worker(**worker_opts) as worker:  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
-                # Inject the merged template so Worker uses our view (no disk mutation).
-                # Priming the `template` cached_property bypasses the Worker
-                # code that would otherwise register the template's cleanup,
-                # so register it here: rendering a VCS template clones it into
-                # a temp directory that only `_cleanup` removes.
-                object.__setattr__(worker, "template", merged_template)
-                worker._cleanup_hooks.append(  # pyright: ignore[reportPrivateUsage]
-                    merged_template._cleanup  # pyright: ignore[reportPrivateUsage]
-                )
-                worker.run_copy()  # Critical operation that can fail silently
-                user = dict(getattr(worker.answers, "user", {}) or {})
-                metadata = dict(getattr(worker.answers, "metadata", {}) or {})
-                user.update(metadata)
-                return {str(k): v for k, v in user.items()}
-        except CopierAnswersInterrupt as e:
-            # Must precede the generic Exception handler -- CopierAnswersInterrupt
-            # is also an Exception; see UserCancelledError for the payload-leak
-            # rationale.
-            _logger.debug("User cancelled interactive prompt for %s", template_name)
-            raise UserCancelledError() from e
-        except Exception as e:
-            if self._is_interactive_prompt_failure(e):
-                _logger.debug(
-                    "Translating prompt_toolkit/questionary failure for %s",
-                    template_name,
-                )
-                raise InteractiveRenderFailedError(
-                    "Copier attempted to prompt but this environment does not "
-                    "support interactive prompts. This typically happens in "
-                    "Git Bash pseudo-TTYs, Windows CI runners without a console "
-                    "buffer, Docker entrypoints without -it, or editor-embedded "
-                    "shells."
-                ) from e
-            _logger.exception("File generation failed for %s: %s", template_name, e)
-            raise  # Re-raise for CLI error handling
-
-    @staticmethod
-    def _is_interactive_prompt_failure(exc: BaseException) -> bool:
-        """Return True if ``exc`` (or any cause/context) is a prompt-layer failure.
-
-        Walks the ``__cause__`` / ``__context__`` chain looking for an
-        exception whose type is defined in ``prompt_toolkit`` or
-        ``questionary``, or Copier's own ``InteractiveSessionError`` (its
-        wrapper for EOF during prompting, which carries a ``builtins``
-        cause and would evade the module-prefix check). This catches the
-        Windows ``NoConsoleScreenBufferError`` path as well as any other
-        prompt-layer failure that bubbles up from ``Worker.run_copy()``.
-        """
-        seen: set[int] = set()
-        cursor: BaseException | None = exc
-        while cursor is not None and id(cursor) not in seen:
-            seen.add(id(cursor))
-            if isinstance(cursor, InteractiveSessionError):
-                return True
-            module = getattr(type(cursor), "__module__", "") or ""
-            if module.startswith(("prompt_toolkit", "questionary")):
-                return True
-            cursor = cursor.__cause__ or cursor.__context__
-        return False
-
-
-__all__ = ["RenderEngine", "Template", "final_template_info"]
+__all__ = ["RenderEngine", "final_template_info"]
