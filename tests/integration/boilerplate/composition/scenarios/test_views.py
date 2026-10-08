@@ -98,6 +98,16 @@ def _order_id(order: tuple[str, ...]) -> str:
 # ------------------------------------------------------------------ C1-C4
 
 
+def rendered_files(project: Path) -> dict[str, str]:
+    """Return the files the layers rendered into `project`, keyed by POSIX path.
+
+    ``RenderEngine`` also writes ``boilerplate.lock`` into a project it composes;
+    the full-view counterfactual does not, and the lock is not a layer's file, so
+    the views are compared without it.
+    """
+    return {p: text for p, text in tree(project).items() if p != "boilerplate.lock"}
+
+
 class ServiceViews(NamedTuple):
     """The family's core and service composed under each view, before git."""
 
@@ -127,7 +137,10 @@ def service_views(
             templates_dir=templates,
         )
         yield ServiceViews(
-            work, templates, composed, {m: tree(p) for m, p in composed.items()}
+            work,
+            templates,
+            composed,
+            {m: rendered_files(p) for m, p in composed.items()},
         )
 
 
@@ -336,7 +349,10 @@ def leak(tmp_path_factory: pytest.TempPathFactory) -> Iterator[LeakSetup]:
             templates_dir=releases["v1"],
         )
         yield LeakSetup(
-            releases, repos, composed, {m: tree(p) for m, p in composed.items()}
+            releases,
+            repos,
+            composed,
+            {m: rendered_files(p) for m, p in composed.items()},
         )
 
 

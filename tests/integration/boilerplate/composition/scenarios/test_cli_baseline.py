@@ -1,8 +1,9 @@
-"""What the shipped `boilerplate new` writes today: the full-view baseline.
+"""What the shipped `boilerplate new` writes today: scoped answers files and the lock.
 
-S21 runs the real CLI against the bundled layers. ``RenderEngine`` renders
-every layer under the full view, so every layer's answers file records the
-whole merged questionnaire; and there is no `update` command yet.
+S21 runs the real CLI against the bundled layers. ``RenderEngine`` renders each
+layer under its scoped view, so every layer's answers file records only its own
+and its ancestors' questions; the project ends with ``boilerplate.lock``; and
+there is no `update` command yet.
 """
 
 import re
@@ -13,6 +14,8 @@ from typing import NamedTuple
 
 import pytest
 
+from boilerplate.models.template_meta import TemplateMeta
+from boilerplate.project_state.lock_file import read_lock
 from tests.integration.boilerplate.composition.scenarios.builders import (
     PROJECT_RECORDED,
     TEMPLATES,
@@ -79,6 +82,23 @@ class TestShippedNew:
             "project": PROJECT_RECORDED | {"_src_path"},
             "streamlit": PROJECT_RECORDED | {"container_registry", "_src_path"},
         }
+
+    def test_new_writes_the_lock_of_the_bundled_folders(self, new_run: NewRun) -> None:
+        """S21: each bundled layer is locked at its declared version, no commit."""
+        lock = read_lock(new_run.project)
+
+        assert [
+            (layer.name, str(layer.version), layer.commit, layer.source)
+            for layer in lock.layers
+        ] == [
+            (
+                name,
+                str(TemplateMeta.load(TEMPLATES / name).version),
+                None,
+                answers_file(new_run.project, name)["_src_path"],
+            )
+            for name in LAYERS
+        ]
 
     def test_bundled_layers_render_at_their_own_versions(self, new_run: NewRun) -> None:
         """S21: each bundled layer renders at its own boilerplate.yml version.
