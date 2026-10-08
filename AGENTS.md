@@ -93,11 +93,12 @@ def calculate_line_totals(order_items: list[OrderItem]) -> list[float]:
 
 Registered in `pyproject.toml`:
 
-| Marker        | Usage                                                            |
-| ------------- | ---------------------------------------------------------------- |
-| `integration` | Auto-applied to tests under `tests/integration/` (conftest hook) |
-| `slow`        | Marks slow tests; deselect with `-m "not slow"`                  |
-| `snapshot`    | Syrupy snapshot tests; grouped onto one xdist worker             |
+| Marker        | Usage                                                                    |
+| ------------- | ------------------------------------------------------------------------ |
+| `integration` | Auto-applied to tests under `tests/integration/` (conftest hook)         |
+| `slow`        | Marks slow tests; deselect with `-m "not slow"`                          |
+| `scenario`    | Auto-applied to composition scenarios; deselect with `-m "not scenario"` |
+| `snapshot`    | Syrupy snapshot tests; grouped onto one xdist worker                     |
 
 ### Quality
 
