@@ -8,7 +8,7 @@ from boilerplate.common.exceptions import (
     UpdateProjectNotReadyError,
     UpdateSubmodulesUnsupportedError,
 )
-from boilerplate.composition.staging import check_project_ready
+from boilerplate.composition.staging import IntentOperation, check_project_ready
 from tests.boilerplate.templates.conftest import commit_all, git
 
 
@@ -39,6 +39,17 @@ class TestRefusedProject:
         assert str(stop.value) == (
             "Working tree has uncommitted changes. "
             "Commit or stash them before running boilerplate update."
+        )
+
+    def test_message_names_the_command_that_stopped(self, project: Path) -> None:
+        (project / "new.txt").write_text("new\n", encoding="utf-8")
+
+        with pytest.raises(UpdateProjectNotReadyError) as stop:
+            check_project_ready(project, IntentOperation.ADD)
+
+        assert str(stop.value) == (
+            "Working tree has uncommitted changes. "
+            "Commit or stash them before running boilerplate add."
         )
 
     def test_plain_folder_is_refused(self, tmp_path: Path) -> None:

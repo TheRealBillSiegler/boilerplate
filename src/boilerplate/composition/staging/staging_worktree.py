@@ -178,7 +178,7 @@ class StagingWorktree:
             UpdateCheckoutChangedError: If the checkout changed during staging;
                 it is left as it is.
         """
-        require_checkout_unchanged(self.project, self.start_commit)
+        require_checkout_unchanged(self.project, self.start_commit, self.operation)
         self.record_phase("committing")
         restore_working_tree(self.project, self.last_commit)
         if paused:
@@ -196,7 +196,7 @@ class StagingWorktree:
                 repository root.
             UpdateSubmodulesUnsupportedError: If the project has submodules.
         """
-        check_project_ready(self.project)
+        check_project_ready(self.project, self.operation)
         self._started_at = datetime.now(UTC)
         root = self._temp_root or Path(tempfile.gettempdir())
         remove_stale_staging(root)
