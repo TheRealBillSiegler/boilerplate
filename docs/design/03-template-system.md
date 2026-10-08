@@ -281,9 +281,9 @@ All of the following MUST hold before Boilerplate invokes Copier for a render or
 
 **On render failure**: no partial `.copier-answers.<layer>.yml` files in destination; no partial `boilerplate.lock`; staging directory removed; error raised with attribution `Copier` and phase `render`.
 
-**On update success**: each affected layer's `.copier-answers.<layer>.yml` updated by Copier with new `_commit` (if that layer's version changed); `boilerplate.lock` regenerated; `MigrationRecord` appended (per §06); backup removed.
+**On update success**: each affected layer's `.copier-answers.<layer>.yml` updated by Copier with new `_commit` (if that layer's version changed); `boilerplate.lock` regenerated; `MigrationRecord` appended (per §06); staging worktree removed.
 
-**On update abort**: backup restored to original project state; no new `MigrationRecord` written.
+**On update failure before the copy back**: staging worktree removed; the project is unchanged; no new `MigrationRecord` written.
 
 ### Non-responsibilities
 
@@ -308,7 +308,7 @@ These invariants MUST hold across the Boilerplate ↔ Copier boundary; violation
 - Boilerplate MUST never write any layer's `.copier-answers.<layer>.yml`; only Copier does.
 - Render MUST leave no partial destination state on failure (staging-then-move, per §07 Atomic Staged Write Pattern).
 - `boilerplate.lock` MUST be written only after Copier returns success.
-- On `update`, the project backup MUST exist from the start of the operation until terminal status (success or rollback).
+- On `update`, the staging worktree MUST exist from the start of the walk until the copy back or the failure that removes it, and the user's checkout MUST stay unchanged until the copy back.
 
 Failure attribution for boundary violations follows the [§07 Error Attribution table](07-operational-quality.md#error-attribution): infrastructure failures (missing submodule, invalid YAML include) attribute to `Git` or `YAML`; render conflicts attribute to `Copier`; lock or migration record failures attribute to `Boilerplate`.
 
