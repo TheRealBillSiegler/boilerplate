@@ -25,6 +25,7 @@ from boilerplate.common.exceptions import (
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
+    RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UserCancelledError,
 )
@@ -62,6 +63,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     MetadataValidationError: "BP_RESOLVE_METADATA_INVALID",
     MissingRequiredAnswersError: "BP_INPUT_ANSWERS_MISSING",
     InvalidDataError: "BP_INPUT_DATA_INVALID",
+    RecordedAnswerRejectedError: "BP_INPUT_ANSWER_REJECTED",
     InteractiveRenderFailedError: "BP_RENDER_PROMPT_FAILED",
     DependencyNotFoundError: "BP_RESOLVE_DEP_NOT_FOUND",
     DependencyCycleError: "BP_GRAPH_CYCLE",
@@ -249,6 +251,7 @@ class TestSeverityAndRetryable:
             NonInteractiveRequiresForceError,
             MissingRequiredAnswersError,
             InvalidDataError,
+            RecordedAnswerRejectedError,
             ProfileError,
             # Not-found errors
             TemplateNotFoundError,
@@ -303,3 +306,36 @@ class TestInvalidDataError:
         assert err.remediation is not None
         assert "--data" in err.remediation
         assert "--data-file" in err.remediation
+
+
+class TestRecordedAnswerRejectedError:
+    """A rejected recorded answer carries what a user needs to repair it."""
+
+    def _error(self) -> RecordedAnswerRejectedError:
+        return RecordedAnswerRejectedError(
+            "rejected",
+            layer="docs",
+            question="docs_site_name",
+            value="",
+            reason="The site name cannot be empty.",
+        )
+
+    def test_carries_the_layer_question_value_and_reason(self) -> None:
+        err = self._error()
+
+        assert (err.layer, err.question, err.value, err.reason) == (
+            "docs",
+            "docs_site_name",
+            "",
+            "The site name cannot be empty.",
+        )
+
+    def test_remediation_names_the_set_flag_for_the_question(self) -> None:
+        assert self._error().remediation == (
+            "Pass a valid value with --set docs_site_name=<value>."
+        )
+
+    def test_an_explicit_remediation_wins(self) -> None:
+        err = RecordedAnswerRejectedError("rejected", remediation="Do this.")
+
+        assert err.remediation == "Do this."

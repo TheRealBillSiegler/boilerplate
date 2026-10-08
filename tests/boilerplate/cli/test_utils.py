@@ -28,6 +28,7 @@ from boilerplate.common.exceptions import (
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
+    RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UserCancelledError,
 )
@@ -225,6 +226,10 @@ class TestCliErrorHandler:
                 MissingRequiredAnswersError("answers required"),
                 ExitCode.VALIDATION_ERROR,
             ),
+            (
+                RecordedAnswerRejectedError("recorded answer rejected"),
+                ExitCode.VALIDATION_ERROR,
+            ),
             # Exit 4 (ACTION_REQUIRED) — recoverable workflow pause
             (
                 ActionRequiredError("resolve conflicts, then re-run"),
@@ -243,6 +248,7 @@ class TestCliErrorHandler:
             "destination-not-empty",
             "non-interactive-requires-force",
             "missing-required-answers",
+            "recorded-answer-rejected",
             "action-required",
             "user-cancelled",
         ],
