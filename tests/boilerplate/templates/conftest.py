@@ -49,10 +49,9 @@ from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.composition.updating import (
     LayerRelease,
     ScopedWorker,
+    StepInputs,
     UpdateOptions,
     UpdateViews,
-    build_update_data,
-    layered_recorded_answers,
     read_recorded_answers,
     read_recorded_answers_by_layer,
 )
@@ -344,52 +343,35 @@ def recorded_answers(project: Path, layer: str) -> dict[str, Any]:
     return read_recorded_answers(project, layer)
 
 
-def update_data(
+def force_recorded_answers(
     project: Path,
     *,
-    root: str,
     layer: str,
     templates_dir: Path | None = None,
     full_view: bool = False,
-    ask_unanswered: bool = True,
 ) -> dict[str, Any]:
-    """Build the forced answers an update of `layer` passes to Copier.
+    """Return the answers the rule an update step replaced forced as data.
 
-    Reads the project's answers files, resolves the layer's chain and view, and
-    runs the questionnaire pass; the rule itself is ``build_update_data``.
+    The recorded answers of `layer`'s chain, ancestors first and the layer's own
+    on top, which outrank the layer's own answers file in Copier. An update step
+    no longer passes them; a scenario forces them to show what that did.
 
     Args:
         project: The composed project.
-        root: The composition's root layer.
         layer: The layer being updated.
         templates_dir: The templates directory holding the target release.
-        full_view: Whether to read every answers file, merged in file-name
-            order, against the root's full view, instead of `layer`'s chain
-            against its scoped view.
-        ask_unanswered: Whether to run the questionnaire pass.
+        full_view: Whether to merge every answers file, in file-name order,
+            instead of `layer`'s chain.
 
     Returns:
-        The questionnaire pass's answers with the recorded answers on top.
+        The merged recorded answers.
     """
     recorded_by_layer = read_recorded_answers_by_layer(project)
-    if full_view:
-        chain, view_root = list(recorded_by_layer), root
-    else:
-        chain, view_root = layer_chain(layer, templates_dir), layer
-    if not ask_unanswered:
-        return layered_recorded_answers(recorded_by_layer, chain)
-    asked = ask_merged_questionnaire(
-        root,
-        layered_recorded_answers(recorded_by_layer, list(recorded_by_layer)),
-        templates_dir,
-    )
-    return build_update_data(
-        recorded_by_layer=recorded_by_layer,
-        chain=chain,
-        asked_user=asked.user,
-        asked_hidden=asked.hidden,
-        view_questions=layer_view(view_root, templates_dir).questions,
-    )
+    chain = list(recorded_by_layer) if full_view else layer_chain(layer, templates_dir)
+    merged: dict[str, Any] = {}
+    for name in chain:
+        merged.update(recorded_by_layer.get(name, {}))
+    return merged
 
 
 def _recorded_ref(project: Path, layer: str) -> str:
@@ -408,8 +390,9 @@ def update_layer(
     templates: Mapping[str, Path | None],
     full_view: bool = False,
     step_views: bool = False,
-    ask_unanswered: bool = True,
     data: Mapping[str, Any] | None = None,
+    force_recorded: bool = False,
+    secrets: Mapping[str, Any] | None = None,
     old_templates: Path | None = None,
     old_view: LayerView | None = None,
     target_view: LayerView | None = None,
@@ -418,7 +401,7 @@ def update_layer(
     interactive: bool = False,
     skip_answered: bool = False,
     worker_type: type[ScopedWorker] = ScopedWorker,
-) -> None:
+) -> dict[str, Any]:
     """Update one layer of a composed project to `ref` under two views.
 
     Args:
@@ -431,17 +414,17 @@ def update_layer(
             this update reads, keyed by ref (`None` for the bundled
             templates); the project's recorded ref and `ref` must both be
             keys, unless `old_templates` stands in for the recorded one.
-        full_view: Whether to render under the root's full view and pass
-            every answers file's answers, as ``RenderEngine`` would, instead
-            of `layer`'s scoped view and its chain's answers.
+        full_view: Whether to render under the root's full view, as
+            ``RenderEngine`` would, instead of `layer`'s scoped view.
         step_views: Whether to build the views as an update step does, the
             layer's scope under the full schema's definitions, instead of
             `layer`'s scoped view or, with `full_view`, the root's full view.
-        ask_unanswered: Whether to run a questionnaire pass over the full
-            merged view at `ref` for questions `layer`'s chain has not
-            recorded (``update_data``).
-        data: Forced answers to pass instead of building them; ``{}`` is a
-            vanilla ``copier update``, which reads only the answers file.
+        data: Values supplied to the step, as data for the questions in the
+            layer's scope; ``{}`` supplies none.
+        force_recorded: Whether to supply the recorded answers of `layer`'s
+            chain too, own on top (``force_recorded_answers``): the rule the
+            step replaced, to show what it did.
+        secrets: Secret answers given earlier in the same update.
         old_templates: The directory the old copy's view is composed from,
             for an update whose layer keeps its ref while an ancestor moves,
             so `templates` cannot hold both; by default `templates` at the
@@ -455,6 +438,9 @@ def update_layer(
         interactive: Whether the step prompts for the layer's own questions.
         skip_answered: Whether the step asks only unanswered questions.
         worker_type: The worker class to update with.
+
+    Returns:
+        The secret answers the step ended with.
     """
     view_root = root if full_view else layer
 
@@ -469,21 +455,23 @@ def update_layer(
         old_view = view_at(old_templates)
     if target_view is None:
         target_view = view_at(templates[ref])
-    if data is None:
-        data = update_data(
-            project,
-            root=root,
-            layer=layer,
-            templates_dir=templates[ref],
-            full_view=full_view,
-            ask_unanswered=ask_unanswered,
-        )
-    update_layer_in_src(
+    supplied = dict(data or {})
+    if force_recorded:
+        supplied = {
+            **force_recorded_answers(
+                project,
+                layer=layer,
+                templates_dir=templates[ref],
+                full_view=full_view,
+            ),
+            **supplied,
+        }
+    return update_layer_in_src(
         project,
         LayerRelease(layer=layer, source=source, ref=ref),
         UpdateViews(old_view, target_view),
-        data,
-        UpdateOptions(
+        inputs=StepInputs(supplied=supplied, secrets=secrets or {}),
+        options=UpdateOptions(
             skip_tasks=skip_tasks,
             quiet=quiet,
             interactive=interactive,
