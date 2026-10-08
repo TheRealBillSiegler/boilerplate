@@ -59,6 +59,10 @@ ALLOWED_SEAMS: dict[str, str] = {
     "boilerplate.composition.rendering.engine.Template": (
         "Copier's template loader; a real one clones or reads a template."
     ),
+    "boilerplate.composition.serialization.yaml_utils.template_public_attr_names": (
+        "Counterfactual: drops one attribute from the extraction to show it is the "
+        "only blocker to composing from git-repository layers; no input removes it."
+    ),
 }
 
 
