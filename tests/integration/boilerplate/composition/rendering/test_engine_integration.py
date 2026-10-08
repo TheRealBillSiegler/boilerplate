@@ -24,6 +24,7 @@ import pytest
 import yaml
 from copier.errors import DirtyLocalWarning
 
+from boilerplate.common.exceptions import MissingRequiredAnswersError
 from boilerplate.composition.models import (
     Composition,
     CompositionGraph,
@@ -33,7 +34,10 @@ from boilerplate.composition.models import (
 from boilerplate.composition.rendering.engine import RenderEngine
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.composition.serialization import extract_complete_copier_config
+from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.repository.directory_repository import DirectoryTemplateRepository
+from boilerplate.repository.template_checksum import template_checksum
+from boilerplate.types import SerializableVersion
 
 _TAG = "v1.0.0"
 _ANSWERS_FILE = ".copier-answers.gitlayer.yml"
@@ -318,6 +322,105 @@ class TestMultiLayerPerLayerAnswers:
         assert git_answers["_commit"] == _TAG
 
         assert not (destination / ".copier-answers.yml").exists()
+
+
+class TestCreationLock:
+    """A successful render ends with ``boilerplate.lock`` describing its layers."""
+
+    @pytest.fixture()
+    def mixed_composition(
+        self, plain_base_template: Path, dirty_git_template: Path
+    ) -> Composition:
+        """Compose a plain-folder layer and a git-backed layer, in that order."""
+        specs = {"baselayer": plain_base_template, "gitlayer": dirty_git_template}
+        nodes = {
+            f"{name}@0.1.0": GraphNode(name=name, version="0.1.0", path=path)
+            for name, path in specs.items()
+        }
+        return Composition(
+            graph=CompositionGraph(nodes=nodes, edges={}, sequence=list(nodes)),
+            sequence=list(nodes),
+            layers=[
+                CompositionLayer(name=name, version="0.1.0", path=path, values={})
+                for name, path in specs.items()
+            ],
+            final={"project_name": {"type": "str", "default": "demo"}},
+        )
+
+    def test_a_folder_layer_is_locked_at_its_version_with_no_commit(
+        self, mixed_composition: Composition, plain_base_template: Path, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+
+        _render_composition(mixed_composition, destination)
+
+        base = read_lock(destination).layers[0]
+        assert (base.name, base.version, base.commit, base.source, base.checksum) == (
+            "baselayer",
+            SerializableVersion("0.1.0"),
+            None,
+            str(plain_base_template),
+            template_checksum(plain_base_template),
+        )
+
+    def test_a_git_layer_is_locked_at_the_commit_its_answers_file_records(
+        self, mixed_composition: Composition, dirty_git_template: Path, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+
+        _render_composition(mixed_composition, destination)
+
+        git_layer = read_lock(destination).layers[1]
+        assert (git_layer.name, git_layer.commit, git_layer.source) == (
+            "gitlayer",
+            _TAG,
+            str(dirty_git_template),
+        )
+
+    def test_the_lock_names_the_layers_in_order_and_the_root(
+        self, mixed_composition: Composition, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+
+        _render_composition(mixed_composition, destination)
+
+        lock = read_lock(destination)
+        assert [layer.name for layer in lock.layers] == ["baselayer", "gitlayer"]
+        # The git layer's version is the release its commit names, the way
+        # Copier's update reads it, not the version its folder declares.
+        assert lock.root_template == "gitlayer@1.0.0"
+        assert set(lock.copier_answers_file_hashes or {}) == {"baselayer", "gitlayer"}
+
+    def test_the_lock_records_the_version_of_the_tool_given(
+        self, mixed_composition: Composition, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+
+        RenderEngine(boilerplate_version="9.9.9").render(
+            mixed_composition,
+            ExecutionContext(
+                destination=destination,
+                context_data={"project_name": "demo"},
+                overwrite=True,
+                interactive=False,
+                skip_tasks=True,
+            ),
+        )
+
+        assert read_lock(destination).boilerplate_version == "9.9.9"
+
+    def test_a_render_that_fails_writes_no_lock(
+        self, mixed_composition: Composition, tmp_path: Path
+    ) -> None:
+        destination = tmp_path / "out"
+        failing = mixed_composition.model_copy(
+            update={"final": {"required_without_default": {"type": "str"}}}
+        )
+
+        with pytest.raises(MissingRequiredAnswersError, match="required_without"):
+            _render_composition(failing, destination)
+
+        assert not (destination / LOCK_FILE_NAME).exists()
 
 
 class TestGitTemplateCleanup:

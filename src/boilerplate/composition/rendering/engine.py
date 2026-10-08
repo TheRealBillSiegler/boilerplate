@@ -13,10 +13,12 @@ performed by Copier.
 from logging import getLogger
 from pathlib import Path
 
+from boilerplate import __version__
 from boilerplate.common.exceptions import MissingRequiredAnswersError
 from boilerplate.composition.models.composition import Composition
 from boilerplate.composition.models.composition_layer import CompositionLayer
 from boilerplate.composition.models.json_types import JSON
+from boilerplate.composition.rendering.creation_lock import write_creation_lock
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.rendering.questionnaire import ask_questionnaire
@@ -115,6 +117,14 @@ def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo
 class RenderEngine:
     """Asks the merged questionnaire once, then renders each layer under its view."""
 
+    def __init__(self, boilerplate_version: str = __version__) -> None:
+        """Prepare an engine that stamps the locks it writes with a tool version.
+
+        Args:
+            boilerplate_version: The version of the tool, recorded in the lock.
+        """
+        self._boilerplate_version = boilerplate_version
+
     def render(self, composition: Composition, ctx: ExecutionContext) -> TemplateInfo:
         """Render all layers of `composition` into `ctx.destination`.
 
@@ -122,7 +132,7 @@ class RenderEngine:
         question; each layer then renders, in topological order, under its
         scoped view with those answers as data, so its answers file records
         only its own and its ancestors' questions. The merged tasks run once, on
-        the last layer.
+        the last layer. A successful render ends with ``boilerplate.lock``.
 
         Args:
             composition: Computed composition (layers and final merged schema).
@@ -215,6 +225,11 @@ class RenderEngine:
             with worker_session(worker_opts, merged_template, view) as worker:
                 worker.run_copy()  # Critical operation that can fail silently
 
+        write_creation_lock(
+            ctx.destination,
+            composition,
+            boilerplate_version=self._boilerplate_version,
+        )
         final_layer = composition.layers[-1]
         return final_template_info(
             final_path=final_layer.path, fallback_name=final_layer.name
