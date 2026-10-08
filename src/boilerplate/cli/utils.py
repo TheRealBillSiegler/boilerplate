@@ -14,6 +14,8 @@ from boilerplate.cli.engine import UsageError, get_current_context
 from boilerplate.cli.validators import validate_directory
 from boilerplate.common.exceptions import (
     ActionRequiredError,
+    AddAncestorsMissingError,
+    AddAncestorVersionError,
     AnswersFileIncompleteError,
     BoilerplateError,
     DestinationNotEmptyError,
@@ -23,9 +25,11 @@ from boilerplate.common.exceptions import (
     InvalidDataError,
     InvalidTemplateSpecifierError,
     InvalidVersionError,
+    LayerAlreadyAddedError,
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
+    ProjectNotManagedError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UpdateCheckoutChangedError,
@@ -156,6 +160,10 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
             UpdateCheckoutChangedError,
             UpdateProjectNotReadyError,
             UpdateUnknownLayerError,
+            ProjectNotManagedError,
+            LayerAlreadyAddedError,
+            AddAncestorsMissingError,
+            AddAncestorVersionError,
         ) as e:
             _display_error_and_exit(
                 str(e),

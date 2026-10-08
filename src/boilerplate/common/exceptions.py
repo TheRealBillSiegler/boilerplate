@@ -608,3 +608,92 @@ class UpdateUnknownLayerError(BoilerplateError):
         """Initialize with default error code BP_UPDATE_LAYER_UNKNOWN."""
         super().__init__(message, error_code="BP_UPDATE_LAYER_UNKNOWN", **kwargs)
         self.layers = tuple(layers)
+
+
+def _add_first_remediation(layers: Sequence[str]) -> str:
+    """Return the remediation that adds each of `layers` before the layer."""
+    commands = " and ".join(f"'boilerplate add {layer}'" for layer in layers)
+    return f"Run {commands or "'boilerplate add <ancestor>'"} first."
+
+
+class ProjectNotManagedError(BoilerplateError):
+    """Raised when ``add`` finds no ``boilerplate.lock`` in the project."""
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_UPDATE_PROJECT_NOT_MANAGED."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_PROJECT_NOT_MANAGED",
+            remediation=kwargs.pop(
+                "remediation", "Use 'boilerplate adopt' to bring the project under it."
+            ),
+            **kwargs,
+        )
+
+
+class LayerAlreadyAddedError(BoilerplateError):
+    """Raised when ``add`` names a template the project's lock already lists."""
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_UPDATE_LAYER_ALREADY_ADDED."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_LAYER_ALREADY_ADDED",
+            remediation=kwargs.pop("remediation", "Use 'boilerplate update' instead."),
+            **kwargs,
+        )
+
+
+class AddAncestorsMissingError(BoilerplateError):
+    """Raised when a layer being added extends layers the project lacks.
+
+    Attributes:
+        layers: The missing layers, each one a layer the new layer extends,
+            directly or through another layer.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layers: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_ANCESTORS_MISSING."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_ANCESTORS_MISSING",
+            remediation=kwargs.pop("remediation", _add_first_remediation(layers)),
+            **kwargs,
+        )
+        self.layers = tuple(layers)
+
+
+class AddAncestorVersionError(BoilerplateError):
+    """Raised when an ancestor's recorded version fails the new layer's ``extends``.
+
+    Attributes:
+        ancestor: The ancestor whose recorded version fails the constraint.
+        recorded: The version the lock records for the ancestor.
+        constraint: The ``extends`` reference the new layer declares.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        ancestor: str = "",
+        recorded: str = "",
+        constraint: str = "",
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_ANCESTOR_VERSION_MISMATCH."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_ANCESTOR_VERSION_MISMATCH",
+            remediation=kwargs.pop("remediation", "Run 'boilerplate update' first."),
+            **kwargs,
+        )
+        self.ancestor = ancestor
+        self.recorded = recorded
+        self.constraint = constraint
