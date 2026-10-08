@@ -40,6 +40,7 @@ jobs:
     outputs:
       code: ${{ steps.f.outputs.code }}
       docs: ${{ steps.f.outputs.docs }}
+      composition: ${{ steps.f.outputs.composition }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -54,18 +55,26 @@ jobs:
           # the zero SHA (branch creation), or unreachable (force-push evicted
           # the old tip).
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
-            { echo "code=true"; echo "docs=true"; } >> "$GITHUB_OUTPUT"; exit 0
+            { echo "code=true"; echo "docs=true"; echo "composition=true"; } >> "$GITHUB_OUTPUT"; exit 0
           fi
-          code=false; docs=false
+          code=false; docs=false; composition=false
           while read -r f; do
             [ -z "$f" ] && continue
             case "$f" in
               docs/*|*.md|mkdocs.yml|mkdocs.yaml) docs=true ;;
               *) code=true ;;
             esac
+            # The composition scenarios run only for these paths. Keep the list
+            # in step with _COMPOSITION_DIRS and _COMPOSITION_FILES in scripts/check.py,
+            # the local gate.
+            case "$f" in
+              src/boilerplate/composition/*|src/boilerplate/templates/*) composition=true ;;
+              tests/integration/boilerplate/composition/*|tests/boilerplate/templates/*) composition=true ;;
+              tests/fixtures/family/*|uv.lock|.github/workflows/ci.yml) composition=true ;;
+            esac
           done < <(git diff --name-only "$BASE" "$HEAD")
-          { echo "code=$code"; echo "docs=$docs"; } >> "$GITHUB_OUTPUT"
-          echo "Detected: code=$code docs=$docs"
+          { echo "code=$code"; echo "docs=$docs"; echo "composition=$composition"; } >> "$GITHUB_OUTPUT"
+          echo "Detected: code=$code docs=$docs composition=$composition"
 
   lint:
     needs: changes
@@ -134,10 +143,30 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen
-      - name: Test suite (repo root — testpaths gates the full suite)
-        run: uv run pytest
+      - name: Test suite (repo root — testpaths gates the suite; scenarios run in their own job)
+        run: uv run pytest -m "not scenario"
       - name: Doctests (serial; root runs do not collect src/ doctests)
         run: uv run pytest --doctest-modules src -n0
+
+  scenarios:
+    name: Composition scenarios
+    needs: changes
+    # The scenarios rerun the composition design's evidence against real Copier
+    # and git, and take minutes, so they run only when the diff touches the
+    # composition code, the templates, their tests or fixtures, the lockfile or
+    # this workflow. One leg, ubuntu on the latest Python: the test job's
+    # diagonal covers the other platforms for everything else.
+    if: needs.changes.outputs.composition == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen
+      - name: Composition scenarios
+        run: uv run pytest -m scenario
 
   package:
     name: Package smoke test
@@ -205,7 +234,7 @@ jobs:
     # protection to require ONLY this "gate" check. Skipped on drafts so a
     # draft never shows a vacuously green gate.
     if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
-    needs: [changes, lint, shellcheck, typecheck, test, package, docs, tests-go-red]
+    needs: [changes, lint, shellcheck, typecheck, test, scenarios, package, docs, tests-go-red]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -217,6 +246,7 @@ jobs:
             "${{ needs.shellcheck.result }}" \
             "${{ needs.typecheck.result }}" \
             "${{ needs.test.result }}" \
+            "${{ needs.scenarios.result }}" \
             "${{ needs.package.result }}" \
             "${{ needs.docs.result }}" \
             "${{ needs['tests-go-red'].result }}"; do
