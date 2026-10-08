@@ -21,9 +21,9 @@ import pytest
 import yaml
 from plumbum import local
 
+from boilerplate.composition.views import LayerView
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
-    LayerView,
     ScopedWorker,
     build_layer_repo,
     commit_all,
