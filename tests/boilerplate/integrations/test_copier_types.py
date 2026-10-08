@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 from copier._main import _operation  # pyright: ignore[reportPrivateUsage]
+from copier._types import Phase
 
 from boilerplate.integrations.copier_types import (
     MISSING,
@@ -27,6 +28,7 @@ from boilerplate.integrations.copier_types import (
     Worker,
     copier_operation,
     load_answersfile_data,
+    tasks_phase,
     template_public_attr_names,
 )
 
@@ -163,6 +165,34 @@ class TestCopierOperation:
 
         with pytest.raises(LookupError):
             _operation.get()
+
+
+class TestTasksPhase:
+    """The shim enters the phase Copier's own task run sets around it."""
+
+    def test_only_run_copy_sets_the_tasks_phase(self) -> None:
+        """Pin that ``_execute_tasks`` leaves the phase to its caller."""
+        setters = sorted(
+            name
+            for name in ("run_copy", "run_recopy", "run_update", "_execute_tasks")
+            if "Phase.use(Phase.TASKS)" in inspect.getsource(getattr(Worker, name))
+        )
+
+        assert setters == ["run_copy"]
+
+    def test_phase_is_tasks_inside_the_block_and_restored_after(self) -> None:
+        """Set ``tasks`` for the block, then restore the undefined phase."""
+        with tasks_phase():
+            inside = Phase.current()
+
+        assert (inside, Phase.current()) == (Phase.TASKS, Phase.UNDEFINED)
+
+    def test_phase_is_restored_when_the_block_raises(self) -> None:
+        """Reset the phase on the way out of a failure too."""
+        with pytest.raises(RuntimeError), tasks_phase():
+            raise RuntimeError("boom")
+
+        assert Phase.current() == Phase.UNDEFINED
 
 
 class TestTaskError:
