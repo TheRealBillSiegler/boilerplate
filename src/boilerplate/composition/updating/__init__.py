@@ -13,12 +13,14 @@ from boilerplate.composition.updating.update_data import (
     layered_recorded_answers,
 )
 from boilerplate.composition.updating.update_options import UpdateOptions
+from boilerplate.composition.updating.update_views import UpdateViews
 
 __all__ = [
     "LayerRelease",
     "RenderRole",
     "ScopedWorker",
     "UpdateOptions",
+    "UpdateViews",
     "build_update_data",
     "layered_recorded_answers",
     "read_recorded_answers",

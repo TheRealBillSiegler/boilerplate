@@ -50,6 +50,7 @@ from boilerplate.composition.updating import (
     LayerRelease,
     ScopedWorker,
     UpdateOptions,
+    UpdateViews,
     build_update_data,
     layered_recorded_answers,
     read_recorded_answers,
@@ -57,7 +58,11 @@ from boilerplate.composition.updating import (
 )
 from boilerplate.composition.updating import update_layer as update_layer_in_src
 from boilerplate.composition.views import LayerView, build_layer_view, view_config
-from boilerplate.integrations.copier_types import Template, Worker
+from boilerplate.integrations.copier_types import (
+    Template,
+    Worker,
+    load_answersfile_data,
+)
 from boilerplate.settings import Settings
 
 TEMPLATES = Path(boilerplate.__file__).parent / "templates"
@@ -358,6 +363,12 @@ def update_data(
     )
 
 
+def _recorded_ref(project: Path, layer: str) -> str:
+    """Return the ref `project`'s answers file records for `layer`."""
+    recorded = load_answersfile_data(project, Path(f".copier-answers.{layer}.yml"))
+    return str(recorded["_commit"])
+
+
 def update_layer(
     project: Path,
     *,
@@ -369,12 +380,14 @@ def update_layer(
     full_view: bool = False,
     ask_unanswered: bool = True,
     data: Mapping[str, Any] | None = None,
-    views_by_ref: Mapping[str, LayerView] | None = None,
+    old_templates: Path | None = None,
+    old_view: LayerView | None = None,
+    target_view: LayerView | None = None,
     skip_tasks: bool = True,
     quiet: bool = True,
     worker_type: type[ScopedWorker] = ScopedWorker,
 ) -> None:
-    """Update one layer of a composed project to `ref` under per-ref views.
+    """Update one layer of a composed project to `ref` under two views.
 
     Args:
         project: The composed project, a git repository with a clean tree.
@@ -384,7 +397,8 @@ def update_layer(
         ref: The git ref of the target template version.
         templates: The templates directory holding each release a render of
             this update reads, keyed by ref (`None` for the bundled
-            templates); the recorded ref and `ref` must both be keys.
+            templates); the project's recorded ref and `ref` must both be
+            keys, unless `old_templates` stands in for the recorded one.
         full_view: Whether to render under the root's full view and pass
             every answers file's answers, as ``RenderEngine`` would, instead
             of `layer`'s scoped view and its chain's answers.
@@ -393,18 +407,25 @@ def update_layer(
             recorded (``update_data``).
         data: Forced answers to pass instead of building them; ``{}`` is a
             vanilla ``copier update``, which reads only the answers file.
-        views_by_ref: Views to render under instead of composing them from
-            `templates`.
+        old_templates: The directory the old copy's view is composed from,
+            for an update whose layer keeps its ref while an ancestor moves,
+            so `templates` cannot hold both; by default `templates` at the
+            ref the project records for `layer`.
+        old_view: The view the old copy renders under instead of composing
+            it from the old templates.
+        target_view: The view the in-place render and the new copy render
+            under instead of composing it from `templates` at `ref`.
         skip_tasks: Whether to skip the layer's own post-generation tasks.
         quiet: Whether to silence Copier's progress output.
         worker_type: The worker class to update with.
     """
     view_root = root if full_view else layer
-    views = (
-        dict(views_by_ref)
-        if views_by_ref is not None
-        else {r: layer_view(view_root, d) for r, d in templates.items()}
-    )
+    if old_view is None:
+        if old_templates is None:
+            old_templates = templates[_recorded_ref(project, layer)]
+        old_view = layer_view(view_root, old_templates)
+    if target_view is None:
+        target_view = layer_view(view_root, templates[ref])
     if data is None:
         data = update_data(
             project,
@@ -417,7 +438,7 @@ def update_layer(
     update_layer_in_src(
         project,
         LayerRelease(layer=layer, source=source, ref=ref),
-        views,
+        UpdateViews(old_view, target_view),
         data,
         UpdateOptions(skip_tasks=skip_tasks, quiet=quiet, worker_type=worker_type),
     )
