@@ -8,6 +8,7 @@ from pathlib import Path
 from boilerplate import __version__
 from boilerplate.common.exceptions import UpdateConflictPausedError
 from boilerplate.composition.staging import check_project_ready
+from boilerplate.composition.staging.operation_lock import operation_lock
 from boilerplate.composition.updating.task_failure_handler import (
     TaskFailureHandler,
     keep_files,
@@ -49,6 +50,7 @@ class Updater:
         *,
         on_task_failure: TaskFailureHandler = keep_files,
         boilerplate_version: str = __version__,
+        lock_timeout: float | None = None,
     ) -> None:
         """Prepare an updater.
 
@@ -57,9 +59,12 @@ class Updater:
                 were copied back; returns whether to keep the update or undo it.
                 The default keeps it, as a caller that cannot ask does.
             boilerplate_version: The version of the tool, recorded in the lock.
+            lock_timeout: Seconds to wait for another operation on the project
+                to finish; ``BOILERPLATE_LOCK_TIMEOUT`` (default 60) when omitted.
         """
         self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
+        self._lock_timeout = lock_timeout
 
     def update(
         self, project: Path, request: UpdateRequest | None = None
@@ -154,16 +159,19 @@ class Updater:
             plumbum.commands.processes.ProcessExecutionError: If a source cannot
                 check its target out.
             UpdateCheckoutChangedError: If the checkout changed during the walk.
+            ConcurrencyContentionError: If another operation on the project
+                still holds its lock when the timeout passes.
         """
         request = request or UpdateRequest()
         check_project_ready(project)
-        lock = read_lock(project)
         with (
+            operation_lock(project, timeout=self._lock_timeout),
             ReleaseCheckouts() as checkouts,
             tempfile.TemporaryDirectory(
                 prefix="boilerplate-views-", ignore_cleanup_errors=True
             ) as workdir,
         ):
+            lock = read_lock(project)
             plan = plan_walk(project, request, lock, checkouts, Path(workdir))
             for warning in plan.warnings:
                 _logger.warning(warning)
