@@ -251,7 +251,7 @@ class TestFamilyBuilder:
         ("layer", "expected"),
         [
             ("core", ["1.0.0", "1.1.0", "2.0.0", "2.1.0", "3.0.0"]),
-            ("service", ["1.0.0", "1.1.0"]),
+            ("service", ["1.0.0", "1.1.0", "1.2.0"]),
             ("docs", ["1.0.0", "1.1.0", "1.2.0"]),
             ("ci", ["1.0.0", "1.1.0"]),
             ("app", ["1.0.0", "1.1.0"]),
@@ -492,6 +492,54 @@ class TestDocsFilterRelease:
         }
 
         assert changed == {"_extensions/docfilters.py", "boilerplate.yml"}
+
+
+class TestServiceMaintainerRelease:
+    """Service 1.2.0 adds a line that renders core's ``maintainer_name``."""
+
+    MAINTAINER = "Ada Probe"
+
+    @pytest.fixture(scope="class")
+    def service_on_new_core(
+        self, family: Family, tmp_path_factory: pytest.TempPathFactory
+    ) -> Iterator[Composed]:
+        """Compose service 1.2.0 over core 2.0.0, which renamed the question."""
+        work = tmp_path_factory.mktemp("service-1-2-0")
+        with temp_dir_inside(work):
+            yield _compose(
+                family,
+                "service",
+                work,
+                {"maintainer_name": self.MAINTAINER},
+                tags={"core": "2.0.0", "service": "1.2.0"},
+            )
+
+    def test_service_guide_names_the_maintainer(
+        self, service_on_new_core: Composed
+    ) -> None:
+        """Render core's ``maintainer_name`` into the service guide."""
+        assert (
+            f"Maintained by {self.MAINTAINER}."
+            in service_on_new_core.files["SERVICE.md"].splitlines()
+        )
+
+    def test_release_changes_only_the_guide_and_its_version(
+        self, family: Family
+    ) -> None:
+        """Leave every other file of service 1.1.0 as it was."""
+        old = family.releases["service"]["1.1.0"]
+        new = family.releases["service"]["1.2.0"]
+        changed = {
+            path.relative_to(new).as_posix()
+            for path in new.rglob("*")
+            if path.is_file()
+            and (
+                not (old / path.relative_to(new)).exists()
+                or path.read_bytes() != (old / path.relative_to(new)).read_bytes()
+            )
+        }
+
+        assert changed == {"SERVICE.md.jinja", "boilerplate.yml"}
 
 
 class TestCoreTask:
