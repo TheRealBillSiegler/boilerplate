@@ -1,0 +1,109 @@
+_answers_file: .copier-answers.core.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata and the extension module.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+  - _extensions
+
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - _extensions/naming.py:PackageNameExtension
+
+# Project-owned: the project keeps its own history here, so a release never
+# merges into the changelog once it exists.
+_skip_if_exists:
+  - "CHANGELOG.md"
+
+# Runs once, offline: records that the task ran by appending a line.
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "print('core task ran', file=open('.core-task-marker', 'a', encoding='utf-8'))"
+
+project_name:
+  type: str
+  help: "What is the (human-readable) name of the project?"
+  default: "{{ _folder_name }}"
+
+package_name:
+  default: "{{ project_name | to_package }}"
+  when: false
+
+maintainer_name:
+  type: str
+  help: "Who maintains the project?"
+  default: "Your Name"
+
+python_version:
+  type: str
+  help: "Which Python version does the project target?"
+  choices:
+    - "3.12"
+    - "3.13"
+  default: "3.12"
+
+use_tests:
+  type: bool
+  help: "Include a smoke test?"
+  default: true
+
+api_token:
+  type: str
+  help: "API token for the package index (kept out of the answers file)."
+  secret: true
+  default: ""
+
+license:
+  type: str
+  help: "Which license does the project use?"
+  choices:
+    - MIT
+    - Apache-2.0
+  default: MIT
+
+# 2.0.0 renames `author_name`: the migration moves the recorded answer so the
+# update does not ask `maintainer_name` again and drop the recorded name.
+# 2.1.0 drops Python 3.11: the migration moves a recorded 3.11 to 3.12.
+_migrations:
+  - version: "2.0.0"
+    when: "{{ _stage == 'before' }}"
+    command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import pathlib
+
+        answers = pathlib.Path(".copier-answers.core.yml")
+        if answers.exists():
+            text = answers.read_text(encoding="utf-8")
+            answers.write_text(
+                text.replace("author_name:", "maintainer_name:"),
+                encoding="utf-8",
+                newline="\n",
+            )
+  - version: "2.1.0"
+    when: "{{ _stage == 'before' }}"
+    command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import pathlib
+
+        answers = pathlib.Path(".copier-answers.core.yml")
+        if answers.exists():
+            text = answers.read_text(encoding="utf-8")
+            answers.write_text(
+                text.replace("python_version: '3.11'", "python_version: '3.12'"),
+                encoding="utf-8",
+                newline="\n",
+            )

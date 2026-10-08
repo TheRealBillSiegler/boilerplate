@@ -1,0 +1,17 @@
+{% if license == 'MIT' -%}
+MIT License
+
+Copyright (c) {{ maintainer_name }}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the software
+without restriction, subject to the conditions of the MIT License.
+{%- else -%}
+Apache License, Version 2.0
+
+Copyright {{ maintainer_name }}
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+{%- endif %}
