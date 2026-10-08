@@ -43,10 +43,10 @@ from boilerplate.composition.rendering.engine import (
     _WORKER_EXCLUDES,  # pyright: ignore[reportPrivateUsage]
     RenderEngine,
 )
+from boilerplate.composition.rendering.grants_unsafe import grants_unsafe
 from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
 )
-from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.rendering.questionnaire import ask_questionnaire
 from boilerplate.composition.rendering.questionnaire_answers import (
     QuestionnaireAnswers,
@@ -69,7 +69,6 @@ from boilerplate.composition.views import (
     LayerView,
     build_layer_view,
     build_step_view,
-    view_config,
 )
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.settings import Settings
@@ -165,23 +164,20 @@ def render_full_view(
     tasks = normalize_tasks(composition.final)
     for index, layer in enumerate(composition.layers):
         run_tasks = index == len(composition.layers) - 1 and not skip_tasks
-        config = view_config(view, skip_if_exists=[])
-        if run_tasks and tasks:
-            config["tasks"] = tasks
-        template = MergedTemplate(str(layer.path), dict(view.questions), config)
+        layer_tasks = tasks if run_tasks else []
         options: WorkerOptions = {
             "src_path": str(layer.path),
             "dst_path": dest,
             "data": {**asked.user, **asked.metadata},
             "user_defaults": {},
-            "unsafe": bool(template.jinja_extensions) or (run_tasks and bool(tasks)),
+            "unsafe": grants_unsafe(layer, view) or bool(layer_tasks),
             "overwrite": True,
             "defaults": True,
             "skip_tasks": not run_tasks,
             "exclude": _WORKER_EXCLUDES,
             "quiet": True,
         }
-        with worker_session(options, template, view) as worker:
+        with worker_session(options, view, tasks=layer_tasks) as worker:
             worker.run_copy()
     return dest
 

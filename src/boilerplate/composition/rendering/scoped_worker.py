@@ -1,4 +1,4 @@
-"""A Copier ``Worker`` that renders each copy of a compose or update under a view."""
+"""A Copier ``Worker`` that renders each copy of a compose or update under its view."""
 
 import logging
 from collections.abc import Mapping
@@ -87,8 +87,13 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             ``_skip_if_exists`` list. A compose clears it, because a forced
             render overwrites every file; an add and an update keep it.
         check_recorded: Whether the in-place render rejects a recorded answer
-            the target view's question cannot take. A compose pass turns it off,
-            as Copier then drops such an answer silently.
+            the target view's question cannot take. A compose turns it off through
+            ``worker_session``, since it supplies every answer as data; an
+            update keeps it.
+        fallback_version: The layer's ``boilerplate.yml`` version, reported as
+            the template version when the layer is not a git repository; a
+            git-derived version takes precedence. Unset for an update, whose
+            layers are git-backed.
     """
 
     old_view: LayerView | None = field(default=None, kw_only=True)
@@ -98,6 +103,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     tasks: tuple[Any, ...] = field(default=(), kw_only=True)
     honor_skip_if_exists: bool = field(default=True, kw_only=True)
     check_recorded: bool = field(default=True, kw_only=True)
+    fallback_version: str | None = field(default=None, kw_only=True)
 
     def view_for_render(self) -> LayerView:
         """Return the view for the render this worker makes.
@@ -392,7 +398,13 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             **({"tasks": list(self.tasks)} if self.tasks else {}),
             **({} if self.honor_skip_if_exists else {"skip_if_exists": []}),
         )
-        result = MergedTemplate(url, dict(view.questions), config or None, ref=ref)
+        result = MergedTemplate(
+            url,
+            dict(view.questions),
+            config or None,
+            ref=ref,
+            fallback_version=self.fallback_version,
+        )
         # Copier registers a template's cleanup only for the template it
         # builds itself; this one it never sees, and a VCS template clones
         # into a temp directory that only `_cleanup` removes.

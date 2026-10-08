@@ -617,3 +617,62 @@ class TestComposedRenderIgnoresSkipIfExists:
         assert (destination / "shared.txt").read_text(encoding="utf-8") == (
             "final content"
         )
+
+
+class TestForcedRerenderOverRejectedAnswer:
+    """A `--force` re-render takes its answers as data, whatever the file records."""
+
+    def _layer(self, root: Path, choices: str, default: str) -> Path:
+        template = root / "colorlayer"
+        template.mkdir(parents=True, exist_ok=True)
+        (template / "boilerplate.yml").write_text(
+            'schema_version: "1"\nname: colorlayer\nversion: 0.1.0\ndescription: x\n',
+            encoding="utf-8",
+        )
+        (template / "copier.yml").write_text(
+            "_answers_file: .copier-answers.colorlayer.yml\n"
+            f"color:\n  type: str\n  choices: [{choices}]\n  default: {default}\n",
+            encoding="utf-8",
+        )
+        (template / "{{_copier_conf.answers_file}}.jinja").write_text(
+            _ANSWERS_STUB, encoding="utf-8"
+        )
+        return template
+
+    def _render(self, template: Path, destination: Path) -> None:
+        spec = "colorlayer@0.1.0"
+        node = GraphNode(name="colorlayer", version="0.1.0", path=template)
+        RenderEngine().render(
+            Composition(
+                graph=CompositionGraph(nodes={spec: node}, edges={}, sequence=[spec]),
+                sequence=[spec],
+                layers=[
+                    CompositionLayer(
+                        name="colorlayer", version="0.1.0", path=template, values={}
+                    )
+                ],
+                final={
+                    "color": {"type": "str", "choices": ["green"], "default": "green"}
+                },
+            ),
+            ExecutionContext(
+                destination=destination,
+                overwrite=True,
+                interactive=False,
+                skip_tasks=True,
+            ),
+        )
+
+    def test_the_new_default_replaces_a_recorded_answer_the_view_rejects(
+        self, tmp_path: Path
+    ) -> None:
+        """Compose supplies every answer as data, so no recorded answer is checked."""
+        destination = tmp_path / "out"
+        self._render(self._layer(tmp_path, "red, blue", "red"), destination)
+
+        self._render(self._layer(tmp_path, "green", "green"), destination)
+
+        recorded = yaml.safe_load(
+            (destination / ".copier-answers.colorlayer.yml").read_text(encoding="utf-8")
+        )
+        assert recorded["color"] == "green"
