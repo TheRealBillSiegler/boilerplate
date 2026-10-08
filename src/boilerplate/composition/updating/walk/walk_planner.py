@@ -94,7 +94,7 @@ def plan_walk(
     root = layers[-1]
     sources = read_layer_sources(project, lock)
     at_lock = lock_releases(lock, sources)
-    views = ReleaseViews(checkouts, root=root, workdir=workdir)
+    views = ReleaseViews(checkouts, workdir=workdir)
     layer_versions = read_layer_versions(
         project, lock, views.ancestors(at_lock), checkouts
     )
