@@ -1,5 +1,5 @@
 """Run an update plan: the staging, the layers, the copy back and what follows."""
-# Spec: docs/design/06-project-lifecycle.md §Staging worktree
+# Spec: docs/design/06-project-lifecycle.md §Part 2: Project Update
 
 import logging
 from typing import Any
