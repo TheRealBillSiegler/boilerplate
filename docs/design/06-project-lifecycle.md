@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document specifies the lifecycle of a Boilerplate-managed project: creation, update, layer addition, adoption, and ejection — covering workflows, lock file management, rollback, and migration records.
+This document specifies the lifecycle of a Boilerplate-managed project: creation, update, layer addition, adoption, and ejection — covering workflows, lock file management, staging, and migration records.
 
 ---
 
@@ -149,7 +149,9 @@ Project update takes an existing Boilerplate project (with `boilerplate.lock`), 
 
 ### Pre-Flight Check
 
-Before starting the update pipeline, Boilerplate MUST check the project working tree for uncommitted changes (both staged and unstaged). If the working tree is dirty, Boilerplate MUST fail immediately with a clear error: `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` The `--force` flag MAY override this check, but MUST emit a WARNING: `"Proceeding with uncommitted changes. Local modifications may be lost if rollback is needed."`
+Before starting the update pipeline, Boilerplate MUST check that the project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty. If the tree is dirty, Boilerplate MUST fail immediately with exit code `3` and the error `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` `update` has no override; the tree is clean, or the update does not start.
+
+A project with submodules (a `.gitmodules` file) MUST stop with `BP_UPDATE_SUBMODULES_UNSUPPORTED` and exit code `3`, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended ([git-worktree](https://git-scm.com/docs/git-worktree)).
 
 ### Update Pipeline
 
@@ -157,7 +159,7 @@ Before starting the update pipeline, Boilerplate MUST check the project working 
 1. Load     →  Read boilerplate.lock + each layer's .copier-answers.<layer>.yml
 2. Resolve  →  Build new dependency graph for target version
 3. Plan     →  Compute UpdatePlan (diff old vs new)
-4. Apply    →  Three-way merge into staging (after user confirmation)
+4. Apply    →  Walk the layers in a staging worktree, then copy the result back (after user confirmation)
 5. Lock     →  Write new boilerplate.lock
 6. Record   →  Append migration record to .boilerplate/migrations.yml
 ```
@@ -234,7 +236,7 @@ When `--dry-run` is active, print the UpdatePlan and exit without prompting or m
 
 ### Step 4: Three-Way Merge
 
-Three-way merge semantics preserve local modifications while incorporating template changes. **Boilerplate does NOT implement its own three-way merge.** All merging is performed by Copier's per-template `update` mechanism; Boilerplate orchestrates the per-layer invocations and owns the cross-layer rollback envelope.
+Three-way merge semantics preserve local modifications while incorporating template changes. **Boilerplate does NOT implement its own three-way merge.** All merging is performed by Copier's per-template `update` mechanism; Boilerplate orchestrates the per-layer invocations and owns the staging worktree around them.
 
 > **Why per-layer Copier `update`?** Copier enforces a "1 template = 1 Git repository" rule, so the documented mechanism for multi-template projects is one `copier update -a <answers-file>` invocation per template. Boilerplate MUST NOT reimplement three-way merge — Copier already provides three-way semantics per layer via that template's own Git history; Boilerplate only orchestrates the per-layer invocations.
 
@@ -247,7 +249,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 
 - **Single-layer projects** (no `extends`): Run the one layer's update through the same `Worker` subclass; its scoped view is the layer's own schema. Boilerplate writes `boilerplate.lock` afterward.
 
-- **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in topological order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the layer's scoped view ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate manages the cross-layer rollback envelope (see [Pre-Merge Backup](#pre-merge-backup) and the `update --continue` / `update --abort` semantics below).
+- **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in topological order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the layer's scoped view ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate stages the walk in a git worktree and brings the result back as uncommitted changes (see [Staging worktree](#staging-worktree) and [Step 5](#step-5-failure-and-conflict)).
 
 The per-layer answers files (`.copier-answers.<layer>.yml`) record the answers each layer's update starts from, written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior). [Design 04 §Safe Update](04-composition-engine.md#safe-update) owns where each answer in a layer's step comes from, how the step prompts and checks recorded answers, how `--set` and `--answers` replace a rejected one, and when the walk runs tasks.
 
@@ -273,52 +275,43 @@ If the template source repository referenced in the lock file has been deleted, 
 
 Template source repositories SHOULD be treated as critical infrastructure. The lock file records the source URL and commit hash per layer, but does not embed the template content itself — source availability is required for updates.
 
-### Pre-Merge Backup
+### Staging worktree
 
-Before the three-way merge modifies any project files, Boilerplate MUST create a backup of all files that will be affected:
+`update` runs the walk in a detached git worktree of the project, so the user's checkout changes only when the update has finished or paused on a conflict. `add` uses the same staging ([Part 2.4](#adding-a-layer)).
 
-1. Create a backup directory: `.boilerplate/backup-{iso_timestamp}` inside the project root.
-2. For each file in the merge plan (modified, deleted, or conflicted), copy the current version to the backup directory, preserving relative paths.
-3. Record the backup directory path in a `.boilerplate/merge-in-progress.json` file containing `{"backup_dir": "...", "started_at": "...", "affected_files": [...]}`.
+1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git worktree add --detach`) in the system temp directory, inside a uniquely named folder whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
+    - The worktree shares the repository's config, so line-ending, filter and LFS settings match the user's checkout.
+    - A detached HEAD adds no branch to the repository.
+    - Boilerplate MUST commit in the worktree with git's plumbing (`git write-tree`, `git commit-tree`, `git update-ref`), so the user's hooks do not run.
+2. **Walk.** Boilerplate MUST run the walk ([design 04 §Safe Update](04-composition-engine.md#safe-update)) in the worktree, ancestors first, and commit after each layer. Copier refuses to update a project with uncommitted changes, so the commit is what lets Copier update the next layer.
+3. **Fail.** Any error, a cancelled prompt or a rejected answer MUST remove the worktree. The user's checkout never changed, and no lock is written.
+4. **Succeed.** Before copying back, Boilerplate MUST verify that the user's checkout is still at the starting commit with no changes; if not, it MUST discard the worktree and stop with `BP_UPDATE_CHECKOUT_CHANGED` and exit code `3`. Otherwise it copies the final tree into the user's checkout as uncommitted changes, which is what plain Copier leaves, writes the lock, and removes the worktree.
+5. **Conflict.** When a layer's update returns conflicts (Copier inserts standard `<<<<<<<` / `=======` / `>>>>>>>` markers in affected text files), Boilerplate MUST stop the walk, copy back the layers finished so far together with Copier's conflict markers, and write no lock. See [Step 5](#step-5-failure-and-conflict).
 
-**Recovery**:
+Stale worktrees left by an interrupted run are removed by the stale-staging cleanup of [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern).
 
-- `boilerplate update --abort` MUST restore files from the backup directory, delete the backup, remove `merge-in-progress.json`, and record a `failed` migration entry. This works regardless of git state, unlike `git checkout .` which only restores committed files.
-- On successful completion (`--continue` or clean merge), the backup directory MUST be deleted and `merge-in-progress.json` removed.
-- If `--force` was used with uncommitted changes, the backup provides the recovery path that `git checkout .` cannot.
-
-> **Why not rely on git alone?** With `--force`, the merge may run against uncommitted changes; `git checkout .` would restore the last *committed* state, losing them. The backup directory preserves the actual pre-merge file contents regardless of git status.
+### Merge behavior and ordering
 
 **Per-file merge behavior**: Per-file merge semantics (clean updates for unchanged files, conflict-marker insertion for text-file conflicts, binary-conflict reporting for binary files, modify/delete handling, etc.) are owned by Copier's `update` mechanism. Boilerplate does not specify or implement these semantics; they are documented in Copier's own update reference.
 
-**Cross-layer ordering**: Per-layer Copier `update` invocations are always issued in topological order (same as creation): dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it ([design 04 §Safe Update](04-composition-engine.md#safe-update)). A failure or conflict in any layer halts the cross-layer envelope; subsequent layers are not invoked.
+**Cross-layer ordering**: Per-layer Copier `update` invocations are always issued in topological order (same as creation): dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it ([design 04 §Safe Update](04-composition-engine.md#safe-update)). A failure or conflict in any layer halts the walk; subsequent layers are not invoked.
 
-**Conflict handling (cross-layer envelope)**:
+### Step 5: Failure and conflict
 
-- When any per-layer `copier update` returns conflicts (Copier inserts standard `<<<<<<<` / `=======` / `>>>>>>>` markers in affected text files), Boilerplate halts further layer invocations.
-- Boilerplate reports each conflicted file path and the originating layer.
-- Boilerplate prints remediation: `"Resolve conflicts, then run 'boilerplate update --continue' to finalize."`
-- Boilerplate exits with code `4` (`ACTION_REQUIRED`); no new lock file is written.
+**Failure.** Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (`1` for an unexpected failure, `3` for a rejected answer, `130` for a cancelled prompt). A task failure after the copy back follows [design 04 §Safe Update](04-composition-engine.md#safe-update): a terminal offers to keep the files or undo the update, and `--non-interactive` keeps the files, writes the lock, names the failed task and how to rerun it, and exits `1`.
 
-**Conflict continuation** (`--continue`): After the user resolves all conflict markers, `boilerplate update --continue` scans the project for remaining `<<<<<<<` markers. If none are found, it resumes the cross-layer envelope: any remaining layers are updated via `copier update --continue` per layer in topological order, the accumulated task list runs once, then the new lock file is written and a `success` migration record is appended. If markers remain, it reports the unresolved files and exits `4` (`ACTION_REQUIRED`). Exit code `1` is reserved for unexpected failures (I/O errors, internal errors).
+**Conflict.** When a layer's update returns conflicts, Boilerplate:
 
-### Step 5: Rollback
+- stops the walk, so later layers are not invoked;
+- brings back the layers finished so far into the user's checkout as uncommitted changes, with Copier's conflict markers in the conflicted files;
+- reports each conflicted file path and the originating layer;
+- exits with code `4` (`ACTION_REQUIRED`) and writes no lock;
+- prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git restore' discards the partial update."`
 
-If any update step fails after staging has begun:
+The user resolves and commits as with plain Copier, then reruns `boilerplate update`. A layer whose own and ancestors' recorded `_commit` already equal their targets is skipped ([design 04 §Safe Update](04-composition-engine.md#safe-update)), so the answers files themselves record the progress, and the rerun finishes the layers that remain, runs the accumulated task list once, writes the lock and records `success`. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so discarding the update takes `git restore .` for the modified files and `git clean` for the added ones.
 
-1. Delete the staging directory
-2. Append a failed migration record to `.boilerplate/migrations.yml`
-3. Print remediation guidance (see Rollback procedure below)
-4. Exit with code `1`
+The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
 
-The lock file is only written after a fully successful update, so there is no partial-lock-file scenario to recover from.
-
-**Rollback procedure**:
-
-1. If a pre-merge backup directory exists (created by the update pipeline before merging — see Pre-Merge Backup section), restore the project from it: copy the backup directory contents back to the project root.
-2. Then run `git checkout .` to restore any tracked files that were modified.
-3. `git checkout .` alone is NOT sufficient as a rollback if the project had uncommitted changes before the update — those changes exist only in the backup directory, not in git history.
-4. If no backup directory exists (e.g., the operation failed before the backup was created), `git checkout .` is the only option, and uncommitted pre-update changes may be lost.
 
 ### Step 6: Post-Update State
 
@@ -336,13 +329,13 @@ Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, 
 **Invariants** (the generic two-phase write protocol is specified in [§02 MigrationRecord](02-data-models.md#migrationrecord); the project-specific timing below is owned here):
 
 - Entries MUST be append-only. Existing entries MUST NOT be modified except the `status` field during the two-phase write.
-- Failed and conflict entries MUST be recorded. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, the migration record's status is updated to `conflict`. When the update fails with code `1` (unexpected error), the status is updated to `failed`. The `status: success` value is written only after `--continue` completes with all conflicts resolved.
+- Failed and conflict entries MUST be recorded. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, the migration record's status is updated to `conflict`. When the update fails with code `1` (unexpected error), the status is updated to `failed`. The `status: success` value is written only when a run completes every layer.
 - The file MUST be created with the initial `created` MigrationRecord on project creation (per Step 5 above), not as an empty file. The audit log is complete from inception.
 - Writes to `migrations.yml` MUST follow the single-file tmp-then-rename recipe in [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern); the temporary file is `migrations.tmp.{random_suffix}`.
-- The initial `in_progress` record is appended at the START of the update operation. Terminal-status writes follow per-status timing:
-  - `success` MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the `--continue` path, `success` is appended as a new record (per §Step 4 Conflict continuation) — its prior `in_progress` record was already advanced to `conflict` at exit 4 and stays terminal.
-  - `conflict` is written at exit 4 (ACTION_REQUIRED) when merge conflicts are detected. No lock file is written on this path per §Step 4 Conflict handling — conflict is a deliberate pause state, not a completed update, so the AFTER-lock-write rule does not apply to it.
-  - `failed` is written when the operation aborts with code 1. The lock file is not written on the failure path; the migration record records the operation outcome regardless of whether the lock-write step was attempted.
+- The initial `in_progress` record is appended when the copy back starts, after the check that the user's checkout is unchanged; a run that fails or is cancelled before then changes nothing in the checkout and appends no record. Terminal-status writes follow per-status timing:
+  - `success` MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the rerun after a conflict, `success` is appended as a new record (per [Step 5](#step-5-failure-and-conflict)) — the prior `in_progress` record was already advanced to `conflict` at exit 4 and stays terminal.
+  - `conflict` is written at exit 4 (ACTION_REQUIRED) when merge conflicts are detected. No lock file is written on this path per [Step 5](#step-5-failure-and-conflict) — conflict is a deliberate pause state, not a completed update, so the AFTER-lock-write rule does not apply to it.
+  - `failed` is written when a task fails after the copy back. Under `--non-interactive` the files are kept and the lock file is written on that path; a terminal user who undoes the update leaves the checkout as it was and no record.
 
 **Known limitation**: The lock file write and migration record append are two separate atomic operations with no transactional guarantee across both. If the process crashes after writing the lock file but before appending the migration record, the missing migration entry is a minor inconsistency — re-running `update` detects the lock is current and no work is needed. The migration log is advisory, not authoritative.
 
@@ -350,7 +343,7 @@ Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, 
 
 - Entries MUST be append-only and chronologically ordered by `timestamp`. Implementations MUST NOT reorder, delete, or rewrite prior entries.
 - On the update path, `boilerplate.lock` MUST be regenerated only after a successful update operation; the lock is the authoritative source of completed-update truth.
-- A failed update MUST leave the project in its pre-update state with no partial migration record. The `failed` MigrationRecord that captures the abort MUST itself be written atomically per §Atomic Staged Write Pattern.
+- A failed update that stops before the copy back MUST leave the project in its pre-update state with no migration record. A `failed` MigrationRecord is written only when a task fails after the copy back, and it MUST itself be written atomically per §Atomic Staged Write Pattern.
 
 ### Corruption recovery
 
@@ -371,10 +364,14 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | PATCH update, no local changes | Files updated, new lock written, migration recorded, exit `0` |
 | MINOR update, local changes, no conflicts | Local changes preserved, template deltas applied, exit `0` |
 | MAJOR update | UpdatePlan flags MAJOR, requires explicit confirmation |
-| Merge conflict detected | Conflict markers in files, no new lock written, migration record with `conflict` status, exit `4` |
+| Merge conflict detected | Layers finished so far brought back as uncommitted changes with Copier's conflict markers, no new lock written, migration record with `conflict` status, exit `4` |
+| Dirty working tree, untracked files included | Error naming the uncommitted changes; no files modified, exit `3` |
+| Project with submodules | `BP_UPDATE_SUBMODULES_UNSUPPORTED` naming the paths; no files modified, exit `3` |
+| User's checkout changed during the walk | Worktree discarded, `BP_UPDATE_CHECKOUT_CHANGED`; no files modified, exit `3` |
+| Task fails after the copy back (`--non-interactive`) | Files kept, lock written, failed task named with how to rerun it, `failed` migration record, exit `1` |
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
-| Failure mid-update | Staging cleaned, failed migration record, remediation guidance printed, exit `1` |
+| Failure mid-update | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
 
 ### Performance Contracts
 
@@ -390,7 +387,7 @@ Adding a layer applies one more template to a project Boilerplate already manage
 
 ### Preconditions
 
-The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.md#add), checked before any file changes, with the working tree check the same as the update [Pre-Flight Check](#pre-flight-check) without its `--force` override. Each failure exits with code `3`.
+The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.md#add), checked before any file changes, with the working tree check the same as the update [Pre-Flight Check](#pre-flight-check). Each failure exits with code `3`.
 
 ### Add pipeline
 
@@ -408,7 +405,7 @@ The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.m
 1. **Resolve** the template and its `extends`.
 2. **Ask** only the new layer's own questions, with defaults from the merged template of the project's layers plus the new one.
 3. **Take answers** to ancestors' questions the same way update takes them ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
-4. **Render** the layer's scoped view with Copier's `copy`, using the same staging and rollback as update ([Pre-Merge Backup](#pre-merge-backup), [Step 5: Rollback](#step-5-rollback)).
+4. **Render** the layer's scoped view with Copier's `copy`, using the same staging as update ([Staging worktree](#staging-worktree), [Step 5: Failure and conflict](#step-5-failure-and-conflict)).
 5. **Bring the result back** as uncommitted changes.
 6. **Write `boilerplate.lock`** with the new layer appended at the end of the topological order. A new layer has no descendants, so last is always valid.
 7. **Append a migration record** to `.boilerplate/migrations.yml`. The record carries no classification, as for `created` and `adopted` records: no prior version of the layer exists to compare.
@@ -432,7 +429,7 @@ A layer that offers alternatives (CI providers, docs site generators) SHOULD ask
 | Template already in the project | Error pointing to `boilerplate update`; no files modified, exit `3` |
 | An ancestor the layer `extends` is not in the lock | Error naming each missing layer with the remediation `boilerplate add <ancestor>` first; no files modified, exit `3` |
 | An ancestor's recorded version fails the layer's `extends` constraint | Error naming the ancestor, its recorded version and the constraint, with the remediation `boilerplate update` first; no files modified, exit `3` |
-| Failure mid-add | Staging cleaned, failed migration record, remediation guidance printed, exit `1` |
+| Failure mid-add | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
 
 ---
 
@@ -532,7 +529,7 @@ Ejection is a mutating operation and MUST acquire the standard advisory mutex on
 
 ### No Recovery Needed
 
-Ejection is a delete, not a staged write: there is no staging directory, no intent journal, and no backup to roll back or resume. Consequently it reuses none of update's merge or pre-merge-backup machinery. A user who ejects by mistake can re-`adopt` the project — adoption regenerates `boilerplate.lock` and `.boilerplate/migrations.yml` from the existing Copier answers files (see [Part 2.5](#part-25-project-adoption)).
+Ejection is a delete, not a staged write: there is no staging directory, no intent journal, and no backup to roll back or resume. Consequently it reuses none of update's merge or staging-worktree machinery. A user who ejects by mistake can re-`adopt` the project — adoption regenerates `boilerplate.lock` and `.boilerplate/migrations.yml` from the existing Copier answers files (see [Part 2.5](#part-25-project-adoption)).
 
 ### Acceptance Criteria
 
