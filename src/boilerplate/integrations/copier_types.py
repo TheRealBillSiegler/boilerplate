@@ -29,6 +29,9 @@ renders through it.
 no default; the answer walk of an update tells such a question by it. A test
 pins it against ``get_default``.
 
+``get_git`` is the git command Copier runs its own git calls through (with a
+fixed commit identity); the staging worktree runs its git calls through it too.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -50,6 +53,7 @@ from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
 from copier._types import MISSING
 from copier._user_data import AnswersMap, Question, load_answersfile_data
+from copier._vcs import get_git
 from packaging.version import Version
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
@@ -129,6 +133,7 @@ __all__ = [
     "SandboxedEnvironment",
     "Template",
     "Worker",
+    "get_git",
     "load_answersfile_data",
     "load_template_config",
     "recorded_commit_version",
