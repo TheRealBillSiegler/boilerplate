@@ -21,6 +21,10 @@ file; reading recorded answers through it reads them the way Copier does.
 question; checking a recorded answer through them casts, narrows and validates
 it the way Copier will.
 
+``MISSING`` is the sentinel ``Question.get_default`` returns for a question with
+no default; the answer walk of an update tells such a question by it. A test
+pins it against ``get_default``.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -39,6 +43,7 @@ import functools
 
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
+from copier._types import MISSING
 from copier._user_data import AnswersMap, Question, load_answersfile_data
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
@@ -82,6 +87,7 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
 
 __all__ = [
     "DEFAULT_EXCLUDE",
+    "MISSING",
     "NEW_COPY_DIR_PREFIX",
     "OLD_COPY_DIR_PREFIX",
     "AnswersMap",
