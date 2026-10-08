@@ -13,8 +13,10 @@ flowchart TD
         changes{"changes job<br>anything outside docs touched?"}
         changes -- "docs-only" --> skip["code jobs skip"]
         changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: ubuntu-only on PRs, diagonal on pushes<br>tests-go-red: pull_request events only"]
+        changes -- "composition paths" --> scen["scenarios<br>ubuntu, latest Python"]
         docsjob["docs build<br>always runs, no needs"]
         code --> gate["gate<br>the single pass/fail signal"]
+        scen --> gate
         skip --> gate
         docsjob --> gate
     end
@@ -30,14 +32,14 @@ flowchart TD
 
 ## The dispatcher: `changes`
 
-The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed.
+The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed. It also flags **composition** when a changed file is under `src/boilerplate/composition/`, `src/boilerplate/templates/`, `tests/integration/boilerplate/composition/`, `tests/boilerplate/templates/` or `tests/fixtures/family/`, or is `uv.lock` or the workflow file itself; the scenarios job runs only then.
 
 | Event | BASE | HEAD |
 | --- | --- | --- |
 | `pull_request` | PR base SHA | PR head SHA |
 | `push` | `github.event.before` (branch tip before the push) | `github.sha` (tip after) |
 
-When BASE is unusable — empty, the zero SHA of a branch-creation push, or an object the clone no longer has after a force-push — the dispatcher falls back to running everything. The failure mode of the fallback is a few wasted minutes, never a merge that skips validation. On `develop` and `main` the fallback is rare by construction: branch rules forbid non-fast-forward pushes.
+When BASE is unusable — empty, the zero SHA of a branch-creation push, or an object the clone no longer has after a force-push — the dispatcher falls back to running everything, the scenarios included. The failure mode of the fallback is a few wasted minutes, never a merge that skips validation. On `develop` and `main` the fallback is rare by construction: branch rules forbid non-fast-forward pushes.
 
 ## Draft PRs cost nothing
 
@@ -51,6 +53,10 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 | `push` | ubuntu × {3.12, 3.13}, windows × 3.13, macos × 3.13 |
 
 PRs run one leg because development and the local gate already exercise Windows; CI's marginal PR signal is the POSIX leg. Pushes run the *diagonal* instead of the full OS × version cross product: OS-specific bugs are Python-version-independent and version-specific bugs are OS-independent, so the missing cells add multiplier cost without adding coverage. Windows and macOS breakage cannot land silently — it is caught by the merge-time push run.
+
+## Composition scenarios
+
+The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only or CLI-only change never pays for them. The gate waits on the job like any other.
 
 ## New tests go red
 
@@ -76,6 +82,6 @@ Run before every push:
 uv run python scripts/check.py
 ```
 
-It mirrors the billable gate exactly — ruff check `--no-fix`, `ruff format --check`, pyright, the full pytest suite plus doctests, and both strict docs builds. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
+It mirrors the billable gate — ruff check `--no-fix`, `ruff format --check`, pyright, the pytest suite without the scenarios, doctests, and both strict docs builds. It runs the scenarios too when a composition path differs from the merge base with `origin/develop`, or when it cannot find that merge base, and prints which it chose and why. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
 
 Next: [Versioning & Compatibility](versioning.md) — how releases are numbered and what compatibility they promise.
