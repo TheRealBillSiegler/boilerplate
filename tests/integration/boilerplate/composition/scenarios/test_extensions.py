@@ -6,7 +6,10 @@ ancestor's file directly. D17 probes which spellings of another template's
 file resolve, from a local directory and from Copier's git clone. S19
 registers the ancestor's file as an importable module per ref, so a
 descendant renders with the ancestor's extension at the release each copy of
-an update renders.
+an update renders. Whether a descendant can use the filter at all runs on the
+made-up template family; the per-ref update variants stay on the bundled
+layers, because the family's docs filter is the same file in every release, so
+no registration variant renders anything different.
 """
 
 import importlib.util
@@ -31,11 +34,14 @@ from tests.boilerplate.templates.conftest import (
     layer_view,
     update_layer,
 )
+from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     CLEAN,
+    FAMILY_PROJECT,
     build_releases,
     build_repos,
+    compose_family,
     copy_project,
     lines,
     make_git_project,
@@ -43,10 +49,12 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     on_own_worker,
     substitute,
     temp_dir_inside,
+    templates_at,
     write,
 )
 
 LOADER = "copier_template_extensions.TemplateExtensionLoader"
+FIRST_RELEASES = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
 
 # ------------------------------------------------------------------ D17
 
@@ -389,31 +397,41 @@ def registered_update(
         yield variant, project
 
 
-@pytest.mark.xdist_group("S19-compose")
-class TestRegistrationAtCompose:
-    """S19: composing with an ancestor's file-path filter used by a descendant."""
+@pytest.mark.xdist_group("S19-family")
+class TestRegistrationOnTheFamily:
+    """S19: app uses the filter docs ships, once composing registers it."""
 
     def test_descendant_cannot_use_the_ancestors_filter_unregistered(
-        self, tmp_path: Path
+        self, family: Family, tmp_path: Path
     ) -> None:
-        """S19: without registration streamlit's render has no `probe_shout` filter."""
-        releases = build_releases(tmp_path, ("v1",), _file_path_extensions)
+        """S19: without registration app's render has no `docs_anchor` filter."""
+        templates = templates_at(family, tmp_path, FIRST_RELEASES)
 
         with pytest.raises(
-            TemplateAssertionError, match="No filter named 'probe_shout'"
+            TemplateAssertionError, match="No filter named 'docs_anchor'"
         ):
             compose_project(
-                "streamlit", tmp_path / "probe-app", ANSWERS, releases["v1"]
+                "app",
+                tmp_path / "family-app",
+                {"project_name": FAMILY_PROJECT},
+                templates,
             )
 
     def test_registered_filter_renders_in_the_descendant(
-        self, file_path_setup: FilePathSetup
+        self, family: Family, tmp_path: Path
     ) -> None:
-        """S19: registered as a module, project's filter renders in streamlit's file."""
-        assert lines(file_path_setup.project / "streamlit_shout.txt") == [
-            "R1:PROBE APP",
-            "ST-HOOK",
-        ]
+        """S19: registered as a module, docs' filter renders in app's file."""
+        project = compose_family(family, tmp_path, "app", FIRST_RELEASES)
+
+        assert (
+            "The overview lives in the [documentation](docs/index.md#family-app)."
+            in lines(project / "APP.md")
+        )
+
+
+@pytest.mark.xdist_group("S19-compose")
+class TestRegistrationAtCompose:
+    """S19: composing with an ancestor's file-path hook used by a descendant."""
 
     def test_descendant_hook_stays_out_of_the_ancestors_files(
         self, file_path_setup: FilePathSetup
