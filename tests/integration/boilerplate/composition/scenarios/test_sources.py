@@ -1,7 +1,8 @@
 """Whether Boilerplate composes straight from layers that are git repositories.
 
-S18 points the template catalog at a directory whose ``project`` and
-``streamlit`` layers are each a git repository tagged ``v1`` and ``v2``.
+S18 points the template catalog at the family's directory of git
+repositories, one per layer, each tagged at its releases; it composes
+``service`` over ``core``.
 Copier's ``Template`` exposes ``git_index_modes`` for a git-backed template,
 keyed by ``PurePosixPath``; the composer's JSON check rejects those keys.
 """
@@ -9,7 +10,6 @@ keyed by ``PurePosixPath``; the composer's JSON check rejects those keys.
 import os
 import subprocess
 import sys
-from collections.abc import Iterator
 from pathlib import Path
 from typing import NamedTuple
 
@@ -22,14 +22,13 @@ from tests.boilerplate.templates.conftest import (
     compose_project,
     render_full_view,
 )
+from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
-    ANSWERS,
+    FAMILY_PROJECT,
     answers_file,
-    build_releases,
-    build_repos,
-    temp_dir_inside,
-    write,
 )
+
+COMPOSED = ("core", "service")
 
 
 class GitSources(NamedTuple):
@@ -40,16 +39,11 @@ class GitSources(NamedTuple):
 
 
 @pytest.fixture(scope="module")
-def git_sources(tmp_path_factory: pytest.TempPathFactory) -> Iterator[GitSources]:
-    """Build both layers as repositories tagged v1 and v2, side by side."""
-    root = tmp_path_factory.mktemp("git-sources")
-
-    def releases(ref: str, release: Path) -> None:
-        write(release / "project" / "project_own.txt.jinja", f"release={ref}\n")
-
-    with temp_dir_inside(root):
-        repos = build_repos(root, build_releases(root, ("v1", "v2"), releases))
-        yield GitSources(root / "repos", repos)
+def git_sources(family: Family) -> GitSources:
+    """Return the family's repositories, side by side, and the two composed."""
+    return GitSources(
+        family.repos["core"].parent, {layer: family.repos[layer] for layer in COMPOSED}
+    )
 
 
 @pytest.mark.xdist_group("S18")
@@ -69,7 +63,7 @@ class TestComposeFromGitSources:
         self, git_sources: GitSources
     ) -> None:
         """S18: composing from layers that are git repositories succeeds."""
-        compose("streamlit", git_sources.templates_dir)
+        compose("service", git_sources.templates_dir)
 
     @pytest.mark.xfail(
         strict=True,
@@ -89,14 +83,14 @@ class TestComposeFromGitSources:
                 "-m",
                 "boilerplate",
                 "new",
-                "streamlit",
-                str(tmp_path / "probe-app"),
+                "service",
+                str(tmp_path / "family-app"),
                 "--templates-dir",
                 str(git_sources.templates_dir),
                 "--non-interactive",
                 "--no-tasks",
                 "--data",
-                "project_name=Probe App",
+                f"project_name={FAMILY_PROJECT}",
             ],
             capture_output=True,
             text=True,
@@ -119,8 +113,10 @@ class TestComposeFromGitSources:
 
         A counterfactual, patched inside Boilerplate on purpose: it shows the
         attribute is the only blocker. Both layers then record the latest
-        tag, v2, as `_commit` and the repository as `_src_path`.
+        tag, core 3.0.0 and service 1.1.0, as `_commit` and the repository as
+        `_src_path`.
         """
+        answers = {"project_name": FAMILY_PROJECT}
         original = yaml_utils.template_public_attr_names
 
         def without_git_index_modes(cls: type[Template]) -> frozenset[str]:
@@ -129,24 +125,25 @@ class TestComposeFromGitSources:
         monkeypatch.setattr(
             yaml_utils, "template_public_attr_names", without_git_index_modes
         )
-        project = tmp_path / "probe-app"
+        project = tmp_path / "family-app"
         if compose_with == "full-view":
             render_full_view(
-                "streamlit",
+                "service",
                 project,
-                context_data=ANSWERS,
+                context_data=answers,
                 templates_dir=git_sources.templates_dir,
             )
         else:
-            compose_project("streamlit", project, ANSWERS, git_sources.templates_dir)
+            compose_project("service", project, answers, git_sources.templates_dir)
         provenance = {
             layer: (
                 answers_file(project, layer)["_commit"],
                 Path(answers_file(project, layer)["_src_path"]),
             )
-            for layer in ("project", "streamlit")
+            for layer in COMPOSED
         }
 
         assert provenance == {
-            layer: ("v2", repo) for layer, repo in git_sources.repos.items()
+            "core": ("3.0.0", git_sources.repos["core"]),
+            "service": ("1.1.0", git_sources.repos["service"]),
         }
