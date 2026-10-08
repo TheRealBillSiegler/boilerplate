@@ -55,6 +55,7 @@ class AddRun:
         self._inputs = inputs
         self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
+        self._warnings: tuple[str, ...] = ()
 
     def execute(self) -> AddOutcome:
         """Run the plan.
@@ -87,6 +88,7 @@ class AddRun:
                     interactive=self._inputs.request.interactive,
                 ),
             )
+            self._warnings = staging.warn_uncarried(plan.layer)
             staging.commit_layer(f"Add {plan.layer} {plan.release.ref}")
             staging.copy_back()
             return self._finish(staging, secrets)
@@ -171,4 +173,5 @@ class AddRun:
             status=status,
             layer=self._inputs.plan.layer,
             version=self._inputs.plan.version,
+            warnings=self._warnings,
         )
