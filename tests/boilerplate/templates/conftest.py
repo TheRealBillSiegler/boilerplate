@@ -11,13 +11,16 @@ render or update the same templates.
 Two views of a composition drive a layer's render:
 
 - The *full* view is the whole composition's merged questionnaire and
-  extension union, which ``RenderEngine`` gives every layer (``render``).
+  extension union. ``boilerplate new`` no longer gives it to every layer;
+  ``render_full_view`` keeps that earlier render as a counterfactual for the
+  scenarios that show what the scoped view changes.
 - The *scoped* view of a layer is the merged questionnaire and extension
-  union of that layer and its ancestors only (``layer_view``). The harness
-  composes a project by asking the full questionnaire once and rendering each
-  layer under its scoped view (``compose_project``), and updates one layer
-  through ``ScopedWorker``, which renders every copy Copier's update makes
-  under the scoped view of the ref that copy renders at (``update_layer``).
+  union of that layer and its ancestors only (``layer_view``).
+  ``RenderEngine`` composes a project by asking the full questionnaire once and
+  rendering each layer under its scoped view (``compose_project``), and the
+  harness updates one layer through ``ScopedWorker``, which renders every copy
+  Copier's update makes under the scoped view of the ref that copy renders at
+  (``update_layer``).
 
 The view builder, ``ScopedWorker``, the update answer rule and the single-layer
 update are Boilerplate's own code in ``boilerplate.composition.views`` and
@@ -30,7 +33,7 @@ import subprocess
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any
 
 import boilerplate
 from boilerplate.cli.utils import build_template_catalog
@@ -44,6 +47,12 @@ from boilerplate.composition.rendering.models.execution_context import (
     ExecutionContext,
 )
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
+from boilerplate.composition.rendering.questionnaire import ask_questionnaire
+from boilerplate.composition.rendering.questionnaire_answers import (
+    QuestionnaireAnswers,
+)
+from boilerplate.composition.rendering.worker_options import WorkerOptions
+from boilerplate.composition.rendering.worker_session import worker_session
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.composition.updating import (
@@ -60,14 +69,9 @@ from boilerplate.composition.views import (
     LayerView,
     build_layer_view,
     build_step_view,
-    registered_ancestor_extensions,
     view_config,
 )
-from boilerplate.integrations.copier_types import (
-    Template,
-    Worker,
-    load_answersfile_data,
-)
+from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.settings import Settings
 
 TEMPLATES = Path(boilerplate.__file__).parent / "templates"
@@ -80,7 +84,7 @@ def compose(name: str, templates_dir: Path | None = None) -> Composition:
     return Composer().compose(Resolver().resolve(name, registry))
 
 
-def render_full_view(
+def render_project(
     name: str,
     dest: Path,
     *,
@@ -91,8 +95,8 @@ def render_full_view(
 ) -> Path:
     """Render the composition rooted at `name` into `dest` through ``RenderEngine``.
 
-    ``RenderEngine`` renders every layer under the composition's full view,
-    which is what ``boilerplate new`` does.
+    ``RenderEngine`` is what ``boilerplate new`` drives: one questionnaire pass,
+    then each layer under its scoped view.
 
     Args:
         name: The composition's root layer, e.g. "project" or "streamlit".
@@ -119,6 +123,66 @@ def render_full_view(
         skip_tasks=skip_tasks,
     )
     RenderEngine().render(compose(name, templates_dir), ctx)
+    return dest
+
+
+def render_full_view(
+    name: str,
+    dest: Path,
+    *,
+    context_data: Mapping[str, object] | None = None,
+    skip_tasks: bool = True,
+    templates_dir: Path | None = None,
+) -> Path:
+    """Render every layer of `name`'s composition under the full view.
+
+    The render ``boilerplate new`` made before layers rendered under their
+    scoped views, kept as a counterfactual: every layer renders the whole
+    composition's questionnaire and importable extensions, and no ancestor's
+    file-path extension is loaded. A scenario compares it with
+    ``render_project`` to show what the scoped view changes.
+
+    Args:
+        name: The composition's root layer.
+        dest: The destination directory.
+        context_data: Copier's forced `data` channel.
+        skip_tasks: Whether to skip post-generation tasks.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates.
+
+    Returns:
+        The rendered project's destination directory.
+    """
+    composition = compose(name, templates_dir)
+    view = build_layer_view(composition)._replace(ancestor_extensions=())
+    asked = ask_questionnaire(
+        composition,
+        destination=dest,
+        data=dict(context_data or {}),
+        user_defaults={},
+        defaults=True,
+    )
+    tasks = normalize_tasks(composition.final)
+    for index, layer in enumerate(composition.layers):
+        run_tasks = index == len(composition.layers) - 1 and not skip_tasks
+        config = view_config(view, skip_if_exists=[])
+        if run_tasks and tasks:
+            config["tasks"] = tasks
+        template = MergedTemplate(str(layer.path), dict(view.questions), config)
+        options: WorkerOptions = {
+            "src_path": str(layer.path),
+            "dst_path": dest,
+            "data": {**asked.user, **asked.metadata},
+            "user_defaults": {},
+            "unsafe": bool(template.jinja_extensions) or (run_tasks and bool(tasks)),
+            "overwrite": True,
+            "defaults": True,
+            "skip_tasks": not run_tasks,
+            "exclude": _WORKER_EXCLUDES,
+            "quiet": True,
+        }
+        with worker_session(options, template, view) as worker:
+            worker.run_copy()
     return dest
 
 
@@ -150,7 +214,7 @@ def render(
     Returns:
         The rendered project's destination directory.
     """
-    return render_full_view(
+    return render_project(
         name,
         tmp_path / "out",
         context_data=context_data,
@@ -201,28 +265,6 @@ def layer_chain(name: str, templates_dir: Path | None = None) -> list[str]:
     return [layer.name for layer in compose(name, templates_dir).layers]
 
 
-def _primed_worker(template: Template, **options: object) -> Worker:
-    """Return a Worker whose `template` is `template`, cleanup registered."""
-    worker = Worker(**options)  # pyright: ignore[reportCallIssue]
-    object.__setattr__(worker, "template", template)
-    worker._cleanup_hooks.append(template._cleanup)  # pyright: ignore[reportPrivateUsage]
-    return worker
-
-
-class QuestionnaireAnswers(NamedTuple):
-    """The answers one questionnaire pass produced.
-
-    Attributes:
-        user: Every question's answer, hidden (``when: false``) ones included.
-        metadata: Copier's own ``_``-prefixed answers.
-        hidden: Names of the questions that were never shown.
-    """
-
-    user: dict[str, Any]
-    metadata: dict[str, Any]
-    hidden: frozenset[str]
-
-
 def ask_merged_questionnaire(
     root: str,
     data: Mapping[str, Any],
@@ -231,9 +273,6 @@ def ask_merged_questionnaire(
     defaults: bool = True,
 ) -> QuestionnaireAnswers:
     """Run one questionnaire pass over the full merged view of `root`.
-
-    The first layer's Worker asks the merged questionnaire, the way
-    ``RenderEngine`` does, into a scratch destination that is discarded.
 
     Args:
         root: The composition's root layer.
@@ -245,31 +284,13 @@ def ask_merged_questionnaire(
     Returns:
         The pass's answers.
     """
-    composition = compose(root, templates_dir)
-    view = layer_view(root, templates_dir)
-    first = composition.layers[0]
-    template = MergedTemplate(
-        str(first.path), dict(view.questions), view_config(view, skip_if_exists=[])
-    )
-    with (
-        tempfile.TemporaryDirectory() as scratch,
-        _primed_worker(
-            template,
-            src_path=str(first.path),
-            dst_path=Path(scratch),
-            data=dict(data),
+    with tempfile.TemporaryDirectory() as scratch:
+        return ask_questionnaire(
+            compose(root, templates_dir),
+            destination=Path(scratch),
+            data=data,
             user_defaults={},
             defaults=defaults,
-            unsafe=True,
-            quiet=True,
-        ) as worker,
-        registered_ancestor_extensions(view.ancestor_extensions),
-    ):
-        worker._ask()  # pyright: ignore[reportPrivateUsage]
-        return QuestionnaireAnswers(
-            dict(worker.answers.user),
-            dict(worker.answers.metadata),
-            frozenset(worker.answers.hidden),
         )
 
 
@@ -280,14 +301,8 @@ def compose_project(
     templates_dir: Path | None = None,
     *,
     skip_tasks: bool = True,
-    register_ancestors: bool = True,
-) -> dict[str, Any]:
-    """Compose the project rooted at `root` into `dest` under scoped views.
-
-    One questionnaire pass over the full merged view answers every question;
-    each layer then renders, in topological order, under its own scoped view
-    with those answers pre-seeded, so it records only the answers its scoped
-    view asks. The merged tasks run once, on the final layer.
+) -> None:
+    """Compose the project rooted at `root` into `dest` through ``RenderEngine``.
 
     Args:
         root: The composition's root layer.
@@ -296,46 +311,14 @@ def compose_project(
         templates_dir: An extra directory searched ahead of the bundled
             templates.
         skip_tasks: Whether to skip the merged post-generation tasks.
-        register_ancestors: Whether each layer's render loads the file-path
-            extensions its ancestors declare, as ``ScopedWorker`` does for an
-            update; off, a layer using an ancestor's filter fails to render.
-
-    Returns:
-        The questionnaire pass's public answers.
     """
-    composition = compose(root, templates_dir)
-    asked = ask_merged_questionnaire(root, answers, templates_dir)
-    seeded = {**asked.user, **asked.metadata}
-    tasks = normalize_tasks(composition.final)
-    for index, layer in enumerate(composition.layers):
-        run_tasks = (
-            index == len(composition.layers) - 1 and not skip_tasks and bool(tasks)
-        )
-        view = layer_view(layer.name, templates_dir)
-        if not register_ancestors:
-            view = view._replace(ancestor_extensions=())
-        config = view_config(view, skip_if_exists=[])
-        if run_tasks:
-            config["tasks"] = tasks
-        template = MergedTemplate(str(layer.path), dict(view.questions), config)
-        with (
-            _primed_worker(
-                template,
-                src_path=str(layer.path),
-                dst_path=dest,
-                data=dict(seeded),
-                user_defaults={},
-                unsafe=True,
-                overwrite=True,
-                defaults=True,
-                skip_tasks=not run_tasks,
-                exclude=_WORKER_EXCLUDES,
-                quiet=True,
-            ) as worker,
-            registered_ancestor_extensions(view.ancestor_extensions),
-        ):
-            worker.run_copy()
-    return {k: v for k, v in seeded.items() if not k.startswith("_")}
+    render_project(
+        root,
+        dest,
+        context_data=answers,
+        skip_tasks=skip_tasks,
+        templates_dir=templates_dir,
+    )
 
 
 def recorded_answers(project: Path, layer: str) -> dict[str, Any]:

@@ -1,8 +1,9 @@
 """Unit tests for the object-oriented Renderer.
 
-These tests patch Copier Worker/Template to avoid filesystem work and
-validate orchestration semantics:
-- Executes layers in order.
+These tests patch the Copier Worker to avoid filesystem work and validate
+orchestration semantics:
+- The merged questionnaire is asked once, by its own Worker.
+- Executes layers in order, each under its scoped view.
 - Tasks are applied only on the final layer.
 - RenderOptions flags are passed through correctly (interactive/defaults, overwrite).
 """
@@ -15,7 +16,7 @@ from typing import Any, ClassVar
 import pytest
 from copier.errors import CopierAnswersInterrupt
 
-import boilerplate.composition.rendering.engine as mod
+import boilerplate.composition.rendering.worker_session as session_mod
 from boilerplate.common.exceptions import (
     InteractiveRenderFailedError,
     MissingRequiredAnswersError,
@@ -29,16 +30,10 @@ from boilerplate.composition.models import (
 )
 from boilerplate.composition.rendering.engine import RenderEngine
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
+from boilerplate.composition.views import LayerView
 
 # Test-only alias for an internal helper; tests may legitimately probe internals.
 _find_missing = RenderEngine._find_missing_required_answers  # pyright: ignore[reportPrivateUsage]
-
-
-class FakeTemplate:
-    def __init__(
-        self, *args: object, **kwargs: object
-    ) -> None:  # signature matches Template(url=str(...))
-        pass
 
 
 class FakeWorker:
@@ -49,6 +44,7 @@ class FakeWorker:
         self.template = None
         self._cleanup_hooks: list[Callable[[], None]] = []
         self.ran = False
+        self.asked = False
         self.answers = None
         self.dst_path = kwargs.get("dst_path")
 
@@ -63,6 +59,7 @@ class FakeWorker:
             {
                 "user": {"layer_mark": src_path_val},
                 "metadata": {"_src_path": src_path_val},
+                "hidden": set(),
             },
         )()
         return self
@@ -75,20 +72,43 @@ class FakeWorker:
     ) -> bool:
         return False
 
+    def _ask(self) -> None:
+        self.asked = True
+
     def run_copy(self) -> None:
         self.ran = True
 
 
+def _layer_workers() -> list[FakeWorker]:
+    """Return the Workers that rendered a layer, in render order."""
+    return [w for w in FakeWorker.last_instances if w.ran]
+
+
+def _questionnaire_workers() -> list[FakeWorker]:
+    """Return the Workers that asked the questionnaire."""
+    return [w for w in FakeWorker.last_instances if w.asked]
+
+
 @pytest.fixture(autouse=True)
 def patch_copier_symbols(monkeypatch: pytest.MonkeyPatch):
-    # Patch copier.Template and copier.Worker used inside renderer
-    monkeypatch.setattr(mod, "Template", FakeTemplate)
-    monkeypatch.setattr(mod, "Worker", FakeWorker)
+    # Patch the copier.Worker the render drives
+    monkeypatch.setattr(session_mod, "Worker", FakeWorker)
     # Ensure clean state per test run
     try:
         FakeWorker.last_instances.clear()
     except Exception:
         FakeWorker.last_instances = []
+
+
+def _write_layer_files(path: Path, name: str, copier_yml: str = "") -> None:
+    """Write the `boilerplate.yml` and `copier.yml` of a layer named `name`."""
+    path.mkdir(parents=True, exist_ok=True)
+    (path / "boilerplate.yml").write_text(
+        f'schema_version: "1.0"\nname: {name}\ndescription: x\n'
+        'version: "0.0.1"\nextends: []\n',
+        encoding="utf-8",
+    )
+    (path / "copier.yml").write_text(copier_yml, encoding="utf-8")
 
 
 def _make_composition(tmp_path: Path, n: int, with_tasks: bool = True) -> Composition:
@@ -97,17 +117,7 @@ def _make_composition(tmp_path: Path, n: int, with_tasks: bool = True) -> Compos
     order: list[str] = []
     for i in range(n):
         p = tmp_path / f"tmpl{i}"
-        p.mkdir(parents=True, exist_ok=True)
-        # Minimal boilerplate.yml to satisfy TemplateMeta.load
-        (p / "boilerplate.yml").write_text(
-            """
-            schema_version: "1.0"
-            name: sample
-            description: x
-            version: "0.0.1"
-            extends: []
-            """.strip()
-        )
+        _write_layer_files(p, f"tmpl{i}")
         layers.append(
             CompositionLayer(name=f"tmpl{i}", version="0.0.1", path=p, values={})
         )
@@ -138,18 +148,7 @@ def _make_two_layer_composition(
 
     def _write(name: str, copier_yml: str) -> CompositionLayer:
         p = tmp_path / name
-        p.mkdir(parents=True, exist_ok=True)
-        (p / "boilerplate.yml").write_text(
-            f"""
-            schema_version: "1.0"
-            name: {name}
-            description: x
-            version: "0.0.1"
-            extends: []
-            """.strip()
-        )
-        if copier_yml:
-            (p / "copier.yml").write_text(copier_yml)
+        _write_layer_files(p, name, copier_yml)
         return CompositionLayer(name=name, version="0.0.1", path=p, values={})
 
     base = _write("base", base_copier_yml)
@@ -186,20 +185,20 @@ def test_executes_layers_in_order_and_only_final_runs_tasks(tmp_path: Path):
     RenderEngine().render(comp, ctx)
 
     num_layers = len(comp.layers)
-    assert len(FakeWorker.last_instances) == num_layers
+    workers = _layer_workers()
+    assert len(workers) == num_layers
 
     # Check order and flags uniformly for all layers
-    for idx, inst in enumerate(FakeWorker.last_instances):
+    for idx, inst in enumerate(workers):
         is_final_layer = idx == num_layers - 1
 
         assert inst.init_kwargs["src_path"] == str(comp.layers[idx].path)
         assert inst.init_kwargs["skip_tasks"] == (not is_final_layer)
-        # defaults should be True when not interactive; only first layer
-        # could be interactive
+        # Every answer is already in `data`: no layer prompts.
         assert inst.init_kwargs["defaults"] is True
 
 
-def test_propagates_renderoptions_and_first_layer_interactive(tmp_path: Path):
+def test_propagates_renderoptions_and_questionnaire_interactive(tmp_path: Path):
     comp = _make_composition(tmp_path, 2, with_tasks=False)
     ctx = ExecutionContext(
         destination=tmp_path / "out2",
@@ -210,8 +209,8 @@ def test_propagates_renderoptions_and_first_layer_interactive(tmp_path: Path):
 
     RenderEngine().render(comp, ctx)
 
-    assert len(FakeWorker.last_instances) == 2
-    first, second = FakeWorker.last_instances
+    (asker,) = _questionnaire_workers()
+    first, second = _layer_workers()
 
     # Overwrite: user's --force only gates the first layer (writing into a
     # pre-existing destination). Non-first layers are orchestrated overlays
@@ -219,9 +218,10 @@ def test_propagates_renderoptions_and_first_layer_interactive(tmp_path: Path):
     assert first.init_kwargs["overwrite"] is False
     assert second.init_kwargs["overwrite"] is True
 
-    # First layer interactive -> defaults False; second layer non-interactive
-    # -> defaults True
-    assert first.init_kwargs["defaults"] is False
+    # Only the questionnaire pass prompts; the layers take its answers.
+    assert asker.init_kwargs["defaults"] is False
+    assert asker.init_kwargs["data"] == {"alpha": 1}
+    assert first.init_kwargs["defaults"] is True
     assert second.init_kwargs["defaults"] is True
 
 
@@ -244,12 +244,13 @@ def test_non_first_layers_always_overwrite(tmp_path: Path):
 
     RenderEngine().render(comp, ctx)
 
-    assert len(FakeWorker.last_instances) == 3
+    workers = _layer_workers()
+    assert len(workers) == 3
     # First layer honors user's --force (False here)
-    assert FakeWorker.last_instances[0].init_kwargs["overwrite"] is False
+    assert workers[0].init_kwargs["overwrite"] is False
     # Non-first layers always overwrite regardless of user's --force
-    assert FakeWorker.last_instances[1].init_kwargs["overwrite"] is True
-    assert FakeWorker.last_instances[2].init_kwargs["overwrite"] is True
+    assert workers[1].init_kwargs["overwrite"] is True
+    assert workers[2].init_kwargs["overwrite"] is True
 
 
 def test_single_layer_executes_tasks_when_present(tmp_path: Path):
@@ -264,8 +265,7 @@ def test_single_layer_executes_tasks_when_present(tmp_path: Path):
 
     RenderEngine().render(comp, ctx)
 
-    assert len(FakeWorker.last_instances) == 1
-    worker = FakeWorker.last_instances[0]
+    (worker,) = _layer_workers()
 
     # Single layer is both first AND final, so tasks should run
     assert worker.init_kwargs["skip_tasks"] is False, (
@@ -286,8 +286,7 @@ def test_single_layer_without_tasks_skips_tasks(tmp_path: Path):
 
     RenderEngine().render(comp, ctx)
 
-    assert len(FakeWorker.last_instances) == 1
-    worker = FakeWorker.last_instances[0]
+    (worker,) = _layer_workers()
 
     # No tasks in final schema, but still final layer
     assert worker.init_kwargs["skip_tasks"] is False, (
@@ -310,10 +309,11 @@ def test_multi_layer_only_final_executes_tasks(tmp_path: Path):
     RenderEngine().render(comp, ctx)
 
     num_layers = len(comp.layers)
-    assert len(FakeWorker.last_instances) == num_layers
+    workers = _layer_workers()
+    assert len(workers) == num_layers
 
     # Check all layers uniformly: only final layer executes tasks
-    for idx, worker in enumerate(FakeWorker.last_instances):
+    for idx, worker in enumerate(workers):
         is_final_layer = idx == num_layers - 1
         expected_skip_tasks = not is_final_layer
 
@@ -333,16 +333,7 @@ def _make_composition_with_questions(
 ) -> Composition:
     """Build a single-layer composition carrying the given question schema."""
     p = tmp_path / "tmpl0"
-    p.mkdir(parents=True, exist_ok=True)
-    (p / "boilerplate.yml").write_text(
-        """
-        schema_version: "1.0"
-        name: sample
-        description: x
-        version: "0.0.1"
-        extends: []
-        """.strip()
-    )
+    _write_layer_files(p, "tmpl0")
     layer = CompositionLayer(name="tmpl0", version="0.0.1", path=p, values={})
     spec = "tmpl0@0.0.1"
     graph = CompositionGraph(
@@ -454,7 +445,7 @@ class TestPreflightMissingRequiredAnswers:
 
         # Does not raise — FakeWorker just records the call and succeeds.
         RenderEngine().render(comp, ctx)
-        assert len(FakeWorker.last_instances) == 1
+        assert len(_layer_workers()) == 1
 
     def test_supplied_context_satisfies_preflight(self, tmp_path: Path) -> None:
         comp = _make_composition_with_questions(
@@ -469,7 +460,7 @@ class TestPreflightMissingRequiredAnswers:
         )
 
         RenderEngine().render(comp, ctx)
-        assert len(FakeWorker.last_instances) == 1
+        assert len(_layer_workers()) == 1
 
 
 class _FakePromptToolkitError(Exception):
@@ -513,7 +504,7 @@ class TestInteractivePromptCrashTranslation:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _CrashingWorker.exc_to_raise = _FakePromptToolkitError
-        monkeypatch.setattr(mod, "Worker", _CrashingWorker)
+        monkeypatch.setattr(session_mod, "Worker", _CrashingWorker)
 
         comp = _make_composition_with_questions(
             tmp_path,
@@ -536,7 +527,7 @@ class TestInteractivePromptCrashTranslation:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _CrashingWorker.exc_to_raise = _FakeQuestionaryError
-        monkeypatch.setattr(mod, "Worker", _CrashingWorker)
+        monkeypatch.setattr(session_mod, "Worker", _CrashingWorker)
 
         comp = _make_composition_with_questions(
             tmp_path, {"x": {"type": "str", "default": "x"}}
@@ -555,7 +546,7 @@ class TestInteractivePromptCrashTranslation:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Errors not from prompt_toolkit/questionary propagate unchanged."""
-        monkeypatch.setattr(mod, "Worker", _NonPromptCrashingWorker)
+        monkeypatch.setattr(session_mod, "Worker", _NonPromptCrashingWorker)
 
         comp = _make_composition_with_questions(
             tmp_path, {"x": {"type": "str", "default": "x"}}
@@ -625,7 +616,9 @@ class TestUserCancellationTranslation:
             "Question(fake question)",
             f"Template(path={abs_template_path})",
         )
-        monkeypatch.setattr(mod, "Worker", _CopierAnswersInterruptCrashingWorker)
+        monkeypatch.setattr(
+            session_mod, "Worker", _CopierAnswersInterruptCrashingWorker
+        )
 
         comp = _make_composition_with_questions(
             tmp_path, {"x": {"type": "str", "default": "x"}}
@@ -656,7 +649,7 @@ class TestUserCancellationTranslation:
         different, less controlled situation and must not be silently caught
         or reclassified.
         """
-        monkeypatch.setattr(mod, "Worker", _PlainKeyboardInterruptWorker)
+        monkeypatch.setattr(session_mod, "Worker", _PlainKeyboardInterruptWorker)
 
         comp = _make_composition_with_questions(
             tmp_path, {"x": {"type": "str", "default": "x"}}
@@ -701,7 +694,7 @@ class TestWorkerExcludes:
 
         RenderEngine().render(comp, ctx)
 
-        exclude = FakeWorker.last_instances[0].init_kwargs["exclude"]
+        exclude = _layer_workers()[0].init_kwargs["exclude"]
         for pattern in (".git", "__pycache__", "~*", "*.py[co]", ".DS_Store", ".svn"):
             assert pattern in exclude, f"{pattern!r} missing from worker exclude"
         # Boilerplate's own authoring-metadata excludes stay covered too.
@@ -764,7 +757,7 @@ class TestPreflightConditionalWhen:
         )
 
         RenderEngine().render(comp, ctx)  # must not raise
-        assert len(FakeWorker.last_instances) == 1
+        assert len(_layer_workers()) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -801,7 +794,7 @@ class TestLayerScopedUnsafe:
 
         RenderEngine().render(comp, ctx)
 
-        base_worker, final_worker = FakeWorker.last_instances
+        base_worker, final_worker = _layer_workers()
         assert base_worker.init_kwargs["unsafe"] is False
         assert final_worker.init_kwargs["unsafe"] is False
 
@@ -822,7 +815,7 @@ class TestLayerScopedUnsafe:
 
         RenderEngine().render(comp, ctx)
 
-        base_worker, final_worker = FakeWorker.last_instances
+        base_worker, final_worker = _layer_workers()
         assert base_worker.init_kwargs["unsafe"] is True
         # The sibling stays scoped down here only because this final schema
         # carries no merged `_jinja_extensions` union (the merger would
@@ -846,24 +839,24 @@ class TestLayerScopedUnsafe:
 
         RenderEngine().render(comp, ctx)
 
-        base_worker, final_worker = FakeWorker.last_instances
+        base_worker, final_worker = _layer_workers()
         # Non-final layers always render with tasks skipped, so a
         # non-final layer never needs unsafe for tasks.
         assert base_worker.init_kwargs["unsafe"] is False
         assert final_worker.init_kwargs["unsafe"] is True
 
 
-class TestMergedExtensionInjection:
-    """The merged `_jinja_extensions` union reaches every layer's Worker.
+class TestScopedExtensions:
+    """Each layer's Worker gets the extensions of its scoped view; the pass, all.
 
-    The first layer's Worker asks the merged questionnaire, so a question
-    default may use a filter from a sibling layer's extension; without the
-    union injected, that render dies with `No filter named ...` (the
-    end-to-end case lives in
-    tests/integration/boilerplate/test_composed_extensions_integration.py).
+    The questionnaire Worker asks the full merged schema, so a question default
+    may use a filter from any layer's extension (the end-to-end case lives in
+    tests/integration/boilerplate/test_composed_extensions_integration.py). A
+    layer renders under the extensions of itself and its ancestors only, because
+    a descendant's or a sibling's hook would change an ancestor's files.
     """
 
-    def test_union_in_final_schema_grants_unsafe_to_every_layer(
+    def test_union_in_final_schema_reaches_the_questionnaire_and_the_final_layer(
         self, tmp_path: Path
     ) -> None:
         comp = _make_two_layer_composition(tmp_path, with_tasks=False)
@@ -877,19 +870,22 @@ class TestMergedExtensionInjection:
 
         RenderEngine().render(comp, ctx)
 
-        base_worker, final_worker = FakeWorker.last_instances
-        assert base_worker.init_kwargs["unsafe"] is True
+        (asker,) = _questionnaire_workers()
+        base_worker, final_worker = _layer_workers()
+        assert asker.init_kwargs["unsafe"] is True
+        assert base_worker.init_kwargs["unsafe"] is False
         assert final_worker.init_kwargs["unsafe"] is True
 
-    def test_build_merged_template_exposes_injected_union(self, tmp_path: Path) -> None:
+    def test_build_merged_template_exposes_the_views_extensions(
+        self, tmp_path: Path
+    ) -> None:
         layer = tmp_path / "layer"
         layer.mkdir()
 
         template = RenderEngine._build_merged_template(  # pyright: ignore[reportPrivateUsage]
             template_path=layer,
-            merged_questions={},
+            view=LayerView({}, ("probe_ext.ProbeExtension",)),
             tasks_value=[],
-            extensions_value=["probe_ext.ProbeExtension"],
         )
 
         assert tuple(template.jinja_extensions) == ("probe_ext.ProbeExtension",)
@@ -897,7 +893,7 @@ class TestMergedExtensionInjection:
     def test_filepath_specs_stay_layer_local(self, tmp_path: Path) -> None:
         """A filepath-style loader spec resolves only in its declaring layer's tree.
 
-        The union filter therefore never injects it into siblings.
+        The view therefore never carries it as an importable extension.
         """
         comp = _make_two_layer_composition(tmp_path, with_tasks=False)
         comp.final["_jinja_extensions"] = ["_extensions/context.py:ContextUpdater"]
@@ -910,14 +906,18 @@ class TestMergedExtensionInjection:
 
         RenderEngine().render(comp, ctx)
 
-        base_worker, final_worker = FakeWorker.last_instances
-        # Nothing injectable survives the filter, so neither layer needs
-        # the unsafe grant.
+        (asker,) = _questionnaire_workers()
+        base_worker, final_worker = _layer_workers()
+        # Nothing importable survives the filter, so no Worker needs the
+        # unsafe grant.
+        assert asker.init_kwargs["unsafe"] is False
         assert base_worker.init_kwargs["unsafe"] is False
         assert final_worker.init_kwargs["unsafe"] is False
 
-    def test_injection_augments_own_declarations_in_place(self, tmp_path: Path) -> None:
-        """The layer's own list keeps its order; injected entries append after it.
+    def test_view_extensions_augment_own_declarations_in_place(
+        self, tmp_path: Path
+    ) -> None:
+        """The layer's own list keeps its order; the view's entries append after it.
 
         Loader-before-spec ordering matters to copier_template_extensions.
         """
@@ -932,12 +932,14 @@ class TestMergedExtensionInjection:
 
         template = RenderEngine._build_merged_template(  # pyright: ignore[reportPrivateUsage]
             template_path=layer,
-            merged_questions={},
+            view=LayerView(
+                {},
+                (
+                    "copier_template_extensions.TemplateExtensionLoader",
+                    "probe_ext.ProbeExtension",
+                ),
+            ),
             tasks_value=[],
-            extensions_value=[
-                "copier_template_extensions.TemplateExtensionLoader",
-                "probe_ext.ProbeExtension",
-            ],
         )
 
         assert tuple(template.jinja_extensions) == (
@@ -945,3 +947,104 @@ class TestMergedExtensionInjection:
             "_extensions/context.py:ContextUpdater",
             "probe_ext.ProbeExtension",
         )
+
+
+# ---------------------------------------------------------------------------
+# One questionnaire pass, then each layer under its scoped view
+# ---------------------------------------------------------------------------
+
+
+class _AskInterruptWorker(FakeWorker):
+    """FakeWorker whose questionnaire pass raises a real CopierAnswersInterrupt."""
+
+    def _ask(self) -> None:
+        raise CopierAnswersInterrupt(
+            "AnswersMap(fake)", "Question(fake)", "Template(fake)"
+        )  # pyright: ignore[reportArgumentType]
+
+
+class TestScopedRenderLoop:
+    """The questionnaire is asked once over the full schema; layers render scoped."""
+
+    def test_the_questionnaire_is_asked_once_before_any_layer_renders(
+        self, tmp_path: Path
+    ) -> None:
+        comp = _make_composition(tmp_path, 3, with_tasks=False)
+        ctx = ExecutionContext(
+            destination=tmp_path / "out",
+            context_data={},
+            overwrite=True,
+            interactive=False,
+        )
+
+        RenderEngine().render(comp, ctx)
+
+        (asker,) = _questionnaire_workers()
+        assert FakeWorker.last_instances[0] is asker
+        assert not asker.ran
+        assert asker.init_kwargs["src_path"] == str(comp.layers[0].path)
+
+    def test_every_layer_receives_the_questionnaires_answers_as_data(
+        self, tmp_path: Path
+    ) -> None:
+        comp = _make_composition(tmp_path, 3, with_tasks=False)
+        ctx = ExecutionContext(
+            destination=tmp_path / "out",
+            context_data={},
+            overwrite=True,
+            interactive=False,
+        )
+
+        RenderEngine().render(comp, ctx)
+
+        (asker,) = _questionnaire_workers()
+        for worker in _layer_workers():
+            assert worker.init_kwargs["data"] == {
+                "layer_mark": str(comp.layers[0].path),
+                "_src_path": str(comp.layers[0].path),
+            }
+        assert asker.init_kwargs["src_path"] == str(comp.layers[0].path)
+
+    def test_a_layer_renders_under_its_own_scoped_questions(
+        self, tmp_path: Path
+    ) -> None:
+        comp = _make_two_layer_composition(
+            tmp_path,
+            base_copier_yml="base_q:\n  type: str\n  default: b\n",
+            final_copier_yml="final_q:\n  type: str\n  default: f\n",
+        )
+        ctx = ExecutionContext(
+            destination=tmp_path / "out",
+            context_data={},
+            overwrite=True,
+            interactive=False,
+        )
+
+        RenderEngine().render(comp, ctx)
+
+        (asker,) = _questionnaire_workers()
+        base_worker, final_worker = _layer_workers()
+        # The pass and the final layer take the composition's merged schema;
+        # the base layer takes only what it declares.
+        assert set(asker.template.questions_data) == {"q"}
+        assert set(base_worker.template.questions_data) == {"base_q"}
+        assert set(final_worker.template.questions_data) == {"q"}
+
+    def test_cancelling_the_questionnaire_becomes_concise_cancellation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(session_mod, "Worker", _AskInterruptWorker)
+        comp = _make_composition_with_questions(
+            tmp_path, {"x": {"type": "str", "default": "x"}}
+        )
+        ctx = ExecutionContext(
+            destination=tmp_path / "out",
+            context_data={},
+            overwrite=True,
+            interactive=True,
+        )
+
+        with pytest.raises(UserCancelledError):
+            RenderEngine().render(comp, ctx)
+
+        assert [w for w in FakeWorker.last_instances if w.ran] == []
