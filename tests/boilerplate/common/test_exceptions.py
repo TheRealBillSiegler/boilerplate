@@ -13,6 +13,8 @@ import boilerplate.composition.merging.exceptions as merging_exceptions_module
 import boilerplate.settings.profile as profile_module
 from boilerplate.common.exceptions import (
     ActionRequiredError,
+    AddAncestorsMissingError,
+    AddAncestorVersionError,
     AnswersFileIncompleteError,
     BoilerplateError,
     DestinationNotEmptyError,
@@ -23,11 +25,13 @@ from boilerplate.common.exceptions import (
     InvalidDataError,
     InvalidTemplateSpecifierError,
     InvalidVersionError,
+    LayerAlreadyAddedError,
     LockReadFailedError,
     LockSchemaUnsupportedError,
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
+    ProjectNotManagedError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UpdateCheckoutChangedError,
@@ -95,6 +99,10 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     UpdateTaskFailedError: "BP_UPDATE_TASK_FAILED",
     UpdateConflictPausedError: "BP_UPDATE_CONFLICT_PAUSED",
     UpdateUnknownLayerError: "BP_UPDATE_LAYER_UNKNOWN",
+    ProjectNotManagedError: "BP_UPDATE_PROJECT_NOT_MANAGED",
+    LayerAlreadyAddedError: "BP_UPDATE_LAYER_ALREADY_ADDED",
+    AddAncestorsMissingError: "BP_UPDATE_ANCESTORS_MISSING",
+    AddAncestorVersionError: "BP_UPDATE_ANCESTOR_VERSION_MISMATCH",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -453,3 +461,27 @@ class TestUpdateDowngradeError:
         )
 
         assert (err.layer, err.recorded, err.target) == ("core", "2.0.0", "1.1.0")
+
+
+class TestAddAncestorsMissingError:
+    """A missing-ancestor stop names each missing layer."""
+
+    def test_carries_the_missing_layers(self) -> None:
+        err = AddAncestorsMissingError("missing", layers=("core", "docs"))
+
+        assert err.layers == ("core", "docs")
+
+
+class TestAddAncestorVersionError:
+    """A version stop names the ancestor, its recorded version and the constraint."""
+
+    def test_carries_ancestor_recorded_and_constraint(self) -> None:
+        err = AddAncestorVersionError(
+            "mismatch", ancestor="core", recorded="1.0.0", constraint="core@2.0.0"
+        )
+
+        assert (err.ancestor, err.recorded, err.constraint) == (
+            "core",
+            "1.0.0",
+            "core@2.0.0",
+        )
