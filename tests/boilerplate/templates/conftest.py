@@ -415,6 +415,8 @@ def update_layer(
     target_view: LayerView | None = None,
     skip_tasks: bool = True,
     quiet: bool = True,
+    interactive: bool = False,
+    skip_answered: bool = False,
     worker_type: type[ScopedWorker] = ScopedWorker,
 ) -> None:
     """Update one layer of a composed project to `ref` under two views.
@@ -450,6 +452,8 @@ def update_layer(
             under instead of composing it from `templates` at `ref`.
         skip_tasks: Whether to skip the layer's own post-generation tasks.
         quiet: Whether to silence Copier's progress output.
+        interactive: Whether the step prompts for the layer's own questions.
+        skip_answered: Whether the step asks only unanswered questions.
         worker_type: The worker class to update with.
     """
     view_root = root if full_view else layer
@@ -479,7 +483,13 @@ def update_layer(
         LayerRelease(layer=layer, source=source, ref=ref),
         UpdateViews(old_view, target_view),
         data,
-        UpdateOptions(skip_tasks=skip_tasks, quiet=quiet, worker_type=worker_type),
+        UpdateOptions(
+            skip_tasks=skip_tasks,
+            quiet=quiet,
+            interactive=interactive,
+            skip_answered=skip_answered,
+            worker_type=worker_type,
+        ),
     )
 
 
