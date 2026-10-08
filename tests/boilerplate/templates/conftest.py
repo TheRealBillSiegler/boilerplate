@@ -29,8 +29,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, NamedTuple
 
-import yaml
-
 import boilerplate
 from boilerplate.cli.utils import build_template_catalog
 from boilerplate.composition import Composer
@@ -45,7 +43,13 @@ from boilerplate.composition.rendering.models.execution_context import (
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
-from boilerplate.composition.updating import ScopedWorker
+from boilerplate.composition.updating import (
+    ScopedWorker,
+    build_update_data,
+    layered_recorded_answers,
+    read_recorded_answers,
+    read_recorded_answers_by_layer,
+)
 from boilerplate.composition.views import LayerView, build_layer_view, view_config
 from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
@@ -296,28 +300,8 @@ def compose_project(
 
 
 def recorded_answers(project: Path, layer: str) -> dict[str, Any]:
-    """Return the public answers `layer`'s answers file records in `project`.
-
-    Args:
-        project: The composed project.
-        layer: The layer whose `.copier-answers.<layer>.yml` to read.
-
-    Returns:
-        The recorded answers without Copier's ``_``-prefixed keys; empty when
-        the layer has no answers file.
-    """
-    path = project / f".copier-answers.{layer}.yml"
-    if not path.exists():
-        return {}
-    recorded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return {k: v for k, v in recorded.items() if not str(k).startswith("_")}
-
-
-def _every_recorded_answer(project: Path) -> dict[str, Any]:
-    answers: dict[str, Any] = {}
-    for path in sorted(project.glob(".copier-answers.*.yml")):
-        answers.update(recorded_answers(project, path.name.split(".")[2]))
-    return answers
+    """Return the public answers `layer`'s answers file records in `project`."""
+    return read_recorded_answers(project, layer)
 
 
 def update_data(
@@ -331,12 +315,8 @@ def update_data(
 ) -> dict[str, Any]:
     """Build the forced answers an update of `layer` passes to Copier.
 
-    The recorded answers are the ancestors' in topological order with the
-    layer's own laid on top. The questionnaire pass answers what the layer's
-    view asks at the target release and those files do not record: one pass
-    over the full merged view, forced with every answer the project records,
-    so a new question takes a descendant's override of its default, or the
-    answer a layer updated earlier recorded, whichever layer updates first.
+    Reads the project's answers files, resolves the layer's chain and view, and
+    runs the questionnaire pass; the rule itself is ``build_update_data``.
 
     Args:
         project: The composed project.
@@ -351,23 +331,25 @@ def update_data(
     Returns:
         The questionnaire pass's answers with the recorded answers on top.
     """
-    everything = _every_recorded_answer(project)
+    recorded_by_layer = read_recorded_answers_by_layer(project)
     if full_view:
-        recorded, view_root = everything, root
+        chain, view_root = list(recorded_by_layer), root
     else:
-        recorded, view_root = {}, layer
-        for name in layer_chain(layer, templates_dir):
-            recorded.update(recorded_answers(project, name))
+        chain, view_root = layer_chain(layer, templates_dir), layer
     if not ask_unanswered:
-        return recorded
-    asks = layer_view(view_root, templates_dir).questions
-    asked = ask_merged_questionnaire(root, everything, templates_dir)
-    unanswered = {
-        k: v
-        for k, v in asked.user.items()
-        if k in asks and k not in recorded and k not in asked.hidden
-    }
-    return {**unanswered, **recorded}
+        return layered_recorded_answers(recorded_by_layer, chain)
+    asked = ask_merged_questionnaire(
+        root,
+        layered_recorded_answers(recorded_by_layer, list(recorded_by_layer)),
+        templates_dir,
+    )
+    return build_update_data(
+        recorded_by_layer=recorded_by_layer,
+        chain=chain,
+        asked_user=asked.user,
+        asked_hidden=asked.hidden,
+        view_questions=layer_view(view_root, templates_dir).questions,
+    )
 
 
 def update_layer(
