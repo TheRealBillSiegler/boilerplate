@@ -88,6 +88,17 @@ class TestRunAddTasks:
 
         assert not (run.project / "update.txt").exists()
 
+    def test_tasks_run_in_copiers_tasks_phase(self, run: Run) -> None:
+        """Let a template guard a task with the phase, as under Copier's own run."""
+        tasks_only = {
+            **write_line("phase.txt", "{{ _copier_phase }}"),
+            "when": "{{ _copier_phase == 'tasks' }}",
+        }
+
+        run.run([tasks_only])
+
+        assert lines(run.project / "phase.txt") == ["tasks"]
+
     def test_a_task_sees_a_secret_given_to_the_run(self, run: Run) -> None:
         """Pass the secrets the copy asked, which no answers file records."""
         run.run([write_line("token.txt", "{{ api_token }}")], {"api_token": "s3"})
