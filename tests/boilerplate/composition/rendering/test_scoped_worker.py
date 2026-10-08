@@ -10,7 +10,7 @@ import pytest
 import yaml
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
-from boilerplate.composition.updating import ScopedWorker
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.views import LayerView
 from boilerplate.integrations.copier_types import (
     NEW_COPY_DIR_PREFIX,

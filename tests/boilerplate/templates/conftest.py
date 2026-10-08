@@ -51,13 +51,13 @@ from boilerplate.composition.rendering.questionnaire import ask_questionnaire
 from boilerplate.composition.rendering.questionnaire_answers import (
     QuestionnaireAnswers,
 )
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.rendering.worker_options import WorkerOptions
 from boilerplate.composition.rendering.worker_session import worker_session
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.composition.updating import (
     LayerRelease,
-    ScopedWorker,
     StepInputs,
     UpdateOptions,
     UpdateViews,

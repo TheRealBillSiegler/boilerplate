@@ -6,7 +6,7 @@ question not hidden. Copier's ``Worker._ask`` gives a hidden question its
 default for the questions after it.
 """
 
-from boilerplate.composition.updating.hidden_questions import hidden_questions
+from boilerplate.composition.rendering.hidden_questions import hidden_questions
 
 
 class TestALiteralWhen:
