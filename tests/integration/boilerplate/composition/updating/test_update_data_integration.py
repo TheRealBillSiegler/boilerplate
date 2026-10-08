@@ -1,4 +1,8 @@
-"""The update answer rule against real Copier updates on the made-up template family."""
+"""The update answer rule against real Copier updates on the made-up template family.
+
+A layer's step takes an ancestor's question from the answers file of the ancestor
+that declares it (design 04 §Safe Update), never from the layer's own copy.
+"""
 
 from pathlib import Path
 
@@ -16,14 +20,16 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
 pytestmark = [pytest.mark.scenario]
 
 
-def test_layers_own_recorded_answer_beats_its_ancestors(
+def test_declaring_ancestors_answer_beats_the_layers_stale_copy(
     family: Family, tmp_path: Path
 ) -> None:
-    """The scoped data lays the layer's own answers over its ancestors'.
+    """The step passes the declaring ancestor's recorded answer as data.
 
-    With core recording author_name 'Ada Probe' and service 'Own Name',
-    updating service keeps 'Own Name'. This checks the layering rule through
-    Copier's recording.
+    With core recording author_name 'Ada Probe' and service's file holding a
+    stale copy, 'Own Name', updating service takes core's answer: data
+    outranks the layer's own file, and the step rewrites that copy. The
+    expected values come from design 04 (a descendant's stale copy of an
+    ancestor's answer must not shadow the ancestor's value).
     """
     before = {"core": "1.0.0", "service": "1.0.0"}
     project = compose_family(
@@ -34,7 +40,7 @@ def test_layers_own_recorded_answer_beats_its_ancestors(
         f"author_name: {AUTHOR}\n",
         "author_name: Own Name\n",
     )
-    commit_all(project, "service's answer diverges from core's")
+    commit_all(project, "service's copy of core's answer goes stale")
     update_family_layer(
         family,
         project,
@@ -48,4 +54,4 @@ def test_layers_own_recorded_answer_beats_its_ancestors(
     assert {
         layer: recorded_answers(project, layer)["author_name"]
         for layer in ("core", "service")
-    } == {"core": AUTHOR, "service": "Own Name"}
+    } == {"core": AUTHOR, "service": AUTHOR}
