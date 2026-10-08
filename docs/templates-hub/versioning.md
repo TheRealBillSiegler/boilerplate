@@ -26,7 +26,7 @@ A template version moves once per release, measured from the last released versi
 
 **Templates** (versioned in `boilerplate.yml`): source code with `boilerplate.yml`, `copier.yml`, and template files.
 
-A project generated from a template is not itself versioned; it tracks each composed layer's source, version, and commit in one `.copier-answers.<layer>.yml` per layer. The whole-graph lock file is design: [Design — Data models § BoilerplateLock](../design/02-data-models.md#boilerplatelock).
+A project generated from a template is not itself versioned; it tracks each composed layer's source, version, and commit in one `.copier-answers.<layer>.yml` per layer. `boilerplate new` also writes `boilerplate.lock`, which records each layer's name, version, source, commit (null for a layer rendered from a plain folder, such as the bundled templates) and template checksum, plus a hash of each answers file. No command reads it yet. The schema is in [Design — Data models § BoilerplateLock](../design/02-data-models.md#boilerplatelock).
 
 ## Migration-first philosophy
 
