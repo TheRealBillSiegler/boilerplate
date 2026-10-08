@@ -17,9 +17,10 @@ def remove_staging_folder(project: Path, folder: Path, worktree: Path) -> None:
 
     Removal is best effort at every step: it runs on the way out of a failure,
     where a second error would hide the first. The registration is dropped with
-    ``git worktree remove --force`` and ``git worktree prune`` run in
-    `project`; the folder, the journal beside the worktree included, is then
-    deleted.
+    ``git worktree remove --force`` run in `project`; the folder, the journal
+    beside the worktree included, is then deleted. It never prunes: pruning
+    drops every registration whose folder is gone, the user's own included, and
+    belongs only to the stale cleanup (``prune_worktree_registrations``).
 
     Args:
         project: The project the worktree belongs to; may no longer exist.
@@ -27,17 +28,30 @@ def remove_staging_folder(project: Path, folder: Path, worktree: Path) -> None:
         worktree: The worktree inside `folder`.
     """
     if project.is_dir():
-        for command in (
-            ("worktree", "remove", "--force", str(worktree)),
-            ("worktree", "prune"),
-        ):
-            try:
-                run_git(project, *command)
-            except ProcessExecutionError:
-                _logger.warning("git %s failed for %s", command[1], worktree)
+        try:
+            run_git(project, "worktree", "remove", "--force", str(worktree))
+        except ProcessExecutionError:
+            _logger.warning("git worktree remove failed for %s", worktree)
     shutil.rmtree(folder, onexc=_make_writable_and_retry)
     if folder.exists():
         _logger.warning("Staging folder %s could not be removed.", folder)
+
+
+def prune_worktree_registrations(project: Path) -> None:
+    """Drop the registrations of `project`'s worktrees whose folders are gone.
+
+    Only the stale cleanup calls this, after it removed an interrupted run's
+    staging folder.
+
+    Args:
+        project: The project whose registrations to prune; may no longer exist.
+    """
+    if not project.is_dir():
+        return
+    try:
+        run_git(project, "worktree", "prune")
+    except ProcessExecutionError:
+        _logger.warning("git worktree prune failed for %s", project)
 
 
 def _make_writable_and_retry(
