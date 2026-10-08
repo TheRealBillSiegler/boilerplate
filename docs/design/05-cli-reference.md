@@ -303,7 +303,7 @@ Update an existing project to a newer template version. The walk runs in a tempo
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
-| `--target-version` | `-t` | string | null | Target template version. Default: latest. |
+| `--target-version` | `-t` | string | null | Target template version. Default: latest. Refused when it differs from the targets a pending `conflict` record names. |
 | `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
@@ -350,7 +350,7 @@ MAJOR updates MUST include a prominent warning about breaking changes in the pla
 
 **Task execution**: Follows the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
 
-**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`; layers already at their targets are skipped, so the answers files themselves record the progress. `git stash --include-untracked` sets the partial update aside, added files included. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
+**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`, which resumes from the `conflict` record in `.boilerplate/migrations.yml`: the record names each layer's target version and the layers already finished, so the rerun skips those layers and walks the rest to the recorded targets. An explicit `--target-version` that differs from the record is refused until the user sets the partial update aside. `git stash --include-untracked` sets the partial update aside, added files included. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
 
 **File status indicators**:
 
