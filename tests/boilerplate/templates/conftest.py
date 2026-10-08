@@ -44,12 +44,15 @@ from boilerplate.composition.rendering.models.merged_template import MergedTempl
 from boilerplate.composition.resolution import Resolver
 from boilerplate.composition.tasks import normalize_tasks
 from boilerplate.composition.updating import (
+    LayerRelease,
     ScopedWorker,
+    UpdateOptions,
     build_update_data,
     layered_recorded_answers,
     read_recorded_answers,
     read_recorded_answers_by_layer,
 )
+from boilerplate.composition.updating import update_layer as update_layer_in_src
 from boilerplate.composition.views import LayerView, build_layer_view, view_config
 from boilerplate.integrations.copier_types import Template, Worker
 from boilerplate.settings import Settings
@@ -408,20 +411,13 @@ def update_layer(
             full_view=full_view,
             ask_unanswered=ask_unanswered,
         )
-    with worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
-        src_path=str(source),
-        dst_path=project,
-        answers_file=Path(f".copier-answers.{layer}.yml"),
-        data=dict(data),
-        vcs_ref=ref,
-        defaults=True,
-        overwrite=True,
-        quiet=quiet,
-        unsafe=True,
-        skip_tasks=skip_tasks,
-        views_by_ref=views,
-    ) as worker:
-        worker.run_update()
+    update_layer_in_src(
+        project,
+        LayerRelease(layer=layer, source=source, ref=ref),
+        views,
+        data,
+        UpdateOptions(skip_tasks=skip_tasks, quiet=quiet, worker_type=worker_type),
+    )
 
 
 def rehome_layer(project: Path, *, layer: str, source: Path, commit: str) -> None:
