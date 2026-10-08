@@ -1,6 +1,7 @@
 """Build ``boilerplate.lock`` from a composed project's answers files."""
 # Spec: docs/design/06-project-lifecycle.md §Step 4: Lock File Generation
 
+import contextlib
 import hashlib
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -9,7 +10,7 @@ from pathlib import Path
 
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock, LockLayer
-from boilerplate.repository.release_checkout import checked_out_release
+from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.repository.template_checksum import template_checksum
 from boilerplate.types.serializable_version import SerializableVersion
 
@@ -21,7 +22,7 @@ def _answers_file_name(layer: str) -> str:
     return f".copier-answers.{layer}.yml"
 
 
-def _lock_layer(project: Path, layer: str) -> LockLayer:
+def _lock_layer(project: Path, layer: str, checkouts: ReleaseCheckouts) -> LockLayer:
     """Describe one layer from its answers file and the release it records.
 
     Raises:
@@ -35,18 +36,18 @@ def _lock_layer(project: Path, layer: str) -> LockLayer:
             f"layer {layer!r}: {_answers_file_name(layer)} records no _src_path "
             "and _commit, so there is no release to lock"
         )
-    with checked_out_release(str(source), str(commit)) as release:
-        if release.version is None:
-            raise ValueError(
-                f"layer {layer!r}: _commit {commit!r} of {source} reads as no version"
-            )
-        return LockLayer(
-            name=layer,
-            version=SerializableVersion(str(release.version)),
-            source=str(source),
-            commit=str(commit),
-            checksum=template_checksum(release.path),
+    release = checkouts.get(str(source), str(commit))
+    if release.version is None:
+        raise ValueError(
+            f"layer {layer!r}: _commit {commit!r} of {source} reads as no version"
         )
+    return LockLayer(
+        name=layer,
+        version=SerializableVersion(str(release.version)),
+        source=str(source),
+        commit=str(commit),
+        checksum=template_checksum(release.path),
+    )
 
 
 def build_lock(
@@ -55,7 +56,7 @@ def build_lock(
     *,
     boilerplate_version: str,
     previous: BoilerplateLock | None = None,
-    now: datetime | None = None,
+    checkouts: ReleaseCheckouts | None = None,
 ) -> BoilerplateLock:
     """Build the lock of `project` as its answers files record it.
 
@@ -74,7 +75,9 @@ def build_lock(
         boilerplate_version: The version of the tool writing the lock.
         previous: The lock being replaced, if any; the new lock keeps its
             creation time.
-        now: The time to stamp the lock with; the current time by default.
+        checkouts: Release checkouts the caller already holds, which the lock
+            reads and leaves in place; by default the releases are cloned for
+            the call and removed.
 
     Returns:
         The lock, not yet written.
@@ -85,8 +88,12 @@ def build_lock(
         plumbum.commands.processes.ProcessExecutionError: If a layer's source
             cannot check its recorded release out.
     """
-    stamp = now or datetime.now(UTC)
-    entries = tuple(_lock_layer(project, layer) for layer in layers)
+    stamp = datetime.now(UTC)
+    with contextlib.ExitStack() as stack:
+        held = (
+            stack.enter_context(ReleaseCheckouts()) if checkouts is None else checkouts
+        )
+        entries = tuple(_lock_layer(project, layer, held) for layer in layers)
     hashes = {
         layer: hashlib.sha256(
             (project / _answers_file_name(layer)).read_bytes()

@@ -7,6 +7,7 @@ from boilerplate.composition.staging import StagingWorktree
 from boilerplate.models import BoilerplateLock
 from boilerplate.project_state.lock_builder import build_lock
 from boilerplate.project_state.lock_file import write_lock
+from boilerplate.repository.release_checkouts import ReleaseCheckouts
 
 
 def write_update_lock(
@@ -14,6 +15,7 @@ def write_update_lock(
     staging: StagingWorktree,
     previous: BoilerplateLock,
     boilerplate_version: str,
+    checkouts: ReleaseCheckouts | None = None,
 ) -> BoilerplateLock:
     """Record the ``locking`` phase, then write the lock the answers files describe.
 
@@ -27,6 +29,8 @@ def write_update_lock(
         staging: The active staging of the update, whose journal names the phase.
         previous: The lock being replaced.
         boilerplate_version: The version of the tool writing the lock.
+        checkouts: Release checkouts the update already holds, so the lock does
+            not clone the releases again.
 
     Returns:
         The lock that was written.
@@ -44,6 +48,7 @@ def write_update_lock(
         [layer.name for layer in previous.layers],
         boilerplate_version=boilerplate_version,
         previous=previous,
+        checkouts=checkouts,
     )
     write_lock(project, lock)
     return lock
