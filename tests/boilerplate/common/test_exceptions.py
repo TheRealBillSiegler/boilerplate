@@ -35,6 +35,7 @@ from boilerplate.common.exceptions import (
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
     UpdateSubmodulesUnsupportedError,
+    UpdateTaskFailedError,
     UpdateTargetMismatchError,
     UserCancelledError,
 )
@@ -89,6 +90,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     UpdateSubmodulesUnsupportedError: "BP_UPDATE_SUBMODULES_UNSUPPORTED",
     UpdateCheckoutChangedError: "BP_UPDATE_CHECKOUT_CHANGED",
     UpdateProjectNotReadyError: "BP_UPDATE_PROJECT_NOT_READY",
+    UpdateTaskFailedError: "BP_UPDATE_TASK_FAILED",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -246,6 +248,18 @@ class TestErrorCodeContract:
     def test_every_concrete_error_has_an_expected_code(self) -> None:
         """A class added without a row fails here instead of going untested."""
         assert set(concrete_error_classes()) == set(EXPECTED_CODES)
+
+
+class TestUpdateTaskFailedError:
+    """The task failure names the task and how to run it by hand."""
+
+    def test_carries_the_failed_task_and_how_to_rerun_it(self) -> None:
+        """Expose the command the message and the remediation name."""
+        error = UpdateTaskFailedError(
+            "Task 'make' failed.", task="make", remediation="Run 'make' by hand."
+        )
+
+        assert (error.task, error.remediation) == ("make", "Run 'make' by hand.")
 
 
 class TestSeverityAndRetryable:
