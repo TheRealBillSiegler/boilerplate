@@ -20,6 +20,7 @@ from boilerplate.cli.utils import (
 )
 from boilerplate.common.exceptions import (
     ActionRequiredError,
+    AnswersFileIncompleteError,
     BoilerplateError,
     DestinationNotEmptyError,
     DirectoryValidationError,
@@ -30,6 +31,9 @@ from boilerplate.common.exceptions import (
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateDowngradeError,
+    UpdateLayerDriftError,
+    UpdateTargetMismatchError,
     UserCancelledError,
 )
 from boilerplate.composition.graph.exceptions import (
@@ -230,6 +234,10 @@ class TestCliErrorHandler:
                 RecordedAnswerRejectedError("recorded answer rejected"),
                 ExitCode.VALIDATION_ERROR,
             ),
+            (AnswersFileIncompleteError("incomplete"), ExitCode.VALIDATION_ERROR),
+            (UpdateLayerDriftError("drift"), ExitCode.VALIDATION_ERROR),
+            (UpdateTargetMismatchError("mismatch"), ExitCode.VALIDATION_ERROR),
+            (UpdateDowngradeError("downgrade"), ExitCode.VALIDATION_ERROR),
             # Exit 4 (ACTION_REQUIRED) — recoverable workflow pause
             (
                 ActionRequiredError("resolve conflicts, then re-run"),
@@ -249,6 +257,10 @@ class TestCliErrorHandler:
             "non-interactive-requires-force",
             "missing-required-answers",
             "recorded-answer-rejected",
+            "answers-file-incomplete",
+            "layer-drift",
+            "target-mismatch",
+            "downgrade",
             "action-required",
             "user-cancelled",
         ],
