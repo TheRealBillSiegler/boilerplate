@@ -624,6 +624,38 @@ class UpdateCopyBackFailedError(BoilerplateError):
         self.staging_path = staging_path
 
 
+class UpdateInterruptedError(BoilerplateError):
+    """Raised when an earlier run of the operation was cut off before it finished.
+
+    An earlier update or add was interrupted after its copy back started: its
+    changes may sit uncommitted in the checkout. The remediation is
+    ``git stash --include-untracked``, which sets them aside.
+
+    Attributes:
+        targets: Each layer's target version the interrupted run was moving to.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        targets: Mapping[str, str] | None = None,
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_INTERRUPTED."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_INTERRUPTED",
+            remediation=kwargs.pop(
+                "remediation",
+                "Run 'git stash --include-untracked' to set the interrupted "
+                "run's uncommitted changes aside, then run the command again.",
+            ),
+            **kwargs,
+        )
+        self.targets = dict(targets or {})
+
+
 class UpdateTaskFailedError(BoilerplateError):
     """Raised when a task fails after the update's files were copied back.
 
