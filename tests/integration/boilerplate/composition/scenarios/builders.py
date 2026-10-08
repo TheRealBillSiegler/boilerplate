@@ -29,7 +29,6 @@ from tests.boilerplate.templates.conftest import (
     copy_layer_into,
     git,
     init_repo,
-    layer_view,
     rehome_layer,
     update_layer,
 )
@@ -257,6 +256,7 @@ class UpdateOptions(TypedDict, total=False):
     """The ``update_layer`` options a scenario may set."""
 
     full_view: bool
+    step_views: bool
     ask_unanswered: bool
     data: Mapping[str, Any] | None
     skip_tasks: bool
@@ -314,7 +314,7 @@ def update_family_layer(
 
     The old copy renders under the view of the templates at `before`, the new
     copy and the project in place under the view at `after`: the layer's scoped
-    view, or the root's full view when the options ask for it.
+    view, the root's full view or an update step's view, as the options ask.
 
     Args:
         family: The built family.
@@ -327,20 +327,14 @@ def update_family_layer(
         **options: Passed on to ``update_layer``.
     """
     new = after[layer]
-    view_root = root if options.get("full_view") else layer
-    old_dir, new_dir = (
-        templates_at(family, work, before),
-        templates_at(family, work, after),
-    )
     update_layer(
         project,
         root=root,
         layer=layer,
         source=family.repos[layer],
         ref=new,
-        templates={new: new_dir},
-        old_view=layer_view(view_root, old_dir),
-        target_view=layer_view(view_root, new_dir),
+        templates={new: templates_at(family, work, after)},
+        old_templates=templates_at(family, work, before),
         **options,
     )
 

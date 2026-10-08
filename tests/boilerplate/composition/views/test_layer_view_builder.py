@@ -16,6 +16,7 @@ from boilerplate.composition.views import (
     AncestorExtension,
     LayerView,
     build_layer_view,
+    build_step_view,
     extension_module_name,
     is_layer_local_extension,
     view_config,
@@ -202,3 +203,106 @@ class TestIsLayerLocalExtension:
         self, spec: str, expected: bool
     ) -> None:
         assert is_layer_local_extension(spec) is expected
+
+
+class TestDeclaredBy:
+    """The view names the layer that declares each of its questions."""
+
+    def test_the_first_layer_to_hold_a_question_declares_it(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        composition = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [{"a": {"type": "str"}}, {"b": {"type": "str"}}],
+            {},
+        )
+
+        assert dict(build_layer_view(composition).declared_by) == {
+            "a": "base",
+            "b": "child",
+        }
+
+    def test_a_later_layers_override_does_not_declare_the_question(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        composition = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [{"a": {"type": "str", "default": "x"}}, {"a": {"default": "y"}}],
+            {},
+        )
+
+        assert dict(build_layer_view(composition).declared_by) == {"a": "base"}
+
+    def test_directives_are_not_questions(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        composition = composition_factory(
+            ["base@1.0.0"], [{"_answers_file": "x", "a": {}}], {}
+        )
+
+        assert dict(build_layer_view(composition).declared_by) == {"a": "base"}
+
+
+class TestBuildStepView:
+    """A step's view takes definitions from the full schema, names from the scope."""
+
+    def _views(
+        self, composition_factory: Callable[..., Composition]
+    ) -> tuple[Composition, Composition]:
+        scoped = composition_factory(
+            ["base@1.0.0"], [{"a": {"type": "str", "default": "base"}}], {}
+        )
+        full = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [
+                {"a": {"type": "str", "default": "base"}},
+                {"a": {"default": "child"}, "b": {"type": "str"}},
+            ],
+            {},
+        )
+        return scoped, full
+
+    def test_a_descendants_override_sets_the_definition(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        scoped, full = self._views(composition_factory)
+
+        assert build_step_view(scoped, full).questions["a"]["default"] == "child"
+
+    def test_the_questions_follow_the_scope(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        scoped, full = self._views(composition_factory)
+
+        assert list(build_step_view(scoped, full).questions) == ["a"]
+
+    def test_declaring_layers_follow_the_scope_not_the_full_schema(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        """A sibling that declares the question first in the full schema is no owner."""
+        scoped = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [{}, {"foo": {"type": "str"}}],
+            {},
+        )
+        full = composition_factory(
+            ["base@1.0.0", "sibling@1.0.0", "child@1.0.0"],
+            [{}, {"foo": {"type": "str"}}, {"foo": {"default": "x"}}],
+            {},
+        )
+
+        assert dict(build_step_view(scoped, full).declared_by) == {"foo": "child"}
+
+    def test_extensions_come_from_the_scope(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        scoped = composition_factory(
+            ["base@1.0.0"], [{"_jinja_extensions": ["a.mod"]}], {}
+        )
+        full = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [{"_jinja_extensions": ["a.mod"]}, {"_jinja_extensions": ["b.mod"]}],
+            {},
+        )
+
+        assert build_step_view(scoped, full).extensions == ("a.mod",)
