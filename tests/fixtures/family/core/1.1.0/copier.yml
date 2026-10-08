@@ -70,4 +70,5 @@ license:
   choices:
     - MIT
     - Apache-2.0
+    - "None"
   default: MIT

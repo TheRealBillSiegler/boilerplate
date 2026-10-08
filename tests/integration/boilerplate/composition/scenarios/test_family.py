@@ -111,10 +111,22 @@ def _compose(
     answers: dict[str, object] | None = None,
     *,
     skip_tasks: bool = True,
+    tags: dict[str, str] | None = None,
 ) -> Composed:
-    """Compose the first release of every layer under `root` into `work`."""
+    """Compose `root` into `work`, each layer at its first release unless `tags` says.
+
+    Args:
+        family: The built family.
+        root: The composition's final layer.
+        work: The scenario's working directory.
+        answers: Answers forced into the questionnaire, beside the project name.
+        skip_tasks: Whether to skip the merged post-generation tasks.
+        tags: Tags to use instead of a layer's first release, keyed by layer.
+    """
     templates = assemble_templates_dir(
-        family, work / "templates", {k: v[0] for k, v in family.tags.items()}
+        family,
+        work / "templates",
+        {**{k: v[0] for k, v in family.tags.items()}, **(tags or {})},
     )
     project = work / "project"
     with pytest.MonkeyPatch.context() as patch:
@@ -190,6 +202,37 @@ def tasked(
     work = tmp_path_factory.mktemp("tasked")
     with temp_dir_inside(work):
         yield _compose(family, "app", work, skip_tasks=False)
+
+
+LICENSED_VERSIONS = [
+    version
+    for version in family_versions()["core"]
+    if Version(version) >= Version("1.1.0")
+]
+LICENSE_FILE_NAME = "LICENSE"
+
+
+@pytest.fixture(
+    scope="module",
+    params=[
+        on_own_worker((version, choice), f"license-{version}-{choice}")
+        for version in LICENSED_VERSIONS
+        for choice in ("MIT", "None")
+    ],
+)
+def licensed(
+    request: pytest.FixtureRequest,
+    family: Family,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[tuple[str, Composed]]:
+    """Compose core at one release from 1.1.0 on with one license choice made."""
+    version, choice = request.param
+    work = tmp_path_factory.mktemp(f"license-{version}-{choice}")
+    with temp_dir_inside(work):
+        yield (
+            choice,
+            _compose(family, "core", work, {"license": choice}, tags={"core": version}),
+        )
 
 
 class TestFamilyBuilder:
@@ -297,6 +340,31 @@ class TestConditionalPaths:
         _, _, own, rival = CHOICES[name]
 
         assert (own in composed.files, rival in composed.files) == (True, False)
+
+
+class TestLicenseChoice:
+    """Core's license question has an off choice from 1.1.0 on."""
+
+    @pytest.mark.parametrize("version", LICENSED_VERSIONS)
+    def test_offers_none_beside_the_licenses(
+        self, family: Family, version: str
+    ) -> None:
+        """List `None` among the license choices of every release that asks."""
+        template = Template(url=str(family.releases["core"][version]))
+
+        assert template.questions_data["license"]["choices"] == [
+            "MIT",
+            "Apache-2.0",
+            "None",
+        ]
+
+    def test_chosen_license_writes_the_license_file(
+        self, licensed: tuple[str, Composed]
+    ) -> None:
+        """Write a LICENSE only for a choice other than `None`."""
+        choice, composed = licensed
+
+        assert (LICENSE_FILE_NAME in composed.files) == (choice != "None")
 
 
 class TestOverridesAndHooks:
