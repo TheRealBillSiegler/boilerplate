@@ -28,7 +28,7 @@ answers files and call them. The composition scenarios reuse this harness.
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -57,7 +57,12 @@ from boilerplate.composition.updating import (
     read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating import update_layer as update_layer_in_src
-from boilerplate.composition.views import LayerView, build_layer_view, view_config
+from boilerplate.composition.views import (
+    LayerView,
+    build_layer_view,
+    registered_ancestor_extensions,
+    view_config,
+)
 from boilerplate.integrations.copier_types import (
     Template,
     Worker,
@@ -240,6 +245,7 @@ def ask_merged_questionnaire(
             unsafe=True,
             quiet=True,
         ) as worker,
+        registered_ancestor_extensions(view.ancestor_extensions),
     ):
         worker._ask()  # pyright: ignore[reportPrivateUsage]
         return QuestionnaireAnswers(
@@ -256,7 +262,7 @@ def compose_project(
     templates_dir: Path | None = None,
     *,
     skip_tasks: bool = True,
-    extra_extensions: Mapping[str, Sequence[str]] | None = None,
+    register_ancestors: bool = True,
 ) -> dict[str, Any]:
     """Compose the project rooted at `root` into `dest` under scoped views.
 
@@ -272,8 +278,9 @@ def compose_project(
         templates_dir: An extra directory searched ahead of the bundled
             templates.
         skip_tasks: Whether to skip the merged post-generation tasks.
-        extra_extensions: Extension specs to add to a layer's render, keyed
-            by layer name.
+        register_ancestors: Whether each layer's render loads the file-path
+            extensions its ancestors declare, as ``ScopedWorker`` does for an
+            update; off, a layer using an ancestor's filter fails to render.
 
     Returns:
         The questionnaire pass's public answers.
@@ -287,25 +294,28 @@ def compose_project(
             index == len(composition.layers) - 1 and not skip_tasks and bool(tasks)
         )
         view = layer_view(layer.name, templates_dir)
-        config = view_config(
-            view, (extra_extensions or {}).get(layer.name, ()), skip_if_exists=[]
-        )
+        if not register_ancestors:
+            view = view._replace(ancestor_extensions=())
+        config = view_config(view, skip_if_exists=[])
         if run_tasks:
             config["tasks"] = tasks
         template = MergedTemplate(str(layer.path), dict(view.questions), config)
-        with _primed_worker(
-            template,
-            src_path=str(layer.path),
-            dst_path=dest,
-            data=dict(seeded),
-            user_defaults={},
-            unsafe=True,
-            overwrite=True,
-            defaults=True,
-            skip_tasks=not run_tasks,
-            exclude=_WORKER_EXCLUDES,
-            quiet=True,
-        ) as worker:
+        with (
+            _primed_worker(
+                template,
+                src_path=str(layer.path),
+                dst_path=dest,
+                data=dict(seeded),
+                user_defaults={},
+                unsafe=True,
+                overwrite=True,
+                defaults=True,
+                skip_tasks=not run_tasks,
+                exclude=_WORKER_EXCLUDES,
+                quiet=True,
+            ) as worker,
+            registered_ancestor_extensions(view.ancestor_extensions),
+        ):
             worker.run_copy()
     return {k: v for k, v in seeded.items() if not k.startswith("_")}
 
