@@ -257,8 +257,9 @@ class UpdateOptions(TypedDict, total=False):
 
     full_view: bool
     step_views: bool
-    ask_unanswered: bool
     data: Mapping[str, Any] | None
+    force_recorded: bool
+    secrets: Mapping[str, Any] | None
     skip_tasks: bool
     quiet: bool
     interactive: bool
@@ -311,7 +312,7 @@ def update_family_layer(
     after: Mapping[str, str],
     work: Path,
     **options: Unpack[UpdateOptions],
-) -> None:
+) -> dict[str, Any]:
     """Update one layer of a family project from its tag in `before` to `after`.
 
     The old copy renders under the view of the templates at `before`, the new
@@ -327,9 +328,12 @@ def update_family_layer(
         after: Every composed layer's tag at the target release.
         work: The scenario's working directory.
         **options: Passed on to ``update_layer``.
+
+    Returns:
+        The secret answers the step ended with.
     """
     new = after[layer]
-    update_layer(
+    return update_layer(
         project,
         root=root,
         layer=layer,

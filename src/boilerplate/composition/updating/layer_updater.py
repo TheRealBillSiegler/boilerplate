@@ -1,10 +1,14 @@
 """Update one layer of a composed project with Copier."""
 
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 from boilerplate.composition.updating.layer_release import LayerRelease
+from boilerplate.composition.updating.recorded_answers import (
+    read_recorded_answers_by_layer,
+)
+from boilerplate.composition.updating.step_inputs import StepInputs
+from boilerplate.composition.updating.update_data import build_step_data
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_views import UpdateViews
 
@@ -13,9 +17,9 @@ def update_layer(
     project: Path,
     release: LayerRelease,
     views: UpdateViews,
-    data: Mapping[str, Any],
+    inputs: StepInputs | None = None,
     options: UpdateOptions | None = None,
-) -> None:
+) -> dict[str, Any]:
     """Update one layer of a composed project to `release` under two views.
 
     Copier renders the update's old copy at the recorded release and its new
@@ -23,23 +27,44 @@ def update_layer(
     under `views.old`, the other two under `views.target`; the two differ when
     the layer's ancestors move, even if the layer's own ref does not.
 
+    Copier reads the layer's own questions from the layer's own answers file;
+    the step passes as data only the answers the declaring ancestors record,
+    read from their answers files when the step starts, and the values given
+    to it (``build_step_data``).
+
     Args:
         project: The composed project, a git repository with a clean tree.
         release: The layer to update and the release to move it to.
         views: The view of the layer and its ancestors at the recorded
             releases and at the target releases.
-        data: Forced answers; ``{}`` is a vanilla ``copier update``, which
-            reads only the answers file.
+        inputs: The values the user supplies and the secrets given earlier in
+            the same update, as data for the questions in the layer's scope.
         options: How the update runs; the defaults skip the layer's tasks,
             silence Copier and take every question's default without
             prompting.
+
+    Returns:
+        The secret answers the step ended with, for the walk to carry to the
+        next step.
+
+    Raises:
+        RecordedAnswerRejectedError: If a non-interactive step finds a recorded
+            answer of the layer that the target view rejects.
     """
     options = options or UpdateOptions()
+    inputs = inputs or StepInputs()
+    data = build_step_data(
+        layer=release.layer,
+        declared_by=views.target.declared_by,
+        recorded_by_layer=read_recorded_answers_by_layer(project),
+        supplied=inputs.supplied,
+        secrets=inputs.secrets,
+    )
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=str(release.source),
         dst_path=project,
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
-        data=dict(data),
+        data=data,
         vcs_ref=release.ref,
         defaults=not options.interactive,
         skip_answered=options.skip_answered,
@@ -52,3 +77,8 @@ def update_layer(
         target_view=views.target,
     ) as worker:
         worker.run_update()
+        return {
+            name: worker.answers.user[name]
+            for name in worker.template.secret_questions
+            if name in worker.answers.user
+        }
