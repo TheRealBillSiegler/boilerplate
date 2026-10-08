@@ -218,19 +218,29 @@ def build_repos(
     return repos
 
 
-def make_git_project(project: Path, repos: Mapping[str, Path], ref: str) -> None:
+def make_git_project(
+    project: Path, repos: Mapping[str, Path], tags: str | Mapping[str, str]
+) -> None:
     """Point every layer `project` records at its repository, then commit.
 
     Args:
         project: The composed project.
         repos: Each layer's repository, keyed by layer name.
-        ref: The tag every layer's render matches.
+        tags: The tag each layer's render matches, keyed by layer name; a
+            single tag stands for every layer, for releases that share one
+            tag across layers.
     """
     for layer, repo in repos.items():
         if (project / f".copier-answers.{layer}.yml").exists():
-            rehome_layer(project, layer=layer, source=repo, commit=ref)
+            tag = tags if isinstance(tags, str) else tags[layer]
+            rehome_layer(project, layer=layer, source=repo, commit=tag)
     init_repo(project)
-    commit_all(project, f"compose {ref}")
+    label = (
+        tags
+        if isinstance(tags, str)
+        else ", ".join(f"{k} {v}" for k, v in tags.items())
+    )
+    commit_all(project, f"compose {label}")
 
 
 def copy_project(base: Path, dest: Path) -> Path:
