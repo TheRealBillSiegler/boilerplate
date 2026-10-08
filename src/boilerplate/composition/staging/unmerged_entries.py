@@ -7,6 +7,35 @@ from boilerplate.composition.staging.git_commands import run_git
 _NO_OBJECT = "0" * 40
 
 
+def _unmerged_records(worktree: Path) -> list[str]:
+    """Return ``git ls-files --unmerged`` records of `worktree`, one per stage."""
+    listing = run_git(worktree, "ls-files", "--unmerged", "-z")
+    return [record for record in listing.split("\0") if record]
+
+
+def _path_of(record: str) -> str:
+    """Return the path a ``git ls-files --unmerged`` record names."""
+    return record.split("\t", 1)[1]
+
+
+def list_unmerged_paths(worktree: Path) -> tuple[str, ...]:
+    """List the paths a worktree's index holds as unmerged.
+
+    A conflicted file has index stages 1, 2 and 3, as Copier records it; the
+    path is reported once. This is how the walk detects a paused layer: by what
+    git holds, never by Copier's exit status.
+
+    Args:
+        worktree: The staging worktree, whose index is read.
+
+    Returns:
+        The unmerged paths in index order; empty when the update merged cleanly.
+    """
+    return tuple(
+        dict.fromkeys(_path_of(record) for record in _unmerged_records(worktree))
+    )
+
+
 def replay_unmerged_entries(worktree: Path, project: Path) -> None:
     """Write the worktree's conflicted index entries into the checkout's index.
 
@@ -21,11 +50,10 @@ def replay_unmerged_entries(worktree: Path, project: Path) -> None:
         worktree: The staging worktree, whose index is read.
         project: The user's checkout, whose index is written.
     """
-    listing = run_git(worktree, "ls-files", "--unmerged", "-z")
-    records = [record for record in listing.split("\0") if record]
+    records = _unmerged_records(worktree)
     if not records:
         return
-    paths = dict.fromkeys(record.split("\t", 1)[1] for record in records)
+    paths = dict.fromkeys(_path_of(record) for record in records)
     drops = [f"0 {_NO_OBJECT}\t{path}\0" for path in paths]
     entries = [f"{record}\0" for record in records]
     run_git(
