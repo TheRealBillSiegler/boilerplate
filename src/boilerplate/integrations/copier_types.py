@@ -17,6 +17,10 @@ data and never executed.
 ``load_answersfile_data`` is the reader Copier applies to a project's answers
 file; reading recorded answers through it reads them the way Copier does.
 
+``Question`` and ``AnswersMap`` are the classes ``Worker._ask`` builds for each
+question; checking a recorded answer through them casts, narrows and validates
+it the way Copier will.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -35,7 +39,7 @@ import functools
 
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
-from copier._user_data import load_answersfile_data
+from copier._user_data import AnswersMap, Question, load_answersfile_data
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
 NEW_COPY_DIR_PREFIX = f"{Worker.__module__}.new_copy."
@@ -80,6 +84,8 @@ __all__ = [
     "DEFAULT_EXCLUDE",
     "NEW_COPY_DIR_PREFIX",
     "OLD_COPY_DIR_PREFIX",
+    "AnswersMap",
+    "Question",
     "Template",
     "Worker",
     "load_answersfile_data",
