@@ -149,7 +149,7 @@ Project update takes an existing Boilerplate project (with `boilerplate.lock`), 
 
 ### Pre-Flight Check
 
-Before starting the update pipeline, Boilerplate MUST check that the project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty. If the tree is dirty, Boilerplate MUST fail immediately with exit code `3` and the error `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` `update` has no override; the tree is clean, or the update does not start.
+Before starting the update pipeline, Boilerplate MUST check that the project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty. If the tree is dirty, or the project is not a git repository root with at least one commit, Boilerplate MUST fail immediately with `BP_UPDATE_PROJECT_NOT_READY`, exit code `3` and the error `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` `update` has no override; the tree is clean, or the update does not start.
 
 A project with submodules (a `.gitmodules` file) MUST stop with `BP_UPDATE_SUBMODULES_UNSUPPORTED` and exit code `3`, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended ([git-worktree](https://git-scm.com/docs/git-worktree)).
 
