@@ -350,7 +350,7 @@ MAJOR updates MUST include a prominent warning about breaking changes in the pla
 
 **Task execution**: Follows the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
 
-**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`; layers already at their targets are skipped, so the answers files themselves record the progress. `git restore` discards the partial update. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
+**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`; layers already at their targets are skipped, so the answers files themselves record the progress. `git stash --include-untracked` sets the partial update aside, added files included. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
 
 **File status indicators**:
 
@@ -1067,7 +1067,7 @@ Tip: Save your answers for CI reproducibility:
 
 **After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted.
 
-**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`; `git restore` discards the partial update).
+**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`; `git stash --include-untracked` sets the partial update aside).
 
 ### Answer Presets
 
