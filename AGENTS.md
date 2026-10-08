@@ -34,6 +34,7 @@
 - Design operations to be idempotent when possible.
 - Reuse existing libraries and proven code. Avoid reinventing the wheel.
 - Orchestrate, don't reimplement: delegate to established tools (Copier for rendering/answers/merge; proto for toolchains). Build only what doesn't exist (composition, catalog, profiles). See `docs/design/adr-001-build-vs-adopt.md`.
+- Use all underlying technologies idiomatically and set the example of doing so. Where a design departs from a technology's idiom, name the departure and the reason. See `docs/design/01-overview.md`.
 - Prefer immutable data structures.
 - Use context managers for resource cleanup.
 - Prioritize DX and UX.
