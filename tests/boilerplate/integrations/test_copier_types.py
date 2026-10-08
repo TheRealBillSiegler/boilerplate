@@ -24,6 +24,7 @@ from boilerplate.integrations.copier_types import (
     TaskError,
     Template,
     Worker,
+    copy_operation,
     load_answersfile_data,
     template_public_attr_names,
     update_operation,
@@ -152,6 +153,27 @@ class TestUpdateOperation:
     def test_operation_is_restored_when_the_block_raises(self) -> None:
         """Reset the variable on the way out of a failure too."""
         with pytest.raises(RuntimeError), update_operation():
+            raise RuntimeError("boom")
+
+        with pytest.raises(LookupError):
+            _operation.get()
+
+
+class TestCopyOperation:
+    """The shim sets the operation of a task run that follows a copy."""
+
+    def test_operation_is_copy_inside_the_block_and_unset_after(self) -> None:
+        """Set ``"copy"`` for the block, then restore the unset variable."""
+        with copy_operation():
+            inside = _operation.get()
+
+        assert inside == "copy"
+        with pytest.raises(LookupError):
+            _operation.get()
+
+    def test_operation_is_restored_when_the_block_raises(self) -> None:
+        """Reset the variable on the way out of a failure too."""
+        with pytest.raises(RuntimeError), copy_operation():
             raise RuntimeError("boom")
 
         with pytest.raises(LookupError):
