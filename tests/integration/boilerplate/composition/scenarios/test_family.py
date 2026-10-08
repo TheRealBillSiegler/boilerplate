@@ -261,7 +261,7 @@ class TestFamilyBuilder:
         [
             ("core", ["1.0.0", "1.1.0", "2.0.0", "2.1.0", "3.0.0"]),
             ("service", ["1.0.0", "1.1.0"]),
-            ("docs", ["1.0.0", "1.1.0"]),
+            ("docs", ["1.0.0", "1.1.0", "1.2.0"]),
             ("ci", ["1.0.0", "1.1.0"]),
             ("app", ["1.0.0", "1.1.0"]),
         ],
@@ -464,6 +464,43 @@ class TestAppUsesDocsFilter:
     ) -> None:
         """Render the same anchor in the application module."""
         assert "docs/index.md#family-app" in diamond.files["src/family_app/app.py"]
+
+
+class TestDocsFilterRelease:
+    """Docs 1.2.0 changes only what the ``docs_anchor`` filter returns."""
+
+    @pytest.fixture(scope="class")
+    def diamond_on_new_docs(
+        self, family: Family, tmp_path_factory: pytest.TempPathFactory
+    ) -> Iterator[Composed]:
+        """Compose the diamond with docs at 1.2.0 and every other layer at its first."""
+        work = tmp_path_factory.mktemp("diamond-docs-1-2-0")
+        with temp_dir_inside(work):
+            yield _compose(family, "app", work, tags={"docs": "1.2.0"})
+
+    def test_app_guide_links_to_the_new_anchor_spelling(
+        self, diamond_on_new_docs: Composed
+    ) -> None:
+        """Join the words of "Family App" with an underscore, not a hyphen."""
+        assert "(docs/index.md#family_app)" in diamond_on_new_docs.files["APP.md"]
+
+    def test_release_changes_only_the_filter_and_its_version(
+        self, family: Family
+    ) -> None:
+        """Leave every other file of docs 1.1.0 as it was."""
+        old = family.releases["docs"]["1.1.0"]
+        new = family.releases["docs"]["1.2.0"]
+        changed = {
+            path.relative_to(new).as_posix()
+            for path in new.rglob("*")
+            if path.is_file()
+            and (
+                not (old / path.relative_to(new)).exists()
+                or path.read_bytes() != (old / path.relative_to(new)).read_bytes()
+            )
+        }
+
+        assert changed == {"_extensions/docfilters.py", "boilerplate.yml"}
 
 
 class TestCoreTask:
