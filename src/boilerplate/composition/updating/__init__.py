@@ -8,10 +8,8 @@ from boilerplate.composition.updating.recorded_answers import (
 )
 from boilerplate.composition.updating.render_role import RenderRole, render_role
 from boilerplate.composition.updating.scoped_worker import ScopedWorker
-from boilerplate.composition.updating.update_data import (
-    build_update_data,
-    layered_recorded_answers,
-)
+from boilerplate.composition.updating.step_inputs import StepInputs
+from boilerplate.composition.updating.update_data import build_step_data
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_views import UpdateViews
 
@@ -19,10 +17,10 @@ __all__ = [
     "LayerRelease",
     "RenderRole",
     "ScopedWorker",
+    "StepInputs",
     "UpdateOptions",
     "UpdateViews",
-    "build_update_data",
-    "layered_recorded_answers",
+    "build_step_data",
     "read_recorded_answers",
     "read_recorded_answers_by_layer",
     "render_role",

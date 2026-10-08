@@ -3,11 +3,13 @@
 S10 adds a question an ancestor declares and a descendant overrides, under
 three update mechanisms; S12 removes one; S13 retypes one; S14 renames one
 behind a before-stage migration; S15 adds a validator the recorded answer
-fails. S12-S15 force the scoped answers (the layer's
-chain, own on top) without the update questionnaire pass, or run a vanilla
-update, ``data={}``, which leaves Copier to read the layer's answers file
-alone; S10b and the last S14 test add the pass. S10a, S10b and S12-S15 run on
-the made-up template family; S10c stays on the bundled layers because it
+fails. The step's own rule (design 04 §Safe Update) is the default: the layer's
+own answers stay in its answers file and its ancestors' arrive as data. S13 and
+S15 also force the recorded answers of the layer's chain as data, the rule the
+step replaced, or run a vanilla update, ``data={}`` on a worker that skips the
+step's check, which leaves Copier to read the layer's answers file alone; S10b
+adds a questionnaire pass the step no longer runs. S10a, S10b and S12-S15 run
+on the made-up template family; S10c stays on the bundled layers because it
 needs a project composed under the full view, which the family's app cannot
 render.
 """
@@ -19,15 +21,19 @@ from typing import Any, NamedTuple
 
 import pytest
 
-from boilerplate.composition.updating import ScopedWorker
+from boilerplate.composition.updating import (
+    ScopedWorker,
+    read_recorded_answers_by_layer,
+)
 from tests.boilerplate.templates.conftest import (
+    ask_merged_questionnaire,
     commit_all,
     compose_project,
     git,
+    layer_chain,
     layer_view,
     recorded_answers,
     render_full_view,
-    update_data,
     update_layer,
 )
 from tests.integration.boilerplate.composition.family import Family
@@ -74,17 +80,53 @@ class Scenario(NamedTuple):
 
 
 class Mechanism(NamedTuple):
-    """How an update builds the answers it forces (see ``update_layer``)."""
+    """How an update builds the data it supplies (see ``update_layer``)."""
 
-    ask_unanswered: bool = True
+    questionnaire_pass: bool = False
     data: dict[str, Any] | None = None
     worker_type: type[ScopedWorker] = ScopedWorker
+    step_views: bool = False
 
 
-# The scoped data: the chain's recorded answers, no questionnaire pass.
-SCOPED = Mechanism(ask_unanswered=False)
-WITH_PASS = Mechanism()
+# The step's own rule alone; with the pass, the answers one questionnaire pass
+# over the full view at the target gives for what no answers file records.
+SCOPED = Mechanism()
+WITH_PASS = Mechanism(questionnaire_pass=True)
 VANILLA = Mechanism(data={}, worker_type=VanillaWorker)
+STEP = Mechanism(step_views=True)
+
+
+def _questionnaire_pass(
+    project: Path, *, root: str, layer: str, templates_dir: Path
+) -> dict[str, Any]:
+    """Return the answers one pass over the full view gives `layer`'s new questions.
+
+    The pass asks the full view at the target with every answers file's answers
+    given, as the update questionnaire pass did before the step ran no pass.
+
+    Args:
+        project: The composed project.
+        root: The composition's final layer.
+        layer: The layer about to be updated.
+        templates_dir: The templates directory holding the target releases.
+
+    Returns:
+        The pass's answer for every shown question no answers file of `layer`
+        or its ancestors records.
+    """
+    by_layer = read_recorded_answers_by_layer(project)
+    everywhere = {k: v for answers in by_layer.values() for k, v in answers.items()}
+    chain = {
+        k: v
+        for name in layer_chain(layer, templates_dir)
+        for k, v in by_layer.get(name, {}).items()
+    }
+    asked = ask_merged_questionnaire(root, everywhere, templates_dir)
+    return {
+        name: value
+        for name, value in asked.user.items()
+        if name not in chain and name not in asked.hidden
+    }
 
 
 def _update_in_order(
@@ -108,6 +150,14 @@ def _update_in_order(
         root: The composition's final layer.
     """
     for layer in order:
+        data = mechanism.data
+        if mechanism.questionnaire_pass:
+            data = _questionnaire_pass(
+                scenario.project,
+                root=root,
+                layer=layer,
+                templates_dir=templates_at(family, scenario.work, after),
+            )
         update_family_layer(
             family,
             scenario.project,
@@ -116,9 +166,9 @@ def _update_in_order(
             before=before,
             after=after,
             work=scenario.work,
-            ask_unanswered=mechanism.ask_unanswered,
-            data=mechanism.data,
+            data=data,
             worker_type=mechanism.worker_type,
+            step_views=mechanism.step_views,
         )
         commit_all(scenario.project, f"update {layer} to {after[layer]}")
 
@@ -236,7 +286,7 @@ class TestAddedQuestionWithOverride:
         self, family: Family, license_base: Scenario
     ) -> None:
         """S10b: the pass at the target gives core's update the descendant's default."""
-        data = update_data(
+        data = _questionnaire_pass(
             license_base.project,
             root="app",
             layer="core",
@@ -305,7 +355,6 @@ def full_view_walk(
                 ref="v4",
                 templates=full_view_base.releases,
                 full_view=True,
-                ask_unanswered=False,
             )
             commit_all(project, f"update {layer} to v4")
         yield project
@@ -337,7 +386,7 @@ REMOVAL_AFTER = {"core": "3.0.0", "service": "1.0.0"}
 
 
 class RemovedQuestion(NamedTuple):
-    """Core updated 2.1.0 to 3.0.0 with its chain's answers forced."""
+    """Core updated 2.1.0 to 3.0.0, which drops `use_tests`."""
 
     project: Path
     recording: Recording
@@ -362,7 +411,6 @@ def removed(
             before=REMOVAL_BEFORE,
             after=REMOVAL_AFTER,
             work=work,
-            ask_unanswered=False,
             worker_type=worker,
         )
         yield RemovedQuestion(project, recording)
@@ -574,7 +622,7 @@ class TestRetypedQuestion:
                 before=case.before,
                 after=case.after,
                 work=scenario.work,
-                ask_unanswered=False,
+                force_recorded=True,
             )
 
     @pytest.mark.parametrize(
@@ -596,7 +644,7 @@ class TestRetypedQuestion:
                 before=case.before,
                 after=case.after,
                 work=scenario.work,
-                ask_unanswered=False,
+                force_recorded=True,
             )
 
         assert (
@@ -700,7 +748,7 @@ def _update_narrowed(
     narrowed: Narrowed,
     project: Path,
     *,
-    ask_unanswered: bool = True,
+    force_recorded: bool = False,
     data: dict[str, Any] | None = None,
     worker_type: type[ScopedWorker] = ScopedWorker,
 ) -> None:
@@ -711,7 +759,7 @@ def _update_narrowed(
         source=narrowed.repos["project"],
         ref="v2",
         templates=narrowed.releases,
-        ask_unanswered=ask_unanswered,
+        force_recorded=force_recorded,
         data=data,
         worker_type=worker_type,
     )
@@ -740,7 +788,7 @@ class TestNarrowedChoiceOnTheBundledLayers:
         """S13: the rejection comes before any render; tree and answers stay at v1."""
         project = copy_project(narrowed.project, tmp_path / "probe-app")
         with pytest.raises(ValueError, match=re.escape(NARROWED_REJECTION)):
-            _update_narrowed(narrowed, project, ask_unanswered=False)
+            _update_narrowed(narrowed, project, force_recorded=True)
 
         assert (_is_clean(project), answers_file(project, "project")["_commit"]) == (
             True,
@@ -838,30 +886,26 @@ class TestRenamedQuestion:
         """S14: both orders update without a conflict."""
         assert merge_state(renamed[1]) == CLEAN
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "The update questionnaire pass reads the answers files before the "
-            "migration runs and forces the renamed question's default over the "
-            "migrated answer; design 06 (Step 4: Three-Way Merge) expects "
-            "migrations to carry recorded answers through."
-        ),
-    )
-    @pytest.mark.parametrize("order", RENAME_ORDERS, ids=_order_id)
-    def test_update_questionnaire_pass_keeps_the_migrated_answer(
-        self, family: Family, order: tuple[str, ...], tmp_path: Path
+    def test_ancestors_first_update_step_keeps_the_migrated_answer(
+        self, family: Family, tmp_path: Path
     ) -> None:
-        """S14 with the pass: both layers record and render the migrated answer."""
+        """S14: through the update step both layers record and render the migrated name.
+
+        The step runs no questionnaire pass, so the renamed question's default
+        never overrides the migration's answer. Only the ancestors-first order
+        carries it to service, as design 04 §Safe Update requires; the reverse
+        order is pinned above.
+        """
         scenario = _compose(
             family, tmp_path, "service", RENAME_BEFORE, {"author_name": AUTHOR}
         )
         _update_in_order(
             family,
             scenario,
-            order,
+            ("core", "service"),
             RENAME_BEFORE,
             RENAME_AFTER,
-            WITH_PASS,
+            STEP,
             root="service",
         )
         recorded = {
@@ -872,7 +916,7 @@ class TestRenamedQuestion:
 
         assert (recorded, byline) == (
             {"core": AUTHOR, "service": AUTHOR},
-            f"A Python 3.12 project by {AUTHOR}.",
+            f"A Python 3.13 project by {AUTHOR}.",
         )
 
 
@@ -913,7 +957,7 @@ class TestTightenedValidator:
                 before=BASE,
                 after=TIGHTENED_AFTER,
                 work=tightened.work,
-                ask_unanswered=False,
+                force_recorded=True,
             )
 
     def test_vanilla_update_silently_swaps_in_a_valid_default(
