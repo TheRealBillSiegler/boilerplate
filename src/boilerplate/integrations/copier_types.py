@@ -36,12 +36,12 @@ fixed commit identity); the staging worktree runs its git calls through it too.
 Copier runs exits non-zero. Plumbum arrives only through Copier, so the source
 imports it from here rather than from plumbum directly.
 
-``update_operation`` sets Copier's private ``_operation`` ContextVar to
-``"update"`` for a block. Only ``run_copy``, ``run_recopy`` and ``run_update``
-set it, and Copier's task runner reads it to give a task ``_copier_operation``;
-the post-walk task run of an update calls the task runner outside those three, so
-it sets the variable itself. ``TaskError`` is what the task runner raises when a
-task exits non-zero.
+``update_operation`` and ``copy_operation`` set Copier's private ``_operation``
+ContextVar to ``"update"`` or ``"copy"`` for a block. Only ``run_copy``,
+``run_recopy`` and ``run_update`` set it, and Copier's task runner reads it to
+give a task ``_copier_operation``; the task runs that follow an update or an add
+call the task runner outside those three, so they set the variable themselves.
+``TaskError`` is what the task runner raises when a task exits non-zero.
 
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
@@ -59,7 +59,8 @@ these are private symbols copier may move without a deprecation cycle.
 import dataclasses
 import functools
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
+from typing import Literal
 
 from copier._jinja_ext import SandboxedEnvironment
 from copier._main import Worker, _operation  # pyright: ignore[reportPrivateUsage]
@@ -110,7 +111,22 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
 
 
 @contextmanager
-def update_operation() -> Generator[None]:
+def _operation_as(operation: Literal["copy", "update"]) -> Generator[None]:
+    """Run a block with Copier's ``_operation`` ContextVar set to `operation`.
+
+    The variable is restored on the way out, also when the block raises.
+
+    Yields:
+        Nothing; the operation is set for the duration of the block.
+    """
+    token = _operation.set(operation)
+    try:
+        yield
+    finally:
+        _operation.reset(token)
+
+
+def update_operation() -> AbstractContextManager[None]:
     """Run a block under Copier's ``update`` operation.
 
     Inside the block Copier's task runner gives each task
@@ -118,14 +134,24 @@ def update_operation() -> Generator[None]:
     template may guard a creation-only task. The variable is restored on the
     way out, also when the block raises.
 
-    Yields:
-        Nothing; the operation is set for the duration of the block.
+    Returns:
+        A context manager that sets the operation for the duration of the block.
     """
-    token = _operation.set("update")
-    try:
-        yield
-    finally:
-        _operation.reset(token)
+    return _operation_as("update")
+
+
+def copy_operation() -> AbstractContextManager[None]:
+    """Run a block under Copier's ``copy`` operation.
+
+    Inside the block Copier's task runner gives each task
+    ``_copier_operation == "copy"``, as it does during ``run_copy``. Adding a
+    layer runs the layer's tasks after the copy back, outside ``run_copy``, and
+    a by-hand copy would have run them under this operation.
+
+    Returns:
+        A context manager that sets the operation for the duration of the block.
+    """
+    return _operation_as("copy")
 
 
 __all__ = [
@@ -140,6 +166,7 @@ __all__ = [
     "TaskError",
     "Template",
     "Worker",
+    "copy_operation",
     "get_git",
     "load_answersfile_data",
     "load_template_config",
