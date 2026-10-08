@@ -1,6 +1,6 @@
 """Whether the unified questionnaire can be driven interactively in-process.
 
-S17 asks streamlit's full merged view with ``defaults=False`` through the
+S17 asks the family's diamond merged view with ``defaults=False`` through the
 first layer's Worker, feeding keystrokes through prompt_toolkit's pipe input
 with a dummy output, so no console is needed: clear the prefilled project
 name and type a new one, then accept every other default. A spy on the
@@ -19,13 +19,22 @@ from prompt_toolkit.input import create_pipe_input
 from prompt_toolkit.output import DummyOutput
 
 from tests.boilerplate.templates.conftest import ask_merged_questionnaire
+from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
-    check_bundled_questionnaire,
     temp_dir_inside,
+    templates_at,
 )
 
 KEYSTROKES = "\x15Typed App\r" + "\r" * 12  # Ctrl-U clears the prefill.
 GUARD_SECONDS = 90
+# Core 1.1.0 asks `license`, which app 1.1.0 overrides; service overrides core's
+# Python version.
+PROMPTED = {"core": "1.1.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.1.0"}
+
+
+def _plain(default: object) -> object:
+    """Return a choice question's default as the value of its choice."""
+    return default.value if isinstance(default, questionary.Choice) else default
 
 
 class Prompt(NamedTuple):
@@ -45,10 +54,12 @@ class Session(NamedTuple):
 
 
 @pytest.fixture(scope="module")
-def session(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Session]:
+def session(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[Session]:
     """Drive the unified questionnaire from pipe input on a worker thread."""
-    check_bundled_questionnaire()
     root = tmp_path_factory.mktemp("prompting")
+    templates = templates_at(family, root, PROMPTED)
     prompts: list[Prompt] = []
     answers: dict[str, Any] = {}
     real = questionary.unsafe_prompt
@@ -62,7 +73,7 @@ def session(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Session]:
             when = question.get("when", True)
             shown = bool(when(given)) if callable(when) else bool(when)
             prompts.append(
-                Prompt(str(question["name"]), question.get("default"), shown)
+                Prompt(str(question["name"]), _plain(question.get("default")), shown)
             )
         return real(questions, answers=answers)
 
@@ -73,7 +84,7 @@ def session(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Session]:
         ):
             pipe.send_text(KEYSTROKES)
             answers.update(
-                ask_merged_questionnaire("streamlit", {}, defaults=False).user
+                ask_merged_questionnaire("app", {}, templates, defaults=False).user
             )
 
     with temp_dir_inside(root), pytest.MonkeyPatch.context() as patch:
@@ -96,26 +107,22 @@ class TestInteractivePrompting:
         )
 
     def test_hidden_questions_are_never_shown(self, session: Session) -> None:
-        """S17: the two `when: false` questions reach the prompt but are not shown."""
+        """S17: the `when: false` question reaches the prompt but is not shown."""
         hidden = [p.name for p in session.prompts if not p.shown]
 
-        assert hidden == ["project_slug", "package_name"]
+        assert hidden == ["package_name"]
 
     def test_prompt_defaults_carry_the_descendants_overrides(
         self, session: Session
     ) -> None:
-        """S17: streamlit's overrides are the defaults the prompts show."""
+        """S17: service's and app's overrides are the defaults the prompts show."""
         defaults = {
             p.name: p.default
             for p in session.prompts
-            if p.name in ("dependencies", "sample_module", "container_registry")
+            if p.name in ("python_version", "license")
         }
 
-        assert defaults == {
-            "dependencies": '["streamlit", "pydantic>=2"]',
-            "sample_module": False,
-            "container_registry": "ghcr.io",
-        }
+        assert defaults == {"python_version": "3.13", "license": "Apache-2.0"}
 
     def test_folder_name_default_comes_from_the_scratch_destination(
         self, session: Session
