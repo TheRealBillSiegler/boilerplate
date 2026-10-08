@@ -73,6 +73,7 @@ class UpdateWalk:
         self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
         self._ran: list[str] = []
+        self._uncarried: list[str] = []
         self._secrets: dict[str, Any] = {}
 
     def execute(self) -> UpdateOutcome:
@@ -133,6 +134,7 @@ class UpdateWalk:
                 )
             )
             self._ran.append(step.layer)
+            self._uncarried.extend(staging.warn_uncarried(step.layer))
             conflicts = staging.unmerged_paths()
             if conflicts:
                 return conflicts
@@ -236,5 +238,5 @@ class UpdateWalk:
             skipped=self._inputs.plan.skipped,
             paused_at=paused_at,
             conflicts=conflicts,
-            warnings=self._inputs.plan.warnings,
+            warnings=(*self._inputs.plan.warnings, *self._uncarried),
         )

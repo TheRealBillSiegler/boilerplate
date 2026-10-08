@@ -17,6 +17,10 @@ from boilerplate.composition.staging.copy_back import (
     undo_working_tree,
 )
 from boilerplate.composition.staging.git_commands import run_git
+from boilerplate.composition.staging.ignored_files import (
+    list_ignored_paths,
+    uncarried_warning,
+)
 from boilerplate.composition.staging.intent_journal import (
     JOURNAL_LOCK_NAME,
     JOURNAL_NAME,
@@ -88,6 +92,7 @@ class StagingWorktree:
         self._folder: Path | None = None
         self._lock: FileLock | None = None
         self._keep = False
+        self._seen_ignored: set[str] = set()
         self._start_commit: str | None = None
         self._last_commit: str | None = None
         self._started_at = datetime.now(UTC)
@@ -129,6 +134,31 @@ class StagingWorktree:
         """
         self._last_commit = commit_worktree(self.path, message)
         return self._last_commit
+
+    def warn_uncarried(self, layer: str) -> tuple[str, ...]:
+        """Warn about the ignored files `layer` wrote since the last call.
+
+        Copier writes a file even where ``.gitignore`` ignores it, but the layer
+        commit and the copy back carry only what git tracks, so such a file
+        stays in the staging worktree. Carrying it is not decided here: the
+        files are named, in the log and in the return value, and left behind.
+
+        Args:
+            layer: The layer whose update or copy just ran.
+
+        Returns:
+            One warning per ignored path that appeared since the last call.
+        """
+        fresh = [
+            path
+            for path in list_ignored_paths(self.path)
+            if path not in self._seen_ignored
+        ]
+        self._seen_ignored.update(fresh)
+        messages = tuple(uncarried_warning(layer, path) for path in fresh)
+        for message in messages:
+            _logger.warning(message)
+        return messages
 
     def unmerged_paths(self) -> tuple[str, ...]:
         """List the worktree's unmerged paths, the sign a layer's update conflicted.
