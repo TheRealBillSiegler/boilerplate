@@ -1,0 +1,6 @@
+schema_version: "1"
+
+name: service
+version: 1.1.0
+description: A container image and run notes for a Python service.
+extends: [core]

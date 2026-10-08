@@ -25,3 +25,7 @@ docs/assets/mermaid.min.js  binary
 # matches the byte count CI reports. eol=lf overrides core.autocrlf=true on
 # Windows checkouts.
 *.cast   text eol=lf
+
+# The family fixtures render into projects whose files the scenarios compare
+# byte for byte; eol=lf overrides core.autocrlf=true on Windows checkouts.
+tests/fixtures/family/** text eol=lf

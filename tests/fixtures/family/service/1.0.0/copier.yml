@@ -1,0 +1,28 @@
+_answers_file: .copier-answers.service.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata and the extension module.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+  - _extensions
+
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - _extensions/runtime.py:RuntimeContext
+
+# Overrides core's default Python version.
+python_version:
+  default: "3.13"
+
+port:
+  type: str
+  help: "Which port does the service listen on?"
+  default: "8000"
