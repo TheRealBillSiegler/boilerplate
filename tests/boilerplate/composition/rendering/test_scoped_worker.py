@@ -510,3 +510,42 @@ class TestTheOldCopyFill:
         own = {"use_pg": True, "db_url": "postgres://own"}
 
         assert _old_copy_data(tmp_path, own) == own
+
+
+class TestOneViewForCompose:
+    """Compose renders every layer under one view, so the old view is optional."""
+
+    def test_without_an_old_view_every_render_uses_the_target_view(
+        self, tmp_path: Path
+    ) -> None:
+        worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+            src_path=str(tmp_path),
+            dst_path=tmp_path / f"{OLD_COPY_DIR_PREFIX}ab12",
+            target_view=TARGET,
+        )
+
+        assert worker.view_for_render() == TARGET
+
+
+class TestSkipIfExists:
+    """A forced render clears the layer's `_skip_if_exists`; the others keep it."""
+
+    def _template_config(self, tmp_path: Path, **options: object) -> dict[str, object]:
+        (tmp_path / "copier.yml").write_text(
+            "_skip_if_exists:\n  - KEEP.md\n", encoding="utf-8"
+        )
+        worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+            src_path=str(tmp_path),
+            dst_path=tmp_path / "project",
+            target_view=TARGET,
+            **options,
+        )
+        return dict(worker.template.config_data)
+
+    def test_keeps_the_templates_own_list_by_default(self, tmp_path: Path) -> None:
+        assert self._template_config(tmp_path)["skip_if_exists"] == ["KEEP.md"]
+
+    def test_clears_the_list_when_asked_not_to_honor_it(self, tmp_path: Path) -> None:
+        config = self._template_config(tmp_path, honor_skip_if_exists=False)
+
+        assert config["skip_if_exists"] == []
