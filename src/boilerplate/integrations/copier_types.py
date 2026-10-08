@@ -17,6 +17,12 @@ data and never executed.
 ``load_answersfile_data`` is the reader Copier applies to a project's answers
 file; reading recorded answers through it reads them the way Copier does.
 
+``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
+temporary directories Copier's update renders its old copy and its new copy
+into (``Worker._apply_update``); a destination below one of them identifies
+which render of an update a worker is making. A test pins both against
+Copier's source.
+
 Importing them here, from the modules where copier actually defines them, keeps
 that coupling localized to one place. When a copier upgrade relocates these
 symbols, this module is the only thing that needs to change. The dependency is
@@ -30,6 +36,9 @@ import functools
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
 from copier._user_data import load_answersfile_data
+
+OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
+NEW_COPY_DIR_PREFIX = f"{Worker.__module__}.new_copy."
 
 
 @functools.cache
@@ -69,6 +78,8 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
 
 __all__ = [
     "DEFAULT_EXCLUDE",
+    "NEW_COPY_DIR_PREFIX",
+    "OLD_COPY_DIR_PREFIX",
     "Template",
     "Worker",
     "load_answersfile_data",
