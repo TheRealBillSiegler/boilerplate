@@ -13,6 +13,7 @@ import boilerplate.composition.merging.exceptions as merging_exceptions_module
 import boilerplate.settings.profile as profile_module
 from boilerplate.common.exceptions import (
     ActionRequiredError,
+    AnswersFileIncompleteError,
     BoilerplateError,
     DestinationNotEmptyError,
     DestinationRequiredError,
@@ -22,11 +23,16 @@ from boilerplate.common.exceptions import (
     InvalidDataError,
     InvalidTemplateSpecifierError,
     InvalidVersionError,
+    LockReadFailedError,
+    LockSchemaUnsupportedError,
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateDowngradeError,
+    UpdateLayerDriftError,
+    UpdateTargetMismatchError,
     UserCancelledError,
 )
 from boilerplate.composition.graph.exceptions import (
@@ -71,6 +77,12 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     MergeConflictError: "BP_RESOLVE_MERGE_CONFLICT",
     ProfileError: "BP_CONFIG_PROFILE_INVALID",
     UserCancelledError: "BP_RENDER_USER_CANCELLED",
+    LockReadFailedError: "BP_LOCK_READ_FAILED",
+    LockSchemaUnsupportedError: "BP_LOCK_SCHEMA_UNSUPPORTED",
+    AnswersFileIncompleteError: "BP_UPDATE_ANSWERS_INCOMPLETE",
+    UpdateLayerDriftError: "BP_UPDATE_LAYER_DRIFT",
+    UpdateTargetMismatchError: "BP_UPDATE_TARGET_MISMATCH",
+    UpdateDowngradeError: "BP_UPDATE_DOWNGRADE_REJECTED",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -252,6 +264,12 @@ class TestSeverityAndRetryable:
             MissingRequiredAnswersError,
             InvalidDataError,
             RecordedAnswerRejectedError,
+            AnswersFileIncompleteError,
+            UpdateLayerDriftError,
+            UpdateTargetMismatchError,
+            UpdateDowngradeError,
+            LockReadFailedError,
+            LockSchemaUnsupportedError,
             ProfileError,
             # Not-found errors
             TemplateNotFoundError,
@@ -339,3 +357,50 @@ class TestRecordedAnswerRejectedError:
         err = RecordedAnswerRejectedError("rejected", remediation="Do this.")
 
         assert err.remediation == "Do this."
+
+
+class TestAnswersFileIncompleteError:
+    """An incomplete answers file names each layer and the keys it lacks."""
+
+    def test_carries_the_missing_keys_by_layer(self) -> None:
+        err = AnswersFileIncompleteError(
+            "incomplete", missing={"service": ("author_name", "python_version")}
+        )
+
+        assert err.missing == {"service": ("author_name", "python_version")}
+
+    def test_missing_defaults_to_empty(self) -> None:
+        assert AnswersFileIncompleteError("incomplete").missing == {}
+
+
+class TestUpdateLayerDriftError:
+    """A drift stop names the remediation unless the caller words its own."""
+
+    def test_default_remediation_sets_the_partial_update_aside(self) -> None:
+        err = UpdateLayerDriftError("drift", layers=("core", "service"))
+
+        assert err.layers == ("core", "service")
+        assert err.remediation is not None
+        assert "git stash --include-untracked" in err.remediation
+
+
+class TestUpdateTargetMismatchError:
+    """A mismatched resume names the remediation that sets the pause aside."""
+
+    def test_default_remediation_sets_the_partial_update_aside(self) -> None:
+        err = UpdateTargetMismatchError("mismatch", layers=("core",))
+
+        assert err.layers == ("core",)
+        assert err.remediation is not None
+        assert "git stash --include-untracked" in err.remediation
+
+
+class TestUpdateDowngradeError:
+    """A rejected downgrade carries the layer, its recorded version and the target."""
+
+    def test_carries_layer_recorded_and_target(self) -> None:
+        err = UpdateDowngradeError(
+            "downgrade", layer="core", recorded="2.0.0", target="1.1.0"
+        )
+
+        assert (err.layer, err.recorded, err.target) == ("core", "2.0.0", "1.1.0")
