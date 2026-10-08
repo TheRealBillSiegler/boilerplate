@@ -1,5 +1,6 @@
 """The advisory file lock contends across handles and releases on demand."""
 
+import threading
 from pathlib import Path
 
 from boilerplate.common.file_lock import FileLock
@@ -51,3 +52,21 @@ class TestFileLock:
             assert lock.held
 
         assert not lock.held
+
+    def test_acquire_gives_up_after_the_timeout(self, tmp_path: Path) -> None:
+        holder = FileLock(tmp_path / "a.lock")
+        holder.try_acquire()
+
+        assert not FileLock(tmp_path / "a.lock").acquire(0.2, poll_interval=0.05)
+        holder.release()
+
+    def test_acquire_succeeds_once_the_holder_lets_go(self, tmp_path: Path) -> None:
+        holder = FileLock(tmp_path / "a.lock")
+        holder.try_acquire()
+        timer = threading.Timer(0.2, holder.release)
+        timer.start()
+
+        waiter = FileLock(tmp_path / "a.lock")
+        assert waiter.acquire(5, poll_interval=0.05)
+        waiter.release()
+        timer.join()
