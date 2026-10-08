@@ -7,6 +7,7 @@ collection fails loudly here during CI rather than at render time for a user.
 
 from __future__ import annotations
 
+import dataclasses
 import inspect
 import subprocess
 from pathlib import Path
@@ -205,3 +206,96 @@ class TestTaskError:
         error = TaskError.from_process(process)
 
         assert (error.cmd, error.returncode) == (["make", "test"], 2)
+
+
+def _required(callable_: object, skip_self: bool = True) -> list[str]:
+    """Return the names of `callable_`'s parameters that have no default."""
+    parameters = list(inspect.signature(callable_).parameters.values())  # type: ignore[arg-type]
+    if skip_self:
+        parameters = parameters[1:]
+    return [
+        p.name
+        for p in parameters
+        if p.default is inspect.Parameter.empty
+        and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
+    ]
+
+
+class TestWorkerInternalsBoilerplateCalls:
+    """The Worker members ``ScopedWorker`` and the compose pass call or override."""
+
+    @pytest.mark.parametrize("name", ["_ask", "_render_context", "_external_data"])
+    def test_the_member_takes_no_arguments(self, name: str) -> None:
+        """``ScopedWorker`` calls each with none, and overrides ``_ask`` the same."""
+        assert (callable(getattr(Worker, name)), _required(getattr(Worker, name))) == (
+            True,
+            [],
+        )
+
+    def test_execute_tasks_takes_the_task_list_alone(self) -> None:
+        """The post-walk task run passes the template's tasks as its one argument."""
+        assert _required(Worker._execute_tasks) == ["tasks"]  # pyright: ignore[reportPrivateUsage]
+
+    def test_cleanup_hooks_is_an_instance_list_of_callables(
+        self, tmp_path: Path
+    ) -> None:
+        """``ScopedWorker`` appends the template's ``_cleanup`` to it."""
+        worker = Worker(src_path=str(tmp_path), dst_path=tmp_path / "project")
+
+        assert isinstance(worker._cleanup_hooks, list)  # pyright: ignore[reportPrivateUsage]
+
+    @pytest.mark.parametrize(
+        "name", ["jinja_env", "subproject", "resolved_vcs_ref", "template"]
+    )
+    def test_the_property_exists(self, name: str) -> None:
+        """``ScopedWorker`` reads each, and overrides ``template``."""
+        assert hasattr(Worker, name)
+
+    def test_the_fields_the_worker_is_built_with_exist(self) -> None:
+        """Compose builds a Worker with each of these keyword arguments."""
+        names = {field.name for field in dataclasses.fields(Worker)}
+
+        assert {
+            "src_path",
+            "dst_path",
+            "data",
+            "user_defaults",
+            "unsafe",
+            "overwrite",
+            "defaults",
+            "skip_tasks",
+            "quiet",
+            "exclude",
+        } <= names
+
+
+class TestTemplateCleanup:
+    """``Template._cleanup`` is what removes a clone, and is safe to call bare."""
+
+    def test_cleanup_takes_no_arguments(self) -> None:
+        assert _required(Template._cleanup) == []  # pyright: ignore[reportPrivateUsage]
+
+
+class TestAnswersMapAndQuestionShape:
+    """``check_recorded_answers`` builds both the way ``Worker._ask`` does."""
+
+    def test_answers_map_takes_the_keyword_arguments_boilerplate_passes(self) -> None:
+        names = {field.name for field in dataclasses.fields(AnswersMap)}
+
+        assert {"user_defaults", "init", "last", "metadata", "external"} <= names
+
+    def test_answers_map_exposes_the_answer_views_boilerplate_reads(self) -> None:
+        members = {field.name for field in dataclasses.fields(AnswersMap)} | set(
+            dir(AnswersMap)
+        )
+
+        assert {"user", "metadata", "hidden", "last", "init"} <= members
+
+    def test_question_takes_the_keyword_arguments_boilerplate_passes(self) -> None:
+        names = {field.name for field in dataclasses.fields(Question)}
+
+        assert {"answers", "context", "jinja_env", "settings", "var_name"} <= names
+
+    @pytest.mark.parametrize("name", ["get_when", "parse_answer", "validate_answer"])
+    def test_question_has_the_method(self, name: str) -> None:
+        assert callable(getattr(Question, name))
