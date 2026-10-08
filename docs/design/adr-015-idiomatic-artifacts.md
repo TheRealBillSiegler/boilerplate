@@ -31,8 +31,8 @@ Composition therefore answers to two reference points at once, and each owns a d
 - **The scoped view held in the fields of a `Worker` subclass (chosen)** — the layer keeps its own `copier.yml` free of the join, Copier runs every render, and the view reaches all three of Copier's update renders.
 - **Every render under the full merged schema** — rejected: a descendant's context hook rewrote an ancestor's rendered files, and every answers file recorded siblings' answers ([Verification (2026-10-06)](#verification-2026-10-06)).
 - **The scoped view alone as the source of question definitions and defaults at update** — rejected: an ancestor's update recorded the ancestor's own default for a new question its descendant overrides, in both walk orders ([Verification (2026-10-06)](#verification-2026-10-06)); the step takes definitions and defaults from the full merged schema instead.
-- **A later layer's recorded value over an earlier one's** — rejected: a descendant's stale copy of an ancestor's answer shadows the value the ancestor's migration wrote ([Verification (2026-10-08)](#verification-2026-10-08), F1).
-- **One questionnaire pass before the walk** — rejected: it asks for questions a migration answers, and a renamed question's default overrode the migrated answer in both layers and both orders ([Verification (2026-10-08)](#verification-2026-10-08), S14).
+- **A later layer's recorded value over an earlier one's** — rejected: passed data outranks the answers file in Copier's answer precedence (`AnswersMap.combined`), so a descendant's stale copy of an ancestor's answer, passed over the ancestor's, would shadow the value the ancestor's migration wrote.
+- **One questionnaire pass before the walk** — rejected: it asks for questions a migration answers, and a renamed question's default overrode the migrated answer in both layers and both orders ([Verification (2026-10-08)](#verification-2026-10-08)).
 - **A file-path extension registered once, from one source at the target versions** — rejected: the old copy renders with the new code, so the update silently keeps the old output ([Verification (2026-10-06)](#verification-2026-10-06)).
 - **A merged template set on one worker instance** — rejected: `dataclasses.replace` rebuilds the update renders without it ([Verification (2026-09-30)](#verification-2026-09-30)).
 - **Declaring inherited questions in each child layer so a vanilla per-layer update sees them** — rejected: it duplicates the parent's schema by hand, and the copy drifts when the parent renames or retypes the question.
@@ -98,12 +98,9 @@ Empirical run against the bundled `project` and `streamlit` templates and synthe
 
 ## Verification (2026-10-08)
 
-Probe scenarios against Copier 9.18.1 on the composition-scenario fixtures (`tests/integration/boilerplate/composition/scenarios/`), each run in both layers and both orders where it applies.
+Probe scenarios against Copier 9.18.1 (`tests/integration/boilerplate/composition/scenarios/`), on the bundled `project` and `streamlit` templates.
 
-- **A layer's own recorded answers passed as data overrode what its migrations wrote (F1).** The passed value outranked the answers file Copier re-read after the before-migrations, so a migrated answer reverted to the pre-migration value.
-- **A questionnaire pass run before the walk forced a renamed question's default over the migrated answer (S14).** The result held in both layers and both orders (`test_question_changes.py::TestRenamedQuestion`).
-- **A descendant's override of a new ancestor question's default reached the ancestor only through the merged schema (S10).**
-- **Vanilla Copier silently swapped a rejected recorded answer for the default (S13 and S15).** The in-step rejected-answer check of point 2 closes that gap.
+- **A questionnaire pass run before the walk forced a renamed question's default over the migrated answer.** `project` v2 renamed `author_name` to `maintainer_name` behind a before-migration. The pass ran before that migration, found `maintainer_name` unanswered, and its forced default `Your Name` replaced the migrated value in both layers and both orders (`test_question_changes.py::TestRenamedQuestion`).
 
 ## Relationship to other ADRs
 
