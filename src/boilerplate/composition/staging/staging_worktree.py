@@ -17,14 +17,16 @@ from boilerplate.composition.staging.intent_operation import IntentOperation
 from boilerplate.composition.staging.layer_commit import commit_worktree
 from boilerplate.composition.staging.preflight import check_project_ready
 from boilerplate.composition.staging.staging_removal import remove_staging_folder
+from boilerplate.composition.staging.stale_cleanup import (
+    STAGING_PREFIX,
+    remove_stale_staging,
+)
 from boilerplate.composition.staging.unmerged_entries import replay_unmerged_entries
 from boilerplate.composition.staging.working_tree_changes import (
     apply_working_tree_changes,
 )
 
 _logger = logging.getLogger(__name__)
-
-STAGING_PREFIX = "boilerplate-staging-"
 
 
 class StagingWorktree:
@@ -147,6 +149,7 @@ class StagingWorktree:
         check_project_ready(self.project)
         self._started_at = datetime.now(UTC)
         root = self._temp_root or Path(tempfile.gettempdir())
+        remove_stale_staging(root)
         self._folder = Path(tempfile.mkdtemp(prefix=STAGING_PREFIX, dir=root))
         try:
             self._start_commit = run_git(self.project, "rev-parse", "HEAD").strip()
