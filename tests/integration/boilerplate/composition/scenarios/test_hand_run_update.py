@@ -86,6 +86,13 @@ def _update_by_hand(project: Path) -> None:
     )
 
 
+def _record_the_computed_value(project: Path) -> None:
+    """Add `package_name` to the service answers file and commit."""
+    with (project / ANSWERS_FILE).open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write("package_name: family_app\n")
+    commit_all(project, "record the computed value for the update")
+
+
 def _service_md(project: Path) -> str:
     return (project / "SERVICE.md").read_text(encoding="utf-8")
 
@@ -132,12 +139,19 @@ class TestAHandRunUpdateOfAGitBackedLayer:
         self, project: Path
     ) -> None:
         """A `package_name` in the file reaches the old copy, which `--data` cannot."""
-        answers = project / ANSWERS_FILE
-        with answers.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write("package_name: family_app\n")
-        commit_all(project, "record the computed value for the update")
+        _record_the_computed_value(project)
 
         _update_by_hand(project)
 
         assert "docker build -t family_app:8000 ." in _service_md(project)
         assert CONFLICT_MARKER not in _service_md(project)
+
+    def test_the_update_rewrites_the_answers_file_without_the_added_value(
+        self, project: Path
+    ) -> None:
+        _record_the_computed_value(project)
+
+        _update_by_hand(project)
+
+        recorded = answers_file(project, "service")
+        assert "package_name" not in recorded
