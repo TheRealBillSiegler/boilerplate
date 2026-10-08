@@ -404,11 +404,11 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 | Precondition | Error and remediation |
 | --- | --- |
-| The project is managed: `boilerplate.lock` exists | `Project is not managed by Boilerplate. Use 'boilerplate adopt' first.` |
-| The working tree is clean | `Working tree has uncommitted changes. Commit or stash them before running boilerplate add.` |
-| The template is not already in the project | `Template '{name}' is already in this project. Use 'boilerplate update' instead.` |
-| Every template the new layer `extends`, transitively, is already in the lock | The error names each missing layer. Remediation: `boilerplate add <ancestor>` first. |
-| Each such ancestor's recorded version satisfies the new layer's `extends` constraint | The error names the ancestor, its recorded version and the constraint. Remediation: `boilerplate update` first. |
+| The project is managed: `boilerplate.lock` exists | `BP_UPDATE_PROJECT_NOT_MANAGED`: `Project is not managed by Boilerplate. Use 'boilerplate adopt' first.` |
+| The working tree is clean | `BP_UPDATE_PROJECT_NOT_READY`: `Working tree has uncommitted changes. Commit or stash them before running boilerplate add.` |
+| The template is not already in the project | `BP_UPDATE_LAYER_ALREADY_ADDED`: `Template '{name}' is already in this project. Use 'boilerplate update' instead.` |
+| Every template the new layer `extends`, transitively, is already in the lock | `BP_UPDATE_ANCESTORS_MISSING`. The error names each missing layer. Remediation: `boilerplate add <ancestor>` first. |
+| Each such ancestor's recorded version satisfies the new layer's `extends` constraint | `BP_UPDATE_ANCESTOR_VERSION_MISMATCH`. The error names the ancestor, its recorded version and the constraint. Remediation: `boilerplate update` first. |
 
 `add` and `update` stay separate operations: `add` never changes a layer already in the project.
 
