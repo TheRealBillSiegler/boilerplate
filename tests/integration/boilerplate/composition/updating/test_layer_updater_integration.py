@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.composition.updating import LayerRelease, update_layer
+from boilerplate.composition.updating import LayerRelease, UpdateViews, update_layer
 from tests.boilerplate.templates.conftest import layer_view
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -25,14 +25,13 @@ AFTER = {"core": "3.0.0", "service": "1.0.0"}
 
 
 def _update_core(family: Family, project: Path, work: Path, **data: str) -> None:
-    templates = {
-        BEFORE["core"]: templates_at(family, work, BEFORE),
-        AFTER["core"]: templates_at(family, work, AFTER),
-    }
     update_layer(
         project,
         LayerRelease(layer="core", source=family.repos["core"], ref=AFTER["core"]),
-        {ref: layer_view("core", d) for ref, d in templates.items()},
+        UpdateViews(
+            layer_view("core", templates_at(family, work, BEFORE)),
+            layer_view("core", templates_at(family, work, AFTER)),
+        ),
         data,
     )
 

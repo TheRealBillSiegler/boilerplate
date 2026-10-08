@@ -2,9 +2,10 @@
 
 Copier renders an update three times: an old copy at the recorded ref, the
 project in place and a new copy at the target ref, then applies the
-old-to-new diff. ``ScopedWorker`` builds each render's template from the view
-keyed by the ref that render sets on it. These tests pin which inputs reach
-which render when core drops `use_tests` between 2.1.0 and 3.0.0.
+old-to-new diff. ``ScopedWorker`` builds each render's template from the old
+view for the old copy and the target view for the other two. These tests pin
+which inputs reach which render when core drops `use_tests` between 2.1.0 and
+3.0.0, and when only an ancestor moves.
 """
 
 from collections.abc import Iterator
@@ -13,6 +14,7 @@ from typing import NamedTuple
 
 import pytest
 
+from boilerplate.composition.views import LayerView
 from tests.boilerplate.templates.conftest import recorded_answers
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -126,3 +128,62 @@ def test_forced_data_never_reaches_the_old_copy(family: Family, tmp_path: Path) 
         "old_copy": 'description = "Family App"',
         "new_copy": 'description = "FORCED"',
     }
+
+
+ANCESTOR_BEFORE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
+ANCESTOR_AFTER = {**ANCESTOR_BEFORE, "docs": "1.1.0"}
+
+
+def _validator(view: LayerView) -> object:
+    """Return the validator the view's `docs_site_name` question carries."""
+    return view.questions["docs_site_name"].get("validator")
+
+
+@pytest.mark.xdist_group("mechanics-ancestor-only")
+class TestAncestorOnlyMove:
+    """Docs moves 1.0.0 to 1.1.0 while app's own ref stays 1.0.0.
+
+    Docs 1.1.0 adds a validator to `docs_site_name`, so app's view differs
+    between the recorded release and the target although app's ref is the same
+    in the old copy, the in-place render and the new copy.
+    """
+
+    @pytest.fixture(scope="class")
+    def recording(
+        self, family: Family, tmp_path_factory: pytest.TempPathFactory
+    ) -> Iterator[Recording]:
+        """Update app with docs moved and record the view each render built from."""
+        work = tmp_path_factory.mktemp("ancestor-only")
+        with temp_dir_inside(work):
+            project = compose_family(family, work, "app", ANCESTOR_BEFORE)
+            worker, recording = recording_worker()
+            update_family_layer(
+                family,
+                project,
+                root="app",
+                layer="app",
+                before=ANCESTOR_BEFORE,
+                after=ANCESTOR_AFTER,
+                work=work,
+                worker_type=worker,
+            )
+            yield recording
+
+    def test_old_copy_builds_from_the_recorded_releases_view(
+        self, recording: Recording
+    ) -> None:
+        """Give the old copy the questionnaire docs had at 1.0.0."""
+        assert {
+            role: _validator(view) is not None
+            for role, view in recording.views
+            if role == "old_copy"
+        } == {"old_copy": False}
+
+    @pytest.mark.parametrize("role", ["in_place", "new_copy"])
+    def test_in_place_and_new_copy_build_from_the_target_view(
+        self, recording: Recording, role: str
+    ) -> None:
+        """Give the renders at the target the questionnaire docs has at 1.1.0."""
+        assert {
+            _validator(view) is not None for r, view in recording.views if r == role
+        } == {True}

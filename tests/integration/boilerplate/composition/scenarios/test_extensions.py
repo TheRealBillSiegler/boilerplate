@@ -321,9 +321,10 @@ def _registering_worker(
     class RegisteringWorker(ScopedWorker):
         """Add the ancestors' extensions, registered from clones at the render's ref."""
 
-        def view_for(self, ref: str | None) -> LayerView:
-            """Register the ancestors' extensions at `ref` and add them to the view."""
-            view = super().view_for(ref)
+        def view_for_render(self) -> LayerView:
+            """Register the ancestors' extensions at the render's ref, add them."""
+            view = super().view_for_render()
+            ref = self.resolved_vcs_ref
             assert ref is not None
             layer = Path(str(self.src_path)).name
             specs: list[str] = []
@@ -367,18 +368,21 @@ def registered_update(
         releases = file_path_setup.releases
         for layer in ("streamlit", "project"):
             worker_type: type[ScopedWorker] = ScopedWorker
-            views: dict[str, LayerView] | None = None
+            views: list[LayerView] | None = None
             if variant.startswith("B") and layer == "streamlit":
                 module = f"{MODULE_ROOT}.project.ctx"
                 _register(
                     patch, releases["v2"] / "project" / "extensions" / "ctx.py", module
                 )
-                views = {}
-                for ref, release in releases.items():
-                    view = layer_view(layer, release)
-                    views[ref] = LayerView(
+                views = [
+                    LayerView(
                         view.questions, (*view.extensions, f"{module}:ProbeFilter")
                     )
+                    for view in (
+                        layer_view(layer, releases["v1"]),
+                        layer_view(layer, releases["v2"]),
+                    )
+                ]
             elif not variant.startswith("B"):
                 worker_type = _registering_worker(
                     file_path_setup, patch, per_ref_names=variant.startswith("A")
@@ -390,7 +394,8 @@ def registered_update(
                 source=file_path_setup.repos[layer],
                 ref="v2",
                 templates=releases,
-                views_by_ref=views,
+                old_view=views[0] if views else None,
+                target_view=views[1] if views else None,
                 worker_type=worker_type,
             )
             commit_all(project, f"update {layer} to v2")
