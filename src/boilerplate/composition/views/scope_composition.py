@@ -41,7 +41,9 @@ def scope_composition(composition: Composition, layer: str) -> Composition:
         KeyError: If `layer` is not in `composition`.
     """
     nodes = composition.graph.nodes
-    root = next(spec for spec, node in nodes.items() if node.name == layer)
+    root = next((spec for spec, node in nodes.items() if node.name == layer), None)
+    if root is None:
+        raise KeyError(layer)
     kept = _ancestor_specifiers(composition, root)
     templates: dict[str, TemplateInfo] = {}
     for spec in kept:
