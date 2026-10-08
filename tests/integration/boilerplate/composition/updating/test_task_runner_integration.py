@@ -69,7 +69,7 @@ def run(family: Family, tmp_path: Path) -> Iterator[Run]:
     """Compose the project without tasks, so only the run under test executes them."""
     project = compose_family(family, tmp_path, "service", TAGS)
     with ReleaseCheckouts() as checkouts:
-        views = ReleaseViews(checkouts, root="service", workdir=tmp_path / "views")
+        views = ReleaseViews(checkouts, workdir=tmp_path / "views")
         yield Run(family, project, views)
 
 
