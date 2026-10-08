@@ -308,7 +308,6 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 | `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
-| `--allow-downgrade` | — | flag | `false` | Permit updating to an older template version (normally rejected). Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Take every question's default without prompting, a recorded answer being its question's default. Default: `false`. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
@@ -1168,7 +1167,6 @@ The following table summarizes flag availability across commands. **Global flags
 | `--continue` / `-c` | | X | | | | | | | | | | | | | |
 | `--abort` | | X | | | | | | | | | | | | | |
 | `--target-version` / `-t` | | X | | | | | | | | | | | | | |
-| `--allow-downgrade` | | X | | | | | | | | | | | | | |
 | `--category` | | | | | X | | | | | | | | | | |
 | `--tag` (repeatable) | | | | | X | | | | | | | | | | |
 | `--trust` | | | | | X | | | | | | | | | | |
