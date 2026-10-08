@@ -30,8 +30,11 @@ from boilerplate.common.exceptions import (
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateCheckoutChangedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
+    UpdateProjectNotReadyError,
+    UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
     UserCancelledError,
 )
@@ -83,6 +86,9 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     UpdateLayerDriftError: "BP_UPDATE_LAYER_DRIFT",
     UpdateTargetMismatchError: "BP_UPDATE_TARGET_MISMATCH",
     UpdateDowngradeError: "BP_UPDATE_DOWNGRADE_REJECTED",
+    UpdateSubmodulesUnsupportedError: "BP_UPDATE_SUBMODULES_UNSUPPORTED",
+    UpdateCheckoutChangedError: "BP_UPDATE_CHECKOUT_CHANGED",
+    UpdateProjectNotReadyError: "BP_UPDATE_PROJECT_NOT_READY",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix

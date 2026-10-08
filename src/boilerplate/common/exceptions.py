@@ -509,3 +509,52 @@ class UpdateDowngradeError(BoilerplateError):
         self.layer = layer
         self.recorded = recorded
         self.target = target
+
+
+class UpdateProjectNotReadyError(BoilerplateError):
+    """Raised when the project cannot be staged: not a repository, or a dirty tree.
+
+    Copier refuses to update a project whose ``git status --porcelain`` is not
+    empty, untracked files included, and the staging worktree is a worktree of
+    the project's repository.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_UPDATE_PROJECT_NOT_READY."""
+        super().__init__(message, error_code="BP_UPDATE_PROJECT_NOT_READY", **kwargs)
+
+
+class UpdateSubmodulesUnsupportedError(BoilerplateError):
+    """Raised when the project has submodules, so no staging worktree is made.
+
+    Git's worktree documentation says multiple checkouts of a superproject are
+    not recommended.
+
+    Attributes:
+        paths: The submodule paths ``.gitmodules`` declares.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        paths: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_SUBMODULES_UNSUPPORTED."""
+        super().__init__(
+            message, error_code="BP_UPDATE_SUBMODULES_UNSUPPORTED", **kwargs
+        )
+        self.paths = tuple(paths)
+
+
+class UpdateCheckoutChangedError(BoilerplateError):
+    """Raised when the user's checkout changed while the staging worktree lived.
+
+    Copying back would overwrite the user's work, so the worktree is discarded
+    and nothing is written.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_UPDATE_CHECKOUT_CHANGED."""
+        super().__init__(message, error_code="BP_UPDATE_CHECKOUT_CHANGED", **kwargs)
