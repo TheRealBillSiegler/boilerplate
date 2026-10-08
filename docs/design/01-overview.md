@@ -62,11 +62,11 @@ The template system is the primary surface; the managed development environment 
 
 ### Safety-first operations
 
-Operations that modify or remove existing managed state (`update`, `env apply`, `eject`) MUST preview the planned changes and require explicit user confirmation before applying. Operations that create or advance managed state MUST record provenance: project operations write a `MigrationRecord`, and `env apply` writes the `EnvironmentProvisionRecord`. `eject` removes that managed state and records nothing; recovery is to re-`adopt`.
+Operations that modify or remove existing managed state (`update`, `add`, `env apply`, `eject`) MUST preview the planned changes and require explicit user confirmation before applying. Operations that create or advance managed state MUST record provenance: project operations write a `MigrationRecord`, and `env apply` writes the `EnvironmentProvisionRecord`. `eject` removes that managed state and records nothing; recovery is to re-`adopt`.
 
 **Forward-looking (no current referent):** Bulk operations MUST require confirmation.
 
-> *In practice:* `boilerplate update` and `boilerplate env apply` display a plan and prompt for confirmation before applying changes. `boilerplate new` writes directly because creating a project into a new directory is not destructive. Provenance is recorded across two domains: `MigrationRecord` entries in `.boilerplate/migrations.yml` cover project-domain operations (create / update / adopt), and the `EnvironmentProvisionRecord` in `.boilerplate/environment.yml` records the last applied environment state (`env apply`).
+> *In practice:* `boilerplate update`, `boilerplate add` and `boilerplate env apply` display a plan and prompt for confirmation before applying changes. `boilerplate new` writes directly because creating a project into a new directory is not destructive. Provenance is recorded across two domains: `MigrationRecord` entries in `.boilerplate/migrations.yml` cover project-domain operations (create / update / add / adopt), and the `EnvironmentProvisionRecord` in `.boilerplate/environment.yml` records the last applied environment state (`env apply`).
 
 ### Atomic Staged Write Pattern and lock ownership
 
@@ -149,7 +149,7 @@ The product is organized into five vertical slices, each independently deliverab
 | ----- | ---- | ------------------- | ------------ | ----------- |
 | 001 | Template Discovery | `list`, `graph`, `validate` return correct results for first-party and filesystem templates | `list`, `graph`, `validate`, `test`, `cache warm` | [03](03-template-system.md), [05](05-cli-reference.md) |
 | 002 | Project Creation | `new` renders multi-layer compositions atomically with lock file generation | `new`, `compose`, `init-template` | [02](02-data-models.md), [03](03-template-system.md), [04](04-composition-engine.md), [05](05-cli-reference.md), [06](06-project-lifecycle.md) |
-| 003 | Project Update & Adoption | `update` performs three-way merge; `adopt` imports Copier-only projects; `eject` stops Boilerplate management (inverse of `adopt`) | `update`, `adopt`, `eject`, `status`, `lock verify` | [05](05-cli-reference.md), [06](06-project-lifecycle.md) |
+| 003 | Project Update & Adoption | `update` performs three-way merge; `add` applies one more template layer to a managed project; `adopt` imports Copier-only projects; `eject` stops Boilerplate management (inverse of `adopt`) | `update`, `add`, `adopt`, `eject`, `status`, `lock verify` | [05](05-cli-reference.md), [06](06-project-lifecycle.md) |
 | 004 | Environment Profiles | `env apply` provisions tools via proto and records the applied state; re-running `env apply` is the recovery path | `env apply`, `env status` | [08](08-environment-provisioning.md) |
 | 005 | Operational Quality | `doctor` validates system health; structured logging and error codes operational | `doctor` | [07](07-operational-quality.md) |
 | — | Developer Experience | — | — | [05](05-cli-reference.md) |
@@ -167,7 +167,7 @@ Declarative profiles (`boilerplate-env.yml`) pin the development toolchain per p
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                CLI                                   │
-│  Project:  new | update | status | adopt | eject                     │
+│  Project:  new | update | add | status | adopt | eject               │
 │  Template: list | compose | graph | validate | test | init-template  │
 │  System:   doctor | env | lock | cache                               │
 └───────────────────────────────┬──────────────────────────────────────┘
