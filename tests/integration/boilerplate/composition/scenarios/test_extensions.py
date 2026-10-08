@@ -23,10 +23,10 @@ import pytest
 import yaml
 from jinja2.exceptions import TemplateAssertionError
 
+from boilerplate.composition.updating import ScopedWorker
 from boilerplate.composition.views import LayerView
 from boilerplate.integrations.copier_types import Template
 from tests.boilerplate.templates.conftest import (
-    ScopedWorker,
     commit_all,
     compose_project,
     init_repo,
