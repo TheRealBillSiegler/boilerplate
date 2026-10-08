@@ -414,7 +414,7 @@ The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.m
 
 ### Files
 
-The new layer renders into the existing tree as the by-hand copy would. A file another layer already rendered is overwritten and shows in the uncommitted diff, where the user reviews it before committing. A template intended to be added later SHOULD render only files no other layer renders.
+The new layer renders into the existing tree as the by-hand copy would. The new layer's `_skip_if_exists` applies, because Copier checks it before `overwrite` (`copier/_main.py` lines 505 then 514): a file it lists that already exists keeps its content, and any other file another layer already rendered is overwritten and shows in the uncommitted diff, where the user reviews it before committing. `new` with the layer and `add` of the layer later can therefore differ for the listed files, because a composed `new` render ignores every layer's `_skip_if_exists` ([04 §Per-Layer Render Loop](04-composition-engine.md#per-layer-render-loop)) while in the `add` case the project already owns them. A template intended to be added later SHOULD render only files no other layer renders.
 
 ### Choices inside a layer
 
