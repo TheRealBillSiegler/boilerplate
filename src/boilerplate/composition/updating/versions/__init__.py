@@ -9,6 +9,9 @@ from boilerplate.composition.updating.versions.downgrades import reject_downgrad
 from boilerplate.composition.updating.versions.drift import check_drift
 from boilerplate.composition.updating.versions.drift_warning import DriftWarning
 from boilerplate.composition.updating.versions.layer_versions import LayerVersions
+from boilerplate.composition.updating.versions.layer_versions_reader import (
+    read_layer_versions,
+)
 from boilerplate.composition.updating.versions.old_copies import old_copy_for
 from boilerplate.composition.updating.versions.old_copy import OldCopy
 from boilerplate.composition.updating.versions.resolve_versions import resolve_versions
@@ -27,6 +30,7 @@ __all__ = [
     "check_drift",
     "old_copy_for",
     "plan_resume",
+    "read_layer_versions",
     "reject_downgrades",
     "resolve_versions",
 ]
