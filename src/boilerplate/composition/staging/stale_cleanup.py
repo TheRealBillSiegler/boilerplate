@@ -8,7 +8,10 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from boilerplate.composition.staging.intent_journal import JOURNAL_NAME, IntentJournal
-from boilerplate.composition.staging.staging_removal import remove_staging_folder
+from boilerplate.composition.staging.staging_removal import (
+    prune_worktree_registrations,
+    remove_staging_folder,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -50,6 +53,7 @@ def remove_stale_staging(
             continue
         project = Path(journal.destination)
         remove_staging_folder(project, folder, folder / project.name)
+        prune_worktree_registrations(project)
         if not folder.exists():
             _logger.info("Removed stale staging folder %s", folder)
             removed.append(folder)
