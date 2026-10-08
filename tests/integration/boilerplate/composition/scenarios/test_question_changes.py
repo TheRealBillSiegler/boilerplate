@@ -646,17 +646,20 @@ class TestRenamedQuestion:
         """S14: every case and order updates without a conflict."""
         assert merge_state(renamed[1]) == CLEAN
 
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "The update questionnaire pass reads the answers files before the "
+            "migration runs and forces the renamed question's default over the "
+            "migrated answer; design 06 (Step 4: Three-Way Merge) expects "
+            "migrations to carry recorded answers through."
+        ),
+    )
     @pytest.mark.parametrize("order", [LOCK_ORDER, REVERSE_ORDER], ids=_order_id)
-    def test_update_questionnaire_pass_forces_the_renamed_questions_default(
+    def test_update_questionnaire_pass_keeps_the_migrated_answer(
         self, order: tuple[str, ...], tmp_path: Path
     ) -> None:
-        """S14 with the pass: the default beats the answer the migration carried.
-
-        The pass reads the answers files before Copier runs the migration,
-        finds maintainer_name unrecorded, answers it with the default and
-        forces that over the migrated answers file, even with the migration
-        in both layers.
-        """
+        """S14 with the pass: both layers record and render the migrated answer."""
         composed = _compose_v1(
             tmp_path, _renamed_author(RENAME_CASES["both_migrate"]), dict(ANSWERS)
         )
@@ -671,8 +674,14 @@ class TestRenamedQuestion:
             layer: recorded_answers(composed.project, layer)["maintainer_name"]
             for layer in LAYERS
         }
+        maintainer = [
+            line for line in lines(composed.project / "README.md") if "@" in line
+        ]
 
-        assert recorded == {"project": "Your Name", "streamlit": "Your Name"}
+        assert (recorded, maintainer) == (
+            ADA,
+            ["Ada Probe <ada@example.com>. Send questions and changes there."],
+        )
 
 
 # ------------------------------------------------------------------ S15

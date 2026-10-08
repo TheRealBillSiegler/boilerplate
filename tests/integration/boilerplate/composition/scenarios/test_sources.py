@@ -7,7 +7,6 @@ keyed by ``PurePosixPath``; the composer's JSON check rejects those keys.
 """
 
 import os
-import re
 import subprocess
 import sys
 from collections.abc import Iterator
@@ -30,11 +29,6 @@ from tests.boilerplate.templates.conftest import (
     compose,
     compose_project,
     render_full_view,
-)
-
-REJECTED_KEY = (
-    "JSON object keys must be strings, got PurePosixPath: "
-    "PurePosixPath('.gitattributes')"
 )
 
 
@@ -62,17 +56,33 @@ def git_sources(tmp_path_factory: pytest.TempPathFactory) -> Iterator[GitSources
 class TestComposeFromGitSources:
     """S18: composing from git-repository layers."""
 
-    def test_compose_rejects_copiers_path_keyed_attribute(
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "The composer's JSON check rejects Copier's path-keyed "
+            "`git_index_modes`, so git-repository layers cannot compose; "
+            "design 04 (Per-Layer Render Loop, step 1) and ADR-006 expect "
+            "published first-party repositories to compose."
+        ),
+    )
+    def test_compose_succeeds_from_git_repository_layers(
         self, git_sources: GitSources
     ) -> None:
-        """S18: the composer's JSON check fails on `git_index_modes`' path keys."""
-        with pytest.raises(TypeError, match=re.escape(REJECTED_KEY)):
-            compose("streamlit", git_sources.templates_dir)
+        """S18: composing from layers that are git repositories succeeds."""
+        compose("streamlit", git_sources.templates_dir)
 
-    def test_new_exits_with_the_composers_error(
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "`new` exits 1 on the composer's JSON-check error for git-repository "
+            "layers; design 04 (Per-Layer Render Loop, step 1) and ADR-006 expect "
+            "published first-party repositories to compose."
+        ),
+    )
+    def test_new_exits_zero_from_git_repository_layers(
         self, git_sources: GitSources, tmp_path: Path
     ) -> None:
-        """S18: `boilerplate new` exits 1 with the same message on stderr."""
+        """S18: `boilerplate new` from git-repository layers exits 0."""
         result = subprocess.run(
             [
                 sys.executable,
@@ -95,13 +105,7 @@ class TestComposeFromGitSources:
             check=False,
         )
 
-        assert (
-            result.returncode,
-            f"Error: {REJECTED_KEY}" in " ".join(result.stderr.split()),
-        ) == (
-            1,
-            True,
-        )
+        assert result.returncode == 0
 
     @pytest.mark.parametrize("compose_with", ["full-view", "scoped-view"])
     def test_without_git_index_modes_both_composes_record_the_latest_tag(
