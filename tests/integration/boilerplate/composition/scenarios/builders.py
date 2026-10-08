@@ -14,7 +14,7 @@ import shutil
 import tempfile
 from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypedDict, Unpack
 
 import pytest
 import yaml
@@ -30,7 +30,14 @@ from tests.boilerplate.templates.conftest import (
     copy_layer_into,
     git,
     init_repo,
+    layer_view,
     rehome_layer,
+    update_layer,
+)
+from tests.integration.boilerplate.composition.family import (
+    Family,
+    assemble_templates_dir,
+    register_extension_module,
 )
 
 ANSWERS: dict[str, Any] = {
@@ -40,6 +47,8 @@ ANSWERS: dict[str, Any] = {
     "author_email": "ada@example.com",
     "container_registry": "ghcr.io",
 }
+FAMILY_PROJECT = "Family App"
+AUTHOR = "Ada Probe"
 USER_LINE = "USER LINE: keep me across updates."
 EXTENSIONS_DIR = Path(__file__).parent / "extensions"
 
@@ -256,6 +265,160 @@ def make_git_project(
     commit_all(project, f"compose {label}")
 
 
+def templates_at(family: Family, work: Path, tags: Mapping[str, str]) -> Path:
+    """Return a templates directory holding each layer of `tags` at its tag.
+
+    A directory is built once per combination of tags and reused.
+
+    Args:
+        family: The built family.
+        work: The scenario's working directory.
+        tags: The tag of each layer to include, keyed by layer name.
+
+    Returns:
+        The templates directory.
+    """
+    name = "-".join(f"{layer[:2]}{tag}" for layer, tag in sorted(tags.items()))
+    templates = work / "templates" / name
+    if not templates.exists():
+        assemble_templates_dir(family, templates, tags)
+    return templates
+
+
+class UpdateOptions(TypedDict, total=False):
+    """The ``update_layer`` options a scenario may set."""
+
+    ask_unanswered: bool
+    data: Mapping[str, Any] | None
+    skip_tasks: bool
+    quiet: bool
+    worker_type: type[ScopedWorker]
+
+
+def _register_ancestor_extensions(
+    patch: pytest.MonkeyPatch, layer: str, templates: Path
+) -> list[str]:
+    """Register the extension files `layer`'s render needs from other layers.
+
+    A file-path spec resolves inside the template that declares it, so a
+    layer cannot name an ancestor's extension file. Core's ``to_package``
+    filter derives the hidden ``package_name`` every descendant's view asks,
+    and app's files use docs' ``docs_anchor`` filter; whoever composes or
+    updates the layer registers those files as importable modules and adds
+    them to its render.
+
+    Args:
+        patch: The patch context that removes the modules again.
+        layer: The layer being rendered.
+        templates: A templates directory holding the layers the files are in.
+
+    Returns:
+        The ``module:Class`` specs to add to the layer's render.
+    """
+    needed = {
+        "core": ("naming.py", "PackageNameExtension", layer != "core"),
+        "docs": ("docfilters.py", "DocFilters", layer == "app"),
+    }
+    specs: list[str] = []
+    for owner, (file, extension, wanted) in needed.items():
+        if wanted:
+            module = register_extension_module(
+                patch, templates / owner / "_extensions" / file, f"family_ext.{owner}"
+            )
+            specs.append(f"{module}:{extension}")
+    return specs
+
+
+def compose_family(
+    family: Family,
+    work: Path,
+    root: str,
+    tags: Mapping[str, str],
+    answers: Mapping[str, Any] | None = None,
+    *,
+    skip_tasks: bool = True,
+) -> Path:
+    """Compose `root` and its ancestors at `tags` into a git-backed project.
+
+    Args:
+        family: The built family.
+        work: The scenario's working directory.
+        root: The composition's final layer.
+        tags: The tag of each layer in the composition, keyed by layer name.
+        answers: Answers forced beside the project name.
+        skip_tasks: Whether to skip the merged post-generation tasks.
+
+    Returns:
+        The project, committed with each layer pointing at its repository.
+    """
+    templates = templates_at(family, work, tags)
+    project = work / "composed" / "family-app"
+    with pytest.MonkeyPatch.context() as patch:
+        compose_project(
+            root,
+            project,
+            {"project_name": FAMILY_PROJECT, **(answers or {})},
+            templates,
+            skip_tasks=skip_tasks,
+            extra_extensions={
+                layer: _register_ancestor_extensions(patch, layer, templates)
+                for layer in tags
+            },
+        )
+    make_git_project(project, family.repos, tags)
+    return project
+
+
+def update_family_layer(
+    family: Family,
+    project: Path,
+    *,
+    root: str,
+    layer: str,
+    before: Mapping[str, str],
+    after: Mapping[str, str],
+    work: Path,
+    **options: Unpack[UpdateOptions],
+) -> None:
+    """Update one layer of a family project from its tag in `before` to `after`.
+
+    The old copy renders under the view of the templates at `before`, the new
+    copy and the project in place under the view at `after`.
+
+    Args:
+        family: The built family.
+        project: The composed, git-backed project.
+        root: The composition's final layer.
+        layer: The layer to update.
+        before: Every composed layer's tag at the recorded release.
+        after: Every composed layer's tag at the target release.
+        work: The scenario's working directory.
+        **options: Passed on to ``update_layer``.
+    """
+    old, new = before[layer], after[layer]
+    templates = {
+        old: templates_at(family, work, before),
+        new: templates_at(family, work, after),
+    }
+    with pytest.MonkeyPatch.context() as patch:
+        extra = _register_ancestor_extensions(patch, layer, templates[new])
+        views = {
+            tag: LayerView(view.questions, (*view.extensions, *extra))
+            for tag, directory in templates.items()
+            for view in [layer_view(layer, directory)]
+        }
+        update_layer(
+            project,
+            root=root,
+            layer=layer,
+            source=family.repos[layer],
+            ref=new,
+            templates=templates,
+            views_by_ref=views,
+            **options,
+        )
+
+
 def copy_project(base: Path, dest: Path) -> Path:
     """Copy the composed project `base` to `dest` and return `dest`."""
     shutil.copytree(base, dest)
@@ -332,8 +495,9 @@ class Recording(NamedTuple):
     Attributes:
         builds: ``(role, ref)`` for every template a worker built, in order;
             role is ``old_copy``, ``new_copy`` or ``in_place``.
-        copies: The watched files' contents in Copier's old and new copies,
-            keyed by role, then by file; ``None`` for a file not rendered.
+        copies: The watched files' contents after each render of the update,
+            keyed by role (``old_copy``, ``in_place`` or ``new_copy``), then by
+            file; ``None`` for a file not rendered.
     """
 
     builds: list[tuple[str, str | None]]
@@ -351,8 +515,7 @@ def recording_worker(
     """Return a ``ScopedWorker`` subclass that records what each render did.
 
     Args:
-        files: Project-relative files to read out of Copier's old and new
-            copies once each renders.
+        files: Project-relative files to read once each render finishes.
 
     Returns:
         The worker class to pass to ``update_layer`` and the recording it
@@ -369,17 +532,13 @@ def recording_worker(
             return super().view_for(ref)
 
         def run_copy(self) -> None:
-            """Render, then read the watched files out of a temp copy."""
+            """Render, then read the watched files out of the destination."""
             super().run_copy()
-            role = _role(self)
-            if role != "in_place":
-                dst = Path(str(self.dst_path))
-                recording.copies[role] = {
-                    f: (dst / f).read_text(encoding="utf-8")
-                    if (dst / f).exists()
-                    else None
-                    for f in files
-                }
+            dst = Path(str(self.dst_path))
+            recording.copies[_role(self)] = {
+                f: (dst / f).read_text(encoding="utf-8") if (dst / f).exists() else None
+                for f in files
+            }
 
     return RecordingWorker, recording
 
