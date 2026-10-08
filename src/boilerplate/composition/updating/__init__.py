@@ -1,5 +1,9 @@
 """Updating: the pieces that update one layer of a composed project."""
 
+from boilerplate.composition.updating.answers_completeness import (
+    check_answers_complete,
+    required_answer_keys,
+)
 from boilerplate.composition.updating.layer_release import LayerRelease
 from boilerplate.composition.updating.layer_updater import update_layer
 from boilerplate.composition.updating.recorded_answers import (
@@ -21,8 +25,10 @@ __all__ = [
     "UpdateOptions",
     "UpdateViews",
     "build_step_data",
+    "check_answers_complete",
     "read_recorded_answers",
     "read_recorded_answers_by_layer",
     "render_role",
+    "required_answer_keys",
     "update_layer",
 ]
