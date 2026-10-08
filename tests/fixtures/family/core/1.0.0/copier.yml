@@ -23,12 +23,17 @@ _jinja_extensions:
 _skip_if_exists:
   - "CHANGELOG.md"
 
-# Runs once, offline: records that the task ran by appending a line.
+# Run offline: each records that it ran by appending a line, the first a fixed
+# one and the second the operation Copier runs the task under.
 _tasks:
   - command:
       - "{{ _copier_python }}"
       - -c
       - "print('core task ran', file=open('.core-task-marker', 'a', encoding='utf-8'))"
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "print('{{ _copier_operation }}', file=open('.core-operation-marker', 'a', encoding='utf-8'))"
 
 project_name:
   type: str
