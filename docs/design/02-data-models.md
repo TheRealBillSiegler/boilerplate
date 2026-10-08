@@ -613,6 +613,10 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
 | `UpdatePathObstructedError` | `3` | Before the copy back, a path the walk added already exists in the checkout as an ignored file or directory (`BP_UPDATE_PATH_OBSTRUCTED`) |
 | `UpdateInterruptedError` | `3` | The last migration record is still `in_progress`, from an update interrupted after its copy back started (`BP_UPDATE_INTERRUPTED`) |
+| `ProjectNotManagedError` | `3` | `add` found no `boilerplate.lock` in the project (`BP_UPDATE_PROJECT_NOT_MANAGED`) |
+| `LayerAlreadyAddedError` | `3` | `add` named a template the lock already lists (`BP_UPDATE_LAYER_ALREADY_ADDED`) |
+| `AddAncestorsMissingError` | `3` | A template the new layer extends is not in the lock (`BP_UPDATE_ANCESTORS_MISSING`) |
+| `AddAncestorVersionError` | `3` | An ancestor's recorded version fails the new layer's `extends` reference (`BP_UPDATE_ANCESTOR_VERSION_MISMATCH`) |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely |
 | `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back |
