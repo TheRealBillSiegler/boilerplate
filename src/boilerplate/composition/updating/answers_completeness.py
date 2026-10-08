@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from boilerplate.common.exceptions import AnswersFileIncompleteError
-from boilerplate.composition.updating.hidden_questions import hidden_questions
+from boilerplate.composition.rendering.hidden_questions import hidden_questions
 from boilerplate.composition.updating.update_data import declaring_ancestors_answers
 from boilerplate.composition.views import LayerView
 

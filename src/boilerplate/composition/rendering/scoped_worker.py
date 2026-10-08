@@ -12,12 +12,12 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
-from boilerplate.composition.rendering.models.merged_template import MergedTemplate
-from boilerplate.composition.updating.hidden_questions import (
+from boilerplate.composition.rendering.hidden_questions import (
     RENDER_ERRORS,
     hidden_questions,
 )
-from boilerplate.composition.updating.render_role import RenderRole, render_role
+from boilerplate.composition.rendering.models.merged_template import MergedTemplate
+from boilerplate.composition.rendering.render_role import RenderRole, render_role
 from boilerplate.composition.views import (
     LayerView,
     registered_ancestor_extensions,

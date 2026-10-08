@@ -19,7 +19,7 @@ from typing import NamedTuple
 import pytest
 from jinja2.exceptions import TemplateAssertionError
 
-from boilerplate.composition.updating import ScopedWorker
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from tests.boilerplate.templates.conftest import (
     commit_all,
     compose_project,

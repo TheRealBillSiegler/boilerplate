@@ -17,8 +17,8 @@ from copier import run_update
 from copier.errors import UserMessageError
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.updating import (
-    ScopedWorker,
     check_answers_complete,
     read_recorded_answers_by_layer,
 )
