@@ -288,6 +288,7 @@ def templates_at(family: Family, work: Path, tags: Mapping[str, str]) -> Path:
 class UpdateOptions(TypedDict, total=False):
     """The ``update_layer`` options a scenario may set."""
 
+    full_view: bool
     ask_unanswered: bool
     data: Mapping[str, Any] | None
     skip_tasks: bool
@@ -383,7 +384,8 @@ def update_family_layer(
     """Update one layer of a family project from its tag in `before` to `after`.
 
     The old copy renders under the view of the templates at `before`, the new
-    copy and the project in place under the view at `after`.
+    copy and the project in place under the view at `after`: the layer's scoped
+    view, or the root's full view when the options ask for it.
 
     Args:
         family: The built family.
@@ -396,6 +398,7 @@ def update_family_layer(
         **options: Passed on to ``update_layer``.
     """
     old, new = before[layer], after[layer]
+    view_root = root if options.get("full_view") else layer
     templates = {
         old: templates_at(family, work, before),
         new: templates_at(family, work, after),
@@ -405,7 +408,7 @@ def update_family_layer(
         views = {
             tag: LayerView(view.questions, (*view.extensions, *extra))
             for tag, directory in templates.items()
-            for view in [layer_view(layer, directory)]
+            for view in [layer_view(view_root, directory)]
         }
         update_layer(
             project,
