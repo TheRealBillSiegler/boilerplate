@@ -558,3 +558,21 @@ class UpdateCheckoutChangedError(BoilerplateError):
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
         """Initialize with default error code BP_UPDATE_CHECKOUT_CHANGED."""
         super().__init__(message, error_code="BP_UPDATE_CHECKOUT_CHANGED", **kwargs)
+
+
+class UpdateTaskFailedError(BoilerplateError):
+    """Raised when a task fails after the update's files were copied back.
+
+    The update keeps the files and writes the lock before it raises, so the
+    project is updated except for the task, which the user runs by hand.
+
+    Attributes:
+        task: The task's command, as Copier ran it.
+    """
+
+    def __init__(
+        self, message: str = "", *, task: str = "", **kwargs: str | None
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_TASK_FAILED."""
+        super().__init__(message, error_code="BP_UPDATE_TASK_FAILED", **kwargs)
+        self.task = task
