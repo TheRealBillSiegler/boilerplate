@@ -306,9 +306,9 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 - brings back the layers finished so far into the user's checkout as uncommitted changes, with Copier's conflict markers in the conflicted files;
 - reports each conflicted file path and the originating layer;
 - exits with code `4` (`ACTION_REQUIRED`) and writes no lock;
-- prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git restore' discards the partial update."`
+- prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git stash --include-untracked' sets the partial update aside."`
 
-The user resolves and commits as with plain Copier, then reruns `boilerplate update`. A layer whose own and ancestors' recorded `_commit` already equal their targets is skipped ([design 04 §Safe Update](04-composition-engine.md#safe-update)), so the answers files themselves record the progress, and the rerun finishes the layers that remain, runs the accumulated task list once, writes the lock and records `success`. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so discarding the update takes `git restore .` for the modified files and `git clean` for the added ones.
+The user resolves and commits as with plain Copier, then reruns `boilerplate update`. A layer whose own and ancestors' recorded `_commit` already equal their targets is skipped ([design 04 §Safe Update](04-composition-engine.md#safe-update)), so the answers files themselves record the progress, and the rerun finishes the layers that remain, runs the accumulated task list once, writes the lock and records `success`. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so `git stash --include-untracked` sets the whole partial update aside, modified and added files alike, and keeps it recoverable; `git clean` would also delete any file the user has created since.
 
 The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
 
