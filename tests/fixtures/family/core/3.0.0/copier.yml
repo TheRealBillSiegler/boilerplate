@@ -64,6 +64,7 @@ license:
   choices:
     - MIT
     - Apache-2.0
+    - "None"
   default: MIT
 
 # 2.0.0 renames `author_name`: the migration moves the recorded answer so the
