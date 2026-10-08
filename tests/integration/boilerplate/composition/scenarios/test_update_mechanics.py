@@ -4,13 +4,13 @@ Copier renders an update three times: an old copy at the recorded ref, the
 project in place and a new copy at the target ref, then applies the
 old-to-new diff. These scenarios pin which inputs reach which render (S12's
 control, and a direct check of the harness's answer layering), where tasks
-run (S16) and how a conflicting user edit is left for the user (S20).
+run (S16) and how a conflicting user edit is left for the user (S20). They run
+on the made-up template family.
 """
 
-import json
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import pytest
 
@@ -21,53 +21,63 @@ from tests.boilerplate.templates.conftest import (
     recorded_answers,
     update_layer,
 )
+from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
-    LICENSE_FILE,
-    LicenseProject,
+    AUTHOR,
     Recording,
     add_user_line,
     append,
     build_releases,
     build_repos,
-    compose_license_project,
+    compose_family,
     lines,
     make_git_project,
     merge_state,
     recording_worker,
     substitute,
     temp_dir_inside,
+    update_family_layer,
     write,
 )
 
 # ------------------------------------------------------------------ S12 control
 
+REMOVAL_FILE = "tests/test_smoke.py"
+REMOVAL_BEFORE = {"core": "2.1.0", "service": "1.0.0"}
+REMOVAL_AFTER = {"core": "3.0.0", "service": "1.0.0"}
+
 
 class RemovalUpdate(NamedTuple):
-    """Project updated v4 to v5 (license question removed) with data={}."""
+    """Core updated 2.1.0 to 3.0.0, which drops `use_tests`, with data={}."""
 
-    setup: LicenseProject
+    project: Path
     recording: Recording
 
 
 @pytest.fixture(scope="module")
-def removal(tmp_path_factory: pytest.TempPathFactory) -> Iterator[RemovalUpdate]:
-    """Compose the license releases at v4, then update project to v5 with data={}."""
-    root = tmp_path_factory.mktemp("removal")
-    with temp_dir_inside(root):
-        setup = compose_license_project(root)
-        worker, recording = recording_worker([LICENSE_FILE])
-        update_layer(
-            setup.project,
-            root="streamlit",
-            layer="project",
-            source=setup.repos["project"],
-            ref="v5",
-            templates={r: setup.releases[r] for r in ("v4", "v5")},
+def removal(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[RemovalUpdate]:
+    """Compose with `use_tests` off at core 2.1.0, then update core with data={}."""
+    work = tmp_path_factory.mktemp("removal")
+    with temp_dir_inside(work):
+        project = compose_family(
+            family, work, "service", REMOVAL_BEFORE, {"use_tests": False}
+        )
+        worker, recording = recording_worker([REMOVAL_FILE])
+        update_family_layer(
+            family,
+            project,
+            root="service",
+            layer="core",
+            before=REMOVAL_BEFORE,
+            after=REMOVAL_AFTER,
+            work=work,
             data={},
             worker_type=worker,
         )
-        yield RemovalUpdate(setup, recording)
+        yield RemovalUpdate(project, recording)
 
 
 @pytest.mark.xdist_group("mechanics-removal")
@@ -79,12 +89,11 @@ class TestEachCopyRendersItsOwnRelease:
     ) -> None:
         """S12 control: with data={} the old copy still renders the recorded answer.
 
-        Copier builds the old copy's answers from the layer's answers file,
-        so nothing forced through ``data`` reaches it.
+        Copier builds the old copy's answers from the layer's answers file, so
+        nothing forced through ``data`` reaches it: with `use_tests` recorded
+        off, the old copy has no smoke test, where the default would write one.
         """
-        assert removal.recording.copies["old_copy"][LICENSE_FILE] == (
-            "license=Apache-2.0\nrelease=v4\n"
-        )
+        assert removal.recording.copies["old_copy"][REMOVAL_FILE] is None
 
     def test_each_render_builds_its_template_from_its_own_refs_view(
         self, removal: RemovalUpdate
@@ -92,48 +101,47 @@ class TestEachCopyRendersItsOwnRelease:
         """S12: Copier sets each rebuilt worker's ref; each builds that ref's view.
 
         The update builds a template for its checks, the old copy at the
-        recorded v4, the in-place render and the new copy at the target v5.
+        recorded 2.1.0, the in-place render and the new copy at the target 3.0.0.
         """
         assert removal.recording.builds == [
-            ("in_place", "v5"),
-            ("old_copy", "v4"),
-            ("in_place", "v5"),
-            ("new_copy", "v5"),
+            ("in_place", "3.0.0"),
+            ("old_copy", "2.1.0"),
+            ("in_place", "3.0.0"),
+            ("new_copy", "3.0.0"),
         ]
 
 
-def test_forced_data_never_reaches_the_old_copy(tmp_path: Path) -> None:
+def test_forced_data_never_reaches_the_old_copy(family: Family, tmp_path: Path) -> None:
     """Data forced into an update renders in place and in the new copy only.
 
-    Forcing description 'FORCED' over the recorded one, the old copy's
-    pyproject.toml still renders the recorded description. This checks the
-    S12 control's reading directly; no probe log covers it.
+    Forcing project_name 'FORCED' over the recorded one, the old copy's
+    pyproject.toml still renders the recorded name. This checks the S12
+    control's reading directly; no probe log covers it.
     """
-    setup = compose_license_project(tmp_path)
+    project = compose_family(family, tmp_path, "service", REMOVAL_BEFORE)
     worker, recording = recording_worker(["pyproject.toml"])
-    data = {**recorded_answers(setup.project, "project"), "description": "FORCED"}
-    update_layer(
-        setup.project,
-        root="streamlit",
-        layer="project",
-        source=setup.repos["project"],
-        ref="v5",
-        templates={r: setup.releases[r] for r in ("v4", "v5")},
-        data=data,
+    update_family_layer(
+        family,
+        project,
+        root="service",
+        layer="core",
+        before=REMOVAL_BEFORE,
+        after=REMOVAL_AFTER,
+        work=tmp_path,
+        data={**recorded_answers(project, "core"), "project_name": "FORCED"},
         worker_type=worker,
     )
     descriptions = {
         role: next(
             line
-            for line in (copy[name] or "").splitlines()
+            for line in (recording.copies[role]["pyproject.toml"] or "").splitlines()
             if line.startswith("description")
         )
-        for role, copy in recording.copies.items()
-        for name in ("pyproject.toml",)
+        for role in ("old_copy", "new_copy")
     }
 
     assert descriptions == {
-        "old_copy": 'description = "Probe description"',
+        "old_copy": 'description = "Family App"',
         "new_copy": 'description = "FORCED"',
     }
 
@@ -141,120 +149,178 @@ def test_forced_data_never_reaches_the_old_copy(tmp_path: Path) -> None:
 # ------------------------------------------------------------------ own answers
 
 
-def test_layers_own_recorded_answer_beats_its_ancestors(tmp_path: Path) -> None:
+def test_layers_own_recorded_answer_beats_its_ancestors(
+    family: Family, tmp_path: Path
+) -> None:
     """The scoped data lays the layer's own answers over its ancestors'.
 
-    With project recording author_name 'Ada Probe' and streamlit 'Own Name',
-    updating streamlit keeps 'Own Name'. This checks the harness's layering
+    With core recording author_name 'Ada Probe' and service 'Own Name',
+    updating service keeps 'Own Name'. This checks the harness's layering
     rule through Copier's recording; no probe log covers it.
     """
-    releases = build_releases(tmp_path, ("v1", "v2"))
-    repos = build_repos(tmp_path, releases)
-    project = tmp_path / "probe-app"
-    compose_project("streamlit", project, ANSWERS, releases["v1"])
-    make_git_project(project, repos, "v1")
+    before = {"core": "1.0.0", "service": "1.0.0"}
+    project = compose_family(
+        family, tmp_path, "service", before, {"author_name": AUTHOR}
+    )
     substitute(
-        project / ".copier-answers.streamlit.yml",
-        "author_name: Ada Probe\n",
+        project / ".copier-answers.service.yml",
+        f"author_name: {AUTHOR}\n",
         "author_name: Own Name\n",
     )
-    commit_all(project, "streamlit's answer diverges from project's")
-    update_layer(
+    commit_all(project, "service's answer diverges from core's")
+    update_family_layer(
+        family,
         project,
-        root="streamlit",
-        layer="streamlit",
-        source=repos["streamlit"],
-        ref="v2",
-        templates=releases,
+        root="service",
+        layer="service",
+        before=before,
+        after={**before, "service": "1.1.0"},
+        work=tmp_path,
     )
 
     assert {
         layer: recorded_answers(project, layer)["author_name"]
-        for layer in ("project", "streamlit")
-    } == {"project": "Ada Probe", "streamlit": "Own Name"}
+        for layer in ("core", "service")
+    } == {"core": AUTHOR, "service": "Own Name"}
 
 
 # ------------------------------------------------------------------ S16
 
-TASK = """
+MARKER = ".core-task-marker"
+TASK_LINE = "core task ran"
+TASK_BEFORE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
+TASK_CORE = {**TASK_BEFORE, "core": "1.1.0"}
+TASK_SERVICE = {**TASK_CORE, "service": "1.1.0"}
+
+
+class TaskWalk(NamedTuple):
+    """The task marker at compose, and the renders of each layer's update."""
+
+    compose_marker: list[str]
+    core: Recording
+    marker_before_service: list[str]
+    service: Recording
+
+
+@pytest.fixture(scope="module")
+def task_walk(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[TaskWalk]:
+    """Compose the diamond with tasks, then update core and service with tasks."""
+    work = tmp_path_factory.mktemp("tasks")
+    with temp_dir_inside(work):
+        project = compose_family(family, work, "app", TASK_BEFORE, skip_tasks=False)
+        compose_marker = lines(project / MARKER)
+        core_worker, core = recording_worker([MARKER])
+        update_family_layer(
+            family,
+            project,
+            root="app",
+            layer="core",
+            before=TASK_BEFORE,
+            after=TASK_CORE,
+            work=work,
+            skip_tasks=False,
+            worker_type=core_worker,
+        )
+        commit_all(project, "update core")
+        marker_before_service = lines(project / MARKER)
+        service_worker, service = recording_worker([MARKER])
+        update_family_layer(
+            family,
+            project,
+            root="app",
+            layer="service",
+            before=TASK_CORE,
+            after=TASK_SERVICE,
+            work=work,
+            skip_tasks=False,
+            worker_type=service_worker,
+        )
+        yield TaskWalk(compose_marker, core, marker_before_service, service)
+
+
+def _marker_lines(recording: Recording) -> dict[str, list[str]]:
+    """Return the marker's lines in each render the recording saw."""
+    return {
+        role: (copy[MARKER] or "").splitlines()
+        for role, copy in recording.copies.items()
+    }
+
+
+@pytest.mark.xdist_group("mechanics-tasks")
+class TestTasks:
+    """S16: where core's task runs at compose and at update."""
+
+    def test_compose_runs_the_task_once_in_the_destination(
+        self, task_walk: TaskWalk
+    ) -> None:
+        """S16: the merged task runs once across the diamond, in the project folder."""
+        assert task_walk.compose_marker == [TASK_LINE]
+
+    def test_update_runs_the_layers_own_task_in_each_of_copiers_renders(
+        self, task_walk: TaskWalk
+    ) -> None:
+        """S16: core's update runs core's task three times.
+
+        Copier runs it in the old copy, in place and in the new copy; in
+        place it appends to the line compose left.
+        """
+        assert _marker_lines(task_walk.core) == {
+            "old_copy": [TASK_LINE],
+            "in_place": [TASK_LINE, TASK_LINE],
+            "new_copy": [TASK_LINE],
+        }
+
+    def test_update_of_a_layer_without_a_task_runs_none(
+        self, task_walk: TaskWalk
+    ) -> None:
+        """S16: service declares no task of its own, so its update runs none."""
+        assert _marker_lines(task_walk.service) == {
+            "old_copy": [],
+            "in_place": task_walk.marker_before_service,
+            "new_copy": [],
+        }
+
+
+# The in-place claim stays on the bundled layers: the merge undoes the in-place
+# line only when the user's side also differs from the old copy's, which two
+# layers appending to one marker arranges and the family's single task does not.
+MARKER_TASK = """
   - - "{{ _copier_python }}"
     - -c
     - |
-      import json, os, sys
-      rec = {"layer": sys.argv[1], "answers_file": sys.argv[2], "cwd": os.getcwd(),
-             "operation": os.environ.get("COPIER_OPERATION")}
-      with open(sys.argv[3], "a", encoding="utf-8") as fh:
-          fh.write(json.dumps(rec) + "\\n")
       with open("task-marker.txt", "a", encoding="utf-8") as fh:
-          fh.write(sys.argv[1] + "\\n")
-    - LAYER
-    - "{{ _copier_conf.answers_file }}"
-    - LOGPATH
+          fh.write("LAYER\\n")
 """
 BUNDLED_TASKS = '_tasks:\n  -  ["{{ _copier_python }}", _scripts/post_generation.py]\n'
 
 
-class TaskRun(NamedTuple):
-    """One run of a marker task: which layer's task, in which context, where."""
-
-    layer: str
-    answers_file: str
-    operation: str
-    where: str
-
-
-class TaskWalk(NamedTuple):
-    """Task runs at compose and per layer update, and the marker file after."""
-
-    compose: list[TaskRun]
-    updates: dict[str, list[TaskRun]]
-    marker: list[str]
-
-
-def _read_runs(log: Path, project: Path) -> list[TaskRun]:
-    """Read and clear the task log, naming each run's working directory."""
-    runs: list[TaskRun] = []
-    for line in log.read_text(encoding="utf-8").splitlines():
-        record: dict[str, Any] = json.loads(line)
-        cwd = Path(record["cwd"])
-        where = next(
-            (r for r in ("old_copy", "new_copy") if r in cwd.name),
-            "project" if cwd == project else str(cwd),
-        )
-        runs.append(
-            TaskRun(record["layer"], record["answers_file"], record["operation"], where)
-        )
-    log.unlink()
-    return runs
+def _marker_tasks(ref: str, release: Path) -> None:
+    """Give each bundled layer a task that appends its name to a marker file."""
+    substitute(
+        release / "project" / "copier.yml",
+        BUNDLED_TASKS,
+        "_tasks:" + MARKER_TASK.replace("LAYER", "project"),
+    )
+    append(
+        release / "streamlit" / "copier.yml",
+        "\n_tasks:" + MARKER_TASK.replace("LAYER", "streamlit"),
+    )
+    write(release / "project" / "project_own.txt.jinja", f"release={ref}\n")
 
 
 @pytest.fixture(scope="module")
-def task_walk(tmp_path_factory: pytest.TempPathFactory) -> Iterator[TaskWalk]:
-    """Give each layer a marker task, compose with tasks, then update both layers."""
-    root = tmp_path_factory.mktemp("tasks")
-    log = root / "tasklog.jsonl"
-
-    def marker_tasks(ref: str, release: Path) -> None:
-        def task(layer: str) -> str:
-            return TASK.replace("LAYER", layer).replace("LOGPATH", log.as_posix())
-
-        substitute(
-            release / "project" / "copier.yml",
-            BUNDLED_TASKS,
-            "_tasks:" + task("project"),
-        )
-        append(release / "streamlit" / "copier.yml", "\n_tasks:" + task("streamlit"))
-        write(release / "project" / "project_own.txt.jinja", f"release={ref}\n")
-
+def bundled_marker(tmp_path_factory: pytest.TempPathFactory) -> Iterator[list[str]]:
+    """Compose the bundled layers with tasks, then update both with tasks."""
+    root = tmp_path_factory.mktemp("bundled-tasks")
     with temp_dir_inside(root):
-        releases = build_releases(root, ("v1", "v2"), marker_tasks)
+        releases = build_releases(root, ("v1", "v2"), _marker_tasks)
         repos = build_repos(root, releases)
         project = root / "composed" / "probe-app"
         compose_project("streamlit", project, ANSWERS, releases["v1"], skip_tasks=False)
-        compose_runs = _read_runs(log, project)
         make_git_project(project, repos, "v1")
         add_user_line(project / "README.md")
-        updates: dict[str, list[TaskRun]] = {}
         for layer in ("project", "streamlit"):
             update_layer(
                 project,
@@ -265,90 +331,61 @@ def task_walk(tmp_path_factory: pytest.TempPathFactory) -> Iterator[TaskWalk]:
                 templates=releases,
                 skip_tasks=False,
             )
-            updates[layer] = _read_runs(log, project)
             commit_all(project, f"update {layer} to v2")
-        yield TaskWalk(compose_runs, updates, lines(project / "task-marker.txt"))
+        yield lines(project / "task-marker.txt")
 
 
-@pytest.mark.xdist_group("mechanics-tasks")
-class TestTasks:
-    """S16: where each layer's tasks run at compose and at update."""
-
-    def test_compose_runs_every_layers_task_once_in_the_final_layers_context(
-        self, task_walk: TaskWalk
-    ) -> None:
-        """S16: the merged tasks run once each, in the destination, on the final layer.
-
-        Project's task renders `_copier_conf.answers_file` as streamlit's,
-        because the merged tasks render in the final layer's context.
-        """
-        assert task_walk.compose == [
-            TaskRun("project", ".copier-answers.streamlit.yml", "copy", "project"),
-            TaskRun("streamlit", ".copier-answers.streamlit.yml", "copy", "project"),
-        ]
-
-    @pytest.mark.parametrize("layer", ["project", "streamlit"])
-    def test_update_runs_the_layers_own_task_in_each_of_copiers_renders(
-        self, task_walk: TaskWalk, layer: str
-    ) -> None:
-        """S16: a layer's update runs only its own task, three times.
-
-        Copier runs it in the old copy, in place and in the new copy.
-        """
-        answers_file = f".copier-answers.{layer}.yml"
-
-        assert task_walk.updates[layer] == [
-            TaskRun(layer, answers_file, "update", where)
-            for where in ("old_copy", "project", "new_copy")
-        ]
-
-    def test_in_place_task_output_is_undone_by_the_merge(
-        self, task_walk: TaskWalk
-    ) -> None:
-        """S16: the marker lines the in-place tasks append do not survive the update."""
-        assert task_walk.marker == ["project", "streamlit"]
+@pytest.mark.xdist_group("mechanics-bundled-tasks")
+def test_in_place_task_output_is_undone_by_the_merge(bundled_marker: list[str]) -> None:
+    """S16: the marker lines the in-place tasks append do not survive the update."""
+    assert bundled_marker == ["project", "streamlit"]
 
 
 # ------------------------------------------------------------------ S20
 
+CONFLICT_BEFORE = {"core": "2.0.0"}
+CONFLICT_AFTER = {"core": "2.1.0"}
+README_LINE = "A Python 3.11 project by Ada Probe."
+
 
 class ConflictUpdate(NamedTuple):
-    """Streamlit updated to v2 over a user edit of the line v2 changes."""
+    """Core updated to 2.1.0 over a user edit of the line that release changes."""
 
     project: Path
     raised: BaseException | None
 
 
 @pytest.fixture(scope="module")
-def conflict(tmp_path_factory: pytest.TempPathFactory) -> Iterator[ConflictUpdate]:
-    """Edit the README title the next release rewrites, then update streamlit."""
-    root = tmp_path_factory.mktemp("conflict")
+def conflict(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[ConflictUpdate]:
+    """Edit the README line 2.1.0 rewrites, then update core with data={}.
 
-    def retitle(ref: str, release: Path) -> None:
-        if ref == "v2":
-            substitute(
-                release / "streamlit" / "README.md.jinja",
-                "# {{ project_name }}\n",
-                "# {{ project_name }} (release v2)\n",
-            )
-
-    with temp_dir_inside(root):
-        releases = build_releases(root, ("v1", "v2"), retitle)
-        repos = build_repos(root, releases)
-        project = root / "probe-app"
-        compose_project("streamlit", project, ANSWERS, releases["v1"])
-        make_git_project(project, repos, "v1")
-        substitute(project / "README.md", "# Probe App\n", "# Probe App (user fork)\n")
-        commit_all(project, "user edits the title line")
+    Core 2.1.0 drops Python 3.11 and its migration moves a recorded 3.11 to
+    3.12, which rewrites the README line naming the version.
+    """
+    work = tmp_path_factory.mktemp("conflict")
+    with temp_dir_inside(work):
+        project = compose_family(
+            family,
+            work,
+            "core",
+            CONFLICT_BEFORE,
+            {"maintainer_name": AUTHOR, "python_version": "3.11"},
+        )
+        substitute(project / "README.md", README_LINE, f"{README_LINE} (user fork)")
+        commit_all(project, "user edits the version line")
         raised: BaseException | None = None
         try:
-            update_layer(
+            update_family_layer(
+                family,
                 project,
-                root="streamlit",
-                layer="streamlit",
-                source=repos["streamlit"],
-                ref="v2",
-                templates=releases,
+                root="core",
+                layer="core",
+                before=CONFLICT_BEFORE,
+                after=CONFLICT_AFTER,
+                work=work,
+                data={},
                 quiet=False,
             )
         except Exception as exc:  # the outcome under test
@@ -367,19 +404,23 @@ class TestConflictPauses:
     def test_conflict_markers_carry_both_versions(
         self, conflict: ConflictUpdate
     ) -> None:
-        """S20: README opens with inline markers around the user's and v2's title."""
-        assert lines(conflict.project / "README.md")[:5] == [
+        """S20: README holds inline markers around the user's and 2.1.0's line."""
+        assert lines(conflict.project / "README.md")[2:7] == [
             "<<<<<<< before updating",
-            "# Probe App (user fork)",
+            f"{README_LINE} (user fork)",
             "=======",
-            "# Probe App (release v2)",
+            "A Python 3.12 project by Ada Probe.",
             ">>>>>>> after updating",
         ]
 
     def test_conflict_is_visible_to_git_as_unmerged(
         self, conflict: ConflictUpdate
     ) -> None:
-        """S20: git reports README unmerged, with base, ours and theirs staged."""
+        """S20: git reports README unmerged, with base, ours and theirs staged.
+
+        The release's other changes, to the answers file and the pyproject
+        version floor, apply cleanly.
+        """
         stages = [
             line.split()[2]
             for line in git(
@@ -388,7 +429,7 @@ class TestConflictPauses:
         ]
 
         assert (git(conflict.project, "status", "--short").splitlines(), stages) == (
-            [" M .copier-answers.streamlit.yml", "UU README.md"],
+            [" M .copier-answers.core.yml", "UU README.md", " M pyproject.toml"],
             ["1", "2", "3"],
         )
 
