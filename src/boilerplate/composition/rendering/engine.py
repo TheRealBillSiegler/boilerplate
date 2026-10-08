@@ -28,6 +28,7 @@ from boilerplate.composition.models.json_types import JSON
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.tasks import normalize_tasks
+from boilerplate.composition.views.layer_view_builder import is_layer_local_extension
 from boilerplate.integrations.copier_types import (
     DEFAULT_EXCLUDE,
     Template,  # For test compatibility
@@ -67,36 +68,6 @@ _WORKER_EXCLUDES: tuple[str, ...] = (
     *_AUTHORING_METADATA_EXCLUDES,
     *(p for p in DEFAULT_EXCLUDE if p not in {"copier.yaml", "copier.yml"}),
 )
-
-
-def _is_layer_local_extension(spec: str) -> bool:
-    """Return whether a ``_jinja_extensions`` entry only works in its own layer.
-
-    ``copier_template_extensions`` accepts filepath-style loader specs
-    (``_extensions/context.py:ContextUpdater``) that it resolves relative to
-    the rendering template's directory — such a spec cannot be shared with a
-    sibling layer whose tree lacks the file. Importable specs (a dotted
-    module path, with or without a ``:ClassName`` suffix) resolve identically
-    from any layer and are safe to share.
-
-    Args:
-        spec: One ``_jinja_extensions`` list entry.
-
-    Returns:
-        True when the module portion is not a plain dotted import path.
-
-    Examples:
-        >>> _is_layer_local_extension("_extensions/context.py:ContextUpdater")
-        True
-        >>> _is_layer_local_extension(
-        ...     "copier_template_extensions.TemplateExtensionLoader"
-        ... )
-        False
-        >>> _is_layer_local_extension("pkg.module.slugify:SlugifyExtension")
-        False
-    """
-    module_part = spec.split(":", 1)[0]
-    return not all(part.isidentifier() for part in module_part.split("."))
 
 
 def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo:
@@ -214,7 +185,7 @@ class RenderEngine:
             [
                 str(ext)
                 for ext in raw_extensions
-                if not _is_layer_local_extension(str(ext))
+                if not is_layer_local_extension(str(ext))
             ]
             if isinstance(raw_extensions, list)
             else []
