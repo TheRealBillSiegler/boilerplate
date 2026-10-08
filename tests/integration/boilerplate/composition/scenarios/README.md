@@ -113,26 +113,29 @@ update_family_layer(family, project, root="app", layer="service",
 ├─ templates_at for the before and after tags
 ├─ the layer's ancestors' file-path extension files registered as modules
 └─ update_layer(project, root="app", layer="service", source=repos/service,   test
-                ref="1.1.0", templates={"1.0.0": dir, "1.1.0": dir}, views_by_ref)
+                ref="1.1.0", templates={"1.1.0": dir}, old_templates=dir)
    │
-   ├─ views_by_ref = {ref: build_layer_view(compose("service", dir))}       real
-   │    one per release
+   ├─ old view    = build_layer_view(compose("service", before dir))         real
+   ├─ target view = build_layer_view(compose("service", after dir))          real
+   │    two views, not one per ref: when only an ancestor moves, the layer's
+   │    own ref is the same in every render
    │
    ├─ update_data: reads the answers files, asks the pass                   test
    │    └─ build_update_data                                                real
    │         recorded answers: core's file, then service's laid on top
    │         + the pass's answers for questions no file records
    │
-   └─ composition.updating.update_layer(project, release, views_by_ref,     real
-      │                                   data)
-      └─ ScopedWorker(vcs_ref="1.1.0", data, views_by_ref).run_update()     real, over copier
+   └─ composition.updating.update_layer(project, release, views, data)      real
+      └─ ScopedWorker(vcs_ref="1.1.0", data, old_view, target_view)         real, over copier
+         .run_update()
         Copier rebuilds the worker for each render; every rebuilt worker
-        builds its template from views_by_ref[its own ref].
+        picks its view from its destination: the old copy's temp directory
+        takes the old view, the project and the new copy's the target view.
 
-        1  old copy   at _commit 1.0.0  view 1.0.0  answers file only; data never reaches it
+        1  old copy   at _commit 1.0.0  old view     answers file only; data never reaches it
         2  the target release's before-migrations run; Copier re-reads the answers file
-        3  in place   at 1.1.0          view 1.1.0  data over the answers file
-        4  new copy   at 1.1.0          view 1.1.0  same answers, in an empty folder
+        3  in place   at 1.1.0          target view  data over the answers file
+        4  new copy   at 1.1.0          target view  same answers, in an empty folder
         5  the user's changes (old copy → project) are applied to the in-place
            render with git apply --reject; a rejected file is merged again with
            git merge-file, which leaves conflict markers and still exits 0

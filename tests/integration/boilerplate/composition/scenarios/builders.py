@@ -19,7 +19,7 @@ from typing import Any, NamedTuple, TypedDict, Unpack
 import pytest
 import yaml
 
-from boilerplate.composition.updating import ScopedWorker
+from boilerplate.composition.updating import ScopedWorker, render_role
 from boilerplate.composition.views import LayerView
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
@@ -366,27 +366,27 @@ def update_family_layer(
         work: The scenario's working directory.
         **options: Passed on to ``update_layer``.
     """
-    old, new = before[layer], after[layer]
+    new = after[layer]
     view_root = root if options.get("full_view") else layer
-    templates = {
-        old: templates_at(family, work, before),
-        new: templates_at(family, work, after),
-    }
+    old_dir, new_dir = (
+        templates_at(family, work, before),
+        templates_at(family, work, after),
+    )
     with pytest.MonkeyPatch.context() as patch:
-        extra = _register_ancestor_extensions(patch, layer, templates[new])
-        views = {
-            tag: LayerView(view.questions, (*view.extensions, *extra))
-            for tag, directory in templates.items()
-            for view in [layer_view(view_root, directory)]
-        }
+        extra = _register_ancestor_extensions(patch, layer, new_dir)
+        views = [
+            LayerView(view.questions, (*view.extensions, *extra))
+            for view in (layer_view(view_root, old_dir), layer_view(view_root, new_dir))
+        ]
         update_layer(
             project,
             root=root,
             layer=layer,
             source=family.repos[layer],
             ref=new,
-            templates=templates,
-            views_by_ref=views,
+            templates={new: new_dir},
+            old_view=views[0],
+            target_view=views[1],
             **options,
         )
 
@@ -469,15 +469,17 @@ class Recording(NamedTuple):
         copies: The watched files' contents after each render of the update,
             keyed by role (``old_copy``, ``in_place`` or ``new_copy``), then by
             file; ``None`` for a file not rendered.
+        views: ``(role, view)`` for every template a worker built, in order:
+            the view the render drew its template from.
     """
 
     builds: list[tuple[str, str | None]]
     copies: dict[str, dict[str, str | None]]
+    views: list[tuple[str, LayerView]]
 
 
 def _role(worker: ScopedWorker) -> str:
-    name = Path(str(worker.dst_path)).name
-    return next((r for r in ("old_copy", "new_copy") if r in name), "in_place")
+    return render_role(Path(str(worker.dst_path))).value
 
 
 def recording_worker(
@@ -492,15 +494,17 @@ def recording_worker(
         The worker class to pass to ``update_layer`` and the recording it
         fills.
     """
-    recording = Recording([], {})
+    recording = Recording([], {}, [])
 
     class RecordingWorker(ScopedWorker):
         """Record each template build and the watched files of each copy."""
 
-        def view_for(self, ref: str | None) -> LayerView:
-            """Record the build, then return the view keyed by `ref`."""
-            recording.builds.append((_role(self), ref))
-            return super().view_for(ref)
+        def view_for_render(self) -> LayerView:
+            """Record the build, then return the view this render draws from."""
+            view = super().view_for_render()
+            recording.builds.append((_role(self), self.resolved_vcs_ref))
+            recording.views.append((_role(self), view))
+            return view
 
         def run_copy(self) -> None:
             """Render, then read the watched files out of the destination."""
