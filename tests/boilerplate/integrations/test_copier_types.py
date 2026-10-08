@@ -11,6 +11,8 @@ import inspect
 from pathlib import Path
 
 from boilerplate.integrations.copier_types import (
+    NEW_COPY_DIR_PREFIX,
+    OLD_COPY_DIR_PREFIX,
     Template,
     Worker,
     load_answersfile_data,
@@ -59,3 +61,21 @@ class TestLoadAnswersfileData:
             "_commit": "v1",
             "name": "demo",
         }
+
+
+class TestUpdateCopyPrefixes:
+    """The shim names the temp-directory prefixes Copier's update renders under."""
+
+    def test_prefixes_are_the_ones_the_update_names_its_temp_directories_by(
+        self,
+    ) -> None:
+        """Match the f-string prefixes in ``Worker._apply_update``'s source."""
+        source = inspect.getsource(Worker._apply_update)  # pyright: ignore[reportPrivateUsage]
+        module = Worker.__module__
+
+        assert (
+            'prefix=f"{__name__}.old_copy."' in source,
+            'prefix=f"{__name__}.new_copy."' in source,
+            OLD_COPY_DIR_PREFIX,
+            NEW_COPY_DIR_PREFIX,
+        ) == (True, True, f"{module}.old_copy.", f"{module}.new_copy.")
