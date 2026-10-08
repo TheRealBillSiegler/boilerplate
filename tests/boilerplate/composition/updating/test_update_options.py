@@ -1,6 +1,7 @@
 """The defaults of a layer update's run options."""
 
-from boilerplate.composition.updating import ScopedWorker, UpdateOptions
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
+from boilerplate.composition.updating import UpdateOptions
 
 
 class TestUpdateOptions:

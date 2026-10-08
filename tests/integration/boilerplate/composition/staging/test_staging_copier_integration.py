@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
-from boilerplate.composition.updating import ScopedWorker
 from tests.boilerplate.templates.conftest import commit_all, git
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
