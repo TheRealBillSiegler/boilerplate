@@ -5,6 +5,8 @@ from this module to ensure consistent behavior across the codebase and tests.
 """
 # Spec: docs/design/02-data-models.md §Error Hierarchy
 
+from collections.abc import Mapping, Sequence
+
 
 class BoilerplateError(Exception):
     """Base error for the Boilerplate ecosystem.
@@ -323,3 +325,170 @@ class UserCancelledError(BoilerplateError):
     def __init__(self, message: str = "Aborted.", **kwargs: str | None) -> None:
         """Initialize with default error code BP_RENDER_USER_CANCELLED."""
         super().__init__(message, error_code="BP_RENDER_USER_CANCELLED", **kwargs)
+
+
+class LockReadFailedError(BoilerplateError):
+    """Raised when ``boilerplate.lock`` cannot be read as a lock file.
+
+    Covers unparseable YAML, a truncated file and a body that does not match the
+    lock schema. Boilerplate never repairs the file, because it records
+    provenance the project alone cannot reconstruct.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_LOCK_READ_FAILED."""
+        super().__init__(
+            message,
+            error_code="BP_LOCK_READ_FAILED",
+            remediation=kwargs.pop(
+                "remediation",
+                "Lock file is corrupted. To recreate: delete boilerplate.lock and "
+                "run 'boilerplate new <template> . --force' to regenerate from "
+                "the current project state.",
+            ),
+            **kwargs,
+        )
+
+
+class LockSchemaUnsupportedError(BoilerplateError):
+    """Raised when a lock file's schema major is newer than this tool supports.
+
+    The tool fails closed: it neither reads nor mutates a lock written by a
+    newer generation of Boilerplate.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_LOCK_SCHEMA_UNSUPPORTED."""
+        super().__init__(
+            message,
+            error_code="BP_LOCK_SCHEMA_UNSUPPORTED",
+            remediation=kwargs.pop(
+                "remediation",
+                "This project was created with a newer version of Boilerplate. "
+                "Please upgrade.",
+            ),
+            **kwargs,
+        )
+
+
+_SET_ASIDE_REMEDIATION = (
+    "Run 'git stash --include-untracked' to set the partial update aside, "
+    "then run 'boilerplate update' again."
+)
+
+
+class AnswersFileIncompleteError(BoilerplateError):
+    """Raised when a layer's answers file lacks keys its scoped view asks for.
+
+    A hand-run vanilla update of a child layer leaves its answers file with only
+    the layer's own keys; the old copy would then render the ancestors'
+    questions at their defaults. The check runs before any layer does.
+
+    Attributes:
+        missing: The question keys each layer's answers file lacks, keyed by
+            layer name.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        missing: Mapping[str, Sequence[str]] | None = None,
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_ANSWERS_INCOMPLETE."""
+        super().__init__(message, error_code="BP_UPDATE_ANSWERS_INCOMPLETE", **kwargs)
+        self.missing: Mapping[str, tuple[str, ...]] = {
+            layer: tuple(keys) for layer, keys in (missing or {}).items()
+        }
+
+
+class UpdateLayerDriftError(BoilerplateError):
+    """Raised when a layer and one of its ancestors both disagree with the lock.
+
+    As after a hand-run update of each, the walk cannot tell which versions the
+    layer's files were last rendered against, so it stops before any layer
+    runs.
+
+    Attributes:
+        layers: The disagreeing layers the stop names.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layers: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_LAYER_DRIFT."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_LAYER_DRIFT",
+            remediation=kwargs.pop("remediation", _SET_ASIDE_REMEDIATION),
+            **kwargs,
+        )
+        self.layers = tuple(layers)
+
+
+class UpdateTargetMismatchError(BoilerplateError):
+    """Raised when an explicit target differs from a paused update's targets.
+
+    Attributes:
+        layers: The layers whose requested target differs from the recorded one.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layers: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_TARGET_MISMATCH."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_TARGET_MISMATCH",
+            remediation=kwargs.pop("remediation", _SET_ASIDE_REMEDIATION),
+            **kwargs,
+        )
+        self.layers = tuple(layers)
+
+
+class UpdateDowngradeError(BoilerplateError):
+    """Raised when an update would move a layer to an older version.
+
+    Also raised when a layer's recorded ``_commit`` yields no version, so no
+    comparison can show the target is not older. There is no override: the way
+    back from an applied update is reverting the commit that recorded it.
+
+    Attributes:
+        layer: The layer whose target is older, or whose version is unknown.
+        recorded: The version the layer's answers file records, or an empty
+            string when none could be read.
+        target: The version the update would move the layer to.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layer: str = "",
+        recorded: str = "",
+        target: str = "",
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_DOWNGRADE_REJECTED."""
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_DOWNGRADE_REJECTED",
+            remediation=kwargs.pop(
+                "remediation",
+                "Revert the commit that recorded the update to go back to an "
+                "earlier version.",
+            ),
+            **kwargs,
+        )
+        self.layer = layer
+        self.recorded = recorded
+        self.target = target

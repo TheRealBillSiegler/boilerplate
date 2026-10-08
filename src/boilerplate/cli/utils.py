@@ -14,6 +14,7 @@ from boilerplate.cli.engine import UsageError, get_current_context
 from boilerplate.cli.validators import validate_directory
 from boilerplate.common.exceptions import (
     ActionRequiredError,
+    AnswersFileIncompleteError,
     BoilerplateError,
     DestinationNotEmptyError,
     DestinationRequiredError,
@@ -27,6 +28,9 @@ from boilerplate.common.exceptions import (
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateDowngradeError,
+    UpdateLayerDriftError,
+    UpdateTargetMismatchError,
     UserCancelledError,
 )
 from boilerplate.composition import Composer
@@ -140,6 +144,10 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
             NonInteractiveRequiresForceError,
             MissingRequiredAnswersError,
             RecordedAnswerRejectedError,
+            AnswersFileIncompleteError,
+            UpdateLayerDriftError,
+            UpdateTargetMismatchError,
+            UpdateDowngradeError,
         ) as e:
             _display_error_and_exit(
                 str(e),
