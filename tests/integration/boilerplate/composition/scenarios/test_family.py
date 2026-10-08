@@ -24,6 +24,8 @@ from tests.integration.boilerplate.composition.family import (
     register_extension_module,
 )
 from tests.integration.boilerplate.composition.scenarios.builders import (
+    answers_file,
+    make_git_project,
     on_own_worker,
     temp_dir_inside,
     tree,
@@ -235,6 +237,22 @@ def licensed(
         )
 
 
+@pytest.fixture(scope="module")
+def mixed_project(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[Path]:
+    """Compose service over core 1.1.0, whose layers sit at different tags."""
+    work = tmp_path_factory.mktemp("mixed-tags")
+    with temp_dir_inside(work):
+        composed = _compose(
+            family, "service", work, tags={"core": "1.1.0", "service": "1.0.0"}
+        )
+        make_git_project(
+            composed.project, family.repos, {"core": "1.1.0", "service": "1.0.0"}
+        )
+        yield composed.project
+
+
 class TestFamilyBuilder:
     """The builder turns the stored versions into tagged repositories."""
 
@@ -274,6 +292,35 @@ class TestFamilyBuilder:
         listed = git(family.repos["core"], "ls-tree", "-r", "--name-only", "3.0.0")
 
         assert "_deleted.txt" not in listed
+
+
+class TestGitProject:
+    """A composed project records the tag each layer's render matches."""
+
+    @pytest.mark.parametrize(
+        ("layer", "tag"), [("core", "1.1.0"), ("service", "1.0.0")]
+    )
+    def test_each_answers_file_records_its_own_layers_tag(
+        self, mixed_project: Path, layer: str, tag: str
+    ) -> None:
+        """Record the tag given for the layer, not one shared by all."""
+        assert answers_file(mixed_project, layer)["_commit"] == tag
+
+    @pytest.mark.parametrize("layer", ["core", "service"])
+    def test_each_answers_file_points_at_its_layers_repository(
+        self, family: Family, mixed_project: Path, layer: str
+    ) -> None:
+        """Point the answers file at the layer's own repository."""
+        recorded = answers_file(mixed_project, layer)["_src_path"]
+
+        assert Path(recorded) == family.repos[layer]
+
+    def test_a_layer_the_project_lacks_is_left_out(self, mixed_project: Path) -> None:
+        """Write no answers file for a layer that was not composed."""
+        assert sorted(p.name for p in mixed_project.glob(".copier-answers.*.yml")) == [
+            ".copier-answers.core.yml",
+            ".copier-answers.service.yml",
+        ]
 
 
 class TestEveryRelease:
