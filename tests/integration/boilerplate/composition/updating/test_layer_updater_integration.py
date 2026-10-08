@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.composition.updating import LayerRelease, UpdateViews, update_layer
+from boilerplate.composition.updating import (
+    LayerRelease,
+    StepInputs,
+    UpdateViews,
+    update_layer,
+)
 from tests.boilerplate.templates.conftest import layer_view
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -32,7 +37,7 @@ def _update_core(family: Family, project: Path, work: Path, **data: str) -> None
             layer_view("core", templates_at(family, work, BEFORE)),
             layer_view("core", templates_at(family, work, AFTER)),
         ),
-        data,
+        StepInputs(supplied=data),
     )
 
 

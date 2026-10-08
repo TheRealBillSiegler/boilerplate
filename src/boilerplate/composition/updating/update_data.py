@@ -1,84 +1,64 @@
-"""The answers an update of one layer forces on Copier.
+"""The data an update step of one layer passes to Copier.
 
-The rule is pure: it takes the answers the project records and the answers a
-questionnaire pass produced, and does no I/O of its own.
+The rule is pure: it takes the answers the project records, the layer that
+declares each question and the values the user and earlier steps supply, and does
+no I/O of its own.
 """
 
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 
-def layered_recorded_answers(
-    recorded_by_layer: Mapping[str, Mapping[str, Any]], chain: Sequence[str]
-) -> dict[str, Any]:
-    """Merge the recorded answers of `chain`, later layers over earlier ones.
-
-    Args:
-        recorded_by_layer: Each layer's recorded answers, keyed by layer name.
-        chain: The layers whose answers apply, ancestors first and the layer
-            being updated last; a layer with no recorded answers adds none.
-
-    Returns:
-        The merged recorded answers.
-
-    Examples:
-        The layer's own answer beats its ancestor's:
-
-        >>> layered_recorded_answers(
-        ...     {"core": {"author": "Ada", "port": 80}, "service": {"author": "Bo"}},
-        ...     ["core", "service"],
-        ... )
-        {'author': 'Bo', 'port': 80}
-    """
-    merged: dict[str, Any] = {}
-    for layer in chain:
-        merged.update(recorded_by_layer.get(layer, {}))
-    return merged
-
-
-def build_update_data(
+def build_step_data(
     *,
+    layer: str,
+    declared_by: Mapping[str, str],
     recorded_by_layer: Mapping[str, Mapping[str, Any]],
-    chain: Sequence[str],
-    asked_user: Mapping[str, Any],
-    asked_hidden: Collection[str],
-    view_questions: Mapping[str, Any],
+    supplied: Mapping[str, Any],
+    secrets: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Build the forced answers an update of a layer passes to Copier.
+    """Build the data a layer's update step passes to Copier.
 
-    The recorded answers are the ancestors' in chain order with the layer's own
-    laid on top. The questionnaire pass answers what the layer's view asks and
-    those answers do not record, so a question added since the recorded release
-    takes the pass's answer; a hidden question is never taken from it.
+    Copier reads the layer's own questions from the layer's own answers file,
+    after the layer's before-migrations have run, and data outranks that file;
+    so the layer's own recorded answers are never data. A question an ancestor
+    declares arrives as data from the answers file of the layer that declares
+    it, never from the layer's own, possibly stale, copy.
 
     Args:
+        layer: The layer being updated.
+        declared_by: The layer that declares each question in the layer's
+            scope, keyed by question name.
         recorded_by_layer: Each layer's recorded answers, keyed by layer name.
-        chain: The layers whose answers apply, ancestors first and the layer
-            being updated last.
-        asked_user: Every question's answer from the questionnaire pass.
-        asked_hidden: Names of the questions the pass never showed.
-        view_questions: The questions the layer's view asks, keyed by name.
+        supplied: Values the user supplies; data for questions in the scope.
+        secrets: Secret answers already given earlier in the same update; data
+            for questions in the scope.
 
     Returns:
-        The pass's answers for unrecorded questions, with the recorded answers
-        on top.
+        The data for the step: the declaring ancestors' recorded answers, then
+        the earlier secrets, then the supplied values on top.
 
     Examples:
-        A new question takes the pass's answer; a recorded one keeps its value:
+        The ancestor's answer beats the layer's stale copy; the layer's own
+        question is left to Copier:
 
-        >>> build_update_data(
-        ...     recorded_by_layer={"core": {"port": 80}},
-        ...     chain=["core"],
-        ...     asked_user={"port": 8080, "license": "MIT", "slug": "x"},
-        ...     asked_hidden={"slug"},
-        ...     view_questions={"port": {}, "license": {}, "slug": {}},
+        >>> build_step_data(
+        ...     layer="service",
+        ...     declared_by={"author": "core", "port": "service"},
+        ...     recorded_by_layer={
+        ...         "core": {"author": "Ada"},
+        ...         "service": {"author": "Stale", "port": 80},
+        ...     },
+        ...     supplied={},
+        ...     secrets={},
         ... )
-        {'license': 'MIT', 'port': 80}
+        {'author': 'Ada'}
     """
-    recorded = layered_recorded_answers(recorded_by_layer, chain)
-    unanswered = {
-        k: v
-        for k, v in asked_user.items()
-        if k in view_questions and k not in recorded and k not in asked_hidden
-    }
-    return {**unanswered, **recorded}
+    data: dict[str, Any] = {}
+    for question, declarer in declared_by.items():
+        recorded = recorded_by_layer.get(declarer, {})
+        if declarer != layer and question in recorded:
+            data[question] = recorded[question]
+    for given in (secrets, supplied):
+        data.update({k: v for k, v in given.items() if k in declared_by})
+    return data
