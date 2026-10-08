@@ -43,6 +43,11 @@ give a task ``_copier_operation``; the task runs that follow an update or an add
 call the task runner outside those three, so they set the variable themselves.
 ``TaskError`` is what the task runner raises when a task exits non-zero.
 
+``tasks_phase`` enters Copier's tasks phase (``copier._types.Phase.TASKS``, the
+phase ``Worker._apply_update`` and ``run_copy`` set around Copier's own task
+run); a task's ``when:`` reads it as ``_copier_phase``, and the task runs that
+follow an update or an add are outside both, so they enter it themselves.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -59,13 +64,13 @@ these are private symbols copier may move without a deprecation cycle.
 import dataclasses
 import functools
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from typing import Literal
 
 from copier._jinja_ext import SandboxedEnvironment
 from copier._main import Worker, _operation  # pyright: ignore[reportPrivateUsage]
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
-from copier._types import MISSING
+from copier._types import MISSING, Phase
 from copier._user_data import AnswersMap, Question, load_answersfile_data
 from copier._vcs import get_git
 from copier.errors import TaskError
@@ -136,6 +141,20 @@ def copier_operation(operation: CopierOperation) -> Generator[None]:
         _operation.reset(token)
 
 
+def tasks_phase() -> AbstractContextManager[None]:
+    """Run a block in Copier's tasks phase.
+
+    Inside the block Copier's task runner gives each task
+    ``_copier_phase == "tasks"``, as it does during ``run_copy`` and
+    ``run_update``, so a template's ``when:`` can read the phase. The phase is
+    restored on the way out, also when the block raises.
+
+    Returns:
+        A context manager that sets the phase for the duration of the block.
+    """
+    return Phase.use(Phase.TASKS)
+
+
 __all__ = [
     "DEFAULT_EXCLUDE",
     "MISSING",
@@ -153,5 +172,6 @@ __all__ = [
     "get_git",
     "load_answersfile_data",
     "load_template_config",
+    "tasks_phase",
     "template_public_attr_names",
 ]
