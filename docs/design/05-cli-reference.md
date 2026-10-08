@@ -292,9 +292,9 @@ Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `
 
 **Usage**: `boilerplate update [options]`
 
-Update an existing project to a newer template version. See [06-project-lifecycle.md](06-project-lifecycle.md) for the full update workflow.
+Update an existing project to a newer template version. The walk runs in a temporary git worktree of the project and lands in the working tree as uncommitted changes, which is what plain Copier leaves ([06-project-lifecycle.md §Staging worktree](06-project-lifecycle.md#staging-worktree)). See [06-project-lifecycle.md](06-project-lifecycle.md) for the full update workflow.
 
-> **Prerequisite**: The project directory MUST be a git repository. The `update` command requires git access to each layer's template source so that Copier can perform per-layer three-way merge, and uses git for conflict markers and `--abort` recovery. Projects created without `--git-init` that were never placed under git version control cannot be updated. Run `git init && git add -A && git commit -m 'Initial project'` first.
+> **Prerequisite**: The project directory MUST be a git repository. The `update` command requires git access to each layer's template source so that Copier can perform per-layer three-way merge, and uses git for the staging worktree. The working tree MUST have no uncommitted changes, untracked files included, which is Copier's own rule, and a project with submodules (`.gitmodules`) is refused. Projects created without `--git-init` that were never placed under git version control cannot be updated. Run `git init && git add -A && git commit -m 'Initial project'` first.
 
 **Limitation**: Projects created from Copier-only templates (templates without `boilerplate.yml`) do not have a `boilerplate.lock` file and cannot be updated via `boilerplate update`. Use `copier update` directly for these projects.
 
@@ -303,8 +303,6 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
-| `--continue` | `-c` | flag | `false` | Resume after resolving merge conflicts (write lock file). Default: `false`. |
-| `--abort` | — | flag | `false` | Abandon an in-progress update; restore pre-update file state. Default: `false`. |
 | `--target-version` | `-t` | string | null | Target template version. Default: latest. |
 | `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
@@ -312,7 +310,6 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 | `--non-interactive` | — | flag | `false` | Take every question's default without prompting, a recorded answer being its question's default. Default: `false`. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
-| `--force` | `-f` | flag | `false` | Skip the clean working tree pre-flight check. Default: `false`. Does NOT skip confirmation (use `--yes` for that). |
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
 
@@ -350,11 +347,7 @@ MAJOR updates MUST include a prominent warning about breaking changes in the pla
 
 **Task execution**: Follows the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
 
-**`--continue`/`-c`**: Resume an update after the user has resolved merge conflicts. When an update produces conflicts, the CLI exits with code `4` (`ACTION_REQUIRED`) and leaves conflict markers in the affected files. The user resolves the conflicts manually, then runs `boilerplate update --continue` to validate the resolution (no remaining conflict markers) and write the new lock file. If conflict markers remain after `--continue`, the command exits with code `4` (`ACTION_REQUIRED`), not code `1`. Exit code `1` is reserved for unexpected failures (I/O errors, internal errors). This distinction enables CI scripts to differentiate 'still conflicted, needs resolution' from 'hard failure.'
-
-**`--abort`**: Abandon an in-progress update: restore files from the pre-merge backup (see [06-project-lifecycle.md](06-project-lifecycle.md)), record a `failed` migration entry, and exit cleanly. Cannot be used unless an update is in progress (i.e., `.boilerplate/merge-in-progress.json` exists).
-
-**Precondition**: The project MUST be under git version control. If the project directory is not a git repository, `--abort` MUST fail with a clear error: `"Cannot abort: project is not a git repository. Resolve conflicts manually or discard changes with your version control tool."` This is consistent with the update pipeline's per-layer Copier invocations, which require git-accessible template sources.
+**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`; layers already at their targets are skipped, so the answers files themselves record the progress. `git restore` discards the partial update. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
 
 **File status indicators**:
 
@@ -869,7 +862,7 @@ boilerplate env apply [options] <profile-spec>
 
 **Behavior**: The full provisioning pipeline (resolve, plan, confirm, lock, stage, install, commit, record) is specified in [§08 Provisioning Pipeline](08-environment-provisioning.md#part-4-provisioning-pipeline). `env apply` invokes that pipeline; the CLI surface adds only argument parsing, plan display, and confirmation handling on top.
 
-**Exit codes**: 0 (success), 1 (provisioning failure), 3 (validation error). `env apply` does NOT produce exit code 4: per [§08 Part 4 Stage 4](08-environment-provisioning.md), any installation failure triggers a full pipeline rollback to the pre-apply state, so there is no partial-install pause that requires user resolution. (For the resumable user-intervention pattern, see `update --continue` for merge conflicts.)
+**Exit codes**: 0 (success), 1 (provisioning failure), 3 (validation error). `env apply` does NOT produce exit code 4: per [§08 Part 4 Stage 4](08-environment-provisioning.md), any installation failure triggers a full pipeline rollback to the pre-apply state, so there is no partial-install pause that requires user resolution. (For the resumable user-intervention pattern, see the `update` conflict pause: resolve, commit, rerun.)
 
 ### `env status`
 
@@ -1071,7 +1064,7 @@ Tip: Save your answers for CI reproducibility:
 
 **After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted.
 
-**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (`boilerplate update --continue` / `--abort`).
+**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`; `git restore` discards the partial update).
 
 ### Answer Presets
 
@@ -1208,7 +1201,7 @@ The following table summarizes flag availability across commands. **Global flags
 
 | Flag | `new` | `update` | `add` | `adopt` | `eject` | `list` | `compose` | `graph` | `validate` | `status` | `doctor` | `init-template` | `test` | `env` | `lock` | `cache` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `--force` | X | X | | | | | | | | | | | | X | | X |
+| `--force` | X | | | | | | | | | | | | | X | | X |
 | `--non-interactive` | X | X | X | | | | | | | | | | | | | |
 | `--dry-run` / `-n` | X | X | X | X | X | | | | | | | | | X | | |
 | `--answers` | X | X | X | | | | | | | | | | | | | |
@@ -1222,8 +1215,6 @@ The following table summarizes flag availability across commands. **Global flags
 | `--yes` / `-y` | X | X | X | | X | | | | | | | | | X | | |
 | `--git-init` | X | | | | | | | | | | | | | | | |
 | `--render-to` | X | | | | | | | | | | | | | | | |
-| `--continue` / `-c` | | X | | | | | | | | | | | | | | |
-| `--abort` | | X | | | | | | | | | | | | | | |
 | `--target-version` / `-t` | | X | | | | | | | | | | | | | | |
 | `--category` | | | | | | X | | | | | | | | | | |
 | `--tag` (repeatable) | | | | | | X | | | | | | | | | | |
@@ -1244,7 +1235,7 @@ The following table summarizes flag availability across commands. **Global flags
 | `--match` | | | | | | | | | | | | | X | | | |
 | `--update-snapshots` | | | | | | | | | | | | | X | | | |
 
-**Short flag assignment**: `-f` is assigned to `--force` (on `new`, `update`, and `env apply`), matching universal CLI convention (`rm -f`, `cp -f`, `docker rm -f`). `--format` uses long-form only.
+**Short flag assignment**: `-f` is assigned to `--force` (on `new` and `env apply`), matching universal CLI convention (`rm -f`, `cp -f`, `docker rm -f`). `--format` uses long-form only.
 
 ---
 
