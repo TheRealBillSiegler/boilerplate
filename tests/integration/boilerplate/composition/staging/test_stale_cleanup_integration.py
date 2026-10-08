@@ -19,7 +19,18 @@ def staging(project: Path, root: Path) -> StagingWorktree:
 
 
 def leave_behind(project: Path, root: Path) -> StagingWorktree:
-    """Enter a staging and walk away, as an interrupted run does."""
+    """Enter a staging and walk away, as a run whose process died does.
+
+    The operating system drops a dead process's lock, so the helper drops the
+    staging's own to match; ``stay_alive`` is the case where it is still held.
+    """
+    stage = stay_alive(project, root)
+    stage._lock.release()  # pyright: ignore[reportPrivateUsage]
+    return stage
+
+
+def stay_alive(project: Path, root: Path) -> StagingWorktree:
+    """Enter a staging and keep it open, as a run waiting at a prompt does."""
     return staging(project, root).__enter__()
 
 
@@ -29,6 +40,42 @@ def registered_worktrees(project: Path) -> int:
 
 def started_at(stage: StagingWorktree) -> datetime:
     return IntentJournal.read(stage.folder).started_at
+
+
+class TestLiveStaging:
+    def test_staging_that_holds_its_lock_survives_a_cleanup_far_in_the_future(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        live = stay_alive(project, staging_root)
+
+        removed = remove_stale_staging(
+            staging_root, now=started_at(live) + timedelta(days=30)
+        )
+
+        assert removed == ()
+        assert live.path.is_dir()
+        assert registered_worktrees(project) == 2
+        live.__exit__(None, None, None)
+
+    def test_staging_that_released_its_lock_is_stale_once_old_enough(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        dead = leave_behind(project, staging_root)
+        folder = dead.folder
+
+        removed = remove_stale_staging(
+            staging_root, now=started_at(dead) + timedelta(days=30)
+        )
+
+        assert removed == (folder,)
+
+    def test_exit_removes_the_lock_file_with_the_folder(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        with staging(project, staging_root) as stage:
+            folder = stage.folder
+
+        assert not folder.exists()
 
 
 class TestRemoveStaleStaging:

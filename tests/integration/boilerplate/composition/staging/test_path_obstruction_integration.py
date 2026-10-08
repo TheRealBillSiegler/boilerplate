@@ -1,4 +1,4 @@
-"""Stopping a copy back that would overwrite an ignored file or delete an ignored directory."""
+"""Stopping a copy back that would clobber an ignored file or directory."""
 
 from pathlib import Path
 
