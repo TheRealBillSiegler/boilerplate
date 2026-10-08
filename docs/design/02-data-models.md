@@ -440,7 +440,7 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | `status` | enum | One of `in_progress`, `success`, `failed`, `conflict`, `adopted`, `created`; see [MigrationRecord status state machine](#migrationrecord-status-state-machine) for terminal values, exit-code mapping, and two-phase write semantics. |
 | `error` | string or null | Error message if status is not `success` (or `created`/`adopted`, both of which are success-shaped terminal values) |
 | `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created`, `adopted` and `add` records (no prior-version comparison applies). |
-| `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
+| `targets` | map[string, string] or null | On a `conflict` or `in_progress` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
 | `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
 
 **Invariants**: Entries MUST be append-only. Failed and conflict entries MUST be recorded.
@@ -611,6 +611,8 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateDowngradeError` | `3` | Before any layer runs, a target is older than the version a layer's answers file records in `_commit`, or a recorded `_commit` yields no version (`BP_UPDATE_DOWNGRADE_REJECTED`) |
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
+| `UpdatePathObstructedError` | `3` | Before the copy back, a path the walk added already exists in the checkout as an ignored file or directory (`BP_UPDATE_PATH_OBSTRUCTED`) |
+| `UpdateInterruptedError` | `3` | The last migration record is still `in_progress`, from an update interrupted after its copy back started (`BP_UPDATE_INTERRUPTED`) |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely |
 | `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back |
