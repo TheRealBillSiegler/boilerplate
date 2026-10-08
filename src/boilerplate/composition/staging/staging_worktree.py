@@ -7,6 +7,10 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
+from boilerplate.composition.staging.copy_back import (
+    require_checkout_unchanged,
+    restore_working_tree,
+)
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_journal import IntentJournal
 from boilerplate.composition.staging.intent_operation import IntentOperation
@@ -58,6 +62,7 @@ class StagingWorktree:
         self._folder: Path | None = None
         self._start_commit: str | None = None
         self._last_commit: str | None = None
+        self._started_at = datetime.now(UTC)
 
     @property
     def folder(self) -> Path:
@@ -97,6 +102,21 @@ class StagingWorktree:
         self._last_commit = commit_worktree(self.path, message)
         return self._last_commit
 
+    def copy_back(self) -> None:
+        """Reproduce the worktree's last layer commit in the user's checkout.
+
+        The checkout must still be at the starting commit with no changes. The
+        files then match the last layer commit, additions and deletions both,
+        as uncommitted, unstaged changes, the way plain Copier leaves them.
+
+        Raises:
+            UpdateCheckoutChangedError: If the checkout changed during staging;
+                it is left as it is.
+        """
+        require_checkout_unchanged(self.project, self.start_commit)
+        self._write_journal("committing")
+        restore_working_tree(self.project, self.last_commit)
+
     def __enter__(self) -> Self:
         """Check the project, then create the worktree and its journal.
 
@@ -109,6 +129,7 @@ class StagingWorktree:
             UpdateSubmodulesUnsupportedError: If the project has submodules.
         """
         check_project_ready(self.project)
+        self._started_at = datetime.now(UTC)
         root = self._temp_root or Path(tempfile.gettempdir())
         self._folder = Path(tempfile.mkdtemp(prefix=STAGING_PREFIX, dir=root))
         try:
@@ -136,7 +157,7 @@ class StagingWorktree:
         IntentJournal(
             operation=self.operation,
             phase=phase,
-            started_at=datetime.now(UTC),
+            started_at=self._started_at,
             staging_dir=str(self.folder),
             destination=str(self.project),
             template_ref=self.template_ref,
