@@ -8,6 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
+from boilerplate.common.exceptions import UpdateCopyBackFailedError
 from boilerplate.common.file_lock import FileLock
 from boilerplate.composition.staging.copy_back import (
     list_untracked_paths,
@@ -18,6 +19,7 @@ from boilerplate.composition.staging.copy_back import (
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_journal import (
     JOURNAL_LOCK_NAME,
+    JOURNAL_NAME,
     IntentJournal,
 )
 from boilerplate.composition.staging.intent_operation import IntentOperation
@@ -85,6 +87,7 @@ class StagingWorktree:
         self._temp_root = temp_root
         self._folder: Path | None = None
         self._lock: FileLock | None = None
+        self._keep = False
         self._start_commit: str | None = None
         self._last_commit: str | None = None
         self._started_at = datetime.now(UTC)
@@ -193,6 +196,11 @@ class StagingWorktree:
             UpdatePathObstructedError: If a path the walk added already exists
                 in the checkout as a file or directory git ignores; nothing is
                 written.
+            UpdateCopyBackFailedError: If the copy back failed after it began
+                to write. The checkout is restored to the starting commit and
+                this staging worktree is kept, not discarded, so the walk's
+                result is not lost; the error names its path. An interrupt
+                restores and keeps the same way and then propagates as it is.
         """
         require_checkout_unchanged(self.project, self.start_commit, self.operation)
         added = list_added_paths(self.project, self.start_commit, self.last_commit)
@@ -200,10 +208,48 @@ class StagingWorktree:
             added = (*added, *list_uncommitted_paths(self.path))
         require_paths_unobstructed(self.project, added)
         self.record_phase("committing")
-        restore_working_tree(self.project, self.last_commit)
-        if paused:
-            apply_working_tree_changes(self.path, self.project)
-            replay_unmerged_entries(self.path, self.project)
+        try:
+            restore_working_tree(self.project, self.last_commit)
+            if paused:
+                apply_working_tree_changes(self.path, self.project)
+                replay_unmerged_entries(self.path, self.project)
+        except Exception as error:
+            kept = self._keep_after_failed_copy_back()
+            raise UpdateCopyBackFailedError(
+                f"Copying the update back failed: {error}. Your checkout was "
+                f"restored to the starting commit; the update's result is kept in "
+                f"the staging worktree at {kept}.",
+                staging_path=str(kept),
+                remediation="Fix the cause, then run the command again; remove "
+                "the staging folder when you no longer need it.",
+            ) from error
+        except BaseException:
+            self._keep_after_failed_copy_back()
+            raise
+
+    def _keep_after_failed_copy_back(self) -> Path:
+        """Restore the checkout, and keep the staging worktree from being discarded.
+
+        The checkout was clean and at the starting commit when the copy back
+        began, so every untracked file now in it is one the copy back wrote.
+        The kept folder loses its journal, which leaves it to the user: the
+        stale cleanup only removes folders that have one.
+
+        Returns:
+            The kept staging worktree.
+        """
+        try:
+            undo_working_tree(
+                self.project, self.start_commit, list_untracked_paths(self.project)
+            )
+        except Exception:
+            _logger.exception(
+                "Restoring %s after the failed copy back failed", self.project
+            )
+        self._keep = True
+        (self.folder / JOURNAL_NAME).unlink(missing_ok=True)
+        _logger.warning("Kept the staging worktree at %s", self.path)
+        return self.path
 
     def __enter__(self) -> Self:
         """Check the project, then create the worktree and its journal.
@@ -239,7 +285,14 @@ class StagingWorktree:
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        """Remove the worktree and its folder, whether or not the block failed."""
+        """Remove the worktree and its folder, whether or not the block failed.
+
+        A staging whose copy back failed is the exception: its worktree and
+        folder stay, and only the lock is released.
+        """
+        if self._keep:
+            self._release_lock()
+            return
         self._discard()
 
     def _hold_lock(self) -> None:
@@ -268,13 +321,17 @@ class StagingWorktree:
             template_ref=self.template_ref,
         ).write(self.folder)
 
+    def _release_lock(self) -> None:
+        """Release the staging's lock, if it holds one."""
+        if self._lock is not None:
+            self._lock.release()
+            self._lock = None
+
     def _discard(self) -> None:
         """Remove the worktree and the unique folder."""
         if self._folder is None:
             return
         folder, self._folder = self._folder, None
         self._last_commit = None
-        if self._lock is not None:
-            self._lock.release()
-            self._lock = None
+        self._release_lock()
         remove_staging_folder(self.project, folder, folder / self.project.name)
