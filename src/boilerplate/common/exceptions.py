@@ -560,6 +560,30 @@ class UpdateCheckoutChangedError(BoilerplateError):
         super().__init__(message, error_code="BP_UPDATE_CHECKOUT_CHANGED", **kwargs)
 
 
+class UpdatePathObstructedError(BoilerplateError):
+    """Raised when a path the walk added already exists in the user's checkout.
+
+    The checkout is at the starting commit with no changes, so a path that
+    exists where the walk added one is a file or directory git ignores. Copying
+    back would overwrite that file or delete that directory without warning, so
+    nothing is written.
+
+    Attributes:
+        paths: Every obstructed path, relative to the checkout.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        paths: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_PATH_OBSTRUCTED."""
+        super().__init__(message, error_code="BP_UPDATE_PATH_OBSTRUCTED", **kwargs)
+        self.paths = tuple(paths)
+
+
 class UpdateTaskFailedError(BoilerplateError):
     """Raised when a task fails after the update's files were copied back.
 
