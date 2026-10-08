@@ -12,7 +12,7 @@
     - [Help Topics](#help-topics)
     - [Command Examples](#command-examples)
 - [Commands](#commands)
-    - Project: [new](#new) | [update](#update) | [status](#status) | [adopt](#adopt) | [eject](#eject)
+    - Project: [new](#new) | [update](#update) | [add](#add) | [status](#status) | [adopt](#adopt) | [eject](#eject)
     - Template: [list](#boilerplate-list) | [compose](#compose) | [graph](#graph) | [validate](#validate) | [init-template](#init-template) | [test](#test)
     - System: [doctor](#doctor) | [env](#env) ([apply](#env-apply), [status](#env-status)) | [lock](#lock-verify) ([verify](#lock-verify)) | [cache warm](#cache-warm)
 - [Shell Completions](#shell-completions)
@@ -86,7 +86,7 @@ These options apply to all commands and MUST be processed before any subcommand.
 
 ### Trust Flags
 
-The following flags govern execution of untrusted template content and are accepted by both `boilerplate new` and `boilerplate update`. They are defined here once; per-command sections reference this definition.
+The following flags govern execution of untrusted template content and are accepted by `boilerplate new`, `boilerplate update`, and `boilerplate add`. They are defined here once; per-command sections reference this definition.
 
 - `--allow-extensions` — Allow Jinja2 extensions declared by templates. Required when any template layer uses `_jinja_extensions`. Default: `false`.
 - `--allow-tasks` — Allow task execution for untrusted templates. Default: `false`. See the [Task execution truth table](#global-options) above for trust-state rules.
@@ -111,7 +111,7 @@ The following flags govern execution of untrusted template content and are accep
 | Command | Supported Formats |
 | --- | --- |
 | `new` | `text` (default), `json` |
-| `update`, `status`, `doctor`, `validate`, `init-template`, `env` | `table` (default), `json` |
+| `update`, `add`, `status`, `doctor`, `validate`, `init-template`, `env` | `table` (default), `json` |
 | `list` | `table` (default), `json`, `wide` |
 | `compose` | `yaml` (default), `json` |
 | `graph` | `table` (default), `json`, `tree` |
@@ -148,6 +148,7 @@ Usage: boilerplate [OPTIONS] COMMAND [ARGS]
 Project commands:
   new            Create a new project from a template
   update         Update project to newer template version
+  add            Add a template layer to a managed project
   adopt          Import an existing Copier project into Boilerplate
   eject          Stop Boilerplate management of a project
   status         Show project and environment state
@@ -369,6 +370,59 @@ TTY output uses full-word labels for immediate comprehension. Non-TTY and JSON o
 **Confirmation rules**: MAJOR updates MUST show a risk warning in the plan summary. All updates prompt `Proceed? [y/N]` unless `--yes` is active. See [Confirmation Contracts](#confirmation-contracts).
 
 **JSON output**: `--format json` with `--dry-run` outputs the plan (including `updates_available: bool`); with `--yes` outputs the result. `--format json` without `--dry-run` or `--yes` exits with code `3` — JSON mode requires explicit intent.
+
+**Exit codes**: `0` on success, `1` on failure, `2` on config error, `3` on validation error.
+
+---
+
+### `add`
+
+**Usage**: `boilerplate add <template-spec> [path] [options]`
+
+Add one template layer to a project Boilerplate already manages, the way a by-hand `copier copy` with its own answers file would, and record it in `boilerplate.lock`. See [06-project-lifecycle.md §Adding a layer](06-project-lifecycle.md#adding-a-layer) for the full workflow.
+
+**Arguments**:
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `template-spec` | Yes | Template reference: `name` or `name@version` |
+| `path` | No | Path to the project directory (defaults to `.`) |
+
+**Options**:
+
+| Option | Short | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `--dry-run` | `-n` | flag | `false` | Show the add plan and exit without prompting or applying. Default: `false`. |
+| `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
+| `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
+| `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
+| `--non-interactive` | — | flag | `false` | Use defaults for the layer's questions without prompting. Default: `false`. |
+| `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
+| `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
+
+Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
+
+`add` has no `--force`: the clean working tree check cannot be skipped.
+
+**Preconditions**: each failure happens before any file changes and exits with code `3` (`VALIDATION_ERROR`; [ADR-004](adr-004-exit-code-taxonomy.md)).
+
+| Precondition | Error and remediation |
+| --- | --- |
+| The project is managed: `boilerplate.lock` exists | `Project is not managed by Boilerplate. Use 'boilerplate adopt' first.` |
+| The working tree is clean | `Working tree has uncommitted changes. Commit or stash them before running boilerplate add.` |
+| The template is not already in the project | `Template '{name}' is already in this project. Use 'boilerplate update' instead.` |
+| Every template the new layer `extends`, transitively, is already in the lock | The error names each missing layer. Remediation: `boilerplate add <ancestor>` first. |
+| Each such ancestor's recorded version satisfies the new layer's `extends` constraint | The error names the ancestor, its recorded version and the constraint. Remediation: `boilerplate update` first. |
+
+`add` and `update` stay separate operations: `add` never changes a layer already in the project.
+
+**Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
+
+**`--answers` and `--set`**: Both are laid over the new layer's questionnaire data, as Copier's own `--data` is.
+
+**Task execution**: The new layer's tasks run once, under the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
+
+**JSON output**: `--format json` with `--dry-run` outputs the plan; with `--yes` outputs the result. `--format json` without either exits with code `3`, as for `update`.
 
 **Exit codes**: `0` on success, `1` on failure, `2` on config error, `3` on validation error.
 
@@ -917,6 +971,7 @@ boilerplate --show-completion       # Show completion script
 | Top-level | Command names |
 | `new <TAB>` | Template names from the catalog |
 | `new <template> <TAB>` | Directory paths |
+| `add <TAB>` | Template names from the catalog |
 | `compose <TAB>`, `graph <TAB>`, `validate <TAB>` | Template names from the catalog |
 | `--format <TAB>` | `table`, `json`, `yaml`, `tree`, `wide` (context-dependent) |
 | `--trust <TAB>` | `trusted`, `untrusted` |
@@ -979,12 +1034,13 @@ Destructive or high-impact operations MUST require confirmation.
 | Trigger | Command | Summary content |
 | --- | --- | --- |
 | Any update (default behavior) | `update` | Update plan with version deltas and file impact |
+| Adding a layer (default behavior) | `add` | Add plan with the layer, its version and file impact |
 | Environment provisioning | `env apply` | Tools to install/upgrade |
 | Stop management (state removal) | `eject` | Artifacts to remove (`boilerplate.lock`, `.boilerplate/`) |
 
-Note: `--force` on `new` does NOT trigger confirmation — force implies consent. The `--yes` flag bypasses confirmation on `update`, `env apply`, and `eject`.
+Note: `--force` on `new` does NOT trigger confirmation — force implies consent. The `--yes` flag bypasses confirmation on `update`, `add`, `env apply`, and `eject`.
 
-All `update`, `env apply`, and `eject` invocations show a plan and prompt for confirmation by default. `--dry-run` suppresses the prompt (plan only). `--yes` suppresses the prompt (plan + apply).
+All `update`, `add`, `env apply`, and `eject` invocations show a plan and prompt for confirmation by default. `--dry-run` suppresses the prompt (plan only). `--yes` suppresses the prompt (plan + apply).
 
 ### Post-Action Guidance
 
@@ -1013,13 +1069,15 @@ Tip: Save your answers for CI reproducibility:
   boilerplate new fastapi my-project --save-answers answers.yml --non-interactive
 ```
 
+**After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted.
+
 **After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (`boilerplate update --continue` / `--abort`).
 
 ### Answer Presets
 
 An **answer preset** is a YAML file that supplies answers to template questions declaratively, enabling reproducible project creation in CI/CD pipelines and scripts.
 
-**CLI flags** (available on `new` and `update`):
+**CLI flags** (available on `new`, `update`, and `add`):
 
 | Option | Short | Type | Description |
 | --- | --- | --- | --- |
@@ -1148,43 +1206,43 @@ Exit codes are defined in [02-data-models.md](02-data-models.md). Scripts SHOULD
 
 The following table summarizes flag availability across commands. **Global flags** (`--verbose`, `--quiet`, `--help`, `--version`, `--templates-dir`, `--format`, `--offline`) apply to all commands and are omitted from this table.
 
-| Flag | `new` | `update` | `adopt` | `eject` | `list` | `compose` | `graph` | `validate` | `status` | `doctor` | `init-template` | `test` | `env` | `lock` | `cache` |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `--force` | X | X | | | | | | | | | | | X | | X |
-| `--non-interactive` | X | X | | | | | | | | | | | | | |
-| `--dry-run` / `-n` | X | X | X | X | | | | | | | | | X | | |
-| `--answers` | X | X | | | | | | | | | | | | | |
-| `--set` | X | X | | | | | | | | | | | | | |
-| `--save-answers` | X | | | | | | | | | | | | | | |
-| `--no-tasks` | X | X | | | | | | | | | | | | | |
-| `--allow-extensions` | X | X | | | | | | | | | | | | | |
-| `--allow-tasks` | X | X | | | | | | | | | | | | | |
-| `--allow-untrusted` | X | X | | | | | | | | | | | | | |
-| `--template-source` | | X | | | | | | | | | | | | | |
-| `--yes` / `-y` | X | X | | X | | | | | | | | | X | | |
-| `--git-init` | X | | | | | | | | | | | | | | |
-| `--render-to` | X | | | | | | | | | | | | | | |
-| `--continue` / `-c` | | X | | | | | | | | | | | | | |
-| `--abort` | | X | | | | | | | | | | | | | |
-| `--target-version` / `-t` | | X | | | | | | | | | | | | | |
-| `--category` | | | | | X | | | | | | | | | | |
-| `--tag` (repeatable) | | | | | X | | | | | | | | | | |
-| `--trust` | | | | | X | | | | | | | | | | |
-| `--type` | | | | | X | | | | | | | | | | |
-| `--all-versions` | | | | | X | | | | | | | | | | |
-| `--include-archived` | | | | | X | | | | | | | | | | |
-| `--source` | | | | | X | | | | | | | | | | |
-| `--refresh` | | | | | X | | | | | | | | | | |
-| `--questions` / `-Q` | | | | | | X | | | | | | | | | |
-| `--section` (repeatable) | | | | | | X | | | | | | | | | |
-| `--all` | | | | | | X | | | | | | | | | |
-| `--stats` | | | | | | X | | | | | | | | | |
-| `--output` / `-o` | | | | | | X | | | | | | | | | |
-| `--tree` | | | | | | | X | | | | | | | | |
-| `--strict` | | | | | | | | X | | | | | | | |
-| `--fixture` | | | | | | | | | | | | X | | | |
-| `--match` | | | | | | | | | | | | X | | | |
-| `--update-snapshots` | | | | | | | | | | | | X | | | |
+| Flag | `new` | `update` | `add` | `adopt` | `eject` | `list` | `compose` | `graph` | `validate` | `status` | `doctor` | `init-template` | `test` | `env` | `lock` | `cache` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `--force` | X | X | | | | | | | | | | | | X | | X |
+| `--non-interactive` | X | X | X | | | | | | | | | | | | | |
+| `--dry-run` / `-n` | X | X | X | X | X | | | | | | | | | X | | |
+| `--answers` | X | X | X | | | | | | | | | | | | | |
+| `--set` | X | X | X | | | | | | | | | | | | | |
+| `--save-answers` | X | | | | | | | | | | | | | | | |
+| `--no-tasks` | X | X | X | | | | | | | | | | | | | |
+| `--allow-extensions` | X | X | X | | | | | | | | | | | | | |
+| `--allow-tasks` | X | X | X | | | | | | | | | | | | | |
+| `--allow-untrusted` | X | X | X | | | | | | | | | | | | | |
+| `--template-source` | | X | X | | | | | | | | | | | | | |
+| `--yes` / `-y` | X | X | X | | X | | | | | | | | | X | | |
+| `--git-init` | X | | | | | | | | | | | | | | | |
+| `--render-to` | X | | | | | | | | | | | | | | | |
+| `--continue` / `-c` | | X | | | | | | | | | | | | | | |
+| `--abort` | | X | | | | | | | | | | | | | | |
+| `--target-version` / `-t` | | X | | | | | | | | | | | | | | |
+| `--category` | | | | | | X | | | | | | | | | | |
+| `--tag` (repeatable) | | | | | | X | | | | | | | | | | |
+| `--trust` | | | | | | X | | | | | | | | | | |
+| `--type` | | | | | | X | | | | | | | | | | |
+| `--all-versions` | | | | | | X | | | | | | | | | | |
+| `--include-archived` | | | | | | X | | | | | | | | | | |
+| `--source` | | | | | | X | | | | | | | | | | |
+| `--refresh` | | | | | | X | | | | | | | | | | |
+| `--questions` / `-Q` | | | | | | | X | | | | | | | | | |
+| `--section` (repeatable) | | | | | | | X | | | | | | | | | |
+| `--all` | | | | | | | X | | | | | | | | | |
+| `--stats` | | | | | | | X | | | | | | | | | |
+| `--output` / `-o` | | | | | | | X | | | | | | | | | |
+| `--tree` | | | | | | | | X | | | | | | | | |
+| `--strict` | | | | | | | | | X | | | | | | | |
+| `--fixture` | | | | | | | | | | | | | X | | | |
+| `--match` | | | | | | | | | | | | | X | | | |
+| `--update-snapshots` | | | | | | | | | | | | | X | | | |
 
 **Short flag assignment**: `-f` is assigned to `--force` (on `new`, `update`, and `env apply`), matching universal CLI convention (`rm -f`, `cp -f`, `docker rm -f`). `--format` uses long-form only.
 
@@ -1217,6 +1275,7 @@ Common invocation patterns for automated environments:
 | Create with answers file | `boilerplate new template dest --ci --answers answers.yml` |
 | Create from an untrusted source, tasks allowed | `boilerplate new template dest --ci --allow-tasks` |
 | Update project | `boilerplate update --ci` |
+| Add a template layer | `boilerplate add template --ci` |
 | Validate template | `boilerplate validate ./my-template/` |
 | JSON output for scripting | `boilerplate list --format json` |
 | Dry-run update | `boilerplate update --dry-run --format json` |
