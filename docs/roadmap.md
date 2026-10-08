@@ -64,7 +64,7 @@ Prerequisites inside the composition engine, in order:
 2. Per-layer answers-file consumption (the per-layer answers files projects already carry).
 3. Version-conflict detection and graph size/depth limits.
 
-Then the three-way merge envelope — `UpdatePlan`, backup, `--continue` / `--abort`, and the intent journal protecting the in-place commit window (deferred from Phase 1 because `new`'s staging pattern needs no journal) — and finally `adopt`, which reuses the same machinery to bring an existing project under lock management. The conflict-pause / safe-orphan / never-auto-delete semantics governing this envelope are specified in [ADR-007](design/adr-007-update-model.md).
+Then the three-way merge envelope — `UpdatePlan`, the staging worktree, and the intent journal protecting the copy-back window (deferred from Phase 1 because `new`'s staging pattern needs no journal) — and finally `adopt`, which reuses the same machinery to bring an existing project under lock management. The conflict-pause / safe-orphan / never-auto-delete semantics governing this envelope are specified in [ADR-007](design/adr-007-update-model.md).
 
 `status` ships here rather than in Phase 2: reporting drift requires the update machinery to have a meaningful reference point, and source-reachability checks require Phase 4's fetch layer. A Phase 2 `status` would silently omit the most useful signals.
 
