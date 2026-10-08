@@ -8,17 +8,20 @@ from boilerplate.common.exceptions import (
     UpdateSubmodulesUnsupportedError,
 )
 from boilerplate.composition.staging.git_commands import run_git
+from boilerplate.composition.staging.intent_operation import IntentOperation
 from boilerplate.integrations.copier_types import ProcessExecutionError
 
 _logger = logging.getLogger(__name__)
 
 _DIRTY_MESSAGE = (
     "Working tree has uncommitted changes. "
-    "Commit or stash them before running boilerplate update."
+    "Commit or stash them before running boilerplate {command}."
 )
 
 
-def check_project_ready(project: Path) -> None:
+def check_project_ready(
+    project: Path, operation: IntentOperation = IntentOperation.UPDATE
+) -> None:
     """Check that `project` is a clean git repository without submodules.
 
     The tree must have no uncommitted changes, untracked files included:
@@ -29,6 +32,8 @@ def check_project_ready(project: Path) -> None:
 
     Args:
         project: The project folder; it must be the root of its repository.
+        operation: The operation that asks, which the dirty-tree message names
+            as the command to rerun.
 
     Raises:
         UpdateProjectNotReadyError: If `project` is not the root of a git
@@ -38,7 +43,7 @@ def check_project_ready(project: Path) -> None:
     """
     _require_repository_root(project)
     if run_git(project, "status", "--porcelain").strip():
-        raise UpdateProjectNotReadyError(_DIRTY_MESSAGE)
+        raise UpdateProjectNotReadyError(_DIRTY_MESSAGE.format(command=operation.value))
     if (project / ".gitmodules").is_file():
         paths = _submodule_paths(project)
         raise UpdateSubmodulesUnsupportedError(
