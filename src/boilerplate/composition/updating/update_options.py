@@ -11,6 +11,11 @@ class UpdateOptions(BaseModel):
     Attributes:
         skip_tasks: Whether to skip the layer's own post-generation tasks.
         quiet: Whether to silence Copier's progress output.
+        interactive: Whether the layer's step prompts for its own questions,
+            with the recorded answer as the default, as ``copier update`` does;
+            otherwise every question takes its default.
+        skip_answered: Whether the step asks only the questions no answers
+            file records; Copier's ``skip_answered``.
         worker_type: The worker class to update with.
     """
 
@@ -18,4 +23,6 @@ class UpdateOptions(BaseModel):
 
     skip_tasks: bool = True
     quiet: bool = True
+    interactive: bool = False
+    skip_answered: bool = False
     worker_type: type[ScopedWorker] = ScopedWorker

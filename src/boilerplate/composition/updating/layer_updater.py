@@ -30,8 +30,9 @@ def update_layer(
             releases and at the target releases.
         data: Forced answers; ``{}`` is a vanilla ``copier update``, which
             reads only the answers file.
-        options: How the update runs; the defaults skip the layer's tasks and
-            silence Copier.
+        options: How the update runs; the defaults skip the layer's tasks,
+            silence Copier and take every question's default without
+            prompting.
     """
     options = options or UpdateOptions()
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
@@ -40,7 +41,8 @@ def update_layer(
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
         data=dict(data),
         vcs_ref=release.ref,
-        defaults=True,
+        defaults=not options.interactive,
+        skip_answered=options.skip_answered,
         overwrite=True,
         quiet=options.quiet,
         unsafe=True,
