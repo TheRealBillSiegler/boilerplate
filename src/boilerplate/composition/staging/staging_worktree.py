@@ -62,12 +62,15 @@ class StagingWorktree:
 
         Args:
             project: The project to stage; the root of a clean git repository.
+                A relative path is resolved against the current directory now,
+                so the worktree's name and the journal's destination do not
+                depend on the directory of whichever process reads them later.
             operation: The operation the staging belongs to.
             template_ref: The template reference of the operation, if any.
             temp_root: The directory to create the unique folder in; the
                 system temp directory when omitted.
         """
-        self.project = project
+        self.project = project.resolve()
         self.operation = operation
         self.template_ref = template_ref
         self._temp_root = temp_root

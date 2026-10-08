@@ -29,6 +29,28 @@ def install_hook(project: Path, name: str, marker: Path) -> None:
     hook.chmod(0o755)
 
 
+class TestRelativeProject:
+    def test_dot_resolves_to_the_checkout_and_names_the_worktree_after_it(
+        self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(project)
+
+        with staging(Path("."), staging_root) as stage:
+            assert stage.project == project.resolve()
+            assert stage.path.name == PROJECT_NAME
+            assert not stage.folder.is_relative_to(stage.path)
+
+    def test_journal_records_an_absolute_destination(
+        self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(project.parent)
+
+        with staging(Path(PROJECT_NAME), staging_root) as stage:
+            destination = IntentJournal.read(stage.folder).destination
+            assert Path(destination).is_absolute()
+            assert Path(destination) == project.resolve()
+
+
 class TestCreate:
     def test_worktree_is_detached_at_the_current_commit(
         self, project: Path, staging_root: Path
