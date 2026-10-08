@@ -14,7 +14,7 @@ The ancillary documents in this directory:
 - [`adr-004-exit-code-taxonomy.md`](adr-004-exit-code-taxonomy.md) — six-value exit-code taxonomy with `BP*` codes for detail.
 - [`adr-005-integrity-model.md`](adr-005-integrity-model.md) — integrity today: filesystem-permission-based for the lock file; cryptographic signing and a revocation list deferred.
 - [`adr-006-template-distribution.md`](adr-006-template-distribution.md) — git-backed template distribution: monorepo authoring → release-time extraction into published per-template repos, whose URLs and tags the answers files and lock record (the wheel bundle is a deferred offline seed cache).
-- [`adr-007-update-model.md`](adr-007-update-model.md) — safe update: conflict is a pause (exit 4 + `--continue`/`--abort`); structural change is migration-driven; updatability is per-layer.
+- [`adr-007-update-model.md`](adr-007-update-model.md) — safe update: conflict is a pause (exit 4; resolve, commit, rerun `update`); structural change is migration-driven; updatability is per-layer.
 - [`adr-008-distribution-name.md`](adr-008-distribution-name.md) — distribution name: PyPI `boilerplate` is taken by a same-niche tool; publish the dist as `boilerplate-cli`, keep `boilerplate` as the command/repo/brand (Pending — may become `boilerplate` if the name is acquired).
 - [`adr-009-environment-provider-protocol.md`](adr-009-environment-provider-protocol.md) — target: generalize Environment Provisioning into a provider protocol (proto is one kind, optional).
 - [`adr-010-profile.md`](adr-010-profile.md) — profiles are plain default-answer files (`profile.toml` riding Copier's overridable `user_defaults=` channel).
