@@ -119,4 +119,4 @@ class TestTasks:
         """Return the accumulated task list of the full composition."""
         tasks = views.tasks(releases_at(family, BASE))
 
-        assert len(tasks) == 1
+        assert len(tasks) == 2
