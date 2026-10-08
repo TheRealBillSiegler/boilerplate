@@ -22,7 +22,12 @@ from boilerplate.common.exceptions import (
     ProjectNotManagedError,
     UpdateProjectNotReadyError,
 )
-from boilerplate.composition.adding import AddRequest, AddStatus, LayerAdder
+from boilerplate.composition.adding import (
+    AddOutcome,
+    AddRequest,
+    AddStatus,
+    LayerAdder,
+)
 from boilerplate.composition.staging.stale_cleanup import STAGING_PREFIX
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
@@ -45,6 +50,10 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     lines,
     merge_state,
     tree,
+)
+from tests.integration.boilerplate.composition.scenarios.prompt_session import (
+    PromptSession,
+    drive_prompts,
 )
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
@@ -422,6 +431,51 @@ class TestRefusalsComeBeforeStaging:
             "Run 'boilerplate update' first.",
             False,
         )
+
+
+class Prompted(NamedTuple):
+    """A project after an interactive add, and the prompts the add put."""
+
+    project: Path
+    session: PromptSession[AddOutcome]
+
+
+class TestPrompting:
+    """An interactive add asks what no answers file of the project records."""
+
+    @pytest.fixture
+    def prompted(self, family: Family, tmp_path: Path) -> Prompted:
+        """Add docs interactively, typing a site name and accepting the rest."""
+        project = compose_locked_family(family, tmp_path, "service", BASE)
+        request = AddRequest(
+            name="docs",
+            source=family.repos["docs"].as_posix(),
+            ref="1.0.0",
+            interactive=True,
+        )
+        session = drive_prompts(
+            lambda: LayerAdder().add(project, request),
+            typed={"docs_site_name": "Handbook"},
+        )
+        return Prompted(project, session)
+
+    def test_the_run_finishes_without_error(self, prompted: Prompted) -> None:
+        assert prompted.session.error is None
+
+    def test_ancestors_recorded_answers_are_not_asked_again(
+        self, prompted: Prompted
+    ) -> None:
+        """Ask the layer's own questions and core's secret, which no file records."""
+        assert prompted.session.shown == [
+            "api_token",
+            "docs_generator",
+            "docs_site_name",
+        ]
+
+    def test_the_typed_answer_is_recorded(self, prompted: Prompted) -> None:
+        recorded = answers_file(prompted.project, "docs")
+
+        assert recorded["docs_site_name"] == "Handbook"
 
 
 class TestAnErrorMidAdd:
