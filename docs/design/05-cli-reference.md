@@ -308,10 +308,13 @@ Update an existing project to a newer template version. The walk runs in a tempo
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Take every question's default without prompting, a recorded answer being its question's default. Default: `false`. |
+| `--skip-answered` | — | flag | `false` | Ask only the questions no answers file records. Default: `false`. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
+
+**`--skip-answered`**: Ask only the questions no answers file records, as Copier's `--skip-answered` does; every recorded answer stands without a prompt. Prompting happens inside each layer's step ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
 
 **`--non-interactive`**: Take every question's default without prompting, as Copier's `--defaults` does. A recorded answer is the default of its question, so existing answers from each layer's `.copier-answers.<layer>.yml` are reused and a new question takes its declared default.
 
@@ -1203,6 +1206,7 @@ The following table summarizes flag availability across commands. **Global flags
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `--force` | X | | | | | | | | | | | | | X | | X |
 | `--non-interactive` | X | X | X | | | | | | | | | | | | | |
+| `--skip-answered` | | X | | | | | | | | | | | | | | |
 | `--dry-run` / `-n` | X | X | X | X | X | | | | | | | | | X | | |
 | `--answers` | X | X | X | | | | | | | | | | | | | |
 | `--set` | X | X | X | | | | | | | | | | | | | |
