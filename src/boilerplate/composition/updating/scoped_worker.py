@@ -31,6 +31,7 @@ from boilerplate.integrations.copier_types import (
     Template,
     Worker,
     copier_operation,
+    tasks_phase,
 )
 
 _logger = logging.getLogger(__name__)
@@ -126,12 +127,14 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         it, as at creation, but under Copier's `operation`: a task's ``when:``
         sees ``_copier_operation`` as ``"update"`` after an update, where a
         template may guard a creation-only task, and as ``"copy"`` after an add,
-        which a by-hand copy of the layer runs its tasks under. Only
-        ``run_copy``, ``run_recopy`` and ``run_update`` set the operation, and
-        this run is none of them, so the shim sets it. The questions are asked
-        first, as the task conditions and commands render against the answers;
-        the project's recorded answers and the data the worker holds answer them
-        all.
+        which a by-hand copy of the layer runs its tasks under. The tasks run
+        in Copier's tasks phase too, so ``_copier_phase`` reads ``"tasks"`` as
+        it does under Copier's own task run. Only ``run_copy``, ``run_recopy``
+        and ``run_update`` set the operation and the phase, and this run is none
+        of them, so the shim sets both. The questions are asked first, outside
+        the tasks phase, as the task conditions and commands render against the
+        answers; the project's recorded answers and the data the worker holds
+        answer them all.
 
         Args:
             operation: The operation the tasks run under.
@@ -144,7 +147,8 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             copier_operation(operation),
         ):
             super()._ask()
-            self._execute_tasks(self.template.tasks)
+            with tasks_phase():
+                self._execute_tasks(self.template.tasks)
 
     def _ask(self) -> None:
         """Ask the questions, after rejecting a recorded answer the target cannot take.
