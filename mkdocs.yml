@@ -233,6 +233,7 @@ nav:
       - Container deployment: templates-hub/streamlit/deployment/containers/index.md
     - Template Authoring: templates-hub/authoring.md
     - Template Composition: templates-hub/composition.md
+    - Plain Copier: templates-hub/plain-copier.md
     - Versioning and Migration: templates-hub/versioning.md
     - Migration Guide Template: templates-hub/migration-guide-template.md
   - CLI:
