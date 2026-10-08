@@ -549,3 +549,54 @@ class TestSkipIfExists:
         config = self._template_config(tmp_path, honor_skip_if_exists=False)
 
         assert config["skip_if_exists"] == []
+
+
+class TestJinjaExtensions:
+    """The view's extensions join the template's own, keeping its order."""
+
+    def test_the_views_entries_append_after_the_templates_own(
+        self, tmp_path: Path
+    ) -> None:
+        """Loader-before-spec ordering matters to copier_template_extensions."""
+        (tmp_path / "copier.yml").write_text(
+            "_jinja_extensions:\n"
+            "  - copier_template_extensions.TemplateExtensionLoader\n"
+            "  - _extensions/context.py:ContextUpdater\n",
+            encoding="utf-8",
+        )
+        worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+            src_path=str(tmp_path),
+            dst_path=tmp_path / "project",
+            target_view=LayerView(
+                {},
+                (
+                    "copier_template_extensions.TemplateExtensionLoader",
+                    "probe_ext.ProbeExtension",
+                ),
+            ),
+        )
+
+        assert tuple(worker.template.jinja_extensions) == (
+            "copier_template_extensions.TemplateExtensionLoader",
+            "_extensions/context.py:ContextUpdater",
+            "probe_ext.ProbeExtension",
+        )
+
+
+class TestFallbackVersion:
+    """A folder with no git history reports the version its layer declares."""
+
+    def _version(self, tmp_path: Path, **options: object) -> object:
+        worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+            src_path=str(tmp_path),
+            dst_path=tmp_path / "project",
+            target_view=TARGET,
+            **options,
+        )
+        return worker.template.version
+
+    def test_a_plain_folder_reports_the_fallback_version(self, tmp_path: Path) -> None:
+        assert str(self._version(tmp_path, fallback_version="1.2.3")) == "1.2.3"
+
+    def test_no_fallback_leaves_the_version_unset(self, tmp_path: Path) -> None:
+        assert self._version(tmp_path) is None

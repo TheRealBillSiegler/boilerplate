@@ -1,15 +1,14 @@
-"""Run one Copier ``Worker`` against a merged template, one place for its guards.
+"""Run one ``ScopedWorker``, one place for the guards a compose adds around it.
 
-A render and the questionnaire pass before it both drive a ``Worker`` the same
-way: UTF-8 subprocess output, the ancestors' extension files loaded, the merged
-template primed in place of the one Copier would read, and Copier's prompt
-failures turned into Boilerplate's own errors.
+A render and the questionnaire pass before it both drive the Worker subclass an
+update uses: UTF-8 subprocess output, the ancestors' extension files loaded, and
+Copier's prompt failures turned into Boilerplate's own errors.
 """
 # Spec: docs/design/04-composition-engine.md §Copier Worker Interface
 
 import contextlib
 import os
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from logging import getLogger
 
 from copier.errors import CopierAnswersInterrupt, InteractiveSessionError
@@ -18,9 +17,10 @@ from boilerplate.common.exceptions import (
     InteractiveRenderFailedError,
     UserCancelledError,
 )
+from boilerplate.composition.models.json_types import JSON
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.rendering.worker_options import WorkerOptions
 from boilerplate.composition.views import LayerView, registered_ancestor_extensions
-from boilerplate.integrations.copier_types import Template, Worker
 
 _logger = getLogger(__name__)
 
@@ -71,19 +71,28 @@ def _is_interactive_prompt_failure(exc: BaseException) -> bool:
 
 @contextlib.contextmanager
 def worker_session(
-    options: WorkerOptions, template: Template, view: LayerView
-) -> Generator[Worker]:
-    """Open a Copier Worker that reads `template` and renders under `view`.
+    options: WorkerOptions,
+    view: LayerView,
+    *,
+    tasks: Sequence[JSON] = (),
+    fallback_version: str | None = None,
+) -> Generator[ScopedWorker]:
+    """Open a ``ScopedWorker`` that renders under `view`, as a compose does.
+
+    The Worker renders one view for every copy, and a forced render clears the
+    template's own ``_skip_if_exists``. A compose supplies every answer as data,
+    so the Worker checks no recorded answer; only an update's own Worker does.
 
     Args:
         options: Keyword arguments for `copier.Worker`.
-        template: A `MergedTemplate` carrying the view's questions and config.
         view: The view the Worker renders under; its ancestors' extension files
             are importable for the block.
+        tasks: The tasks the Worker runs after rendering, in Copier's shapes.
+        fallback_version: The layer's ``boilerplate.yml`` version, reported as
+            the template version when the layer is not a git repository.
 
     Yields:
-        The Worker, entered, with `template` in place of the one it would read
-        and its cleanup registered.
+        The Worker, entered.
 
     Raises:
         UserCancelledError: If the user cancels a prompt.
@@ -93,22 +102,20 @@ def worker_session(
     destination = options.get("dst_path", "unknown")
     _logger.debug("Starting file generation: %s to %s", source, destination)
     try:
-        # pyright: ignore — pydantic's @dataclass decorator erases
-        # Worker's type to PydanticDataclass, hiding the constructor
-        # signature and context-manager protocol that copier.Worker
-        # correctly implements at runtime.
         with (
             _utf8_env(),
             registered_ancestor_extensions(view.ancestor_extensions),
-            Worker(**options) as worker,  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
+            # pydantic's @dataclass decorator erases the Worker's type, hiding
+            # the constructor signature that it implements at runtime.
+            ScopedWorker(  # pyright: ignore[reportCallIssue]
+                **options,
+                target_view=view,
+                tasks=tuple(tasks),
+                honor_skip_if_exists=False,
+                check_recorded=False,
+                fallback_version=fallback_version,
+            ) as worker,
         ):
-            # Inject the merged template so Worker uses our view (no disk mutation).
-            # Priming the `template` cached_property bypasses the Worker
-            # code that would otherwise register the template's cleanup,
-            # so register it here: rendering a VCS template clones it into
-            # a temp directory that only `_cleanup` removes.
-            object.__setattr__(worker, "template", template)
-            worker._cleanup_hooks.append(template._cleanup)  # pyright: ignore[reportPrivateUsage]
             yield worker
     except CopierAnswersInterrupt as e:
         # Must precede the generic Exception handler -- CopierAnswersInterrupt
