@@ -440,6 +440,8 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | `status` | enum | One of `in_progress`, `success`, `failed`, `conflict`, `adopted`, `created`; see [MigrationRecord status state machine](#migrationrecord-status-state-machine) for terminal values, exit-code mapping, and two-phase write semantics. |
 | `error` | string or null | Error message if status is not `success` (or `created`/`adopted`, both of which are success-shaped terminal values) |
 | `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created` and `adopted` records (no prior-version comparison applies). |
+| `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
+| `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
 
 **Invariants**: Entries MUST be append-only. Failed and conflict entries MUST be recorded.
 
@@ -451,7 +453,7 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | --- | --- | --- |
 | `in_progress` | — (transient) | Update operation has started; record is awaiting in-place update to a terminal status. |
 | `success` | 0 | Normal completion of an update. |
-| `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. |
+| `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. The record names each layer's target version and the layers the paused walk finished, which is what `update` resumes from ([04 §Safe Update](04-composition-engine.md#safe-update)). |
 | `failed` | 1 | Unrecoverable error. |
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
@@ -604,6 +606,8 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `DependencyNotFoundError` | `1` | (extends `DependencyError`) A template referenced in `extends` cannot be found in the catalog |
 | `DependencyCycleError` | `1` | (extends `DependencyError`) The dependency graph contains a cycle |
 | `RecordedAnswerRejectedError` | `3` | A recorded answer fails the target view's question type, choices or validator inside a layer's update step, after the layer's migrations; translated from Copier's `ValueError` |
+| `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
+| `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `MergeConflictError` | `1` | Two layers declare incompatible values for the same configuration key |
 
