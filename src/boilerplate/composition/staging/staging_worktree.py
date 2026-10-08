@@ -17,6 +17,10 @@ from boilerplate.composition.staging.intent_operation import IntentOperation
 from boilerplate.composition.staging.layer_commit import commit_worktree
 from boilerplate.composition.staging.preflight import check_project_ready
 from boilerplate.composition.staging.staging_removal import remove_staging_folder
+from boilerplate.composition.staging.unmerged_entries import replay_unmerged_entries
+from boilerplate.composition.staging.working_tree_changes import (
+    apply_working_tree_changes,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -102,12 +106,21 @@ class StagingWorktree:
         self._last_commit = commit_worktree(self.path, message)
         return self._last_commit
 
-    def copy_back(self) -> None:
-        """Reproduce the worktree's last layer commit in the user's checkout.
+    def copy_back(self, *, paused: bool = False) -> None:
+        """Reproduce the worktree's state in the user's checkout.
 
-        The checkout must still be at the starting commit with no changes. The
+        The checkout must still be at the starting commit with no changes. Its
         files then match the last layer commit, additions and deletions both,
         as uncommitted, unstaged changes, the way plain Copier leaves them.
+
+        A paused copy back is for a walk that stopped on a layer whose update
+        left conflicts. That layer is not committed, so after the restore the
+        worktree's remaining working-tree changes are applied, and its
+        unmerged index entries are replayed into the checkout's index; the
+        conflicted files then show as unmerged and ``git commit`` refuses them.
+
+        Args:
+            paused: Whether the last layer paused on a conflict.
 
         Raises:
             UpdateCheckoutChangedError: If the checkout changed during staging;
@@ -116,6 +129,9 @@ class StagingWorktree:
         require_checkout_unchanged(self.project, self.start_commit)
         self._write_journal("committing")
         restore_working_tree(self.project, self.last_commit)
+        if paused:
+            apply_working_tree_changes(self.path, self.project)
+            replay_unmerged_entries(self.path, self.project)
 
     def __enter__(self) -> Self:
         """Check the project, then create the worktree and its journal.
