@@ -4,11 +4,11 @@
 
 ## Context
 
-`boilerplate update` performs a per-layer `copier update`; Copier performs the only merge (INT-003, [04 §Safe Update](04-composition-engine.md)). Three questions bear on the update model: (1) what happens on a merge conflict, (2) what happens when the template's `extends` chain changed since lock time (the [ADR-001](adr-001-build-vs-adopt.md) HIGH-severity gap), and (3) whether `update` must walk one version at a time within a layer when a template version can carry a migration. On (1), [06 §Step 4](06-project-lifecycle.md) specifies leave-markers, pause at exit 4 (`ACTION_REQUIRED`), and resume via `--continue`/`--abort` over a pre-merge backup, and [02](02-data-models.md) records it as the `conflict` MigrationRecord state. The `MergeConflictError → exit 1` row in the [02](02-data-models.md) Error-Hierarchy table is a *different* condition — the composition-time config-merge error (two layers declaring incompatible values for one key, per [04](04-composition-engine.md)) — unrelated to the update file-conflict. This ADR states the model on (1) and decides (2) and (3).
+`boilerplate update` performs a per-layer `copier update`; Copier performs the only merge (INT-003, [04 §Safe Update](04-composition-engine.md)). Three questions bear on the update model: (1) what happens on a merge conflict, (2) what happens when the template's `extends` chain changed since lock time (the [ADR-001](adr-001-build-vs-adopt.md) HIGH-severity gap), and (3) whether `update` must walk one version at a time within a layer when a template version can carry a migration. On (1), [06 §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict) specifies that a conflict brings back the finished layers with Copier's markers and exits 4 (`ACTION_REQUIRED`), after which the user resolves, commits and reruns `boilerplate update`, and [02](02-data-models.md) records the pause as the `conflict` MigrationRecord state. The `MergeConflictError → exit 1` row in the [02](02-data-models.md) Error-Hierarchy table is a *different* condition — the composition-time config-merge error (two layers declaring incompatible values for one key, per [04](04-composition-engine.md)) — unrelated to the update file-conflict. This ADR states the model on (1) and decides (2) and (3).
 
 ## Decision
 
-**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, leave Copier's conflict markers in the working tree, record a `conflict` MigrationRecord, and exit **4 (`ACTION_REQUIRED`)**. The user resolves markers in place, then `boilerplate update --continue` finalizes (writes the new lock, advances the record to `success`) or `update --abort` restores from the pre-merge backup. **Atomic rollback is reserved for *unexpected* (non-conflict) errors**, which restore the pre-update state and record `failed` (exit 1). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional.
+**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, `update` stops the walk, copies the layers finished so far into the working tree as uncommitted changes with Copier's conflict markers, records a `conflict` MigrationRecord, writes no lock, and exits **4 (`ACTION_REQUIRED`)**. The user resolves the markers, commits as with plain Copier, and reruns `boilerplate update`; a layer already at its target is skipped, so the answers files record the progress, and the rerun writes the new lock and a `success` record. `git restore` discards the partial update. **Every other error removes the staging worktree** ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), which leaves the working tree unchanged with no lock and no migration record, and exits by the error's class (1 for an unexpected failure). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional.
 
 **A changed `extends` chain is handled by author migrations, not provenance inference.**
 
@@ -47,13 +47,14 @@
 
 ## Options considered
 
-- **Rollback-on-conflict** — simpler (drops the `--continue` machinery), but it throws away the merge attempt and hands the user nothing to resolve; it fights Copier's native model. Rejected.
+- **Rollback-on-conflict** — simpler (drops the conflict-pause path), but it throws away the merge attempt and hands the user nothing to resolve; it fights Copier's native model. Rejected.
+- **A Boilerplate-owned backup directory with `update --continue` and `update --abort`** — rejected: the staging worktree leaves the checkout untouched until the walk ends, `git restore` discards a paused update and a rerun of `update` finishes it, so a second state machine adds nothing Copier and git lack ([ADR-001](adr-001-build-vs-adopt.md)).
 - **Pause-with-markers (chosen)** — Copier-native, preserves work, costs the continuation slice.
 - Removed layers: **auto-delete uniquely-owned files** (needs a per-layer file manifest in the lock; carries deletion risk) vs **migrations + safe-orphan (chosen)** — author-declared, no data-loss risk.
 
 ## Consequences
 
-- The update CLI is `update` / `update --continue` / `update --abort` (git/Copier idiom); `--dry-run` (preferred over Copier's `--pretend` where git and Copier idioms clash); `--prereleases` (Copier's name). Operationally-scoped flags may be set per-layer via an allowlisted params object; answers stay merged (the singular-template experience).
+- The update CLI is `update`, rerun after a conflict (git/Copier idiom), with `--skip-answered` (Copier's name); `--dry-run` (preferred over Copier's `--pretend` where git and Copier idioms clash); `--prereleases` (Copier's name). Operationally-scoped flags may be set per-layer via an allowlisted params object; answers stay merged (the singular-template experience).
 - Migrations are arbitrary code — fine for first-party templates (ADR-003), gated behind the trust model before untrusted templates run them.
 - Authoring guidance (removed-layer cleanup migration, breaking-change migration) is owned by INT-009; `init-template` may scaffold a commented `_migrations` stub.
 
