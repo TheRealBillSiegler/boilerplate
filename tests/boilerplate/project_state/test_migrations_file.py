@@ -1,10 +1,11 @@
 """Tests for reading and appending ``.boilerplate/migrations.yml``."""
 
+import logging
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from pytest_mock import MockerFixture
 
 from boilerplate.models import MigrationRecord, MigrationStatus
 from boilerplate.project_state.migrations_file import (
@@ -15,6 +16,29 @@ from boilerplate.project_state.migrations_file import (
 )
 
 STAMP = datetime(2026, 10, 8, 12, 0, tzinfo=UTC)
+
+
+class _Collector(logging.Handler):
+    """Collect the records a logger emits."""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+@pytest.fixture()
+def warnings_logged() -> Iterator[list[logging.LogRecord]]:
+    """Collect the warnings the migration log's reader emits."""
+    logger = logging.getLogger("boilerplate.project_state.migrations_file")
+    collector = _Collector()
+    logger.addHandler(collector)
+    try:
+        yield collector.records
+    finally:
+        logger.removeHandler(collector)
 
 
 def _record(record_id: str, **overrides: object) -> MigrationRecord:
@@ -70,14 +94,16 @@ class TestReadMigrations:
         ids=["unparseable", "not-a-list", "invalid-record", "empty"],
     )
     def test_a_corrupted_file_reads_as_empty_history_and_warns(
-        self, tmp_path: Path, mocker: MockerFixture, text: str
+        self,
+        tmp_path: Path,
+        warnings_logged: list[logging.LogRecord],
+        text: str,
     ) -> None:
-        warning = mocker.patch("boilerplate.project_state.migrations_file._logger")
         (tmp_path / MIGRATIONS_FILE).parent.mkdir()
         (tmp_path / MIGRATIONS_FILE).write_text(text, encoding="utf-8")
 
         assert read_migrations(tmp_path) == ()
-        assert warning.warning.called is (text != "")
+        assert bool(warnings_logged) is (text != "")
 
 
 class TestAppendMigration:
