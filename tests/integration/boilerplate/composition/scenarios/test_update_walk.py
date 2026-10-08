@@ -8,27 +8,41 @@ stops that come before any staging folder exists and an error in a later layer.
 Pauses, resumes and tasks follow in the classes below.
 """
 
+import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, NamedTuple
 
 import pytest
 
+from boilerplate.common.exceptions import (
+    RecordedAnswerRejectedError,
+    UpdateDowngradeError,
+    UpdateLayerDriftError,
+    UpdateProjectNotReadyError,
+)
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.updater import Updater
 from boilerplate.models import MigrationStatus
-from boilerplate.project_state.lock_file import read_lock
-from boilerplate.project_state.migrations_file import read_migrations
-from tests.boilerplate.templates.conftest import git
-from tests.integration.boilerplate.composition.family import Family
+from boilerplate.project_state.lock_builder import build_lock
+from boilerplate.project_state.lock_file import read_lock, write_lock
+from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
+from tests.boilerplate.templates.conftest import commit_all, git, rehome_layer
+from tests.integration.boilerplate.composition.family import Family, build_family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     AUTHOR,
     USER_LINE,
     add_user_line,
     answers_file,
+    compose_family,
     compose_locked_family,
     lines,
+    tree,
+    write,
+)
+from tests.integration.boilerplate.composition.scenarios.prompt_session import (
+    drive_prompts,
 )
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
@@ -135,3 +149,277 @@ class TestDiamondWalkToNewerReleases:
     def test_the_outcome_lists_the_layers_in_walk_order(self, diamond: Walked) -> None:
         """Report every layer as updated, none skipped."""
         assert (diamond.outcome.updated, diamond.outcome.skipped) == (LAYERS, ())
+
+
+SERVICE_BASE = {"core": "1.0.0", "service": "1.0.0"}
+SERVICE_NEXT = {"core": "1.0.0", "service": "1.1.0"}
+STAGING_PREFIX = "boilerplate-staging-"
+
+
+def install_hook(project: Path, name: str, marker: Path) -> None:
+    """Install a git hook that records its run by writing `marker`."""
+    hook = project / ".git" / "hooks" / name
+    hook.write_text(f'#!/bin/sh\necho ran > "{marker.as_posix()}"\n', encoding="utf-8")
+    hook.chmod(0o755)
+
+
+class ServiceWalk(NamedTuple):
+    """A service project walked with hooks installed and an answer supplied.
+
+    Attributes:
+        project: The updated checkout.
+        hooks_ran: The markers the project's hooks wrote, by hook name.
+    """
+
+    project: Path
+    hooks_ran: dict[str, bool]
+
+
+@pytest.fixture(scope="module")
+def service_walk(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[ServiceWalk]:
+    """Walk core and service with a post-checkout and a pre-commit hook installed.
+
+    Core stays at its release while service moves to the next one, and the
+    walk supplies a new author for core's question.
+    """
+    work = tmp_path_factory.mktemp("service-walk")
+    markers = {name: work / f"{name}.ran" for name in ("post-checkout", "pre-commit")}
+    with temp_dir_inside(work):
+        project = compose_locked_family(family, work, "service", SERVICE_BASE)
+        for name, marker in markers.items():
+            install_hook(project, name, marker)
+        Updater().update(
+            project, request(SERVICE_NEXT, supplied={"author_name": "Grace Hopper"})
+        )
+        yield ServiceWalk(project, {name: m.exists() for name, m in markers.items()})
+
+
+@pytest.mark.xdist_group("update-walk-service")
+class TestSuppliedAnswer:
+    """A layer already at its target still runs, so a supplied answer reaches it."""
+
+    def test_the_changed_answer_lands_in_the_layers_answers_file(
+        self, service_walk: ServiceWalk
+    ) -> None:
+        """Record the supplied author in core, which did not move."""
+        recorded = answers_file(service_walk.project, "core")
+
+        assert (recorded["_commit"], recorded["author_name"]) == (
+            "1.0.0",
+            "Grace Hopper",
+        )
+
+    def test_the_changed_answer_is_rendered_into_the_layers_files(
+        self, service_walk: ServiceWalk
+    ) -> None:
+        """Render the supplied author into core's README."""
+        readme = lines(service_walk.project / "README.md")
+
+        assert "A Python 3.13 project by Grace Hopper." in readme
+
+
+@pytest.mark.xdist_group("update-walk-service")
+class TestHooksNeverRun:
+    """The project's own git hooks stay out of the staging."""
+
+    @pytest.mark.parametrize("hook", ["post-checkout", "pre-commit"])
+    def test_the_hook_did_not_run(self, service_walk: ServiceWalk, hook: str) -> None:
+        """Create the worktree and commit each layer without firing it."""
+        assert service_walk.hooks_ran[hook] is False
+
+
+class TestSecretAskedOnce:
+    """A secret question is asked at the first layer that holds it, and no later."""
+
+    def test_the_prompt_for_a_secret_is_shown_once_across_the_walk(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Carry the secret in memory from core's step into service's."""
+        project = compose_locked_family(family, tmp_path, "service", SERVICE_BASE)
+
+        session = drive_prompts(
+            lambda: Updater().update(project, request(SERVICE_BASE, interactive=True))
+        )
+
+        assert (session.finished, session.error, session.shown.count("api_token")) == (
+            True,
+            None,
+            1,
+        )
+
+
+class TestStopsBeforeAnyStaging:
+    """Preflight and the pre-walk checks stop an update before it creates a folder."""
+
+    @pytest.fixture
+    def staging_folders(self, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+        """Record the prefix of every temporary directory the run creates."""
+        created: list[str] = []
+        real = tempfile.mkdtemp
+
+        def spy(
+            suffix: str | None = None,
+            prefix: str | None = None,
+            dir: str | None = None,
+        ) -> str:
+            created.append(prefix or "")
+            return real(suffix, prefix, dir)
+
+        monkeypatch.setattr(tempfile, "mkdtemp", spy)
+        return created
+
+    def test_a_downgrade_is_rejected_first(
+        self, family: Family, tmp_path: Path, staging_folders: list[str]
+    ) -> None:
+        """Refuse a target older than the layer's recorded release."""
+        project = compose_locked_family(
+            family, tmp_path, "service", {"core": "1.1.0", "service": "1.0.0"}
+        )
+
+        with pytest.raises(UpdateDowngradeError):
+            Updater().update(project, request({"core": "1.0.0"}))
+
+        assert STAGING_PREFIX not in staging_folders
+
+    def test_a_layer_and_its_ancestor_that_drifted_are_refused_first(
+        self, family: Family, tmp_path: Path, staging_folders: list[str]
+    ) -> None:
+        """Refuse a project where a hand-run update moved a layer and its ancestor."""
+        project = compose_locked_family(family, tmp_path, "service", SERVICE_BASE)
+        for layer in ("core", "service"):
+            answers = project / f".copier-answers.{layer}.yml"
+            text = answers.read_text(encoding="utf-8")
+            write(answers, text.replace("_commit: 1.0.0", "_commit: 1.1.0"))
+        commit_all(project, "hand-run updates")
+
+        with pytest.raises(UpdateLayerDriftError):
+            Updater().update(project, request(SERVICE_NEXT))
+
+        assert STAGING_PREFIX not in staging_folders
+
+    def test_a_dirty_tree_is_refused_first(
+        self, family: Family, tmp_path: Path, staging_folders: list[str]
+    ) -> None:
+        """Refuse an uncommitted change, untracked files included."""
+        project = compose_locked_family(family, tmp_path, "service", SERVICE_BASE)
+        write(project / "scratch.txt", "not committed\n")
+
+        with pytest.raises(UpdateProjectNotReadyError):
+            Updater().update(project, request(SERVICE_NEXT))
+
+        assert STAGING_PREFIX not in staging_folders
+
+
+class ErrorMidWalk(NamedTuple):
+    """A project before and after a walk that failed in its third layer.
+
+    Attributes:
+        project: The checkout.
+        error: What the walk raised.
+        before: The files and the lock before the walk.
+        start: The commit before the walk.
+        scratch: The temp directory the staging would be created under.
+    """
+
+    project: Path
+    error: Exception
+    before: dict[str, str]
+    start: str
+    scratch: Path
+
+
+@pytest.fixture(scope="module")
+def failed_walk(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[ErrorMidWalk]:
+    """Walk the diamond to docs 1.1.0, which rejects the recorded empty site name."""
+    work = tmp_path_factory.mktemp("failed-walk")
+    with temp_dir_inside(work) as scratch:
+        project = compose_locked_family(
+            family, work, "app", BASE, {"docs_site_name": ""}
+        )
+        before = tree(project)
+        start = head(project)
+        try:
+            Updater().update(project, request({**BASE, "docs": "1.1.0"}))
+        except RecordedAnswerRejectedError as error:
+            yield ErrorMidWalk(project, error, before, start, scratch)
+        else:
+            pytest.fail("the walk was expected to be rejected")
+
+
+@pytest.mark.xdist_group("update-walk-failed")
+class TestAnErrorMidWalk:
+    """A rejected recorded answer in a later layer undoes the whole walk."""
+
+    def test_the_walk_stops_on_the_rejected_answer(
+        self, failed_walk: ErrorMidWalk
+    ) -> None:
+        """Name the layer that rejected the answer."""
+        assert isinstance(failed_walk.error, RecordedAnswerRejectedError)
+        assert failed_walk.error.layer == "docs"
+
+    def test_the_checkout_is_byte_identical(self, failed_walk: ErrorMidWalk) -> None:
+        """Leave every file as it was, though two layers had already updated."""
+        assert tree(failed_walk.project) == failed_walk.before
+
+    def test_the_checkout_is_clean_and_at_its_commit(
+        self, failed_walk: ErrorMidWalk
+    ) -> None:
+        """Leave no working change and move no commit."""
+        assert (
+            git(failed_walk.project, "status", "--porcelain"),
+            head(failed_walk.project),
+        ) == ("", failed_walk.start)
+
+    def test_no_migration_record_is_written(self, failed_walk: ErrorMidWalk) -> None:
+        """Log nothing: the user's checkout never changed."""
+        assert not (failed_walk.project / MIGRATIONS_FILE).exists()
+
+    def test_the_lock_is_the_one_it_was(self, failed_walk: ErrorMidWalk) -> None:
+        """Keep the lock of the last complete operation."""
+        lock = read_lock(failed_walk.project)
+
+        assert {layer.name: str(layer.version) for layer in lock.layers} == BASE
+
+    def test_no_staging_folder_or_worktree_is_left(
+        self, failed_walk: ErrorMidWalk
+    ) -> None:
+        """Remove the worktree and its registration along with its folder."""
+        leftovers = list(failed_walk.scratch.glob(f"{STAGING_PREFIX}*"))
+        worktrees = git(failed_walk.project, "worktree", "list").splitlines()
+
+        assert (leftovers, len(worktrees)) == ([], 1)
+
+
+class TestACommitPastATag:
+    """A recorded ``git describe`` string is a version Copier reads and compares."""
+
+    def test_a_layer_recorded_past_its_tag_updates_end_to_end(
+        self, tmp_path: Path
+    ) -> None:
+        """Walk from ``1.1.0-1-g<hash>`` to the next release and lock it."""
+        private = build_family(tmp_path / "private")
+        core = private.repos["core"]
+        git(core, "switch", "-c", "past-tag", "1.1.0")
+        git(core, "commit", "--allow-empty", "-m", "work after 1.1.0")
+        described = git(core, "describe", "--tags", "--always").strip()
+        git(core, "switch", "main")
+        project = compose_family(
+            private, tmp_path, "service", {"core": "1.1.0", "service": "1.0.0"}
+        )
+        rehome_layer(project, layer="core", source=core, commit=described)
+        commit_all(project, "record core past its tag")
+        order = ["core", "service"]
+        write_lock(project, build_lock(project, order, boilerplate_version="0.0.0"))
+        commit_all(project, "lock")
+
+        Updater().update(project, request({"core": "2.0.0", "service": "1.2.0"}))
+
+        lock = read_lock(project)
+        assert {layer.name: str(layer.version) for layer in lock.layers} == {
+            "core": "2.0.0",
+            "service": "1.2.0",
+        }
