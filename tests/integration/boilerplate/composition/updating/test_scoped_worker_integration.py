@@ -100,20 +100,19 @@ def test_forced_data_never_reaches_the_old_copy(family: Family, tmp_path: Path) 
     pyproject.toml still renders the recorded name. This checks the S12
     control's reading directly.
     """
-    with temp_dir_inside(tmp_path):
-        project = compose_family(family, tmp_path, "service", REMOVAL_BEFORE)
-        worker, recording = recording_worker(["pyproject.toml"])
-        update_family_layer(
-            family,
-            project,
-            root="service",
-            layer="core",
-            before=REMOVAL_BEFORE,
-            after=REMOVAL_AFTER,
-            work=tmp_path,
-            data={**recorded_answers(project, "core"), "project_name": "FORCED"},
-            worker_type=worker,
-        )
+    project = compose_family(family, tmp_path, "service", REMOVAL_BEFORE)
+    worker, recording = recording_worker(["pyproject.toml"])
+    update_family_layer(
+        family,
+        project,
+        root="service",
+        layer="core",
+        before=REMOVAL_BEFORE,
+        after=REMOVAL_AFTER,
+        work=tmp_path,
+        data={**recorded_answers(project, "core"), "project_name": "FORCED"},
+        worker_type=worker,
+    )
     descriptions = {
         role: next(
             line
