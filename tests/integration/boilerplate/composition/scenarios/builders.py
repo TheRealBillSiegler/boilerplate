@@ -1,0 +1,434 @@
+"""Template builders and project-state readers shared by the composition scenarios.
+
+A scenario builds its template releases as plain directories, one per ref,
+each holding every layer at that ref; turns each layer into a git repository
+tagged at its releases; composes a project from the first release; points
+each layer's answers file at its repository; and updates layers through the
+harness in ``tests.boilerplate.templates.conftest``. Everything it writes
+lives under pytest's temp directory, Copier's own temp copies included
+(``temp_dir_inside``).
+"""
+
+import contextlib
+import shutil
+import tempfile
+from collections.abc import Callable, Generator, Mapping, Sequence
+from pathlib import Path
+from typing import Any, NamedTuple
+
+import pytest
+import yaml
+
+from tests.boilerplate.templates.conftest import (
+    TEMPLATES,
+    LayerView,
+    ScopedWorker,
+    build_layer_repo,
+    commit_all,
+    compose_project,
+    copy_layer_into,
+    git,
+    init_repo,
+    rehome_layer,
+)
+
+ANSWERS: dict[str, Any] = {
+    "project_name": "Probe App",
+    "description": "Probe description",
+    "author_name": "Ada Probe",
+    "author_email": "ada@example.com",
+    "container_registry": "ghcr.io",
+}
+USER_LINE = "USER LINE: keep me across updates."
+EXTENSIONS_DIR = Path(__file__).parent / "extensions"
+
+# The bundled questionnaire the scenarios were written against: `project`
+# declares every shared question, `streamlit` only its own and its overrides.
+PROJECT_QUESTIONS = frozenset(
+    {
+        "project_name",
+        "project_slug",
+        "package_name",
+        "description",
+        "dependencies",
+        "dev_dependencies",
+        "sample_module",
+        "author_name",
+        "author_email",
+        "package_index_url",
+    }
+)
+STREAMLIT_OWN_QUESTIONS = frozenset(
+    {"dependencies", "sample_module", "container_registry"}
+)
+# The answers a `project` answers file records: hidden questions are not.
+PROJECT_RECORDED = PROJECT_QUESTIONS - {"project_slug", "package_name"}
+
+Mutator = Callable[[str, Path], None]
+
+
+def require(condition: bool, message: str) -> None:
+    """Fail the scenario at setup when the templates no longer match it.
+
+    Args:
+        condition: Whether the precondition holds.
+        message: What the scenario expected of the templates.
+    """
+    if not condition:
+        pytest.fail(
+            f"Scenario precondition failed: {message}. The bundled templates "
+            "changed, so this scenario no longer applies as written; revise it "
+            "before reading its verdict.",
+            pytrace=False,
+        )
+
+
+@contextlib.contextmanager
+def temp_dir_inside(root: Path) -> Generator[Path]:
+    """Point every temp-directory lookup at a directory under `root`.
+
+    Copier clones templates and renders an update's old and new copies in
+    temp directories; git subprocesses read the environment and Python
+    caches its own lookup in ``tempfile.tempdir``, so both are redirected.
+
+    Args:
+        root: The directory to create the temp directory under.
+
+    Yields:
+        The temp directory.
+    """
+    scratch = root / "tmp"
+    scratch.mkdir(parents=True, exist_ok=True)
+    with pytest.MonkeyPatch.context() as patch:
+        for name in ("TMP", "TEMP", "TMPDIR"):
+            patch.setenv(name, str(scratch))
+        patch.setattr(tempfile, "tempdir", str(scratch))
+        yield scratch
+
+
+@contextlib.contextmanager
+def extensions_on_path() -> Generator[None]:
+    """Make the probe-only extension modules importable while the block runs."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.syspath_prepend(str(EXTENSIONS_DIR))
+        yield
+
+
+def write(path: Path, text: str) -> None:
+    """Write `text` to `path` with LF line endings, creating parent directories."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def append(path: Path, text: str) -> None:
+    """Append `text` to the file at `path`."""
+    write(path, path.read_text(encoding="utf-8") + text)
+
+
+def substitute(path: Path, old: str, new: str) -> None:
+    """Replace the first `old` in the file at `path` with `new`.
+
+    Args:
+        path: The template file to edit.
+        old: Text the scenario expects the file to contain.
+        new: Its replacement.
+    """
+    text = path.read_text(encoding="utf-8")
+    require(old in text, f"{path.name} contains {old!r}")
+    write(path, text.replace(old, new, 1))
+
+
+def declared_questions(config_path: Path) -> frozenset[str]:
+    """Return the question names a ``copier.yml`` declares (directives excluded)."""
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    return frozenset(str(k) for k in config if not str(k).startswith("_"))
+
+
+def check_bundled_questionnaire() -> None:
+    """Fail unless the bundled layers declare the questions the scenarios assume."""
+    require(
+        declared_questions(TEMPLATES / "project" / "copier.yml") == PROJECT_QUESTIONS,
+        f"project/copier.yml declares exactly {sorted(PROJECT_QUESTIONS)}",
+    )
+    require(
+        declared_questions(TEMPLATES / "streamlit" / "copier.yml")
+        == STREAMLIT_OWN_QUESTIONS,
+        "streamlit/copier.yml declares only its own questions and overrides, "
+        f"{sorted(STREAMLIT_OWN_QUESTIONS)}",
+    )
+
+
+def build_releases(
+    root: Path,
+    refs: Sequence[str],
+    mutate: Mutator | None = None,
+    *,
+    merge_readme: bool = True,
+) -> dict[str, Path]:
+    """Write one templates directory per ref holding both bundled layers.
+
+    Args:
+        root: The scenario's working directory.
+        refs: The release refs, oldest first.
+        mutate: Called as ``mutate(ref, release_dir)`` to make each release
+            differ; it may add synthetic layers beside the bundled ones.
+        merge_readme: Whether to drop ``README.md`` from both layers'
+            ``_skip_if_exists``, so an update merges into the README.
+
+    Returns:
+        Each release's templates directory, keyed by ref.
+    """
+    check_bundled_questionnaire()
+    releases: dict[str, Path] = {}
+    for ref in refs:
+        release = root / "releases" / ref
+        for layer in ("project", "streamlit"):
+            copy_layer_into(TEMPLATES / layer, release / layer)
+            if merge_readme:
+                substitute(release / layer / "copier.yml", '  - "README.md"\n', "")
+        if mutate is not None:
+            mutate(ref, release)
+        releases[ref] = release
+    return releases
+
+
+def build_repos(
+    root: Path,
+    releases: Mapping[str, Path],
+    tags: Mapping[str, Sequence[str]] | None = None,
+) -> dict[str, Path]:
+    """Turn every layer of `releases` into a git repository tagged per release.
+
+    Args:
+        root: The scenario's working directory.
+        releases: Each release's templates directory, keyed by ref.
+        tags: The refs to tag for a layer, keyed by layer name; a layer not
+            named gets every ref.
+
+    Returns:
+        Each layer's repository, keyed by layer name.
+    """
+    first = next(iter(releases.values()))
+    repos: dict[str, Path] = {}
+    for layer in sorted(p.name for p in first.iterdir() if p.is_dir()):
+        refs = (tags or {}).get(layer, list(releases))
+        repos[layer] = build_layer_repo(
+            root / "repos" / layer, {ref: releases[ref] / layer for ref in refs}
+        )
+    return repos
+
+
+def make_git_project(project: Path, repos: Mapping[str, Path], ref: str) -> None:
+    """Point every layer `project` records at its repository, then commit.
+
+    Args:
+        project: The composed project.
+        repos: Each layer's repository, keyed by layer name.
+        ref: The tag every layer's render matches.
+    """
+    for layer, repo in repos.items():
+        if (project / f".copier-answers.{layer}.yml").exists():
+            rehome_layer(project, layer=layer, source=repo, commit=ref)
+    init_repo(project)
+    commit_all(project, f"compose {ref}")
+
+
+def copy_project(base: Path, dest: Path) -> Path:
+    """Copy the composed project `base` to `dest` and return `dest`."""
+    shutil.copytree(base, dest)
+    return dest
+
+
+def add_user_line(path: Path, *, prepend: bool = False) -> None:
+    """Add ``USER_LINE`` to the project file at `path` and commit it.
+
+    Args:
+        path: A file inside a git-backed project.
+        prepend: Whether to add the line at the top instead of the end.
+    """
+    text = path.read_text(encoding="utf-8")
+    write(path, f"{USER_LINE}\n{text}" if prepend else f"{text}\n{USER_LINE}\n")
+    commit_all(_project_root(path), "user edit")
+
+
+def _project_root(path: Path) -> Path:
+    return Path(git(path.parent, "rev-parse", "--show-toplevel").strip())
+
+
+def answers_file(project: Path, layer: str) -> dict[str, Any]:
+    """Return everything `layer`'s answers file records, Copier's keys included."""
+    path = project / f".copier-answers.{layer}.yml"
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def lines(path: Path) -> list[str]:
+    """Return the lines of the text file at `path`."""
+    return path.read_text(encoding="utf-8").splitlines()
+
+
+def tree(root: Path) -> dict[str, str]:
+    """Return every file under `root` outside ``.git``, keyed by POSIX path."""
+    return {
+        p.relative_to(root).as_posix(): p.read_text(encoding="utf-8", errors="replace")
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and ".git" not in p.relative_to(root).parts
+    }
+
+
+class MergeState(NamedTuple):
+    """What an update left for the user to resolve.
+
+    Attributes:
+        marked: Files holding conflict markers.
+        rejects: ``.rej`` files left beside their targets.
+        unmerged: Paths git reports as unmerged.
+    """
+
+    marked: list[str]
+    rejects: list[str]
+    unmerged: list[str]
+
+
+CLEAN = MergeState([], [], [])
+
+
+def merge_state(project: Path) -> MergeState:
+    """Return the conflicts an update left in `project`."""
+    files = tree(project)
+    unmerged = git(project, "ls-files", "-u").splitlines()
+    return MergeState(
+        sorted(p for p, text in files.items() if "<<<<<<< " in text),
+        sorted(p for p in files if p.endswith(".rej")),
+        sorted({line.split("\t", 1)[1] for line in unmerged}),
+    )
+
+
+class Recording(NamedTuple):
+    """What a ``recording_worker`` saw during an update.
+
+    Attributes:
+        builds: ``(role, ref)`` for every template a worker built, in order;
+            role is ``old_copy``, ``new_copy`` or ``in_place``.
+        copies: The watched files' contents in Copier's old and new copies,
+            keyed by role, then by file; ``None`` for a file not rendered.
+    """
+
+    builds: list[tuple[str, str | None]]
+    copies: dict[str, dict[str, str | None]]
+
+
+def _role(worker: ScopedWorker) -> str:
+    name = Path(str(worker.dst_path)).name
+    return next((r for r in ("old_copy", "new_copy") if r in name), "in_place")
+
+
+def recording_worker(
+    files: Sequence[str] = (),
+) -> tuple[type[ScopedWorker], Recording]:
+    """Return a ``ScopedWorker`` subclass that records what each render did.
+
+    Args:
+        files: Project-relative files to read out of Copier's old and new
+            copies once each renders.
+
+    Returns:
+        The worker class to pass to ``update_layer`` and the recording it
+        fills.
+    """
+    recording = Recording([], {})
+
+    class RecordingWorker(ScopedWorker):
+        """Record each template build and the watched files of each copy."""
+
+        def view_for(self, ref: str | None) -> LayerView:
+            """Record the build, then return the view keyed by `ref`."""
+            recording.builds.append((_role(self), ref))
+            return super().view_for(ref)
+
+        def run_copy(self) -> None:
+            """Render, then read the watched files out of a temp copy."""
+            super().run_copy()
+            role = _role(self)
+            if role != "in_place":
+                dst = Path(str(self.dst_path))
+                recording.copies[role] = {
+                    f: (dst / f).read_text(encoding="utf-8")
+                    if (dst / f).exists()
+                    else None
+                    for f in files
+                }
+
+    return RecordingWorker, recording
+
+
+# Scenarios S10 and S12: project v4 adds a `license` question its files
+# render, streamlit v4 overrides its default, project v5 removes it again.
+LICENSE_QUESTION = (
+    '\nlicense:\n  type: str\n  help: "License identifier for the project."\n'
+    '  default: "MIT"\n'
+)
+LICENSE_OVERRIDE = (
+    '\n# Override project\'s `license` default.\nlicense:\n  default: "Apache-2.0"\n'
+)
+LICENSE_FILE = "project_license.txt"
+LICENSE_TAGS: dict[str, Sequence[str]] = {
+    "project": ["v1", "v4", "v5"],
+    "streamlit": ["v1", "v4"],
+}
+
+
+def license_releases(ref: str, release: Path) -> None:
+    """Add, override and then remove project's `license` question across releases."""
+    project, streamlit = release / "project", release / "streamlit"
+    if ref == "v4":
+        append(project / "copier.yml", LICENSE_QUESTION)
+        write(project / f"{LICENSE_FILE}.jinja", "license={{ license }}\nrelease=v4\n")
+    if ref == "v5":
+        write(
+            project / f"{LICENSE_FILE}.jinja",
+            "license=(question removed in v5)\nrelease=v5\n",
+        )
+    if ref in ("v4", "v5"):
+        append(streamlit / "copier.yml", LICENSE_OVERRIDE)
+
+
+class LicenseProject(NamedTuple):
+    """A project composed at v4 of the license releases, git-backed.
+
+    Attributes:
+        releases: Each release's templates directory, keyed by ref.
+        repos: Each layer's repository, keyed by layer name.
+        project: The composed project, every layer at v4.
+    """
+
+    releases: dict[str, Path]
+    repos: dict[str, Path]
+    project: Path
+
+
+def compose_license_project(root: Path) -> LicenseProject:
+    """Compose the license releases at v4 under scoped views and commit the project."""
+    releases = build_releases(
+        root, ("v1", "v4", "v5"), license_releases, merge_readme=False
+    )
+    repos = build_repos(root, releases, LICENSE_TAGS)
+    project = root / "composed" / "probe-app"
+    compose_project("streamlit", project, ANSWERS, releases["v4"])
+    make_git_project(project, repos, "v4")
+    return LicenseProject(releases, repos, project)
+
+
+def on_own_worker(value: object, name: str) -> object:
+    """Return a fixture param whose tests all run on one xdist worker.
+
+    A module-scoped fixture is built once per worker that runs a test using
+    it; grouping the tests of one param keeps that to one build.
+
+    Args:
+        value: The param's value.
+        name: The param's id, also its xdist group.
+
+    Returns:
+        A ``pytest.param`` carrying the group mark.
+    """
+    return pytest.param(value, id=name, marks=pytest.mark.xdist_group(name))
