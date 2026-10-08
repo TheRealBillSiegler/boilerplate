@@ -24,6 +24,7 @@ from tests.boilerplate.templates.conftest import (
     commit_all,
     compose_project,
     init_repo,
+    render_full_view,
 )
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -279,18 +280,17 @@ class TestRegistrationOnTheFamily:
     def test_descendant_cannot_use_the_ancestors_filter_unregistered(
         self, family: Family, tmp_path: Path
     ) -> None:
-        """S19: without registration app's render has no `docs_anchor` filter."""
+        """S19: the full view loads no ancestor file, so app has no `docs_anchor`."""
         templates = templates_at(family, tmp_path, FIRST_RELEASES)
 
         with pytest.raises(
             TemplateAssertionError, match="No filter named 'docs_anchor'"
         ):
-            compose_project(
+            render_full_view(
                 "app",
                 tmp_path / "family-app",
-                {"project_name": FAMILY_PROJECT},
-                templates,
-                register_ancestors=False,
+                context_data={"project_name": FAMILY_PROJECT},
+                templates_dir=templates,
             )
 
     def test_registered_filter_renders_in_the_descendant(
