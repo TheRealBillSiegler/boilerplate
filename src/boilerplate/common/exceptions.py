@@ -602,6 +602,28 @@ class ConcurrencyContentionError(BoilerplateError):
         super().__init__(message, error_code="BP_CONCURRENCY_CONTENTION", **kwargs)
 
 
+class UpdateCopyBackFailedError(BoilerplateError):
+    """Raised when copying the staging worktree back into the checkout failed partway.
+
+    The checkout was restored to the starting commit, and the staging worktree
+    is kept so the walk's result is not lost.
+
+    Attributes:
+        staging_path: The kept staging worktree, which holds the walk's result.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        staging_path: str = "",
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_COPY_BACK_FAILED."""
+        super().__init__(message, error_code="BP_UPDATE_COPY_BACK_FAILED", **kwargs)
+        self.staging_path = staging_path
+
+
 class UpdateTaskFailedError(BoilerplateError):
     """Raised when a task fails after the update's files were copied back.
 
