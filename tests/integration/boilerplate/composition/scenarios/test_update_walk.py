@@ -9,7 +9,7 @@ Pauses, resumes and tasks follow in the classes below.
 """
 
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -21,7 +21,10 @@ from boilerplate.common.exceptions import (
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
+    UpdateTaskFailedError,
 )
+from boilerplate.composition.updating.failed_task import FailedTask
+from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
@@ -427,12 +430,14 @@ class TestACommitPastATag:
         }
 
 
-def publish_release(repo: Path, tag: str) -> None:
+def publish_release(
+    repo: Path, tag: str, edit: Callable[[Path], None] | None = None
+) -> None:
     """Publish `tag` as a new release of the layer repository `repo`.
 
-    The release changes nothing a layer renders; it carries the new version in
-    ``boilerplate.yml`` and a note, which is all a release needs to be the
-    latest one.
+    The release carries the new version in ``boilerplate.yml``, which is all a
+    release needs to be the latest one, and whatever `edit` changes in the
+    repository's working tree.
     """
     manifest = repo / "boilerplate.yml"
     text = manifest.read_text(encoding="utf-8")
@@ -442,6 +447,8 @@ def publish_release(repo: Path, tag: str) -> None:
         if line.startswith("version:")
     )
     write(manifest, text.replace(f"version: {current}", f"version: {tag}", 1))
+    if edit is not None:
+        edit(repo)
     commit_all(repo, f"release {tag}", tag)
 
 
@@ -592,3 +599,220 @@ class TestResumeAfterAConflict:
             ("1", MigrationStatus.CONFLICT),
             ("2", MigrationStatus.SUCCESS),
         ]
+
+
+@pytest.mark.xdist_group("update-walk-service")
+class TestTasksAfterTheWalk:
+    """The composition's tasks run once, against the finished project."""
+
+    def test_core_runs_its_task_once_across_the_walk(
+        self, service_walk: ServiceWalk
+    ) -> None:
+        """Append one line though two layers updated and each skipped its tasks."""
+        marker = lines(service_walk.project / ".core-task-marker")
+
+        assert marker == ["core task ran"]
+
+    def test_the_task_runs_under_the_update_operation(
+        self, service_walk: ServiceWalk
+    ) -> None:
+        """Give the task ``_copier_operation == "update"``."""
+        marker = lines(service_walk.project / ".core-operation-marker")
+
+        assert marker == ["update"]
+
+    def test_the_tasks_run_in_the_users_checkout(
+        self, service_walk: ServiceWalk
+    ) -> None:
+        """Leave the task's files as uncommitted additions."""
+        status = git(service_walk.project, "status", "--porcelain").splitlines()
+
+        assert "?? .core-task-marker" in status
+
+
+class TestNoTasks:
+    def test_no_tasks_skips_the_task_run(self, family: Family, tmp_path: Path) -> None:
+        """Run no task when the request says so."""
+        project = compose_locked_family(family, tmp_path, "service", SERVICE_BASE)
+
+        Updater().update(project, request(SERVICE_NEXT, no_tasks=True))
+
+        assert not (project / ".core-task-marker").exists()
+
+
+FAILING_TASK = """  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "raise SystemExit(7)"
+"""
+MARKER_TASK_END = "file=open('.core-operation-marker', 'a', encoding='utf-8'))\"\n"
+
+
+def add_failing_task(repo: Path) -> None:
+    """Add a task that exits non-zero to the core release being published."""
+    config = repo / "copier.yml"
+    text = config.read_text(encoding="utf-8")
+    assert MARKER_TASK_END in text
+    write(config, text.replace(MARKER_TASK_END, MARKER_TASK_END + FAILING_TASK, 1))
+
+
+class FailedTaskWalk(NamedTuple):
+    """A project whose update ran a task that failed.
+
+    Attributes:
+        project: The checkout.
+        before: The files before the walk.
+        start: The commit before the walk.
+        lock: The lock before the walk.
+        raised: What the walk raised, if it raised.
+        outcome: What the walk returned, if it returned.
+        asked: The failed tasks the walk offered to the handler.
+    """
+
+    project: Path
+    before: dict[str, str]
+    start: str
+    lock: BoilerplateLock
+    raised: Exception | None
+    outcome: UpdateOutcome | None
+    asked: list[FailedTask]
+
+
+def walk_with_a_failing_task(
+    work: Path, choice: TaskFailureChoice | None
+) -> FailedTaskWalk:
+    """Update core to a release whose task fails, answering the failure with `choice`.
+
+    Args:
+        work: A directory to build the family and the project in.
+        choice: What the handler answers; ``None`` for the default handler, which
+            keeps the files.
+
+    Returns:
+        The project and what the walk did.
+    """
+    private = build_family(work / "private")
+    publish_release(private.repos["core"], "1.0.1", add_failing_task)
+    asked: list[FailedTask] = []
+
+    def handler(failed: FailedTask) -> TaskFailureChoice:
+        asked.append(failed)
+        assert choice is not None
+        return choice
+
+    with temp_dir_inside(work):
+        project = compose_locked_family(private, work, "service", SERVICE_BASE)
+        before, start, lock = tree(project), head(project), read_lock(project)
+        updater = Updater() if choice is None else Updater(on_task_failure=handler)
+        raised: Exception | None = None
+        outcome: UpdateOutcome | None = None
+        try:
+            outcome = updater.update(
+                project, request({"core": "1.0.1", "service": "1.0.0"})
+            )
+        except UpdateTaskFailedError as error:
+            raised = error
+    return FailedTaskWalk(project, before, start, lock, raised, outcome, asked)
+
+
+@pytest.fixture(scope="module")
+def kept_failure(tmp_path_factory: pytest.TempPathFactory) -> FailedTaskWalk:
+    """Update with a failing task and the default handler, which keeps the files."""
+    return walk_with_a_failing_task(tmp_path_factory.mktemp("kept-failure"), None)
+
+
+@pytest.fixture(scope="module")
+def undone_failure(tmp_path_factory: pytest.TempPathFactory) -> FailedTaskWalk:
+    """Update with a failing task and a handler that undoes the update."""
+    return walk_with_a_failing_task(
+        tmp_path_factory.mktemp("undone-failure"), TaskFailureChoice.UNDO
+    )
+
+
+@pytest.mark.xdist_group("update-walk-kept-failure")
+class TestAFailingTaskUnderKeep:
+    """A caller that keeps the files gets the update, the lock and the failure."""
+
+    def test_raises_naming_the_failed_task(self, kept_failure: FailedTaskWalk) -> None:
+        """Name the command that exited non-zero."""
+        error = kept_failure.raised
+
+        assert isinstance(error, UpdateTaskFailedError)
+        assert "SystemExit(7)" in error.task
+
+    def test_says_how_to_rerun_the_task(self, kept_failure: FailedTaskWalk) -> None:
+        """Point at the task and the project root."""
+        error = kept_failure.raised
+
+        assert isinstance(error, UpdateTaskFailedError)
+        assert (error.remediation or "").startswith(
+            "Run it by hand from the project root: "
+        )
+
+    def test_keeps_the_updated_files(self, kept_failure: FailedTaskWalk) -> None:
+        """Leave the copied-back update in the checkout."""
+        assert answers_file(kept_failure.project, "core")["_commit"] == "1.0.1"
+
+    def test_writes_the_lock(self, kept_failure: FailedTaskWalk) -> None:
+        """Record the update as applied, as the files are."""
+        lock = read_lock(kept_failure.project)
+
+        assert {layer.name: str(layer.version) for layer in lock.layers} == {
+            "core": "1.0.1",
+            "service": "1.0.0",
+        }
+
+    def test_appends_a_failed_record(self, kept_failure: FailedTaskWalk) -> None:
+        """Log the update as failed, with the task in the message."""
+        (record,) = read_migrations(kept_failure.project)
+
+        assert (
+            record.status,
+            record.to_version,
+            "SystemExit(7)" in (record.error or ""),
+        ) == (
+            MigrationStatus.FAILED,
+            "service@1.0.0",
+            True,
+        )
+
+
+@pytest.mark.xdist_group("update-walk-undone-failure")
+class TestAFailingTaskUnderUndo:
+    """A caller that undoes the update gets the checkout back as it was."""
+
+    def test_reports_the_update_as_undone(self, undone_failure: FailedTaskWalk) -> None:
+        """Return an outcome rather than raising."""
+        assert undone_failure.outcome is not None
+        assert undone_failure.outcome.status is UpdateStatus.UNDONE
+
+    def test_the_handler_is_offered_the_failed_task_once(
+        self, undone_failure: FailedTaskWalk
+    ) -> None:
+        """Ask the caller what to do with the one task that failed."""
+        assert [("SystemExit(7)" in task.command) for task in undone_failure.asked] == [
+            True
+        ]
+
+    def test_the_checkout_returns_to_its_starting_files(
+        self, undone_failure: FailedTaskWalk
+    ) -> None:
+        """Restore every file and remove what the update and the tasks added."""
+        assert tree(undone_failure.project) == undone_failure.before
+
+    def test_the_checkout_is_clean_at_its_commit(
+        self, undone_failure: FailedTaskWalk
+    ) -> None:
+        """Leave no working change, no staged change and no new commit."""
+        assert (
+            git(undone_failure.project, "status", "--porcelain"),
+            head(undone_failure.project),
+        ) == ("", undone_failure.start)
+
+    def test_no_lock_is_written(self, undone_failure: FailedTaskWalk) -> None:
+        """Leave the lock of the last complete operation."""
+        assert read_lock(undone_failure.project) == undone_failure.lock
+
+    def test_no_record_is_written(self, undone_failure: FailedTaskWalk) -> None:
+        """Log nothing: the checkout is as it was."""
+        assert not (undone_failure.project / MIGRATIONS_FILE).exists()
