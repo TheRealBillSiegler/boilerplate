@@ -28,8 +28,11 @@ from boilerplate.common.exceptions import (
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateCheckoutChangedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
+    UpdateProjectNotReadyError,
+    UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
     UserCancelledError,
 )
@@ -148,6 +151,9 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
             UpdateLayerDriftError,
             UpdateTargetMismatchError,
             UpdateDowngradeError,
+            UpdateSubmodulesUnsupportedError,
+            UpdateCheckoutChangedError,
+            UpdateProjectNotReadyError,
         ) as e:
             _display_error_and_exit(
                 str(e),

@@ -31,8 +31,11 @@ from boilerplate.common.exceptions import (
     NonInteractiveRequiresForceError,
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
+    UpdateCheckoutChangedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
+    UpdateProjectNotReadyError,
+    UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
     UserCancelledError,
 )
@@ -238,6 +241,9 @@ class TestCliErrorHandler:
             (UpdateLayerDriftError("drift"), ExitCode.VALIDATION_ERROR),
             (UpdateTargetMismatchError("mismatch"), ExitCode.VALIDATION_ERROR),
             (UpdateDowngradeError("downgrade"), ExitCode.VALIDATION_ERROR),
+            (UpdateSubmodulesUnsupportedError("submodules"), ExitCode.VALIDATION_ERROR),
+            (UpdateCheckoutChangedError("changed"), ExitCode.VALIDATION_ERROR),
+            (UpdateProjectNotReadyError("dirty"), ExitCode.VALIDATION_ERROR),
             # Exit 4 (ACTION_REQUIRED) — recoverable workflow pause
             (
                 ActionRequiredError("resolve conflicts, then re-run"),
@@ -261,6 +267,9 @@ class TestCliErrorHandler:
             "layer-drift",
             "target-mismatch",
             "downgrade",
+            "submodules-unsupported",
+            "checkout-changed",
+            "project-not-ready",
             "action-required",
             "user-cancelled",
         ],
