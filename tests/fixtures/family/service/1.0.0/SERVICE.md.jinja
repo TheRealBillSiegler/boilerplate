@@ -1,0 +1,8 @@
+# Running {{ project_name }} as a service
+
+The image runs as the `{{ container_user }}` user on Python {{ python_version }} and listens on port {{ port }}.
+
+```console
+docker build -t {{ package_name }} .
+docker run --rm -p {{ port }}:{{ port }} {{ package_name }}
+```

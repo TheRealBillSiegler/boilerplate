@@ -1,0 +1,23 @@
+"""HTTP entry point for {{ project_name }}.
+
+See docs/index.md#{{ project_name | docs_anchor }} for the overview.
+"""
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
+class Handler(BaseHTTPRequestHandler):
+    """Answer every GET request with the project name."""
+
+    def do_GET(self) -> None:
+        """Send the project name as plain text."""
+        body = b"{{ project_name }}"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(body)
+
+
+def main() -> None:
+    """Serve on port {{ port }} until interrupted."""
+    HTTPServer(("", {{ port }}), Handler).serve_forever()

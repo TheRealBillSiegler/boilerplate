@@ -1,0 +1,21 @@
+_answers_file: .copier-answers.app.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+
+# Files here use docs' `docs_anchor` filter. A file-path spec resolves against
+# the declaring template's own root, so a descendant cannot name docs' extension
+# file; whoever composes registers it as a module and adds it to this layer's
+# render.
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader

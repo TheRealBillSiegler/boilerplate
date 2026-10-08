@@ -1,0 +1,13 @@
+FROM python:{{ python_version }}-slim
+
+WORKDIR /srv/{{ package_name }}
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+RUN pip install --no-cache-dir .
+
+RUN useradd --system {{ container_user }}
+USER {{ container_user }}
+
+EXPOSE {{ port }}
+CMD ["python", "-m", "http.server", "{{ port }}"]

@@ -1,0 +1,32 @@
+_answers_file: .copier-answers.docs.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata and the extension module.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+  - _extensions
+
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - _extensions/docfilters.py:DocFilters
+
+docs_generator:
+  type: str
+  help: "Which documentation generator builds the site?"
+  choices:
+    - mkdocs
+    - sphinx
+  default: mkdocs
+
+docs_site_name:
+  type: str
+  help: "What is the documentation site called?"
+  default: "{{ project_name }} documentation"
