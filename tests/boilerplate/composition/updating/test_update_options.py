@@ -11,3 +11,8 @@ class TestUpdateOptions:
 
     def test_default_worker_renders_under_per_ref_views(self) -> None:
         assert UpdateOptions().worker_type is ScopedWorker
+
+    def test_defaults_take_every_default_without_prompting(self) -> None:
+        options = UpdateOptions()
+
+        assert (options.interactive, options.skip_answered) == (False, False)

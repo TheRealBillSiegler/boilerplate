@@ -261,6 +261,8 @@ class UpdateOptions(TypedDict, total=False):
     data: Mapping[str, Any] | None
     skip_tasks: bool
     quiet: bool
+    interactive: bool
+    skip_answered: bool
     worker_type: type[ScopedWorker]
 
 
