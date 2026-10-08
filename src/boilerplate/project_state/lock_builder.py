@@ -10,6 +10,7 @@ from pathlib import Path
 
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock, JoinedVia, LockLayer
+from boilerplate.project_state.folder_layer import FolderLayer
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.repository.template_checksum import template_checksum
 from boilerplate.types.serializable_version import SerializableVersion
@@ -22,29 +23,51 @@ def _answers_file_name(layer: str) -> str:
     return f".copier-answers.{layer}.yml"
 
 
+def _layer_name(layer: str | FolderLayer) -> str:
+    """Return the name of `layer`, given by name or as a `FolderLayer`."""
+    return layer.name if isinstance(layer, FolderLayer) else layer
+
+
 def _lock_layer(
-    project: Path, layer: str, checkouts: ReleaseCheckouts, joined_via: JoinedVia
+    project: Path,
+    layer: str | FolderLayer,
+    checkouts: ReleaseCheckouts,
+    joined_via: JoinedVia,
 ) -> LockLayer:
     """Describe one layer from its answers file and the release it records.
 
+    A `FolderLayer` whose answers file records no ``_commit`` is described by
+    its folder: its version, no commit, and the checksum of the folder.
+
     Raises:
-        ValueError: If the answers file records no ``_src_path`` or ``_commit``,
-            or the release reads as no version.
+        ValueError: If the answers file records no ``_src_path`` or ``_commit``
+            and the layer is no `FolderLayer`, or the release reads as no
+            version.
     """
-    recorded = load_answersfile_data(project, _answers_file_name(layer)) or {}
+    folder = layer if isinstance(layer, FolderLayer) else None
+    name = _layer_name(layer)
+    recorded = load_answersfile_data(project, _answers_file_name(name)) or {}
     source, commit = recorded.get("_src_path"), recorded.get("_commit")
+    if not commit and folder is not None:
+        return LockLayer(
+            name=name,
+            version=SerializableVersion(folder.version),
+            source=str(source or folder.path),
+            commit=None,
+            checksum=template_checksum(folder.path),
+        )
     if not source or not commit:
         raise ValueError(
-            f"layer {layer!r}: {_answers_file_name(layer)} records no _src_path "
+            f"layer {name!r}: {_answers_file_name(name)} records no _src_path "
             "and _commit, so there is no release to lock"
         )
     release = checkouts.get(str(source), str(commit))
     if release.version is None:
         raise ValueError(
-            f"layer {layer!r}: _commit {commit!r} of {source} reads as no version"
+            f"layer {name!r}: _commit {commit!r} of {source} reads as no version"
         )
     return LockLayer(
-        name=layer,
+        name=name,
         version=SerializableVersion(str(release.version)),
         joined_via=joined_via,
         source=str(source),
@@ -54,13 +77,14 @@ def _lock_layer(
 
 
 def _origins(
-    layers: Sequence[str], previous: BoilerplateLock | None
+    layers: Sequence[str | FolderLayer], previous: BoilerplateLock | None
 ) -> dict[str, JoinedVia]:
     """Return how each of `layers` joined: as `previous` says, else ``extends``."""
     recorded = (
         {entry.name: entry.joined_via for entry in previous.layers} if previous else {}
     )
-    return {layer: recorded.get(layer, JoinedVia.EXTENDS) for layer in layers}
+    names = [_layer_name(layer) for layer in layers]
+    return {name: recorded.get(name, JoinedVia.EXTENDS) for name in names}
 
 
 def _root(entries: Sequence[LockLayer]) -> LockLayer:
@@ -79,7 +103,7 @@ def _root(entries: Sequence[LockLayer]) -> LockLayer:
 
 def build_lock(
     project: Path,
-    layers: Sequence[str],
+    layers: Sequence[str | FolderLayer],
     *,
     boilerplate_version: str,
     previous: BoilerplateLock | None = None,
@@ -101,7 +125,10 @@ def build_lock(
     Args:
         project: The composed project holding the answers files.
         layers: The layers in composition order, ancestors first and the root
-            last.
+            last. A layer that rendered from a plain template folder is given as
+            a `FolderLayer`; when its answers file records no ``_commit`` it is
+            locked at the folder's version with no commit. Any other layer must
+            record a release.
         boilerplate_version: The version of the tool writing the lock.
         previous: The lock being replaced, if any; the new lock keeps its
             creation time.
@@ -127,13 +154,15 @@ def build_lock(
             stack.enter_context(ReleaseCheckouts()) if checkouts is None else checkouts
         )
         entries = tuple(
-            _lock_layer(project, layer, held, origins[layer]) for layer in layers
+            _lock_layer(project, layer, held, origins[_layer_name(layer)])
+            for layer in layers
         )
     hashes = {
-        layer: hashlib.sha256(
-            (project / _answers_file_name(layer)).read_bytes()
+        entry.name: hashlib.sha256(
+            (project / _answers_file_name(entry.name)).read_bytes()
         ).hexdigest()
-        for layer in layers
+        for entry in entries
+        if (project / _answers_file_name(entry.name)).is_file()
     }
     root = _root(entries)
     return BoilerplateLock(
