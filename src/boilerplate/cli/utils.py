@@ -25,6 +25,7 @@ from boilerplate.common.exceptions import (
     MetadataValidationError,
     MissingRequiredAnswersError,
     NonInteractiveRequiresForceError,
+    RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UserCancelledError,
 )
@@ -138,6 +139,7 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
             DestinationNotEmptyError,
             NonInteractiveRequiresForceError,
             MissingRequiredAnswersError,
+            RecordedAnswerRejectedError,
         ) as e:
             _display_error_and_exit(
                 str(e),
