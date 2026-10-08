@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from copier.errors import InvalidTypeError
 from pydantic import ConfigDict
@@ -29,6 +29,7 @@ from boilerplate.integrations.copier_types import (
     Question,
     Template,
     Worker,
+    copy_operation,
     update_operation,
 )
 
@@ -118,24 +119,29 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         with registered_ancestor_extensions(self.render_view.ancestor_extensions):
             super().run_update()
 
-    def run_tasks(self) -> None:
+    def run_tasks(self, operation: Literal["copy", "update"] = "update") -> None:
         """Run the template's tasks against the finished project as an update's.
 
         The project is the composed whole by now, so the tasks run once against
-        it, as at creation, but under Copier's ``update`` operation: a task's
-        ``when:`` sees ``_copier_operation == "update"`` and a template may guard
-        a creation-only task. Only ``run_copy``, ``run_recopy`` and ``run_update``
-        set the operation, and this run is none of them, so the shim sets it. The
-        questions are asked first, as the task conditions and commands render
-        against the answers; the project's recorded answers and the data the
-        worker holds answer them all.
+        it, as at creation, but under Copier's `operation`: a task's ``when:``
+        sees ``_copier_operation`` as ``"update"`` after an update, where a
+        template may guard a creation-only task, and as ``"copy"`` after an add,
+        which a by-hand copy of the layer runs its tasks under. Only
+        ``run_copy``, ``run_recopy`` and ``run_update`` set the operation, and
+        this run is none of them, so the shim sets it. The questions are asked
+        first, as the task conditions and commands render against the answers;
+        the project's recorded answers and the data the worker holds answer them
+        all.
+
+        Args:
+            operation: The operation the tasks run under.
 
         Raises:
             TaskError: If a task exits non-zero; it names the command.
         """
         with (
             registered_ancestor_extensions(self.render_view.ancestor_extensions),
-            update_operation(),
+            copy_operation() if operation == "copy" else update_operation(),
         ):
             super()._ask()
             self._execute_tasks(self.template.tasks)
