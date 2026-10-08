@@ -21,6 +21,8 @@ import yaml
 
 from boilerplate.composition.updating import ScopedWorker, render_role
 from boilerplate.composition.views import LayerView
+from boilerplate.project_state.lock_builder import build_lock
+from boilerplate.project_state.lock_file import write_lock
 from tests.boilerplate.templates.conftest import (
     TEMPLATES,
     build_layer_repo,
@@ -29,6 +31,7 @@ from tests.boilerplate.templates.conftest import (
     copy_layer_into,
     git,
     init_repo,
+    layer_chain,
     rehome_layer,
     update_layer,
 )
@@ -300,6 +303,35 @@ def compose_family(
         skip_tasks=skip_tasks,
     )
     make_git_project(project, family.repos, tags)
+    return project
+
+
+def compose_locked_family(
+    family: Family,
+    work: Path,
+    root: str,
+    tags: Mapping[str, str],
+    answers: Mapping[str, Any] | None = None,
+) -> Path:
+    """Compose `root` at `tags`, write its lock and commit the lock.
+
+    The lock lists the layers in composition order and records what each
+    answers file records, as ``boilerplate new`` will.
+
+    Args:
+        family: The built family.
+        work: The scenario's working directory.
+        root: The composition's final layer.
+        tags: The tag of each layer in the composition, keyed by layer name.
+        answers: Answers forced beside the project name.
+
+    Returns:
+        The project, committed with its lock and a clean tree.
+    """
+    project = compose_family(family, work, root, tags, answers)
+    order = layer_chain(root, templates_at(family, work, tags))
+    write_lock(project, build_lock(project, order, boilerplate_version="0.0.0"))
+    commit_all(project, "lock")
     return project
 
 
