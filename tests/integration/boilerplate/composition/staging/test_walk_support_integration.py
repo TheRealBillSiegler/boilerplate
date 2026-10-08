@@ -1,13 +1,16 @@
 """What the update walk reads from, and does to, a staging worktree."""
 
+import shutil
 from pathlib import Path
+
+import pytest
 
 from boilerplate.composition.staging import (
     IntentJournal,
     IntentOperation,
     StagingWorktree,
 )
-from tests.boilerplate.templates.conftest import git
+from tests.boilerplate.templates.conftest import git, init_repo
 from tests.integration.boilerplate.composition.staging.conftest import head
 from tests.integration.boilerplate.composition.staging.test_pause_copy_back_integration import (
     conflict_edit_txt,
@@ -114,3 +117,77 @@ class TestUndoCopyBack:
             stage.undo_copy_back(stage.untracked_in_checkout())
 
         assert git(project, "status", "--porcelain") == ""
+
+
+class TestUndoCopyBackWhereUnlinkWouldFail:
+    def copy_back_added_dir(self, stage: StagingWorktree) -> None:
+        (stage.path / "new").mkdir()
+        (stage.path / "new" / "added.txt").write_text("added\n", encoding="utf-8")
+        stage.commit_layer("layer one")
+        stage.copy_back()
+
+    def test_symlink_is_removed_and_its_target_is_not(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Remove the link itself; never follow it to the file it names."""
+        with staging(project, staging_root) as stage:
+            stage.copy_back()
+            try:
+                (project / "link.txt").symlink_to("keep.txt")
+            except OSError:
+                pytest.skip("this platform cannot create symlinks unprivileged")
+
+            stage.undo_copy_back(["link.txt"])
+
+        assert not (project / "link.txt").is_symlink()
+        assert (project / "keep.txt").read_text(encoding="utf-8") == "keep\n"
+
+    def test_symlink_to_a_file_outside_the_project_is_removed(
+        self, project: Path, staging_root: Path, tmp_path: Path
+    ) -> None:
+        """Treat a link out of the project as the link it is, not as an escape."""
+        outside = tmp_path / "outside.txt"
+        outside.write_text("outside\n", encoding="utf-8")
+        with staging(project, staging_root) as stage:
+            stage.copy_back()
+            try:
+                (project / "link.txt").symlink_to(outside)
+            except OSError:
+                pytest.skip("this platform cannot create symlinks unprivileged")
+
+            stage.undo_copy_back(["link.txt"])
+
+        assert not (project / "link.txt").is_symlink()
+        assert outside.read_text(encoding="utf-8") == "outside\n"
+
+    def test_parent_the_user_deleted_does_not_stop_the_undo(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Skip a listed path whose folder is already gone and finish restoring."""
+        with staging(project, staging_root) as stage:
+            self.copy_back_added_dir(stage)
+            (project / "keep.txt").write_text("task edit\n", encoding="utf-8")
+            listed = stage.untracked_in_checkout()
+            shutil.rmtree(project / "new")
+
+            stage.undo_copy_back(listed)
+
+        assert (project / "keep.txt").read_text(encoding="utf-8") == "keep\n"
+        assert git(project, "status", "--porcelain") == ""
+
+    def test_nested_repository_listed_as_a_directory_does_not_raise(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Leave a nested repository alone instead of unlinking a directory."""
+        with staging(project, staging_root) as stage:
+            stage.copy_back()
+            nested = project / "nested"
+            nested.mkdir()
+            init_repo(nested)
+            (nested / "inner.txt").write_text("inner\n", encoding="utf-8")
+            listed = stage.untracked_in_checkout()
+            assert listed == ("nested/",)
+
+            stage.undo_copy_back(listed)
+
+        assert (nested / "inner.txt").read_text(encoding="utf-8") == "inner\n"
