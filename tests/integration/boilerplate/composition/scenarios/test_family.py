@@ -61,6 +61,7 @@ CORE_FILES = {
     "src/family_app/__init__.py",
     "tests/test_smoke.py",
     ".copier-answers.core.yml",
+    "boilerplate.lock",
 }
 SERVICE_FILES = {"Dockerfile", "SERVICE.md", ".copier-answers.service.yml"}
 DOCS_FILES = {"mkdocs.yml", "docs/index.md", ".copier-answers.docs.yml"}
