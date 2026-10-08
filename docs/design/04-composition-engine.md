@@ -248,6 +248,8 @@ The merger runs over two layer sets. Over every layer of the composition it prod
 
 No render of a layer sees a descendant's or a sibling's questions or extensions, because a descendant's context hook or same-named filter in an ancestor's render would change the ancestor's files ([ADR-015 §Verification (2026-10-06)](adr-015-idiomatic-artifacts.md#verification-2026-10-06)).
 
+An update step takes each question's definition from the full merged schema, so an ancestor's step can receive a descendant's override of the ancestor's question. The override's `default`, `when`, `validator` and `choices` expressions MUST reference only questions in the scoped view of the layer that declares the overridden question, because a question only the descendant declares is undefined in the ancestor's step. `boilerplate validate` MUST check this ([05 §`validate`](05-cli-reference.md#validate), check `V16`).
+
 ---
 
 ## Stage 4 — RenderEngine
