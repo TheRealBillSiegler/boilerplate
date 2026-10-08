@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from boilerplate.models import BoilerplateLock, JoinedVia
+from boilerplate.project_state.folder_layer import FolderLayer
 from boilerplate.project_state.lock_builder import build_lock, mark_added
 from boilerplate.project_state.lock_file import read_lock, write_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
@@ -275,3 +276,70 @@ class TestMarkAdded:
 
         with pytest.raises(ValueError, match="extends"):
             mark_added(only_core, "core")
+
+
+class TestFolderLayers:
+    """A layer rendered from a plain folder has a version but no commit."""
+
+    def _folder(self, root: Path) -> Path:
+        folder = root / "templates" / "app"
+        folder.mkdir(parents=True)
+        (folder / "file.txt").write_text("app folder\n", encoding="utf-8")
+        return folder
+
+    def test_records_the_given_version_and_no_commit(
+        self, layers: Layers, tmp_path: Path
+    ) -> None:
+        """Take the version from the folder's layer and leave ``commit`` null."""
+        folder = self._folder(tmp_path)
+        (layers.project / ".copier-answers.app.yml").write_text(
+            f"_src_path: {folder.as_posix()}\n", encoding="utf-8"
+        )
+
+        lock = build_lock(
+            layers.project,
+            ["core", FolderLayer("app", "2.0.0", folder)],
+            boilerplate_version="0.3.0",
+        )
+
+        app = lock.layers[1]
+        assert (app.version, app.commit, app.source, app.checksum) == (
+            SerializableVersion("2.0.0"),
+            None,
+            folder.as_posix(),
+            template_checksum(folder),
+        )
+        assert set(lock.copier_answers_file_hashes or {}) == {"core", "app"}
+
+    def test_a_layer_with_a_recorded_commit_still_reads_its_release(
+        self, layers: Layers, tmp_path: Path
+    ) -> None:
+        """Prefer the answers file's ``_commit`` over the folder."""
+        folder = self._folder(tmp_path)
+
+        lock = build_lock(
+            layers.project,
+            ["core", FolderLayer("app", "9.9.9", folder)],
+            boilerplate_version="0.3.0",
+        )
+
+        assert (lock.layers[1].version, lock.layers[1].commit) == (
+            SerializableVersion("1.0.0"),
+            "1.0.0",
+        )
+
+    def test_a_folder_layer_without_an_answers_file_has_no_hash(
+        self, layers: Layers, tmp_path: Path
+    ) -> None:
+        """Hash only the answers files that exist, and record the folder as source."""
+        folder = self._folder(tmp_path)
+        (layers.project / ".copier-answers.app.yml").unlink()
+
+        lock = build_lock(
+            layers.project,
+            ["core", FolderLayer("app", "2.0.0", folder)],
+            boilerplate_version="0.3.0",
+        )
+
+        assert set(lock.copier_answers_file_hashes or {}) == {"core"}
+        assert lock.layers[1].source == str(folder)
