@@ -57,7 +57,7 @@ def license_step(
 
 
 class TestDescendantOverrideOfANewAncestorQuestion:
-    """Core 1.1.0 adds `license` (MIT); app 1.1.0 overrides its default."""
+    """S25: core 1.1.0 adds `license` (MIT); app 1.1.0 overrides its default."""
 
     def test_core_step_records_the_overridden_default(self, license_step: Path) -> None:
         """The ancestor's step takes the default from the full merged schema."""
@@ -73,7 +73,7 @@ PROMPT_AFTER = {"core": "2.1.0", "service": "1.0.0"}
 
 
 class TestValueChangingMigrationWithAStaleDescendant:
-    """Core 2.1.0 rewrites a recorded Python 3.11 to 3.12; service's copy is stale."""
+    """S23: core 2.1.0 moves a recorded Python 3.11 to 3.12; service's copy is stale."""
 
     BEFORE: ClassVar[dict[str, Any]] = {"core": "2.0.0", "service": "1.0.0"}
     AFTER: ClassVar[dict[str, Any]] = {"core": "2.1.0", "service": "1.0.0"}
@@ -141,7 +141,7 @@ class TestValueChangingMigrationWithAStaleDescendant:
 
 
 class TestRenamedAnswer:
-    """Core 2.0.0 renames `author_name`; service 1.2.0 renders the new name."""
+    """S24: core 2.0.0 renames `author_name`; service 1.2.0 renders the new name."""
 
     BEFORE: ClassVar[dict[str, Any]] = {"core": "1.0.0", "service": "1.0.0"}
     AFTER: ClassVar[dict[str, Any]] = {"core": "2.0.0", "service": "1.2.0"}
@@ -174,7 +174,7 @@ class TestRenamedAnswer:
 
 
 class TestInteractivePrompting:
-    """Each layer's step asks its own questions, as ``copier update`` does."""
+    """S26: each layer's step asks its own questions, as ``copier update`` does."""
 
     def _update_core(
         self,
@@ -261,7 +261,7 @@ SITE_NAME_REASON = "The site name cannot be empty."
 
 
 class TestRejectedRecordedAnswer:
-    """Docs 1.1.0 rejects an empty `docs_site_name`; service 1.1.0 retypes `port`."""
+    """S28: docs 1.1.0 rejects an empty `docs_site_name`; service retypes `port`."""
 
     def _compose_empty_site_name(self, family: Family, tmp_path: Path) -> Path:
         return compose_family(family, tmp_path, "app", BASE, {"docs_site_name": ""})
@@ -369,7 +369,7 @@ class TestRejectedRecordedAnswer:
 
 
 class TestSecretAskedOnce:
-    """A secret answered in core's step reaches service's step as data."""
+    """S27: a secret answered in core's step reaches service's step as data."""
 
     BEFORE: ClassVar[dict[str, Any]] = {"core": "1.0.0", "service": "1.0.0"}
     AFTER: ClassVar[dict[str, Any]] = {"core": "1.1.0", "service": "1.1.0"}

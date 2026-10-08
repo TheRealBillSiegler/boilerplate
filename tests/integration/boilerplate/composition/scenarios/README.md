@@ -4,7 +4,7 @@ Reproducible evidence for the composition design: each test re-runs one scenario
 
 Most scenarios run on a made-up family of five Python-project templates (`core`, `service`, `docs`, `ci`, `app`) kept as data in `tests/fixtures/family/`. A few stay on the bundled `project` and `streamlit` layers, because the family cannot express what they claim; the table says which.
 
-Five scenarios assert target behavior the code does not yet have. They are strict expected failures (`xfail`): they pass the run while the gap exists and fail it once the gap closes, at which point remove the marker.
+Two scenarios assert target behavior the code does not yet have. They are strict expected failures (`xfail`): they pass the run while the gap exists and fail it once the gap closes, at which point remove the marker.
 
 A failure means a claim no longer holds (Copier, Git or the templates changed). Revisit the design that rests on it, starting with [design 04 §Safe Update](../../../../../docs/design/04-composition-engine.md#safe-update), before changing the expected value.
 
@@ -20,7 +20,7 @@ Every scenario builds its template repositories and project under pytest's temp 
 
 ## How the harness works
 
-The harness stands in for the part of a compose-and-update engine that does not exist yet, the questionnaire pass and the compose loop, so the scenarios drive Boilerplate's real pieces and Copier directly. Five views of it follow.
+The harness stands in for the part of a compose-and-update engine that does not exist yet, the compose loop with its questionnaire pass and the walk that calls each layer's update step, so the scenarios drive Boilerplate's real pieces and Copier directly. Five views of it follow.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,17 +33,18 @@ The harness stands in for the part of a compose-and-update engine that does not 
 │ Harness                                           test code │
 │   tests/boilerplate/templates/conftest.py                   │
 │   compose_project · ask_merged_questionnaire ·              │
-│   update_layer · update_data · layer_view (thin wrappers    │
+│   update_layer · step_view · layer_view (thin wrappers      │
 │   that resolve, compose, read answers files and call src)   │
 ├──────────────────────────────┬──────────────────────────────┤
 │ Boilerplate engine      real │ Copier 9.18.1           real │
 │   catalog · Resolver ·       │   Worker.run_copy ·          │
 │   Composer · MergedTemplate  │   Worker.run_update · git    │
 │   composition/views:         │                              │
-│     build_layer_view         │                              │
+│     build_layer_view ·       │                              │
+│     build_step_view          │                              │
 │   composition/updating:      │                              │
 │     ScopedWorker ·           │                              │
-│     build_update_data ·      │                              │
+│     build_step_data ·        │                              │
 │     update_layer             │                              │
 ├──────────────────────────────┴──────────────────────────────┤
 │ Fixtures                                          test code │
@@ -108,24 +109,29 @@ Composing asks every question once over the full merged view, then renders each 
 
 ```text
 update_family_layer(family, project, root="app", layer="service",
-                    before={…, "service": "1.0.0"}, after={…, "service": "1.1.0"}, work=work)
+                    before={…, "service": "1.0.0"}, after={…, "service": "1.1.0"},
+                    work=work, step_views=True)
 │
 ├─ templates_at for the before and after tags
 └─ update_layer(project, root="app", layer="service", source=repos/service,   test
                 ref="1.1.0", templates={"1.1.0": dir}, old_templates=dir)
    │
-   ├─ old view    = build_layer_view(compose("service", before dir))         real
-   ├─ target view = build_layer_view(compose("service", after dir))          real
-   │    two views, not one per ref: when only an ancestor moves, the layer's
-   │    own ref is the same in every render
+   ├─ old view    = build_step_view(compose("service", before dir),          real
+   ├─ target view   compose("app", …)) at the before / after dir
+   │    the questions of service's scope under the definitions of the full
+   │    merged schema, so a descendant's override sets the default of a new
+   │    ancestor question; two views, not one per ref: when only an ancestor
+   │    moves, the layer's own ref is the same in every render
    │
-   ├─ update_data: reads the answers files, asks the pass                   test
-   │    └─ build_update_data                                                real
-   │         recorded answers: core's file, then service's laid on top
-   │         + the pass's answers for questions no file records
-   │
-   └─ composition.updating.update_layer(project, release, views, data)      real
-      └─ ScopedWorker(vcs_ref="1.1.0", data, old_view, target_view)         real, over copier
+   └─ composition.updating.update_layer(project, release, views, inputs)     real
+      ├─ build_step_data, from the answers files as the step starts         real
+      │    the data is only what the layer does not own:
+      │      for each question an ancestor declares, the answer in that
+      │        ancestor's file (core's), never service's own copy
+      │      + the secrets asked earlier in this update
+      │      + the values the user supplies (data=, the future --set)
+      └─ ScopedWorker(vcs_ref="1.1.0", data, old_view, target_view,         real, over copier
+                      defaults = not interactive, skip_answered)
          .run_update()
         Copier rebuilds the worker for each render; every rebuilt worker
         picks its view from its destination: the old copy's temp directory
@@ -134,14 +140,22 @@ update_family_layer(family, project, root="app", layer="service",
         1  old copy   at _commit 1.0.0  old view     answers file only; data never reaches it
         2  the target release's before-migrations run; Copier re-reads the answers file
         3  in place   at 1.1.0          target view  data over the answers file
+             before Copier asks, the layer's own recorded answers are checked
+             against the target view's questions (type, choices, validator):
+             a rejected one raises RecordedAnswerRejectedError, or with prompting
+             is logged and asked again; an answer the data replaces is not checked
+             Copier then asks the layer's own questions: defaults, or prompts
+             with the recorded answer as the default
         4  new copy   at 1.1.0          target view  same answers, in an empty folder
         5  the user's changes (old copy → project) are applied to the in-place
            render with git apply --reject; a rejected file is merged again with
            git merge-file, which leaves conflict markers and still exits 0
         6  after-migrations run
+
+        the step returns the secret answers it asked, for the walk to carry on
 ```
 
-The step order is Copier's `_apply_update` in `copier/_main.py`. Because each render builds its own view, the old copy renders the questionnaire of the release it reconstructs, and forced data reaches only the in-place render and the new copy.
+The step order is Copier's `_apply_update` in `copier/_main.py`. Because each render builds its own view, the old copy renders the questionnaire of the release it reconstructs, and data reaches only the in-place render and the new copy.
 
 ```text
 pytest session
@@ -176,14 +190,14 @@ Rows marked *added* are checks written with this suite. Rows marked *expected fa
 | C3 | What does each answers file record? | Scoped: each layer's own view (core's file has no `port`). Full: everything, everywhere. | `test_views.py::TestComposeUnderEachView::test_core_answers_file_records_the_questions_of_its_view`, `::test_service_answers_file_records_its_whole_view` |
 | C4 | Do both layers update cleanly to their next releases, in either order and view? | Yes: user line kept once, core's `LICENSE` appears, service's `port` takes its new type, both answers files end at the new tags. *Bundled:* updates under the full view keep rendering a descendant's hook in project's files. | `test_views.py::TestWalkThroughReleases`; *bundled*: `::TestImportableExtensionsInViews::test_project_file_renders_the_description_its_view_allows` |
 | S10a | Scoped update, no questionnaire pass: does app's override of a question core 1.1.0 adds land? | No: core renders and records MIT; app records MIT or Apache-2.0 by order. | `test_question_changes.py::TestAddedQuestionWithOverride::test_override_reaches_only_the_layers_its_mechanism_lets_it[S10a-*]` |
-| S10b | Does one pass over the full view at the target fix it? | Yes: Apache-2.0 in `LICENSE` and both answers files, either order. | same test `[S10b-*]`, `::test_questionnaire_pass_answers_the_new_question_with_the_override` |
-| S10c *bundled* | Does the full view see the override? | Yes: Apache-2.0 everywhere. The family cannot compose its app under the full view, which has no way to give app docs' filter. | `test_question_changes.py::TestAddedQuestionUnderTheFullView` |
+| S10b | Does one pass over the full view at the target fix it? | Yes: Apache-2.0 in `LICENSE` and both answers files, either order. The step runs no such pass; the test supplies the pass's answers as data, a control for S25. | same test `[S10b-*]`, `::test_questionnaire_pass_answers_the_new_question_with_the_override` |
+| S10c *bundled* | Does the full view see the override? | Yes: Apache-2.0 everywhere. The project is composed under the full view through `RenderEngine`, which registers no ancestor's file-path extension, so the family's app still cannot be composed that way (`No filter named 'docs_anchor'`). Updating app under the full view is now possible, since the views `ScopedWorker` renders under register them. | `test_question_changes.py::TestAddedQuestionUnderTheFullView` |
 | S11 | Does a diamond scope each layer to its transitive ancestors and update cleanly? | Yes, in the scoped view: each view adds its ancestry's questions, app renders through docs' filter, docs then app update with the user line kept and only they move. *Bundled:* the same in the full view, docs' importable filter reaches only views that descend from docs, and an edit beside a changed line conflicts in both views. | `test_views.py::TestDiamond`, `::TestDiamondUpdates`; *bundled*: `::TestBundledDiamond`, `::TestBundledDiamondUpdates` |
 | S12 | Does removing a question break the old copy? | No: the old copy renders the recorded `use_tests: false` (no smoke test); the answers file drops the key; service, not yet updated, keeps it. | `test_question_changes.py::TestRemovedQuestion` |
 | S12 control | Does forced data reach the old copy? | No: it renders from the answers file, also with `data={}`. | `../updating/test_scoped_worker_integration.py::TestEachCopyRendersItsOwnRelease`; *added*: `::test_forced_data_never_reaches_the_old_copy` |
-| S13 | What happens to a recorded answer the new type or choices reject? | Forced: raw `ValueError` before any render, for the declaring layer and a descendant. Castable: carried as the new type. Vanilla: silently replaced by the default. The project stays untouched unless the release ships a migration, which runs first: core 2.1.0 rewrites the recorded Python version before the forced one is rejected. | `test_question_changes.py::TestRetypedQuestion`; *bundled*: `::TestNarrowedChoiceOnTheBundledLayers` (the narrowed choice with no migration) |
+| S13 | What happens to a recorded answer the new type or choices reject? | Forced as data: raw `ValueError` before any render, for the declaring layer and a descendant. Through the step: a non-interactive step raises `RecordedAnswerRejectedError` first (S28). Castable: carried as the new type. Vanilla: silently replaced by the default. The project stays untouched unless the release ships a migration, which runs first: core 2.1.0 rewrites the recorded Python version before the forced one is rejected. | `test_question_changes.py::TestRetypedQuestion`; *bundled*: `::TestNarrowedChoiceOnTheBundledLayers` (the narrowed choice with no migration) |
 | S14 | Does a renamed question's value survive behind a migration? | Lock order: yes. Reverse order, with only core shipping the migration: service records the default. | `test_question_changes.py::TestRenamedQuestion` |
-| S14 *added*, *expected failure* | Should the update questionnaire pass respect the migration? | No: it forces the renamed question's default over the migrated answer in both layers, either order. | `test_question_changes.py::TestRenamedQuestion::test_update_questionnaire_pass_keeps_the_migrated_answer` (target: both layers record and render the migrated answer) |
+| S14 *added* | Does the update step keep a renamed question's migrated answer? | Yes, ancestors first: with no questionnaire pass, both layers record and render the migrated answer. | `test_question_changes.py::TestRenamedQuestion::test_ancestors_first_update_step_keeps_the_migrated_answer` |
 | S15 | What does a validator the recorded answer fails do? | Forced: `ValueError` before render, for docs and app. Vanilla: silently swaps in the new default when it is valid. | `test_question_changes.py::TestTightenedValidator` |
 | S16 | Where do tasks run? | Compose: once, in the destination, although five layers render. Update: the layer's own task in the old copy, in place and in the new copy; a layer with no task runs none. *Bundled:* the in-place output is undone by the merge when two layers append to one marker; on the family the appended line survives. | `test_update_mechanics.py::TestTasks`; *bundled*: `::test_in_place_task_output_is_undone_by_the_merge` |
 | S17 | Can the unified questionnaire run interactively in-process? | Yes via prompt_toolkit pipe input; prompts show service's and app's overrides; `project_name` defaults to the scratch directory's name. | `test_prompting.py::TestInteractivePrompting` |
@@ -193,5 +207,11 @@ Rows marked *added* are checks written with this suite. Rows marked *expected fa
 | S21, *expected failure* | Should each answers file record only its own layer's view, and should `update` be a command? | Not yet: every answers file records the whole merged questionnaire; `update` exits 3, no such command. | `test_cli_baseline.py::TestShippedNew::test_each_answers_file_records_only_its_layers_scoped_view` (target: project's file lacks streamlit's questions), `::test_update_help_exits_zero` (target: `boilerplate update --help` exits 0); the other `TestShippedNew` tests pass |
 | S22 *bundled* | Does a three-layer chain scope and update cleanly? | Yes in both orders; the leaf's override reaches every layer that asks the question. No family shape is a chain of three: every layer extends core alone except app, which extends two. | `test_views.py::TestChain`, `::TestChainUpdates` |
 | D17 | Which spellings of another template's extension file resolve? | Walk-out relative: locally only. Drive-less absolute: everywhere. Drive-letter absolute (Windows): never, it splits at the drive colon. | `test_extensions.py::TestFilePathSpellings` |
-| *added* | Do a layer's own answers beat its ancestors' in the scoped data? | Yes. | `../updating/test_update_data_integration.py::test_layers_own_recorded_answer_beats_its_ancestors` |
+| S23 *added* | Does a migration that changes a value reach a descendant whose copy is stale? | Yes: core 2.1.0 rewrites a recorded Python 3.11 to 3.12, then service's step takes core's 3.12; both files record it and the Dockerfile renders it. Forcing service's own stale 3.11, the first rule, is rejected. | `test_update_steps.py::TestValueChangingMigrationWithAStaleDescendant` |
+| S24 *added* | Does a renamed answer survive in the descendant's file? | Yes, ancestors first, non-interactive: both answers files record `maintainer_name` and service 1.2.0's guide renders it. | `test_update_steps.py::TestRenamedAnswer` |
+| S25 *added* | Does a descendant's override of a new ancestor question land in the ancestor's step? | Yes: core 1.1.0 adds `license`, app 1.1.0 overrides its default, and core's non-interactive step records and renders Apache-2.0. | `test_update_steps.py::TestDescendantOverrideOfANewAncestorQuestion` |
+| S26 *added* | Does each layer's step prompt for its own questions? | Yes: core's step re-asks them with the recorded or migrated answer as the default; `skip_answered` asks what no file records (the never-recorded secret too); service's step does not ask core's. | `test_update_steps.py::TestInteractivePrompting`; `::TestSecretAskedOnce::test_service_step_does_not_ask_the_secret_or_cores_questions_again` |
+| S27 *added* | Is a secret asked once per update? | Yes: answered in core's step, it reaches service's as data and stays out of every answers file; without the carry, service's step asks it again. | `test_update_steps.py::TestSecretAskedOnce` |
+| S28 *added* | What does a step do with a recorded answer the target rejects? | A non-interactive step raises `RecordedAnswerRejectedError` naming docs, `docs_site_name` and the empty value; a supplied value replaces it; an interactive step logs why and the prompt takes a valid one; a recorded `"8000"` under service 1.1.0's `int` passes. | `test_update_steps.py::TestRejectedRecordedAnswer` |
+| *added* | Does a declaring ancestor's answer beat the layer's stale copy in a step's data? | Yes: a deliberate change from the first rule, which put the layer's own answer on top. The pure rule is tested in `tests/boilerplate/composition/updating/test_update_data.py`. | `../updating/test_update_data_integration.py::test_declaring_ancestors_answer_beats_the_layers_stale_copy` |
 | *added* | Does the family itself hold? | Every release of every layer is a valid template; the first releases compose into the documented shapes; `license` has an off choice; a project records a tag per layer. | `test_family.py` |
