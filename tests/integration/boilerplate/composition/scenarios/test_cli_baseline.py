@@ -73,14 +73,25 @@ class TestShippedNew:
         """S21: the non-interactive compose exits 0."""
         assert new_run.result.returncode == 0
 
-    def test_every_answers_file_records_the_whole_merged_questionnaire(
+    @pytest.mark.xfail(
+        strict=True,
+        reason=(
+            "`new` renders every layer under the full merged view, so project's "
+            "answers file records streamlit's questions; design 04 (Per-Layer "
+            "Render Loop) and ADR-015 point 4 expect each file to record only "
+            "its own layer's scoped view."
+        ),
+    )
+    def test_each_answers_file_records_only_its_layers_scoped_view(
         self, new_run: NewRun
     ) -> None:
-        """S21: project's file records streamlit's question too (full view)."""
+        """S21: project's file lacks streamlit's question; streamlit's has both."""
         keys = {layer: set(answers_file(new_run.project, layer)) for layer in LAYERS}
-        merged = PROJECT_RECORDED | {"container_registry", "_src_path"}
 
-        assert keys == dict.fromkeys(LAYERS, merged)
+        assert keys == {
+            "project": PROJECT_RECORDED | {"_src_path"},
+            "streamlit": PROJECT_RECORDED | {"container_registry", "_src_path"},
+        }
 
     def test_bundled_layers_record_no_template_version(self, new_run: NewRun) -> None:
         """S21: bundled layers are not git roots, so both render version None."""
@@ -103,11 +114,15 @@ class TestShippedNew:
         ]
 
 
-def test_update_is_not_a_command_yet(tmp_path: Path) -> None:
-    """S21: `boilerplate update` does not exist; the CLI exits 3 naming it."""
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "The CLI has no `update` command and exits 3; design 05 (update) "
+        "specifies `boilerplate update`."
+    ),
+)
+def test_update_help_exits_zero(tmp_path: Path) -> None:
+    """S21: `boilerplate update --help` exits 0."""
     result = _boilerplate("update", "--help", cwd=tmp_path)
 
-    assert (result.returncode, "No such command 'update'." in result.stderr) == (
-        3,
-        True,
-    )
+    assert result.returncode == 0
