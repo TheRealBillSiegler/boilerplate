@@ -451,14 +451,14 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 
 | Status | Exit code | Meaning |
 | --- | --- | --- |
-| `in_progress` | — (transient) | Update operation has started; record is awaiting in-place update to a terminal status. |
+| `in_progress` | — (transient) | The copy back from the staging worktree has started; record is awaiting in-place update to a terminal status. |
 | `success` | 0 | Normal completion of an update. |
 | `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. The record names each layer's target version and the layers the paused walk finished, which is what `update` resumes from ([04 §Safe Update](04-composition-engine.md#safe-update)). |
 | `failed` | 1 | Unrecoverable error. |
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
 
-**Two-phase write (update and add operations)**: For `update` and `add` operations, the MigrationRecord MUST be appended at the START with `status: in_progress` and then updated in-place to a terminal value after the lock file has been successfully written. The two-phase write ensures partial failures leave a record.
+**Two-phase write (update and add operations)**: For `update` and `add` operations, the MigrationRecord MUST be appended with `status: in_progress` when the copy back from the staging worktree starts, and then updated in-place to a terminal value after the lock file has been successfully written. An operation that fails before the copy back changes nothing in the project and appends no record.
 
 **Single-phase write (adopt and create)**: For `adopt` and `create` operations the record is written once with the corresponding terminal status (no `in_progress` phase) because these pipelines write only Boilerplate-owned state files and have no merge-conflict path.
 
@@ -478,7 +478,7 @@ An intent journal records the in-progress state of a mutating operation for cras
 | `template_ref` | string or null | Template reference (for create/update/add) |
 | `profile_ref` | string or null | Profile reference (for env_apply) |
 
-**File locations**: Project operations use `.boilerplate-commit-intent.json` in the staging directory. Environment operations use `.boilerplate-env-intent.json` in the staging directory.
+**File locations**: Project operations use `.boilerplate-commit-intent.json` in the staging directory. For `update` and `add`, the staging directory is the uniquely named temp folder that holds the worktree, and the journal sits beside the worktree so `git add -A` in the worktree never picks it up. Environment operations use `.boilerplate-env-intent.json` in the staging directory.
 
 #### IntentJournal phase vocabularies
 
@@ -610,6 +610,8 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
+| `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely |
+| `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back |
 | `MergeConflictError` | `1` | Two layers declare incompatible values for the same configuration key |
 
 Unrecognized exceptions outside this hierarchy MUST exit with code `1` (`FAILURE`). Exit-code semantics (what each code means) are specified in [§Exit Codes](#exit-codes) below.
@@ -630,7 +632,7 @@ Runtime settings (the `Settings` object) and the `boilerplate-sources.yml` catal
 | `1` | `FAILURE` | General runtime failure |
 | `2` | `CONFIG_ERROR` | Configuration or settings could not be loaded |
 | `3` | `VALIDATION_ERROR` | Input validation failed |
-| `4` | `ACTION_REQUIRED` | The operation requires user intervention before it can complete (e.g., merge conflicts during `update` that need manual resolution before `--continue`). Distinguishes recoverable workflow pauses from hard failures (exit 1). Commands: `update` (merge conflicts). `env apply` does not produce exit 4 — per §08 Part 4, all provisioning failures roll back fully to exit 1; a partial-install resume path is a candidate future enhancement, not part of the contract. |
+| `4` | `ACTION_REQUIRED` | The operation requires user intervention before it can complete (e.g., merge conflicts during `update` that the user resolves and commits before rerunning `boilerplate update`). Distinguishes recoverable workflow pauses from hard failures (exit 1). Commands: `update` (merge conflicts). `env apply` does not produce exit 4 — per §08 Part 4, all provisioning failures roll back fully to exit 1; a partial-install resume path is a candidate future enhancement, not part of the contract. |
 | `130` | `USER_CANCELLED` | The user cancelled an interactive prompt (Ctrl+C). Matches the POSIX `128 + SIGINT` convention Typer's own `KeyboardInterrupt` handler already uses, so every Ctrl+C in the CLI — inside a prompt or not — exits with the same code. |
 
 Command-line usage errors — an unknown option, a missing argument, a rejected flag value — are input validation and exit `3`, overriding Click's own default of `2`, which this taxonomy reserves for `CONFIG_ERROR`.
