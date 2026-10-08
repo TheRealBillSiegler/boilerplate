@@ -1,11 +1,12 @@
-"""Template builders and project-state readers shared by the composition scenarios.
+"""Project builders and project-state readers shared by the composition scenarios.
 
-A scenario builds its template releases as plain directories, one per ref,
-each holding every layer at that ref; turns each layer into a git repository
-tagged at its releases; composes a project from the first release; points
-each layer's answers file at its repository; and updates layers through the
-harness in ``tests.boilerplate.templates.conftest``. Everything it writes
-lives under pytest's temp directory, Copier's own temp copies included
+Most scenarios run on the made-up template family: ``compose_family`` composes
+a project from chosen tags of its layers and points each layer's answers file at
+its repository, and ``update_family_layer`` updates one layer between two sets
+of tags through the harness in ``tests.boilerplate.templates.conftest``. The
+scenarios whose claims the family cannot express build releases of the bundled
+layers instead (``build_releases``, ``build_repos``). Everything a scenario
+writes lives under pytest's temp directory, Copier's own temp copies included
 (``temp_dir_inside``).
 """
 
@@ -546,8 +547,8 @@ def recording_worker(
     return RecordingWorker, recording
 
 
-# Scenarios S10 and S12: project v4 adds a `license` question its files
-# render, streamlit v4 overrides its default, project v5 removes it again.
+# Scenario S10c: project v4 adds a `license` question its files render, and
+# streamlit v4 overrides its default.
 LICENSE_QUESTION = (
     '\nlicense:\n  type: str\n  help: "License identifier for the project."\n'
     '  default: "MIT"\n'
@@ -556,51 +557,15 @@ LICENSE_OVERRIDE = (
     '\n# Override project\'s `license` default.\nlicense:\n  default: "Apache-2.0"\n'
 )
 LICENSE_FILE = "project_license.txt"
-LICENSE_TAGS: dict[str, Sequence[str]] = {
-    "project": ["v1", "v4", "v5"],
-    "streamlit": ["v1", "v4"],
-}
 
 
 def license_releases(ref: str, release: Path) -> None:
-    """Add, override and then remove project's `license` question across releases."""
+    """Add project's `license` question at v4 and override its default in streamlit."""
     project, streamlit = release / "project", release / "streamlit"
     if ref == "v4":
         append(project / "copier.yml", LICENSE_QUESTION)
         write(project / f"{LICENSE_FILE}.jinja", "license={{ license }}\nrelease=v4\n")
-    if ref == "v5":
-        write(
-            project / f"{LICENSE_FILE}.jinja",
-            "license=(question removed in v5)\nrelease=v5\n",
-        )
-    if ref in ("v4", "v5"):
         append(streamlit / "copier.yml", LICENSE_OVERRIDE)
-
-
-class LicenseProject(NamedTuple):
-    """A project composed at v4 of the license releases, git-backed.
-
-    Attributes:
-        releases: Each release's templates directory, keyed by ref.
-        repos: Each layer's repository, keyed by layer name.
-        project: The composed project, every layer at v4.
-    """
-
-    releases: dict[str, Path]
-    repos: dict[str, Path]
-    project: Path
-
-
-def compose_license_project(root: Path) -> LicenseProject:
-    """Compose the license releases at v4 under scoped views and commit the project."""
-    releases = build_releases(
-        root, ("v1", "v4", "v5"), license_releases, merge_readme=False
-    )
-    repos = build_repos(root, releases, LICENSE_TAGS)
-    project = root / "composed" / "probe-app"
-    compose_project("streamlit", project, ANSWERS, releases["v4"])
-    make_git_project(project, repos, "v4")
-    return LicenseProject(releases, repos, project)
 
 
 def on_own_worker(value: object, name: str) -> object:
