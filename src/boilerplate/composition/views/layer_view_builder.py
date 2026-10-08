@@ -2,7 +2,8 @@
 
 A composition rooted at a layer holds that layer and its ancestors, so its
 merged questionnaire and importable extension union is the layer's *scoped*
-view; rooted at the composition's final layer, it is the *full* view.
+view; rooted at the composition's final layer, it is the *full* view. An update
+step asks the scoped view's questions under the full view's definitions.
 """
 
 from collections.abc import Sequence
@@ -67,6 +68,27 @@ def _ancestor_extensions(layer: CompositionLayer) -> tuple[AncestorExtension, ..
     return tuple(found)
 
 
+def declaring_layers(composition: Composition) -> dict[str, str]:
+    """Return the layer that declares each question of `composition`.
+
+    Each layer's recorded ``values`` hold the questions accumulated up to it, so
+    the first layer to hold a question declares it; a later layer that holds it
+    only overrides it.
+
+    Args:
+        composition: A resolved and composed set of layers.
+
+    Returns:
+        The declaring layer's name, keyed by question name.
+    """
+    owners: dict[str, str] = {}
+    for layer in composition.layers:
+        for name in layer.values:
+            if not name.startswith("_"):
+                owners.setdefault(name, layer.name)
+    return owners
+
+
 def build_layer_view(composition: Composition) -> LayerView:
     """Return the merged view of `composition`.
 
@@ -78,7 +100,7 @@ def build_layer_view(composition: Composition) -> LayerView:
         The merged questions and the importable extension union, and the
         file-path extension specs of every layer but the last as the files at
         their releases; the last layer's own file-path specs are left to
-        Copier.
+        Copier. It also names the layer that declares each question.
     """
     raw = composition.final.get("_jinja_extensions")
     extensions = (
@@ -92,8 +114,36 @@ def build_layer_view(composition: Composition) -> LayerView:
         for extension in _ancestor_extensions(layer)
     )
     return LayerView(
-        dict(composition.merged_questions_schema), extensions, ancestor_extensions
+        dict(composition.merged_questions_schema),
+        extensions,
+        ancestor_extensions,
+        declaring_layers(composition),
     )
+
+
+def build_step_view(scoped: Composition, full: Composition) -> LayerView:
+    """Return the view an update step renders a layer under.
+
+    The step asks the questions of the layer's scope, with each question's
+    definition and default taken from the full composition's merged schema, so a
+    descendant's override sets the default of a question an ancestor adds, in the
+    ancestor's step.
+
+    Args:
+        scoped: The composition rooted at the layer being updated: the layer and
+            its ancestors.
+        full: The full composition, which holds `scoped`'s layers; both at the
+            versions the view is for.
+
+    Returns:
+        The scoped view with each question's definition replaced by the full
+        schema's. Extensions, ancestor extension files and declaring layers
+        follow the scope.
+    """
+    view = build_layer_view(scoped)
+    full_questions = full.merged_questions_schema
+    questions = {name: full_questions[name] for name in view.questions}
+    return view._replace(questions=questions)
 
 
 def view_config(
