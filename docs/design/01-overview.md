@@ -84,6 +84,8 @@ Boilerplate manages the toolchain across its full lifecycle — installation, ve
 
 Boilerplate MUST orchestrate established external tools (Copier, package managers, version checkers) instead of reimplementing their responsibilities. Ownership boundaries between Boilerplate and integrated tools MUST be explicit in every operation.
 
+Boilerplate MUST use all of its underlying technologies idiomatically and set the example of doing so. Where the design departs from a technology's idiom, it MUST name the departure and the reason.
+
 ### Versioning and compatibility
 
 The Boilerplate tool itself follows Semantic Versioning 2.0.0. Breaking changes MUST be accompanied by a major version bump and documented migration path. Templates use PEP 440 — a SemVer-compatible superset that PEP 440 itself endorses for the `MAJOR.MINOR.PATCH` (clauses 1-8) public-version part. Templates carry versions in this scheme and declare their compatibility constraints.
