@@ -1,0 +1,13 @@
+image: ghcr.io/astral-sh/uv:python{{ python_version }}-bookworm
+
+stages:
+  - test
+
+variables:
+  UV_LINK_MODE: copy
+
+test:
+  stage: test
+  script:
+    - uv sync
+    - uv run pytest --maxfail=1

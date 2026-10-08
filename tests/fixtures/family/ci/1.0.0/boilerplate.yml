@@ -1,0 +1,6 @@
+schema_version: "1"
+
+name: ci
+version: 1.0.0
+description: Continuous integration for a Python project.
+extends: [core]
