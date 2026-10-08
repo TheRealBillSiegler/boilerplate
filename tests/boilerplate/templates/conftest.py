@@ -19,7 +19,10 @@ Two views of a composition drive a layer's render:
   through ``ScopedWorker``, which renders every copy Copier's update makes
   under the scoped view of the ref that copy renders at (``update_layer``).
 
-``probes/composition`` reuses this harness for its scenario tests.
+The view builder, ``ScopedWorker``, the update answer rule and the single-layer
+update are Boilerplate's own code in ``boilerplate.composition.views`` and
+``boilerplate.composition.updating``; the helpers here resolve and compose, read
+answers files and call them. The composition scenarios reuse this harness.
 """
 
 import shutil
