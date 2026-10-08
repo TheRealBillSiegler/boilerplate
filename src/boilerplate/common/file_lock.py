@@ -1,6 +1,7 @@
 """A platform-native advisory lock on a file."""
 
 import sys
+import time
 from pathlib import Path
 from types import TracebackType
 from typing import IO, Self
@@ -57,6 +58,28 @@ class FileLock:
             handle.close()
             return False
         self._handle = handle
+        return True
+
+    def acquire(self, timeout: float, poll_interval: float = 0.1) -> bool:
+        """Take the lock, retrying until `timeout` seconds have passed.
+
+        Args:
+            timeout: How long to keep trying; zero tries once.
+            poll_interval: Seconds to sleep between tries.
+
+        Returns:
+            True when this lock now holds the file; False when the timeout
+            passed with another holder still on it.
+
+        Raises:
+            OSError: If the file cannot be opened.
+        """
+        deadline = time.monotonic() + timeout
+        while not self.try_acquire():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False
+            time.sleep(min(poll_interval, remaining))
         return True
 
     def release(self) -> None:
