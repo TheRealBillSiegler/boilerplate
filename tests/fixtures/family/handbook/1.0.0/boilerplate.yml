@@ -1,0 +1,6 @@
+schema_version: "1"
+
+name: handbook
+version: 1.0.0
+description: A contributor handbook that also claims the README and the ignore file.
+extends: [core]

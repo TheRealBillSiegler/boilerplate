@@ -1,0 +1,20 @@
+_answers_file: .copier-answers.handbook.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+
+# Project-owned: a project that already has a README keeps it when the handbook
+# is added. The handbook's other shared file, `.gitignore`, is not listed, so a
+# by-hand copy overwrites it.
+_skip_if_exists:
+  - "README.md"
