@@ -60,6 +60,7 @@ from boilerplate.composition.updating import update_layer as update_layer_in_src
 from boilerplate.composition.views import (
     LayerView,
     build_layer_view,
+    build_step_view,
     registered_ancestor_extensions,
     view_config,
 )
@@ -176,6 +177,24 @@ def layer_view(name: str, templates_dir: Path | None = None) -> LayerView:
         The merged questions and importable extension union.
     """
     return build_layer_view(compose(name, templates_dir))
+
+
+def step_view(layer: str, root: str, templates_dir: Path | None = None) -> LayerView:
+    """Return the view an update step of `layer` renders under.
+
+    The scoped view's questions under the full view's definitions: `layer`'s
+    composition for the scope, `root`'s for the definitions.
+
+    Args:
+        layer: The layer being updated.
+        root: The composition's final layer.
+        templates_dir: An extra directory searched ahead of the bundled
+            templates.
+
+    Returns:
+        The step's view.
+    """
+    return build_step_view(compose(layer, templates_dir), compose(root, templates_dir))
 
 
 def layer_chain(name: str, templates_dir: Path | None = None) -> list[str]:
@@ -388,6 +407,7 @@ def update_layer(
     ref: str,
     templates: Mapping[str, Path | None],
     full_view: bool = False,
+    step_views: bool = False,
     ask_unanswered: bool = True,
     data: Mapping[str, Any] | None = None,
     old_templates: Path | None = None,
@@ -412,6 +432,9 @@ def update_layer(
         full_view: Whether to render under the root's full view and pass
             every answers file's answers, as ``RenderEngine`` would, instead
             of `layer`'s scoped view and its chain's answers.
+        step_views: Whether to build the views as an update step does, the
+            layer's scope under the full schema's definitions, instead of
+            `layer`'s scoped view or, with `full_view`, the root's full view.
         ask_unanswered: Whether to run a questionnaire pass over the full
             merged view at `ref` for questions `layer`'s chain has not
             recorded (``update_data``).
@@ -430,12 +453,18 @@ def update_layer(
         worker_type: The worker class to update with.
     """
     view_root = root if full_view else layer
+
+    def view_at(templates_dir: Path | None) -> LayerView:
+        if step_views:
+            return step_view(layer, root, templates_dir)
+        return layer_view(view_root, templates_dir)
+
     if old_view is None:
         if old_templates is None:
             old_templates = templates[_recorded_ref(project, layer)]
-        old_view = layer_view(view_root, old_templates)
+        old_view = view_at(old_templates)
     if target_view is None:
-        target_view = layer_view(view_root, templates[ref])
+        target_view = view_at(templates[ref])
     if data is None:
         data = update_data(
             project,
