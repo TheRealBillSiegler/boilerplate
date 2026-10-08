@@ -3,6 +3,8 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
+from packaging.version import Version
+
 from boilerplate.composition.updating.versions import read_layer_versions
 from boilerplate.models import BoilerplateLock, LockLayer
 from boilerplate.types import SerializableVersion
@@ -88,3 +90,27 @@ class TestReadLayerVersions:
 
         assert core.commit == "1.0.0"
         assert core.commit_version is None
+
+
+class TestReadLayerVersionsThroughAGivenReader:
+    """A caller that already holds the releases reads versions from them."""
+
+    def test_the_commit_is_read_as_the_version_the_reader_gives(
+        self, tmp_path: Path
+    ) -> None:
+        """Ask the reader for the layer's recorded source and commit."""
+        _answers(tmp_path, "core", "_commit: 1.0.0-2-gabc\n_src_path: somewhere\n")
+        asked: list[tuple[str, str]] = []
+
+        def reader(source: str, commit: str) -> Version | None:
+            asked.append((source, commit))
+            return Version("1.0.0.post2")
+
+        (core,) = read_layer_versions(
+            tmp_path, _lock(("core", "1.0.0")), {}, version_reader=reader
+        )
+
+        assert (asked, core.commit_version) == (
+            [("somewhere", "1.0.0-2-gabc")],
+            SerializableVersion("1.0.0.post2"),
+        )
