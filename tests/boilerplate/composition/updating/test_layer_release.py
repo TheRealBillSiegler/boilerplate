@@ -23,3 +23,11 @@ class TestLayerRelease:
 
         with pytest.raises(ValidationError):
             release.ref = "v3"  # pyright: ignore[reportAttributeAccessIssue]
+
+    def test_a_url_source_is_kept_as_written(self) -> None:
+        """Keep a git URL as a string: as a path it would lose its slashes."""
+        url = "https://example.com/org/core.git"
+
+        release = LayerRelease(layer="core", source=url, ref="v2")
+
+        assert str(release.source) == url
