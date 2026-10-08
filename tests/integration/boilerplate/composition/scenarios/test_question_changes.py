@@ -19,6 +19,7 @@ from typing import Any, NamedTuple
 
 import pytest
 
+from boilerplate.composition.updating import ScopedWorker
 from tests.boilerplate.templates.conftest import (
     commit_all,
     compose_project,
@@ -36,6 +37,7 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     CLEAN,
     LICENSE_FILE,
     Recording,
+    VanillaWorker,
     add_user_line,
     answers_file,
     append,
@@ -76,12 +78,13 @@ class Mechanism(NamedTuple):
 
     ask_unanswered: bool = True
     data: dict[str, Any] | None = None
+    worker_type: type[ScopedWorker] = ScopedWorker
 
 
 # The scoped data: the chain's recorded answers, no questionnaire pass.
 SCOPED = Mechanism(ask_unanswered=False)
 WITH_PASS = Mechanism()
-VANILLA = Mechanism(data={})
+VANILLA = Mechanism(data={}, worker_type=VanillaWorker)
 
 
 def _update_in_order(
@@ -115,6 +118,7 @@ def _update_in_order(
             work=scenario.work,
             ask_unanswered=mechanism.ask_unanswered,
             data=mechanism.data,
+            worker_type=mechanism.worker_type,
         )
         commit_all(scenario.project, f"update {layer} to {after[layer]}")
 
@@ -537,6 +541,7 @@ def _vanilla_retyped_update(
         after=case.after,
         work=scenario.work,
         data={},
+        worker_type=VanillaWorker,
     )
     return project
 
@@ -697,6 +702,7 @@ def _update_narrowed(
     *,
     ask_unanswered: bool = True,
     data: dict[str, Any] | None = None,
+    worker_type: type[ScopedWorker] = ScopedWorker,
 ) -> None:
     update_layer(
         project,
@@ -707,6 +713,7 @@ def _update_narrowed(
         templates=narrowed.releases,
         ask_unanswered=ask_unanswered,
         data=data,
+        worker_type=worker_type,
     )
 
 
@@ -719,7 +726,7 @@ def _vanilla_narrowed_update(
     """
     project = copy_project(narrowed.project, tmp_path / "probe-app")
     capsys.readouterr()
-    _update_narrowed(narrowed, project, data={})
+    _update_narrowed(narrowed, project, data={}, worker_type=VanillaWorker)
     return project
 
 

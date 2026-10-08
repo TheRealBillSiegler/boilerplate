@@ -47,6 +47,7 @@ def update_layer(
         quiet=options.quiet,
         unsafe=True,
         skip_tasks=options.skip_tasks,
+        layer=release.layer,
         old_view=views.old,
         target_view=views.target,
     ) as worker:

@@ -470,6 +470,18 @@ def recording_worker(
     return RecordingWorker, recording
 
 
+class VanillaWorker(ScopedWorker):
+    """A worker that leaves a rejected recorded answer to Copier, as vanilla does.
+
+    Copier drops a recorded answer the target release's question rejects and
+    records the new default without a word; ``ScopedWorker`` stops the step
+    instead. This control keeps what Copier alone does observable.
+    """
+
+    def check_recorded_answers(self) -> None:
+        """Check nothing."""
+
+
 def by_ref_worker(recorded_ref: str, target_ref: str) -> type[ScopedWorker]:
     """Return a worker that keys its views by template ref, as the first design did.
 
