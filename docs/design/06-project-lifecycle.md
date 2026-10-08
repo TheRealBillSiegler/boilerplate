@@ -174,8 +174,7 @@ Before starting the update pipeline, Boilerplate MUST check the project working 
 - Resolve the target version using the same deterministic rules as project creation
 - Default: resolve the latest available version of the root template
 - Support explicit target version: `--target-version <version>`
-- Version downgrades MUST be rejected by default. If `--target-version` specifies a version older than the current lock file version, fail with a clear error: "Cannot downgrade from {current} to {target}. Use `--allow-downgrade` to override."
-- When `--allow-downgrade` is active, the downgrade is permitted but the UpdatePlan MUST classify it as `MAJOR` regardless of the version delta, and the confirmation prompt MUST include a warning: "Downgrading may cause data loss or incompatibilities."
+- Downgrades MUST be rejected, with no flag to override. Before the walk starts, `update` MUST compare each layer's target version with the version that layer's answers file records in `_commit`, parsed the way Copier parses it (a `git describe` string such as `v2.0.0-3-gabc1234` reads as `2.0.0.post3+abc1234`). When any target is older, `update` MUST stop before any layer changes, with an error naming the layer, its recorded version and the target. The same rule applies when a recorded `_commit` yields no version. The way back from an applied update is reverting the commit that recorded it.
 
 ### Step 3: Build UpdatePlan
 
@@ -374,8 +373,7 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | MAJOR update | UpdatePlan flags MAJOR, requires explicit confirmation |
 | Merge conflict detected | Conflict markers in files, no new lock written, migration record with `conflict` status, exit `4` |
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
-| Downgrade attempt (no flag) | Rejected with error, exit `3` |
-| Downgrade attempt (`--allow-downgrade`) | Classified as `MAJOR`, warning in confirmation prompt, exit `0` on success |
+| Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
 | Failure mid-update | Staging cleaned, failed migration record, remediation guidance printed, exit `1` |
 
 ### Performance Contracts
