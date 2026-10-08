@@ -15,6 +15,7 @@ from tests.integration.boilerplate.composition.scenarios.builders import templat
 pytestmark = [pytest.mark.scenario]
 
 BASE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
+SIBLINGS = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0"}
 LICENSE_AFTER = {**BASE, "core": "1.1.0", "app": "1.1.0"}
 
 
@@ -30,7 +31,7 @@ def releases_at(family: Family, tags: dict[str, str]) -> dict[str, ReleaseRef]:
 def views(tmp_path: Path) -> Iterator[ReleaseViews]:
     """Return release views rooted at ``app``, cleaned up after the test."""
     with ReleaseCheckouts() as checkouts:
-        yield ReleaseViews(checkouts, root="app", workdir=tmp_path / "views")
+        yield ReleaseViews(checkouts, workdir=tmp_path / "views")
 
 
 class TestStepView:
@@ -75,6 +76,18 @@ class TestStepView:
 
         assert built.ancestor_extensions
         assert all(e.path.is_file() for e in built.ancestor_extensions)
+
+
+class TestSiblingLayers:
+    """Layers added one after another share no single root to compose from."""
+
+    def test_a_layers_step_view_keeps_its_own_questions(
+        self, family: Family, views: ReleaseViews
+    ) -> None:
+        """Define service's own question from the schema of every layer."""
+        built = views.step_view("service", releases_at(family, SIBLINGS))
+
+        assert "port" in built.questions
 
 
 class TestUpdateViews:
