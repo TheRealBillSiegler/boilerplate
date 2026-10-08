@@ -9,7 +9,11 @@ from pydantic.dataclasses import dataclass
 
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.updating.render_role import RenderRole, render_role
-from boilerplate.composition.views import LayerView, view_config
+from boilerplate.composition.views import (
+    LayerView,
+    registered_ancestor_extensions,
+    view_config,
+)
 from boilerplate.integrations.copier_types import Template, Worker
 
 
@@ -48,6 +52,30 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             return self.old_view
         return self.target_view
 
+    @cached_property
+    def render_view(self) -> LayerView:
+        """The view this worker renders under, chosen once from its destination."""
+        return self.view_for_render()
+
+    def run_copy(self) -> None:
+        """Render with the ancestors' extension files of this render's view loaded.
+
+        The old copy registers the recorded releases' files and the renders at
+        the target the target releases', each under its own module names and
+        only while it renders.
+        """
+        with registered_ancestor_extensions(self.render_view.ancestor_extensions):
+            super().run_copy()
+
+    def run_update(self) -> None:
+        """Update with the target releases' extension files loaded.
+
+        The update worker itself builds a Jinja environment, with the target
+        view's extensions, outside any of the three renders.
+        """
+        with registered_ancestor_extensions(self.render_view.ancestor_extensions):
+            super().run_update()
+
     # Copier declares `template` as a cached_property on its own Worker; the
     # override swaps in the view-built template, which pyright reads as an
     # incompatible variable override.
@@ -59,7 +87,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             assert self.subproject.template is not None
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
-        view = self.view_for_render()
+        view = self.render_view
         result = MergedTemplate(
             url, dict(view.questions), view_config(view) or None, ref=ref
         )

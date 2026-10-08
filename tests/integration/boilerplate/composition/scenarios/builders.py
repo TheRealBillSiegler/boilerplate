@@ -36,7 +36,6 @@ from tests.boilerplate.templates.conftest import (
 from tests.integration.boilerplate.composition.family import (
     Family,
     assemble_templates_dir,
-    register_extension_module,
 )
 
 ANSWERS: dict[str, Any] = {
@@ -265,40 +264,6 @@ class UpdateOptions(TypedDict, total=False):
     worker_type: type[ScopedWorker]
 
 
-def _register_ancestor_extensions(
-    patch: pytest.MonkeyPatch, layer: str, templates: Path
-) -> list[str]:
-    """Register the extension files `layer`'s render needs from other layers.
-
-    A file-path spec resolves inside the template that declares it, so a
-    layer cannot name an ancestor's extension file. Core's ``to_package``
-    filter derives the hidden ``package_name`` every descendant's view asks,
-    and app's files use docs' ``docs_anchor`` filter; whoever composes or
-    updates the layer registers those files as importable modules and adds
-    them to its render.
-
-    Args:
-        patch: The patch context that removes the modules again.
-        layer: The layer being rendered.
-        templates: A templates directory holding the layers the files are in.
-
-    Returns:
-        The ``module:Class`` specs to add to the layer's render.
-    """
-    needed = {
-        "core": ("naming.py", "PackageNameExtension", layer != "core"),
-        "docs": ("docfilters.py", "DocFilters", layer == "app"),
-    }
-    specs: list[str] = []
-    for owner, (file, extension, wanted) in needed.items():
-        if wanted:
-            module = register_extension_module(
-                patch, templates / owner / "_extensions" / file, f"family_ext.{owner}"
-            )
-            specs.append(f"{module}:{extension}")
-    return specs
-
-
 def compose_family(
     family: Family,
     work: Path,
@@ -323,18 +288,13 @@ def compose_family(
     """
     templates = templates_at(family, work, tags)
     project = work / "composed" / "family-app"
-    with pytest.MonkeyPatch.context() as patch:
-        compose_project(
-            root,
-            project,
-            {"project_name": FAMILY_PROJECT, **(answers or {})},
-            templates,
-            skip_tasks=skip_tasks,
-            extra_extensions={
-                layer: _register_ancestor_extensions(patch, layer, templates)
-                for layer in tags
-            },
-        )
+    compose_project(
+        root,
+        project,
+        {"project_name": FAMILY_PROJECT, **(answers or {})},
+        templates,
+        skip_tasks=skip_tasks,
+    )
     make_git_project(project, family.repos, tags)
     return project
 
@@ -372,23 +332,17 @@ def update_family_layer(
         templates_at(family, work, before),
         templates_at(family, work, after),
     )
-    with pytest.MonkeyPatch.context() as patch:
-        extra = _register_ancestor_extensions(patch, layer, new_dir)
-        views = [
-            LayerView(view.questions, (*view.extensions, *extra))
-            for view in (layer_view(view_root, old_dir), layer_view(view_root, new_dir))
-        ]
-        update_layer(
-            project,
-            root=root,
-            layer=layer,
-            source=family.repos[layer],
-            ref=new,
-            templates={new: new_dir},
-            old_view=views[0],
-            target_view=views[1],
-            **options,
-        )
+    update_layer(
+        project,
+        root=root,
+        layer=layer,
+        source=family.repos[layer],
+        ref=new,
+        templates={new: new_dir},
+        old_view=layer_view(view_root, old_dir),
+        target_view=layer_view(view_root, new_dir),
+        **options,
+    )
 
 
 def copy_project(base: Path, dest: Path) -> Path:
@@ -483,12 +437,14 @@ def _role(worker: ScopedWorker) -> str:
 
 
 def recording_worker(
-    files: Sequence[str] = (),
+    files: Sequence[str] = (), base: type[ScopedWorker] = ScopedWorker
 ) -> tuple[type[ScopedWorker], Recording]:
-    """Return a ``ScopedWorker`` subclass that records what each render did.
+    """Return a subclass of `base` that records what each render did.
 
     Args:
         files: Project-relative files to read once each render finishes.
+        base: The worker class to record, a ``ScopedWorker`` unless a scenario
+            compares another view choice.
 
     Returns:
         The worker class to pass to ``update_layer`` and the recording it
@@ -496,7 +452,7 @@ def recording_worker(
     """
     recording = Recording([], {}, [])
 
-    class RecordingWorker(ScopedWorker):
+    class RecordingWorker(base):
         """Record each template build and the watched files of each copy."""
 
         def view_for_render(self) -> LayerView:
@@ -516,6 +472,35 @@ def recording_worker(
             }
 
     return RecordingWorker, recording
+
+
+def by_ref_worker(recorded_ref: str, target_ref: str) -> type[ScopedWorker]:
+    """Return a worker that keys its views by template ref, as the first design did.
+
+    It looks the view up by the ref Copier sets on the render, in a mapping
+    from the recorded ref to the old view and the target ref to the target
+    view. When only an ancestor moves the two refs are the same string, the
+    target view overwrites the old one in the mapping, and every render
+    draws from it.
+
+    Args:
+        recorded_ref: The layer's ref at the recorded release.
+        target_ref: The layer's ref at the target release.
+
+    Returns:
+        The worker class to pass to ``update_family_layer``.
+    """
+
+    class ByRefWorker(ScopedWorker):
+        """Draw each render's view from a mapping keyed by template ref."""
+
+        def view_for_render(self) -> LayerView:
+            """Return the view keyed by the ref this render sets."""
+            views = {recorded_ref: self.old_view, target_ref: self.target_view}
+            assert self.resolved_vcs_ref is not None
+            return views[self.resolved_vcs_ref]
+
+    return ByRefWorker
 
 
 # Scenario S10c: project v4 adds a `license` question its files render, and

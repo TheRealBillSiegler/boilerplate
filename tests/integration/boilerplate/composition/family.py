@@ -8,14 +8,11 @@ removes. ``build_family`` overlays each version on the previous one and turns
 the result into a git repository with one commit and one tag per release.
 """
 
-import importlib.util
 import shutil
-import sys
 from collections.abc import Mapping
 from pathlib import Path
 from typing import NamedTuple
 
-import pytest
 from packaging.version import Version
 
 from tests.boilerplate.templates.conftest import build_layer_repo, copy_layer_into
@@ -122,27 +119,3 @@ def assemble_templates_dir(
             ignore=shutil.ignore_patterns("__pycache__"),
         )
     return dest
-
-
-def register_extension_module(patch: pytest.MonkeyPatch, path: Path, name: str) -> str:
-    """Import the extension file at `path` as module `name`, undone with `patch`.
-
-    A descendant cannot name an ancestor's file-path extension spec, but it can
-    load the same file as an importable module the composition adds to its
-    render.
-
-    Args:
-        patch: The patch context that removes the module again.
-        path: The extension file.
-        name: The dotted module name to register it under.
-
-    Returns:
-        `name`, for building a ``name:Class`` extension spec.
-    """
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    patch.setitem(sys.modules, name, module)
-    spec.loader.exec_module(module)
-    return name

@@ -8,6 +8,7 @@ which inputs reach which render when core drops `use_tests` between 2.1.0 and
 3.0.0, and when only an ancestor moves.
 """
 
+import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import NamedTuple
@@ -15,6 +16,7 @@ from typing import NamedTuple
 import pytest
 
 from boilerplate.composition.views import LayerView
+from boilerplate.composition.views.extension_module_name import MODULE_ROOT
 from tests.boilerplate.templates.conftest import recorded_answers
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -187,3 +189,10 @@ class TestAncestorOnlyMove:
         assert {
             _validator(view) is not None for r, view in recording.views if r == role
         } == {True}
+
+    def test_no_registered_extension_module_outlives_the_update(
+        self, recording: Recording
+    ) -> None:
+        """Remove each module the renders registered once the update is done."""
+        assert recording.builds
+        assert [name for name in sys.modules if name.startswith(MODULE_ROOT)] == []
