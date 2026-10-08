@@ -85,7 +85,12 @@ def plan_walk(
     sources = read_layer_sources(project, lock)
     at_lock = lock_releases(lock, sources)
     views = ReleaseViews(checkouts, root=root, workdir=workdir)
-    layer_versions = read_layer_versions(project, lock, views.ancestors(at_lock))
+    layer_versions = read_layer_versions(
+        project,
+        lock,
+        views.ancestors(at_lock),
+        lambda source, commit: checkouts.get(source, commit).version,
+    )
     records = read_migrations(project)
     last_record = records[-1] if records else None
 
