@@ -1,4 +1,4 @@
-"""A Copier ``Worker`` that renders every copy of an update under its own view."""
+"""A Copier ``Worker`` that renders each copy of a compose or update under a view."""
 
 import logging
 from collections.abc import Mapping
@@ -43,6 +43,10 @@ _logger = logging.getLogger(__name__)
 class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGeneralTypeIssues]
     """A Copier Worker that renders its layer under the view of the render it makes.
 
+    Compose and update share it: compose renders each layer once, in place, under
+    one view, so it gives no old view; an update gives the old and the target
+    view.
+
     Copier's update renders an old copy at the recorded release, the project in
     place and a new copy at the target release, rebuilding a worker for each
     with ``dataclasses.replace``; a template primed on one worker instance never
@@ -69,21 +73,31 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     old view hides is not filled.
 
     Attributes:
-        old_view: The view the old copy renders under.
+        old_view: The view the old copy renders under; the target view when
+            absent, as at compose.
         target_view: The view the in-place render and the new copy render under.
         layer: The layer being updated; names it in a rejected-answer error.
         old_copy_fill: The answers the declaring ancestors recorded when the
             walk began, for the questions of the old view they declare; the
             old copy takes those its own answers file lacks.
-        tasks: The tasks the template runs, in Copier's shapes, for the
-            post-walk task run (``run_tasks``); empty for a layer's own update.
+        tasks: The tasks the template runs, in Copier's shapes: for the
+            post-walk task run (``run_tasks``) or for the final layer of a
+            compose; empty for a layer's own update.
+        honor_skip_if_exists: Whether the render keeps the template's own
+            ``_skip_if_exists`` list. A compose clears it, because a forced
+            render overwrites every file; an add and an update keep it.
+        check_recorded: Whether the in-place render rejects a recorded answer
+            the target view's question cannot take. A compose pass turns it off,
+            as Copier then drops such an answer silently.
     """
 
-    old_view: LayerView = field(kw_only=True)
+    old_view: LayerView | None = field(default=None, kw_only=True)
     target_view: LayerView = field(kw_only=True)
     layer: str = field(default="", kw_only=True)
     old_copy_fill: Mapping[str, Any] = field(default_factory=dict, kw_only=True)
     tasks: tuple[Any, ...] = field(default=(), kw_only=True)
+    honor_skip_if_exists: bool = field(default=True, kw_only=True)
+    check_recorded: bool = field(default=True, kw_only=True)
 
     def view_for_render(self) -> LayerView:
         """Return the view for the render this worker makes.
@@ -93,7 +107,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             target view.
         """
         if render_role(Path(self.dst_path)) is RenderRole.OLD_COPY:
-            return self.old_view
+            return self.old_view or self.target_view
         return self.target_view
 
     @cached_property
@@ -163,7 +177,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         role = render_role(Path(self.dst_path))
         if role is RenderRole.OLD_COPY:
             self.data = self.old_copy_data()
-        elif role is RenderRole.IN_PLACE:
+        elif self.check_recorded and role is RenderRole.IN_PLACE:
             self.check_recorded_answers()
         super()._ask()
 
@@ -181,9 +195,8 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             copy's data, with each key they lack taken from ``old_copy_fill``.
         """
         answers = {**self.old_copy_fill, **self.data}
-        hidden = hidden_questions(
-            self.old_view.questions, answers, jinja_env=self.jinja_env
-        )
+        view = self.old_view or self.target_view
+        hidden = hidden_questions(view.questions, answers, jinja_env=self.jinja_env)
         fill = {k: v for k, v in self.old_copy_fill.items() if k not in hidden}
         return {**fill, **self.data}
 
@@ -375,7 +388,9 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         ref = self.resolved_vcs_ref
         view = self.render_view
         config = view_config(
-            view, **({"tasks": list(self.tasks)} if self.tasks else {})
+            view,
+            **({"tasks": list(self.tasks)} if self.tasks else {}),
+            **({} if self.honor_skip_if_exists else {"skip_if_exists": []}),
         )
         result = MergedTemplate(url, dict(view.questions), config or None, ref=ref)
         # Copier registers a template's cleanup only for the template it
