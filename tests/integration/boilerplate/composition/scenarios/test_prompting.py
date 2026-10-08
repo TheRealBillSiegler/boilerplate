@@ -18,8 +18,11 @@ from prompt_toolkit.application import create_app_session
 from prompt_toolkit.input import create_pipe_input
 from prompt_toolkit.output import DummyOutput
 
-from tests.integration.boilerplate.composition.scenarios.builders import check_bundled_questionnaire, temp_dir_inside
 from tests.boilerplate.templates.conftest import ask_merged_questionnaire
+from tests.integration.boilerplate.composition.scenarios.builders import (
+    check_bundled_questionnaire,
+    temp_dir_inside,
+)
 
 KEYSTROKES = "\x15Typed App\r" + "\r" * 12  # Ctrl-U clears the prefill.
 GUARD_SECONDS = 90

@@ -14,6 +14,15 @@ from typing import Any, NamedTuple
 
 import pytest
 
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    compose_project,
+    layer_chain,
+    layer_view,
+    recorded_answers,
+    render_full_view,
+    update_layer,
+)
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     CLEAN,
@@ -36,15 +45,8 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     tree,
     write,
 )
-from tests.integration.boilerplate.composition.scenarios.extensions.leak_hook import LEAKED
-from tests.boilerplate.templates.conftest import (
-    commit_all,
-    compose_project,
-    layer_chain,
-    layer_view,
-    recorded_answers,
-    render_full_view,
-    update_layer,
+from tests.integration.boilerplate.composition.scenarios.extensions.leak_hook import (
+    LEAKED,
 )
 
 LOADER = "copier_template_extensions.TemplateExtensionLoader"

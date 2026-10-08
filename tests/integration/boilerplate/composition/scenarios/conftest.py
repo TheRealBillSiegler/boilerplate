@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from tests.integration.boilerplate.composition.scenarios.builders import extensions_on_path, temp_dir_inside
+from tests.integration.boilerplate.composition.scenarios.builders import (
+    extensions_on_path,
+    temp_dir_inside,
+)
 
 
 @pytest.fixture(autouse=True)
