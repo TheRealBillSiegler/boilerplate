@@ -8,6 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
+from boilerplate.common.file_lock import FileLock
 from boilerplate.composition.staging.copy_back import (
     list_untracked_paths,
     require_checkout_unchanged,
@@ -15,7 +16,10 @@ from boilerplate.composition.staging.copy_back import (
     undo_working_tree,
 )
 from boilerplate.composition.staging.git_commands import run_git
-from boilerplate.composition.staging.intent_journal import IntentJournal
+from boilerplate.composition.staging.intent_journal import (
+    JOURNAL_LOCK_NAME,
+    IntentJournal,
+)
 from boilerplate.composition.staging.intent_operation import IntentOperation
 from boilerplate.composition.staging.layer_commit import commit_worktree
 from boilerplate.composition.staging.path_obstruction import (
@@ -80,6 +84,7 @@ class StagingWorktree:
         self.template_ref = template_ref
         self._temp_root = temp_root
         self._folder: Path | None = None
+        self._lock: FileLock | None = None
         self._start_commit: str | None = None
         self._last_commit: str | None = None
         self._started_at = datetime.now(UTC)
@@ -217,6 +222,7 @@ class StagingWorktree:
         remove_stale_staging(root)
         self._folder = Path(tempfile.mkdtemp(prefix=STAGING_PREFIX, dir=root))
         try:
+            self._hold_lock()
             self._start_commit = run_git(self.project, "rev-parse", "HEAD").strip()
             self._last_commit = self._start_commit
             self._write_journal("staging")
@@ -236,6 +242,21 @@ class StagingWorktree:
         """Remove the worktree and its folder, whether or not the block failed."""
         self._discard()
 
+    def _hold_lock(self) -> None:
+        """Take the exclusive lock that marks this staging as live.
+
+        The lock is taken before the journal is written, so the stale cleanup
+        never sees a journal whose operation is not yet holding it.
+
+        Raises:
+            RuntimeError: If another process holds the lock of this brand-new
+                folder, which nothing else can know the name of.
+        """
+        lock = FileLock(self.folder / JOURNAL_LOCK_NAME)
+        if not lock.try_acquire():
+            raise RuntimeError(f"Could not lock the new staging folder {self.folder}.")
+        self._lock = lock
+
     def _write_journal(self, phase: str) -> None:
         """Write the journal beside the worktree with `phase`."""
         IntentJournal(
@@ -253,4 +274,7 @@ class StagingWorktree:
             return
         folder, self._folder = self._folder, None
         self._last_commit = None
+        if self._lock is not None:
+            self._lock.release()
+            self._lock = None
         remove_staging_folder(self.project, folder, folder / self.project.name)

@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict
 from boilerplate.composition.staging.intent_operation import IntentOperation
 
 JOURNAL_NAME = ".boilerplate-commit-intent.json"
+JOURNAL_LOCK_NAME = ".boilerplate-commit-intent.lock"
 
 
 class IntentJournal(BaseModel):
@@ -19,7 +20,11 @@ class IntentJournal(BaseModel):
     It is written before the operation begins and deleted with the staging
     folder on completion. For a staging worktree it sits in the staging
     folder beside the worktree, so ``git add -A`` in the worktree never picks
-    it up.
+    it up. The running operation holds an exclusive lock on the file
+    ``JOURNAL_LOCK_NAME`` beside it for its whole lifetime, which is how the
+    stale cleanup tells a live operation from a dead one. The journal itself is
+    replaced by rename on every write, which a lock on it would block on
+    Windows, so the lock sits on its own file.
 
     Attributes:
         operation: The operation that owns the journal.
