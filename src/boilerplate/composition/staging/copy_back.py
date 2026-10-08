@@ -2,13 +2,16 @@
 
 import logging
 from collections.abc import Sequence
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from boilerplate.common.exceptions import UpdateCheckoutChangedError
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_operation import IntentOperation
 
 _logger = logging.getLogger(__name__)
+
+# Paths per ``git clean`` call, so a long list stays under the command-line limit.
+_CLEAN_BATCH = 100
 
 
 def require_checkout_unchanged(
@@ -76,9 +79,13 @@ def undo_working_tree(project: Path, commit: str, untracked: Sequence[str]) -> N
     """Return the checkout to `commit`'s files and remove `untracked`.
 
     Tracked files, in the working tree and the index, are restored from
-    ``commit``, and the listed files, which the copy back or a task added, are
-    deleted along with the folders that leave empty. A file not listed stays: the
-    caller lists what it saw, so work the user did since is not touched.
+    ``commit``. The listed files, which the copy back or a task added, are
+    removed by ``git clean -f -d`` run from the project root, one literal
+    pathspec each, so git decides what a path is: a symlink is removed as
+    itself and never followed, and a nested repository that ``ls-files``
+    lists as ``dir/`` is skipped rather than unlinked. The folders that leave
+    empty go too. A file not listed stays: the caller lists what it saw, so
+    work the user did since is not touched.
 
     Args:
         project: The user's checkout.
@@ -86,20 +93,47 @@ def undo_working_tree(project: Path, commit: str, untracked: Sequence[str]) -> N
         untracked: Paths, relative to the checkout, of the files to delete.
 
     Raises:
-        ValueError: If a listed path escapes the checkout.
+        ValueError: If a listed path is absolute or leaves the checkout.
     """
-    root = project.resolve()
-    targets = [(root / relative).resolve() for relative in untracked]
-    for relative, target in zip(untracked, targets, strict=True):
-        if not target.is_relative_to(root):
+    for relative in untracked:
+        if _escapes(relative):
             raise ValueError(f"'{relative}' escapes the project.")
     run_git(
         project, "restore", f"--source={commit}", "--worktree", "--staged", "--", ":/"
     )
-    for target in targets:
-        target.unlink(missing_ok=True)
-        for parent in target.parents:
-            if parent == root or any(parent.iterdir()):
-                break
-            parent.rmdir()
+    for start in range(0, len(untracked), _CLEAN_BATCH):
+        batch = untracked[start : start + _CLEAN_BATCH]
+        run_git(
+            project, "clean", "-f", "-d", "--", *(f":(literal){path}" for path in batch)
+        )
+    for relative in untracked:
+        _remove_emptied_folders(project, relative)
     _logger.debug("Undid the update in %s from %s", project, commit)
+
+
+def _escapes(relative: str) -> bool:
+    """Check whether `relative` is absolute or climbs out of the checkout, by name."""
+    path = PurePosixPath(relative.replace("\\", "/"))
+    return (
+        path.is_absolute()
+        or ".." in path.parts
+        or bool(PureWindowsPath(relative).drive)
+    )
+
+
+def _remove_emptied_folders(project: Path, relative: str) -> None:
+    """Remove the folders above `relative` that the clean left empty.
+
+    The walk goes up by name, never through a symlink, and stops at the first
+    folder that is missing, not empty or not a plain directory.
+    """
+    for parent in PurePosixPath(relative.rstrip("/")).parents:
+        if not parent.parts:
+            return
+        folder = project / parent
+        if folder.is_symlink():
+            return
+        try:
+            folder.rmdir()
+        except OSError:
+            return
