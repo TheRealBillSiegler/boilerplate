@@ -1,12 +1,16 @@
 """A Copier ``Worker`` that renders every copy of an update under its own view."""
 
+import logging
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 
+from copier.errors import InvalidTypeError, UserMessageError
+from jinja2.exceptions import TemplateError
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from boilerplate.common.exceptions import RecordedAnswerRejectedError
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.updating.render_role import RenderRole, render_role
 from boilerplate.composition.views import (
@@ -14,7 +18,20 @@ from boilerplate.composition.views import (
     registered_ancestor_extensions,
     view_config,
 )
-from boilerplate.integrations.copier_types import Template, Worker
+from boilerplate.integrations.copier_types import (
+    MISSING,
+    AnswersMap,
+    Question,
+    Template,
+    Worker,
+)
+
+_logger = logging.getLogger(__name__)
+
+# What rendering a part of a question can raise: Copier wraps an undefined
+# variable in ``UserMessageError`` but lets a compile error, such as an unknown
+# filter, escape as Jinja's own ``TemplateError``.
+_RENDER_ERRORS = (UserMessageError, TemplateError)
 
 
 # pydantic's @dataclass erases the Worker base class's type (hence the
@@ -33,13 +50,23 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     copy must render the questionnaire and extensions of the recorded
     ancestors and the other two those of the targets.
 
+    The in-place render also checks, before Copier asks its questions, that the
+    target view's questions still accept the answers the layer's answers file
+    records. Copier itself silently drops a recorded answer its question
+    rejects and records the new default. The check walks the questions in
+    Copier's order and gives each later question the answers the earlier ones
+    would have, so a ``when`` that reads a question the target adds sees its
+    default.
+
     Attributes:
         old_view: The view the old copy renders under.
         target_view: The view the in-place render and the new copy render under.
+        layer: The layer being updated; names it in a rejected-answer error.
     """
 
     old_view: LayerView = field(kw_only=True)
     target_view: LayerView = field(kw_only=True)
+    layer: str = field(default="", kw_only=True)
 
     def view_for_render(self) -> LayerView:
         """Return the view for the render this worker makes.
@@ -75,6 +102,193 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         """
         with registered_ancestor_extensions(self.render_view.ancestor_extensions):
             super().run_update()
+
+    def _ask(self) -> None:
+        """Ask the questions, after rejecting a recorded answer the target cannot take.
+
+        Copier calls this once per render, in the in-place render after the
+        before-migrations have run and the answers file has been re-read. The
+        old copy and the new copy render recorded releases and forced data, so
+        only the in-place render checks.
+        """
+        if render_role(Path(self.dst_path)) is RenderRole.IN_PLACE:
+            self.check_recorded_answers()
+        super()._ask()
+
+    def check_recorded_answers(self) -> None:
+        """Check the layer's recorded answers against the target view's questions.
+
+        Walk the questions in Copier's order, as ``Worker._ask`` does. For each
+        one, a recorded answer is cast, narrowed to the question's choices and
+        validated through Copier's own ``Question``; then its ``when`` is
+        evaluated; then the answer Copier would see is filled in, so a later
+        question's ``when``, choices and validator render against the earlier
+        answers. That answer is the recorded or forced value when there is one
+        and the question's rendered default otherwise; a question with neither
+        fills nothing. An answer that data replaces is not checked as recorded;
+        the data is parsed and validated as Copier does, for a secret too, and
+        the walk ends there if it fails. The walk works on a copy of the
+        recorded answers, so Copier's own pass starts from the file as it was.
+
+        An interactive step cannot know what the prompt will take, so a later
+        question sees the default there.
+
+        The walk ends at the first question whose default fails, hidden or
+        asked and interactive or not: the default cannot render, or it fails
+        the question's validator or choices against the earlier answers the walk
+        assumed. Copier fails there with its own error, or in an interactive
+        step prompts earlier questions for answers that let the default pass.
+        A non-interactive step also ends it at the first asked question with
+        no default. It ends too at a ``when`` that cannot render, and treats a
+        recorded answer the question cannot check, for want of a supported
+        type or choices that render, as not rejected: Copier reports the
+        template error, not a rejection.
+
+        The walk assumes the worker has no ``ask`` patterns. Copier prompts a
+        question one matches even under defaults, so with patterns set the
+        walk would raise a rejection, or stop, where Copier asks.
+
+        Raises:
+            RecordedAnswerRejectedError: If a non-interactive step finds a
+                recorded answer the target view's question rejects.
+        """
+        self.answers = AnswersMap(
+            user_defaults=self.user_defaults,
+            init=self.data,
+            last=dict(self.subproject.last_answers),
+            metadata=self.template.metadata,
+            external=self._external_data(),
+        )
+        for name, details in self.template.questions_data.items():
+            question = Question(
+                answers=self.answers,
+                context=self._render_context(),
+                jinja_env=self.jinja_env,
+                settings=self.settings,
+                var_name=name,
+                **details,
+            )
+            rejected = self._drop_rejected_recorded_answer(question)
+            try:
+                asked = question.get_when()
+            except _RENDER_ERRORS:
+                return
+            if asked and rejected is not None:
+                self._handle_rejection(name, *rejected)
+            if not asked:
+                self.answers.hide(name)
+                self.answers.last.pop(name, None)
+            if self.skip_answered and self._recorded_and_not_replaced(name):
+                continue
+            try:
+                answer = self._answer_copier_stores(question)
+            except Exception:
+                return
+            if answer is not MISSING:
+                self.answers.user[name] = answer
+            elif asked and self.defaults:
+                return
+
+    def _recorded_and_not_replaced(self, name: str) -> bool:
+        """Report whether the answers file records a question that data leaves alone.
+
+        Args:
+            name: The question's variable name.
+
+        Returns:
+            Whether the walk's recorded answers hold the question while the
+            data passed to the update leaves it alone.
+        """
+        return name in self.answers.last and name not in self.answers.init
+
+    def _drop_rejected_recorded_answer(
+        self, question: Question
+    ) -> tuple[object, str] | None:
+        """Drop the question's recorded answer from the walk's copy if it is rejected.
+
+        Copier drops such an answer too, before it evaluates the question's
+        ``when``. It also drops one it cannot check because the question's
+        type is unsupported or a part of the question fails to render, and
+        then fails on the question itself. That answer is dropped here without
+        a rejection, and the walk meets the error where Copier does.
+
+        Args:
+            question: The question, built against the walk's answers.
+
+        Returns:
+            The recorded answer and why it is rejected, or ``None`` when the
+            question has no recorded answer, data replaces it, it passes, or
+            the question cannot check it.
+        """
+        name = question.var_name
+        if not self._recorded_and_not_replaced(name):
+            return None
+        value = self.answers.last[name]
+        try:
+            question.get_type_name()
+        except (InvalidTypeError, *_RENDER_ERRORS):
+            reason = None
+        else:
+            try:
+                question.validate_answer(question.parse_answer(value))
+            except _RENDER_ERRORS:
+                reason = None
+            except Exception as error:
+                reason = str(error)
+            else:
+                return None
+        del self.answers.last[name]
+        return None if reason is None else (value, reason)
+
+    def _answer_copier_stores(self, question: Question) -> object:
+        """Return the answer Copier stores for a question it does not prompt.
+
+        Data passed to the update is parsed and validated, whatever the
+        question's type or whether it is a secret, which ``get_default`` does
+        not check for a secret. Any other question gets its default.
+
+        Args:
+            question: The question, built against the walk's answers.
+
+        Returns:
+            The data's value or the default, parsed to the question's type, or
+            ``MISSING`` when the question has neither.
+
+        Raises:
+            Exception: Whatever Copier raises for a value that cannot parse or
+                validate, or a default that cannot render.
+        """
+        name = question.var_name
+        if name in self.answers.init:
+            answer = question.parse_answer(self.answers.init[name])
+            question.validate_answer(answer)
+            return answer
+        return question.get_default()
+
+    def _handle_rejection(self, question: str, value: object, reason: str) -> None:
+        """Stop a non-interactive step, or warn before the prompt asks again.
+
+        Args:
+            question: The question whose recorded answer is rejected.
+            value: The recorded answer.
+            reason: Why the target view's question rejects it.
+
+        Raises:
+            RecordedAnswerRejectedError: If the step does not prompt.
+        """
+        message = (
+            f"Layer '{self.layer}': the recorded answer {value!r} for "
+            f"'{question}' is rejected by the target version: {reason}"
+        )
+        if self.defaults:
+            raise RecordedAnswerRejectedError(
+                message,
+                layer=self.layer,
+                question=question,
+                value=value,
+                reason=reason,
+            )
+        _logger.warning("%s; asking for a valid one.", message)
 
     # Copier declares `template` as a cached_property on its own Worker; the
     # override swaps in the view-built template, which pyright reads as an
