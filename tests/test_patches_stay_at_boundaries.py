@@ -59,6 +59,12 @@ ALLOWED_SEAMS: dict[str, str] = {
     "boilerplate.composition.rendering.engine.Template": (
         "Copier's template loader; a real one clones or reads a template."
     ),
+    "boilerplate.composition.staging.copy_back.run_git": (
+        "Fault injection: git's restore failing partway through a copy back (a "
+        "full disk, a file another program has open) cannot be produced "
+        "deterministically on every platform; the wrapper runs every other git "
+        "call for real."
+    ),
     "boilerplate.composition.serialization.yaml_utils.template_public_attr_names": (
         "Counterfactual: drops one attribute from the extraction to show it is the "
         "only blocker to composing from git-repository layers; no input removes it."
