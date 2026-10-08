@@ -35,8 +35,8 @@ from boilerplate.common.exceptions import (
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
     UpdateSubmodulesUnsupportedError,
-    UpdateTaskFailedError,
     UpdateTargetMismatchError,
+    UpdateTaskFailedError,
     UserCancelledError,
 )
 from boilerplate.composition.graph.exceptions import (
