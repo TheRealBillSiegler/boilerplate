@@ -12,6 +12,8 @@ class AddOutcome(BaseModel):
         status: How the add ended.
         layer: The layer that was added, or that the add undone had been adding.
         version: The version the layer was added at.
+        warnings: What the add found and went on from: ignored files the layer
+            wrote, which the copy back does not carry.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -19,3 +21,4 @@ class AddOutcome(BaseModel):
     status: AddStatus
     layer: str
     version: str
+    warnings: tuple[str, ...] = ()
