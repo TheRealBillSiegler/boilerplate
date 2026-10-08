@@ -17,6 +17,7 @@ from boilerplate.common.exceptions import (
     AddAncestorVersionError,
     AnswersFileIncompleteError,
     BoilerplateError,
+    ConcurrencyContentionError,
     DestinationNotEmptyError,
     DestinationRequiredError,
     DirectoryValidationError,
@@ -105,6 +106,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     LayerAlreadyAddedError: "BP_UPDATE_LAYER_ALREADY_ADDED",
     AddAncestorsMissingError: "BP_UPDATE_ANCESTORS_MISSING",
     AddAncestorVersionError: "BP_UPDATE_ANCESTOR_VERSION_MISMATCH",
+    ConcurrencyContentionError: "BP_CONCURRENCY_CONTENTION",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -321,6 +323,13 @@ class TestSeverityAndRetryable:
         err = exception_class("boom")
         assert err.retryable is False
         assert err.severity == "error"
+
+
+class TestConcurrencyContentionError:
+    def test_is_retryable_as_the_registry_says(self) -> None:
+        error = ConcurrencyContentionError("busy")
+
+        assert (error.retryable, error.severity) == (True, "error")
 
 
 class TestActionRequiredError:

@@ -653,6 +653,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely (`BP_UPDATE_SUBMODULES_UNSUPPORTED`) |
 | `UpdateCheckoutChangedError` | `3` | The user's checkout changed while an `update` or `add` worked in the staging worktree, so the worktree is discarded before the copy back (`BP_UPDATE_CHECKOUT_CHANGED`) |
+| `ConcurrencyContentionError` | `1` | Another Boilerplate operation still holds the project's advisory lock when the wait times out (`BP_CONCURRENCY_CONTENTION`) |
 | `MergeConflictError` | `1` | Two layers declare incompatible values for the same configuration key |
 
 Unrecognized exceptions outside this hierarchy MUST exit with code `1` (`FAILURE`). Exit-code semantics (what each code means) are specified in [§Exit Codes](#exit-codes) below.

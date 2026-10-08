@@ -584,6 +584,24 @@ class UpdatePathObstructedError(BoilerplateError):
         self.paths = tuple(paths)
 
 
+class ConcurrencyContentionError(BoilerplateError):
+    """Raised when another Boilerplate process holds the project's operation lock.
+
+    Boilerplate does not run two mutating operations on one project at once.
+    The lock wait timed out, so the other operation may still be running; once
+    it finishes the same command can be run again.
+
+    Attributes:
+        retryable: True; the contention clears when the other operation ends.
+    """
+
+    retryable = True
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_CONCURRENCY_CONTENTION."""
+        super().__init__(message, error_code="BP_CONCURRENCY_CONTENTION", **kwargs)
+
+
 class UpdateTaskFailedError(BoilerplateError):
     """Raised when a task fails after the update's files were copied back.
 
