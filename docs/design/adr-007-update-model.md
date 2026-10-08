@@ -12,7 +12,7 @@
 
 **A changed `extends` chain is handled by author migrations, not provenance inference.**
 
-- *Added* layer → fresh `copier copy` overlay + new answers file, folded into the lock.
+- *Added* layer → a fresh `copier copy` that writes only paths not already present, so a descendant's file keeps its precedence as at compose, + new answers file, folded into the lock; the update reports the colliding paths it left.
 - *Removed* layer → Boilerplate drops it from the managed set; **file cleanup is the job of a Copier `_migrations` script in the template that removed the dependency** (the removed layer's own migrations never run, because it is no longer in the chain). Copier runs migrations across the version range in a single pass — Boilerplate does not loop (see [§Version jumps](#version-jumps-stay-single-pass-migrations-are-jump-safe-by-authoring-contract)).
 - *No migration provided* → **safe-orphan + WARN**: leave the files in place (now unmanaged), name them, and give guidance. Boilerplate **never infers file provenance and never auto-deletes.**
 - Dry-run preview cannot predict migration file effects (they are arbitrary scripts — Copier's `--pretend` has the same limit); the plan shows version/layer deltas and *which* migrations will run.
