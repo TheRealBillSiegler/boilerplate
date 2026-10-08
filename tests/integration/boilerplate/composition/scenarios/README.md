@@ -83,18 +83,18 @@ The family is stored as the first release in full and each later release as the 
 compose_family(family, work, "app", tags, answers)
 │
 ├─ templates_at(family, work, tags)    one folder per layer, each at its tag
-├─ register the ancestors' file-path extension files as importable modules
-│    added to a layer's render: core's to_package for every other layer,
-│    docs' docs_anchor for app
 │
-├─ compose_project("app", dest, answers, templates, extra_extensions)
+├─ compose_project("app", dest, answers, templates)
 │    ├─ compose("app")                catalog → Resolver → Composer     real
 │    │    order: core, service, docs, app
 │    ├─ ask_merged_questionnaire      one pass over the full merged view   test
 │    └─ for each layer, in that order:
 │         layer_view(layer)           compose rooted at this layer:        real
-│                                     its own and its ancestors' questions
+│                                     its own and its ancestors' questions,
+│                                     and the ancestors' file-path extension
+│                                     files at their releases
 │         MergedTemplate(view)                                             real
+│         the view's ancestor files registered as modules                  real
 │         Worker.run_copy(dest, data = the pass's answers)                 copier
 │           → the layer's files + .copier-answers.<layer>.yml
 │         the merged tasks run once, on the last layer
@@ -111,7 +111,6 @@ update_family_layer(family, project, root="app", layer="service",
                     before={…, "service": "1.0.0"}, after={…, "service": "1.1.0"}, work=work)
 │
 ├─ templates_at for the before and after tags
-├─ the layer's ancestors' file-path extension files registered as modules
 └─ update_layer(project, root="app", layer="service", source=repos/service,   test
                 ref="1.1.0", templates={"1.1.0": dir}, old_templates=dir)
    │
@@ -189,7 +188,7 @@ Rows marked *added* are checks written with this suite. Rows marked *expected fa
 | S16 | Where do tasks run? | Compose: once, in the destination, although five layers render. Update: the layer's own task in the old copy, in place and in the new copy; a layer with no task runs none. *Bundled:* the in-place output is undone by the merge when two layers append to one marker; on the family the appended line survives. | `test_update_mechanics.py::TestTasks`; *bundled*: `::test_in_place_task_output_is_undone_by_the_merge` |
 | S17 | Can the unified questionnaire run interactively in-process? | Yes via prompt_toolkit pipe input; prompts show service's and app's overrides; `project_name` defaults to the scratch directory's name. | `test_prompting.py::TestInteractivePrompting` |
 | S18, *expected failure* | Should Boilerplate compose from git-repository layers? | Not yet: `git_index_modes`' path keys fail the composer's JSON check, also via `new`; without that attribute it works and records each layer's latest tag. | `test_sources.py::TestComposeFromGitSources::test_compose_succeeds_from_git_repository_layers`, `::test_new_exits_zero_from_git_repository_layers` (target: composing and `new` succeed); the counterfactual `::test_without_git_index_modes_both_composes_record_the_latest_tag` passes |
-| S19 | Can a descendant use an ancestor's file-path extension? | Only once it is registered as a module: app cannot use docs' filter unregistered and renders with it registered. *Bundled:* registered per render's ref it updates, registered at the target only it silently stays. | `test_extensions.py::TestRegistrationOnTheFamily`; *bundled*: `::TestRegistrationAtCompose`, `::TestRegistrationPerRef` |
+| S19 | Can a descendant use an ancestor's file-path extension? | Only once it is registered as a module: app cannot use docs' filter unregistered and renders with it registered. The view records the file at its release under a name unique to it, and each render registers its own view's files: with docs moving 1.0.0 to 1.2.0 while app's ref stays put, app's old copy renders docs 1.0.0's filter and the in-place and new renders 1.2.0's, so the change lands with the user's edit kept and no conflict. A worker keying its views by ref gives all three the target's filter and silently keeps the old output. | `test_extensions.py::TestRegistrationOnTheFamily`, `::TestRegistrationPerRelease`, `::TestViewKeyedByRefDefect`; *bundled*: `::TestRegistrationAtCompose` |
 | S20 | Does a conflicting user edit pause the update? | Yes: inline markers, no exception, README unmerged with stages 1-3, no `.rej`. The release is core 2.1.0, which moves a recorded Python 3.11 to 3.12 under a user edit of the README line that names it. | `test_update_mechanics.py::TestConflictPauses` |
 | S21, *expected failure* | Should each answers file record only its own layer's view, and should `update` be a command? | Not yet: every answers file records the whole merged questionnaire; `update` exits 3, no such command. | `test_cli_baseline.py::TestShippedNew::test_each_answers_file_records_only_its_layers_scoped_view` (target: project's file lacks streamlit's questions), `::test_update_help_exits_zero` (target: `boilerplate update --help` exits 0); the other `TestShippedNew` tests pass |
 | S22 *bundled* | Does a three-layer chain scope and update cleanly? | Yes in both orders; the leaf's override reaches every layer that asks the question. No family shape is a chain of three: every layer extends core alone except app, which extends two. | `test_views.py::TestChain`, `::TestChainUpdates` |

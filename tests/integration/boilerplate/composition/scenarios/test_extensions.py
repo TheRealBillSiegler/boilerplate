@@ -4,15 +4,12 @@
 against the rendering template's own root, so a descendant cannot name an
 ancestor's file directly. D17 probes which spellings of another template's
 file resolve, from a local directory and from Copier's git clone. S19
-registers the ancestor's file as an importable module per ref, so a
+registers the ancestor's file as an importable module per release, so a
 descendant renders with the ancestor's extension at the release each copy of
-an update renders. Whether a descendant can use the filter at all runs on the
-made-up template family; the per-ref update variants stay on the bundled
-layers, because the family's docs filter is the same file in every release, so
-no registration variant renders anything different.
+an update renders. It runs on the made-up template family: docs 1.2.0 changes
+what its filter returns, and app's file shows it.
 """
 
-import importlib.util
 import subprocess
 import sys
 from collections.abc import Iterator
@@ -20,35 +17,32 @@ from pathlib import Path, PurePath
 from typing import NamedTuple
 
 import pytest
-import yaml
 from jinja2.exceptions import TemplateAssertionError
 
 from boilerplate.composition.updating import ScopedWorker
-from boilerplate.composition.views import LayerView
-from boilerplate.integrations.copier_types import Template
 from tests.boilerplate.templates.conftest import (
     commit_all,
     compose_project,
     init_repo,
-    layer_chain,
-    layer_view,
-    update_layer,
 )
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     CLEAN,
     FAMILY_PROJECT,
+    USER_LINE,
+    add_user_line,
     build_releases,
     build_repos,
+    by_ref_worker,
     compose_family,
-    copy_project,
     lines,
     make_git_project,
     merge_state,
-    on_own_worker,
+    recording_worker,
     substitute,
     templates_at,
+    update_family_layer,
     write,
 )
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
@@ -226,8 +220,6 @@ class StHook(ContextHook):
     def hook(self, context):
         context["st_marker"] = "ST-HOOK"
 '''
-SHOUT_FILES = ("streamlit_shout.txt", "project_shout.txt", "project_marker.txt")
-MODULE_ROOT = "boilerplate_layer_ext"
 
 
 def _file_path_extensions(ref: str, release: Path) -> None:
@@ -257,26 +249,6 @@ def _file_path_extensions(ref: str, release: Path) -> None:
     )
 
 
-def _register(patch: pytest.MonkeyPatch, path: Path, name: str) -> None:
-    """Import the file at `path` as module `name`, undone when `patch` is."""
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    patch.setitem(sys.modules, name, module)
-    spec.loader.exec_module(module)
-
-
-def _ancestor_specs(copier_yml: Path) -> list[tuple[str, str]]:
-    """Return ``(relative file, class)`` of each `extensions/` spec a layer declares."""
-    config = yaml.safe_load(copier_yml.read_text(encoding="utf-8"))
-    return [
-        (spec.split(":", 1)[0], spec.split(":", 1)[1])
-        for spec in config.get("_jinja_extensions", [])
-        if str(spec).startswith("extensions/")
-    ]
-
-
 class FilePathSetup(NamedTuple):
     """The S19 releases, repositories and git-backed v1 project."""
 
@@ -289,117 +261,15 @@ class FilePathSetup(NamedTuple):
 def file_path_setup(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Iterator[FilePathSetup]:
-    """Compose v1, registering project's v1 filter as a module streamlit loads."""
+    """Compose v1; streamlit's render loads project's v1 filter file."""
     root = tmp_path_factory.mktemp("file-path")
-    with temp_dir_inside(root), pytest.MonkeyPatch.context() as patch:
+    with temp_dir_inside(root):
         releases = build_releases(root, ("v1", "v2"), _file_path_extensions)
         repos = build_repos(root, releases)
-        module = f"{MODULE_ROOT}.project.ctx"
-        _register(patch, releases["v1"] / "project" / "extensions" / "ctx.py", module)
         project = root / "composed" / "probe-app"
-        compose_project(
-            "streamlit",
-            project,
-            ANSWERS,
-            releases["v1"],
-            extra_extensions={"streamlit": [f"{module}:ProbeFilter"]},
-        )
+        compose_project("streamlit", project, ANSWERS, releases["v1"])
         make_git_project(project, repos, "v1")
         yield FilePathSetup(releases, repos, project)
-
-
-def _registering_worker(
-    setup: FilePathSetup, patch: pytest.MonkeyPatch, *, per_ref_names: bool
-) -> type[ScopedWorker]:
-    """Return a worker that registers its ancestors' extension files at each build.
-
-    Each build clones every ancestor at the ref the worker renders, registers
-    its `extensions/` files as modules and adds them to the view: under one
-    module name per ref, or one name re-registered at every build.
-    """
-
-    class RegisteringWorker(ScopedWorker):
-        """Add the ancestors' extensions, registered from clones at the render's ref."""
-
-        def view_for_render(self) -> LayerView:
-            """Register the ancestors' extensions at the render's ref, add them."""
-            view = super().view_for_render()
-            ref = self.resolved_vcs_ref
-            assert ref is not None
-            layer = Path(str(self.src_path)).name
-            specs: list[str] = []
-            for ancestor in layer_chain(layer, setup.releases[ref])[:-1]:
-                clone = Template(url=str(setup.repos[ancestor]), ref=ref)
-                self._cleanup_hooks.append(clone._cleanup)  # pyright: ignore[reportPrivateUsage]
-                for relative, cls in _ancestor_specs(
-                    clone.local_abspath / "copier.yml"
-                ):
-                    stem = Path(relative).stem
-                    name = (
-                        f"{MODULE_ROOT}.{ancestor}.{ref}.{stem}"
-                        if per_ref_names
-                        else f"{MODULE_ROOT}.{ancestor}.{stem}"
-                    )
-                    _register(patch, clone.local_abspath / relative, name)
-                    specs.append(f"{name}:{cls}")
-            return LayerView(view.questions, (*view.extensions, *specs))
-
-    return RegisteringWorker
-
-
-VARIANTS = {
-    "A-clone-per-ref-name": "R2:PROBE APP",
-    "C-clone-one-name": "R2:PROBE APP",
-    "B-composed-source-target-only": "R1:PROBE APP",
-}
-
-
-@pytest.fixture(scope="module", params=[on_own_worker(v, f"S19-{v}") for v in VARIANTS])
-def registered_update(
-    request: pytest.FixtureRequest,
-    file_path_setup: FilePathSetup,
-    tmp_path_factory: pytest.TempPathFactory,
-) -> Iterator[tuple[str, Path]]:
-    """Update streamlit then project to v2 under one registration variant."""
-    variant: str = request.param
-    root = tmp_path_factory.mktemp(variant)
-    with temp_dir_inside(root), pytest.MonkeyPatch.context() as patch:
-        project = copy_project(file_path_setup.project, root / "probe-app")
-        releases = file_path_setup.releases
-        for layer in ("streamlit", "project"):
-            worker_type: type[ScopedWorker] = ScopedWorker
-            views: list[LayerView] | None = None
-            if variant.startswith("B") and layer == "streamlit":
-                module = f"{MODULE_ROOT}.project.ctx"
-                _register(
-                    patch, releases["v2"] / "project" / "extensions" / "ctx.py", module
-                )
-                views = [
-                    LayerView(
-                        view.questions, (*view.extensions, f"{module}:ProbeFilter")
-                    )
-                    for view in (
-                        layer_view(layer, releases["v1"]),
-                        layer_view(layer, releases["v2"]),
-                    )
-                ]
-            elif not variant.startswith("B"):
-                worker_type = _registering_worker(
-                    file_path_setup, patch, per_ref_names=variant.startswith("A")
-                )
-            update_layer(
-                project,
-                root="streamlit",
-                layer=layer,
-                source=file_path_setup.repos[layer],
-                ref="v2",
-                templates=releases,
-                old_view=views[0] if views else None,
-                target_view=views[1] if views else None,
-                worker_type=worker_type,
-            )
-            commit_all(project, f"update {layer} to v2")
-        yield variant, project
 
 
 @pytest.mark.xdist_group("S19-family")
@@ -420,6 +290,7 @@ class TestRegistrationOnTheFamily:
                 tmp_path / "family-app",
                 {"project_name": FAMILY_PROJECT},
                 templates,
+                register_ancestors=False,
             )
 
     def test_registered_filter_renders_in_the_descendant(
@@ -445,36 +316,118 @@ class TestRegistrationAtCompose:
         assert lines(file_path_setup.project / "project_marker.txt") == ["absent"]
 
 
-class TestRegistrationPerRef:
-    """S19: updating with the ancestor's filter registered per variant."""
+# ------------------------------------------------------------------ S19, family
 
-    def test_descendant_file_reaches_the_release_its_registration_allows(
-        self, registered_update: tuple[str, Path]
+ANCESTOR_BEFORE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
+ANCESTOR_AFTER = {**ANCESTOR_BEFORE, "docs": "1.2.0"}
+OLD_LINK = "(docs/index.md#family-app)"
+NEW_LINK = "(docs/index.md#family_app)"
+
+
+class AncestorMove(NamedTuple):
+    """The diamond after app is updated while only docs moves.
+
+    Attributes:
+        project: The updated project.
+        copies: App's `APP.md` as each render of the update left it, keyed by
+            role.
+    """
+
+    project: Path
+    copies: dict[str, str | None]
+
+
+def _update_app_with_docs_moved(
+    family: Family, work: Path, worker: type[ScopedWorker] | None = None
+) -> AncestorMove:
+    """Compose the diamond at docs 1.0.0, edit APP.md, update app with docs at 1.2.0."""
+    project = compose_family(family, work, "app", ANCESTOR_BEFORE)
+    add_user_line(project / "APP.md", prepend=True)
+    recorder, recording = recording_worker(["APP.md"], worker or ScopedWorker)
+    update_family_layer(
+        family,
+        project,
+        root="app",
+        layer="app",
+        before=ANCESTOR_BEFORE,
+        after=ANCESTOR_AFTER,
+        work=work,
+        worker_type=recorder,
+    )
+    return AncestorMove(project, {r: c["APP.md"] for r, c in recording.copies.items()})
+
+
+@pytest.fixture(scope="module")
+def ancestor_move(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[AncestorMove]:
+    """Update app to the same release while docs moves from 1.0.0 to 1.2.0."""
+    work = tmp_path_factory.mktemp("ancestor-move")
+    with temp_dir_inside(work):
+        yield _update_app_with_docs_moved(family, work)
+
+
+@pytest.mark.xdist_group("S19-ancestor-move")
+class TestRegistrationPerRelease:
+    """S19: each render of an update loads the ancestor's filter of its own release."""
+
+    def test_old_copy_renders_with_the_recorded_releases_filter(
+        self, ancestor_move: AncestorMove
     ) -> None:
-        """S19: registering only the target release leaves the file at R1 silently.
+        """S19: docs 1.0.0's filter joins the words with hyphens."""
+        assert OLD_LINK in (ancestor_move.copies["old_copy"] or "")
 
-        Registering from a clone at each render's ref (A, C) gives the old
-        copy R1 and the new copy R2, so the update applies R1 to R2. B gives
-        both copies the v2 module, so old equals new and nothing changes.
-        """
-        variant, project = registered_update
-
-        assert lines(project / "streamlit_shout.txt")[0] == VARIANTS[variant]
-
-    def test_ancestor_file_updates_through_its_own_loader(
-        self, registered_update: tuple[str, Path]
+    @pytest.mark.parametrize("role", ["in_place", "new_copy"])
+    def test_renders_at_the_target_use_the_target_releases_filter(
+        self, ancestor_move: AncestorMove, role: str
     ) -> None:
-        """S19: project's own file-path spec loads its filter at each ref."""
-        assert lines(registered_update[1] / "project_shout.txt") == ["R2:PROBE APP"]
+        """S19: docs 1.2.0's filter joins them with underscores."""
+        assert NEW_LINK in (ancestor_move.copies[role] or "")
 
-    def test_descendant_hook_stays_out_of_the_ancestors_files(
-        self, registered_update: tuple[str, Path]
+    def test_the_filter_change_lands_in_the_project(
+        self, ancestor_move: AncestorMove
     ) -> None:
-        """S19: after both updates project's marker still renders the default."""
-        assert lines(registered_update[1] / "project_marker.txt") == ["absent"]
+        """S19: the old-to-new difference applies to app's file."""
+        assert any(NEW_LINK in line for line in lines(ancestor_move.project / "APP.md"))
 
-    def test_update_merges_without_conflict(
-        self, registered_update: tuple[str, Path]
+    def test_the_users_edit_elsewhere_in_the_file_survives(
+        self, ancestor_move: AncestorMove
     ) -> None:
-        """S19: no variant leaves anything to resolve."""
-        assert merge_state(registered_update[1]) == CLEAN
+        """S19: the line the user prepended stays first."""
+        assert lines(ancestor_move.project / "APP.md")[0] == USER_LINE
+
+    def test_the_update_merges_without_conflict(
+        self, ancestor_move: AncestorMove
+    ) -> None:
+        """S19: nothing is left to resolve."""
+        assert merge_state(ancestor_move.project) == CLEAN
+
+
+@pytest.mark.xdist_group("S19-by-ref")
+class TestViewKeyedByRefDefect:
+    """S19: a view keyed by template ref cannot tell the old copy from the new."""
+
+    @pytest.fixture(scope="class")
+    def by_ref(
+        self, family: Family, tmp_path_factory: pytest.TempPathFactory
+    ) -> Iterator[AncestorMove]:
+        """Run the ancestor-only update through a worker that keys views by ref."""
+        work = tmp_path_factory.mktemp("by-ref")
+        with temp_dir_inside(work):
+            yield _update_app_with_docs_moved(
+                family, work, by_ref_worker("1.0.0", "1.0.0")
+            )
+
+    def test_old_copy_renders_the_target_releases_filter(
+        self, by_ref: AncestorMove
+    ) -> None:
+        """S19: app's ref is 1.0.0 in both, so the old copy gets the target view."""
+        assert NEW_LINK in (by_ref.copies.get("old_copy") or "")
+
+    def test_update_silently_keeps_the_old_output(self, by_ref: AncestorMove) -> None:
+        """S19: old and new copies agree, so no difference reaches app's file."""
+        assert any(OLD_LINK in line for line in lines(by_ref.project / "APP.md"))
+
+    def test_update_reports_no_conflict(self, by_ref: AncestorMove) -> None:
+        """S19: nothing flags that the filter change was missed."""
+        assert merge_state(by_ref.project) == CLEAN

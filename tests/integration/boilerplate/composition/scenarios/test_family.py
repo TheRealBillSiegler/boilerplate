@@ -21,7 +21,6 @@ from tests.integration.boilerplate.composition.family import (
     Family,
     assemble_templates_dir,
     family_versions,
-    register_extension_module,
 )
 from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
@@ -131,21 +130,13 @@ def _compose(
         {**{k: v[0] for k, v in family.tags.items()}, **(tags or {})},
     )
     project = work / "project"
-    with pytest.MonkeyPatch.context() as patch:
-        # App's files use docs' filter, which only docs' own render loads.
-        docs_filters = register_extension_module(
-            patch,
-            templates / "docs" / "_extensions" / "docfilters.py",
-            "family_ext.docs.docfilters",
-        )
-        compose_project(
-            root,
-            project,
-            {**ANSWERS, **(answers or {})},
-            templates,
-            skip_tasks=skip_tasks,
-            extra_extensions={"app": [f"{docs_filters}:DocFilters"]},
-        )
+    compose_project(
+        root,
+        project,
+        {**ANSWERS, **(answers or {})},
+        templates,
+        skip_tasks=skip_tasks,
+    )
     return Composed(project, tree(project))
 
 
