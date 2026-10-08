@@ -6,16 +6,21 @@ from pathlib import Path
 
 from boilerplate.common.exceptions import UpdateCheckoutChangedError
 from boilerplate.composition.staging.git_commands import run_git
+from boilerplate.composition.staging.intent_operation import IntentOperation
 
 _logger = logging.getLogger(__name__)
 
 
-def require_checkout_unchanged(project: Path, start_commit: str) -> None:
+def require_checkout_unchanged(
+    project: Path, start_commit: str, operation: IntentOperation
+) -> None:
     """Check the user's checkout is at `start_commit` with no changes.
 
     Args:
         project: The user's checkout.
         start_commit: The commit the checkout was at when staging began.
+        operation: The operation whose copy back asks, which the message and
+            the remediation name.
 
     Raises:
         UpdateCheckoutChangedError: If HEAD moved, or the working tree has
@@ -25,15 +30,16 @@ def require_checkout_unchanged(project: Path, start_commit: str) -> None:
     head = run_git(project, "rev-parse", "HEAD").strip()
     if head != start_commit:
         raise UpdateCheckoutChangedError(
-            "The checkout moved to another commit while the update ran; "
-            "nothing was written.",
-            remediation="Run 'boilerplate update' again.",
+            "The checkout moved to another commit while the "
+            f"{operation.value} ran; nothing was written.",
+            remediation=f"Run 'boilerplate {operation.value}' again.",
         )
     if run_git(project, "status", "--porcelain").strip():
         raise UpdateCheckoutChangedError(
-            "The checkout changed while the update ran; nothing was written.",
+            f"The checkout changed while the {operation.value} ran; "
+            "nothing was written.",
             remediation="Commit or stash your changes, then run "
-            "'boilerplate update' again.",
+            f"'boilerplate {operation.value}' again.",
         )
 
 

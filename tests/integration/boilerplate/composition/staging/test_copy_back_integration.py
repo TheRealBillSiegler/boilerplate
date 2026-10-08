@@ -1,5 +1,6 @@
 """Copying a finished staging worktree back into the user's checkout."""
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,8 +16,10 @@ from tests.boilerplate.templates.conftest import commit_all, git
 from tests.integration.boilerplate.composition.staging.conftest import head
 
 
-def staging(project: Path, root: Path) -> StagingWorktree:
-    return StagingWorktree(project, operation=IntentOperation.UPDATE, temp_root=root)
+def staging(
+    project: Path, root: Path, operation: IntentOperation = IntentOperation.UPDATE
+) -> StagingWorktree:
+    return StagingWorktree(project, operation=operation, temp_root=root)
 
 
 def make_layer_changes(worktree: Path) -> None:
@@ -155,3 +158,68 @@ class TestCheckoutChanged:
             stage.copy_back()
 
         assert not folder.exists()
+
+
+OPERATIONS = [IntentOperation.UPDATE, IntentOperation.ADD]
+
+
+def move_head(project: Path) -> None:
+    (project / "later.txt").write_text("later\n", encoding="utf-8")
+    commit_all(project, "user commits during the run")
+
+
+def dirty_tree(project: Path) -> None:
+    (project / "mine.txt").write_text("mine\n", encoding="utf-8")
+
+
+def copy_back_error(
+    project: Path,
+    root: Path,
+    operation: IntentOperation,
+    disturb: Callable[[Path], None],
+) -> UpdateCheckoutChangedError:
+    with staging(project, root, operation) as stage:
+        disturb(project)
+        with pytest.raises(UpdateCheckoutChangedError) as stop:
+            stage.copy_back()
+    return stop.value
+
+
+@pytest.mark.parametrize("operation", OPERATIONS)
+class TestCheckoutChangedNamesTheOperation:
+    def test_moved_commit_message(
+        self, project: Path, staging_root: Path, operation: IntentOperation
+    ) -> None:
+        error = copy_back_error(project, staging_root, operation, move_head)
+
+        assert str(error) == (
+            f"The checkout moved to another commit while the {operation.value} ran; "
+            "nothing was written."
+        )
+
+    def test_moved_commit_remediation(
+        self, project: Path, staging_root: Path, operation: IntentOperation
+    ) -> None:
+        error = copy_back_error(project, staging_root, operation, move_head)
+
+        assert error.remediation == f"Run 'boilerplate {operation.value}' again."
+
+    def test_changed_tree_message(
+        self, project: Path, staging_root: Path, operation: IntentOperation
+    ) -> None:
+        error = copy_back_error(project, staging_root, operation, dirty_tree)
+
+        assert str(error) == (
+            f"The checkout changed while the {operation.value} ran; "
+            "nothing was written."
+        )
+
+    def test_changed_tree_remediation(
+        self, project: Path, staging_root: Path, operation: IntentOperation
+    ) -> None:
+        error = copy_back_error(project, staging_root, operation, dirty_tree)
+
+        assert error.remediation == (
+            f"Commit or stash your changes, then run 'boilerplate {operation.value}' "
+            "again."
+        )
