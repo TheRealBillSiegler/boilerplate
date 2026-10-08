@@ -603,7 +603,8 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `DependencyError` | — | Intermediate base for dependency resolution errors; never raised directly |
 | `DependencyNotFoundError` | `1` | (extends `DependencyError`) A template referenced in `extends` cannot be found in the catalog |
 | `DependencyCycleError` | `1` | (extends `DependencyError`) The dependency graph contains a cycle |
-| `RecordedAnswerRejectedError` | `3` | A recorded answer fails the target version's question type or validator during the update walk; translated from Copier's `ValueError` |
+| `RecordedAnswerRejectedError` | `3` | A recorded answer fails the target view's question type, choices or validator inside a layer's update step, after the layer's migrations; translated from Copier's `ValueError` |
+| `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `MergeConflictError` | `1` | Two layers declare incompatible values for the same configuration key |
 
 Unrecognized exceptions outside this hierarchy MUST exit with code `1` (`FAILURE`). Exit-code semantics (what each code means) are specified in [§Exit Codes](#exit-codes) below.
