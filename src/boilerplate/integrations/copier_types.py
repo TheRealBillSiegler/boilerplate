@@ -36,6 +36,13 @@ fixed commit identity); the staging worktree runs its git calls through it too.
 Copier runs exits non-zero. Plumbum arrives only through Copier, so the source
 imports it from here rather than from plumbum directly.
 
+``update_operation`` sets Copier's private ``_operation`` ContextVar to
+``"update"`` for a block. Only ``run_copy``, ``run_recopy`` and ``run_update``
+set it, and Copier's task runner reads it to give a task ``_copier_operation``;
+the post-walk task run of an update calls the task runner outside those three, so
+it sets the variable itself. ``TaskError`` is what the task runner raises when a
+task exits non-zero.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -51,13 +58,16 @@ these are private symbols copier may move without a deprecation cycle.
 
 import dataclasses
 import functools
+from collections.abc import Generator
+from contextlib import contextmanager
 
 from copier._jinja_ext import SandboxedEnvironment
-from copier._main import Worker
+from copier._main import Worker, _operation  # pyright: ignore[reportPrivateUsage]
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
 from copier._types import MISSING
 from copier._user_data import AnswersMap, Question, load_answersfile_data
 from copier._vcs import get_git
+from copier.errors import TaskError
 from packaging.version import Version
 from plumbum.commands.processes import ProcessExecutionError
 
@@ -128,6 +138,25 @@ def recorded_commit_version(src_path: str, commit: str) -> Version | None:
         template._cleanup()  # pyright: ignore[reportPrivateUsage]
 
 
+@contextmanager
+def update_operation() -> Generator[None]:
+    """Run a block under Copier's ``update`` operation.
+
+    Inside the block Copier's task runner gives each task
+    ``_copier_operation == "update"``, as it does during ``run_update``, so a
+    template may guard a creation-only task. The variable is restored on the
+    way out, also when the block raises.
+
+    Yields:
+        Nothing; the operation is set for the duration of the block.
+    """
+    token = _operation.set("update")
+    try:
+        yield
+    finally:
+        _operation.reset(token)
+
+
 __all__ = [
     "DEFAULT_EXCLUDE",
     "MISSING",
@@ -137,6 +166,7 @@ __all__ = [
     "ProcessExecutionError",
     "Question",
     "SandboxedEnvironment",
+    "TaskError",
     "Template",
     "Worker",
     "get_git",
@@ -144,4 +174,5 @@ __all__ = [
     "load_template_config",
     "recorded_commit_version",
     "template_public_attr_names",
+    "update_operation",
 ]

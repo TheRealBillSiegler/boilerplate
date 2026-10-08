@@ -8,7 +8,11 @@ collection fails loudly here during CI rather than at render time for a user.
 from __future__ import annotations
 
 import inspect
+import subprocess
 from pathlib import Path
+
+import pytest
+from copier._main import _operation  # pyright: ignore[reportPrivateUsage]
 
 from boilerplate.integrations.copier_types import (
     MISSING,
@@ -17,10 +21,12 @@ from boilerplate.integrations.copier_types import (
     AnswersMap,
     Question,
     SandboxedEnvironment,
+    TaskError,
     Template,
     Worker,
     load_answersfile_data,
     template_public_attr_names,
+    update_operation,
 )
 
 
@@ -113,3 +119,52 @@ class TestQuestionWithoutADefault:
         )
 
         assert question.get_default() is MISSING
+
+
+class TestUpdateOperation:
+    """The shim sets the ContextVar Copier's task runner reads its operation from."""
+
+    def test_task_runner_reads_the_operation_from_the_context_variable(self) -> None:
+        """Pin the private ContextVar and its reader in Copier's source."""
+        source = inspect.getsource(Worker._execute_tasks)  # pyright: ignore[reportPrivateUsage]
+
+        assert "_operation.get()" in source
+
+    def test_only_the_run_methods_set_the_operation(self) -> None:
+        """Pin that nothing but ``run_copy``, ``run_recopy`` and ``run_update`` do."""
+        setters = sorted(
+            name
+            for name in ("run_copy", "run_recopy", "run_update", "_execute_tasks")
+            if "as_operation" in inspect.getsource(getattr(Worker, name))
+        )
+
+        assert setters == ["run_copy", "run_recopy", "run_update"]
+
+    def test_operation_is_update_inside_the_block_and_unset_after(self) -> None:
+        """Set ``"update"`` for the block, then restore the unset variable."""
+        with update_operation():
+            inside = _operation.get()
+
+        assert inside == "update"
+        with pytest.raises(LookupError):
+            _operation.get()
+
+    def test_operation_is_restored_when_the_block_raises(self) -> None:
+        """Reset the variable on the way out of a failure too."""
+        with pytest.raises(RuntimeError), update_operation():
+            raise RuntimeError("boom")
+
+        with pytest.raises(LookupError):
+            _operation.get()
+
+
+class TestTaskError:
+    """The shim re-exports the error Copier raises when a task exits non-zero."""
+
+    def test_carries_the_command_and_the_exit_status(self) -> None:
+        """Expose ``cmd`` and ``returncode`` of the failed process."""
+        process = subprocess.CompletedProcess(["make", "test"], 2, b"", b"")
+
+        error = TaskError.from_process(process)
+
+        assert (error.cmd, error.returncode) == (["make", "test"], 2)
