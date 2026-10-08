@@ -610,6 +610,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateDowngradeError` | `3` | Before any layer runs, a target is older than the version a layer's answers file records in `_commit`, or a recorded `_commit` yields no version (`BP_UPDATE_DOWNGRADE_REJECTED`) |
+| `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
 | `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely |
 | `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back |
