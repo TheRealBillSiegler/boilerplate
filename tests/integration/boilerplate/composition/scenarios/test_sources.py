@@ -105,7 +105,7 @@ class TestComposeFromGitSources:
 
         A counterfactual, patched inside Boilerplate on purpose: it shows the
         attribute is the only blocker. Both layers then record the latest
-        tag, core 3.0.0 and service 1.1.0, as `_commit` and the repository as
+        tag, core 3.0.0 and service 1.2.0, as `_commit` and the repository as
         `_src_path`.
         """
         answers = {"project_name": FAMILY_PROJECT}
@@ -137,5 +137,5 @@ class TestComposeFromGitSources:
 
         assert provenance == {
             "core": ("3.0.0", git_sources.repos["core"]),
-            "service": ("1.1.0", git_sources.repos["service"]),
+            "service": ("1.2.0", git_sources.repos["service"]),
         }
