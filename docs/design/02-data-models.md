@@ -434,12 +434,12 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | string | Sequential integer starting at `"1"` (stored as string). The `created` record (when present) is always `id: "1"`. |
-| `from_version` | string or null | Root template specifier before the operation (e.g., `"streamlit@0.1.0"`). `null` for `created` records (no prior state) and `adopted` records (no prior Boilerplate state — the project existed under Copier but not under Boilerplate). |
-| `to_version` | string | Root template specifier after the operation (e.g., `"streamlit@0.2.0"`). For `created` and `adopted` records, this is the template specifier the project is now bound to. |
+| `from_version` | string or null | Root template specifier before the operation (e.g., `"streamlit@0.1.0"`). `null` for `created` records (no prior state), `add` records (the added layer had no prior state) and `adopted` records (no prior Boilerplate state — the project existed under Copier but not under Boilerplate). |
+| `to_version` | string | Root template specifier after the operation (e.g., `"streamlit@0.2.0"`). For `created` and `adopted` records, this is the template specifier the project is now bound to; for an `add` record, it is the specifier of the added layer. |
 | `timestamp` | ISO 8601 datetime | UTC timestamp |
 | `status` | enum | One of `in_progress`, `success`, `failed`, `conflict`, `adopted`, `created`; see [MigrationRecord status state machine](#migrationrecord-status-state-machine) for terminal values, exit-code mapping, and two-phase write semantics. |
 | `error` | string or null | Error message if status is not `success` (or `created`/`adopted`, both of which are success-shaped terminal values) |
-| `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created` and `adopted` records (no prior-version comparison applies). |
+| `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created`, `adopted` and `add` records (no prior-version comparison applies). |
 | `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
 | `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
 
@@ -458,7 +458,7 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
 
-**Two-phase write (update operations)**: For `update` operations, the MigrationRecord MUST be appended at the START with `status: in_progress` and then updated in-place to a terminal value after the lock file has been successfully written. The two-phase write ensures partial failures leave a record.
+**Two-phase write (update and add operations)**: For `update` and `add` operations, the MigrationRecord MUST be appended at the START with `status: in_progress` and then updated in-place to a terminal value after the lock file has been successfully written. The two-phase write ensures partial failures leave a record.
 
 **Single-phase write (adopt and create)**: For `adopt` and `create` operations the record is written once with the corresponding terminal status (no `in_progress` phase) because these pipelines write only Boilerplate-owned state files and have no merge-conflict path.
 
@@ -470,12 +470,12 @@ An intent journal records the in-progress state of a mutating operation for cras
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `operation` | enum | One of: `create`, `update`, `adopt`, `env_apply`. Identifies which mutating operation owns the journal so crash-recovery logic can dispatch to the operation-specific handler. The set MUST cover every command that participates in journal-based recovery. |
+| `operation` | enum | One of: `create`, `update`, `add`, `adopt`, `env_apply`. Identifies which mutating operation owns the journal so crash-recovery logic can dispatch to the operation-specific handler. The set MUST cover every command that participates in journal-based recovery. |
 | `phase` | string | Current phase. Free-form string at the schema level; valid identifiers are operation-specific. See [IntentJournal phase vocabularies](#intentjournal-phase-vocabularies). |
 | `started_at` | ISO 8601 | When the operation began |
 | `staging_dir` | string | Path to the staging directory |
 | `destination` | string | Path to the target project or environment |
-| `template_ref` | string or null | Template reference (for create/update) |
+| `template_ref` | string or null | Template reference (for create/update/add) |
 | `profile_ref` | string or null | Profile reference (for env_apply) |
 
 **File locations**: Project operations use `.boilerplate-commit-intent.json` in the staging directory. Environment operations use `.boilerplate-env-intent.json` in the staging directory.
@@ -486,7 +486,7 @@ An intent journal records the in-progress state of a mutating operation for cras
 
 | Operation | Phase identifiers | Phase semantics |
 | --- | --- | --- |
-| `create`, `update`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
+| `create`, `update`, `add`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
 | `env_apply` | `staging`, `committing`, `locking` | Same three identifiers as project operations, but `locking` names the Record Write stage (Stage 6) — `environment.yml` is a provenance record, not a lock file. See [EnvironmentProvisionRecord](#environmentprovisionrecord) and §08 Stage 6. |
 
 **Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above.
