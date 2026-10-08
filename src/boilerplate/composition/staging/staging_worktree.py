@@ -2,14 +2,17 @@
 
 import logging
 import tempfile
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
 from typing import Self
 
 from boilerplate.composition.staging.copy_back import (
+    list_untracked_paths,
     require_checkout_unchanged,
     restore_working_tree,
+    undo_working_tree,
 )
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.intent_journal import IntentJournal
@@ -21,7 +24,10 @@ from boilerplate.composition.staging.stale_cleanup import (
     STAGING_PREFIX,
     remove_stale_staging,
 )
-from boilerplate.composition.staging.unmerged_entries import replay_unmerged_entries
+from boilerplate.composition.staging.unmerged_entries import (
+    list_unmerged_paths,
+    replay_unmerged_entries,
+)
 from boilerplate.composition.staging.working_tree_changes import (
     apply_working_tree_changes,
 )
@@ -108,6 +114,50 @@ class StagingWorktree:
         self._last_commit = commit_worktree(self.path, message)
         return self._last_commit
 
+    def unmerged_paths(self) -> tuple[str, ...]:
+        """List the worktree's unmerged paths, the sign a layer's update conflicted.
+
+        Returns:
+            The conflicted paths; empty when the layer's update merged cleanly.
+        """
+        return list_unmerged_paths(self.path)
+
+    def record_phase(self, phase: str) -> None:
+        """Write the intent journal with `phase`.
+
+        The walk names the phases a project operation passes through: the
+        worktree itself writes ``staging`` and ``committing``, and the caller
+        writes ``locking`` before it writes the lock.
+
+        Args:
+            phase: The phase to record.
+        """
+        self._write_journal(phase)
+
+    def untracked_in_checkout(self) -> tuple[str, ...]:
+        """List the files the user's checkout has that git neither tracks nor ignores.
+
+        After a copy back these are the files the update added, and the files a
+        task wrote; listing them is what lets ``undo_copy_back`` remove exactly
+        those.
+
+        Returns:
+            The paths relative to the checkout.
+        """
+        return list_untracked_paths(self.project)
+
+    def undo_copy_back(self, untracked: Sequence[str]) -> None:
+        """Return the user's checkout to the state it had when staging began.
+
+        Tracked files are restored from the starting commit, working tree and
+        index both, and the listed files are removed.
+
+        Args:
+            untracked: The files to remove, as ``untracked_in_checkout`` listed
+                them after the copy back and the tasks.
+        """
+        undo_working_tree(self.project, self.start_commit, untracked)
+
     def copy_back(self, *, paused: bool = False) -> None:
         """Reproduce the worktree's state in the user's checkout.
 
@@ -129,7 +179,7 @@ class StagingWorktree:
                 it is left as it is.
         """
         require_checkout_unchanged(self.project, self.start_commit)
-        self._write_journal("committing")
+        self.record_phase("committing")
         restore_working_tree(self.project, self.last_commit)
         if paused:
             apply_working_tree_changes(self.path, self.project)
