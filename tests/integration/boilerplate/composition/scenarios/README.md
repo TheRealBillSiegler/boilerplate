@@ -1,15 +1,17 @@
-# Composition probes
+# Composition scenarios
 
-Reproducible evidence for the composition design: each test re-runs one scenario probe against real Copier and asserts what the probe observed. These are not product tests. They sit outside `testpaths`, so `uv run pytest` and CI never run them.
+Reproducible evidence for the composition design: each test re-runs one scenario against real Copier and git and asserts what was observed. These are not product tests. They live under `tests/integration/`, so `uv run pytest` collects them, and a collection hook marks each one `scenario`. Deselect them with `-m "not scenario"`; no gate does so yet, and the policy for running them in CI is undecided. A full run takes several minutes.
 
-A failure means a claim no longer holds (Copier, Git or the bundled templates changed). Revisit the design that rests on it, starting with [design 04 §Safe Update](../../docs/design/04-composition-engine.md#safe-update), before changing the expected value.
+Five scenarios assert target behavior the code does not yet have. They are strict expected failures (`xfail`): they pass the run while the gap exists and fail it once the gap closes, at which point remove the marker.
+
+A failure means a claim no longer holds (Copier, Git or the bundled templates changed). Revisit the design that rests on it, starting with [design 04 §Safe Update](../../../../../docs/design/04-composition-engine.md#safe-update), before changing the expected value.
 
 ## Run
 
 ```console
-uv run pytest probes/composition                      # every scenario
-uv run pytest probes/composition/test_views.py        # one group
-uv run pytest probes/composition -k TestRenamedQuestion  # one scenario, by its test class
+uv run pytest tests/integration/boilerplate/composition/scenarios -m scenario                      # every scenario
+uv run pytest tests/integration/boilerplate/composition/scenarios/test_views.py -m scenario        # one group
+uv run pytest tests/integration/boilerplate/composition/scenarios -m scenario -k TestRenamedQuestion  # one scenario, by its test class
 ```
 
 Every scenario builds its template repositories and project under pytest's temp directory and points `TMP`, `TEMP` and `TMPDIR` there, so Copier's clones and update copies stay inside it. The scoped-view harness lives in `tests/boilerplate/templates/conftest.py`; `builders.py` holds the template builders, `extensions/` the probe-only Jinja extensions.
@@ -20,7 +22,7 @@ Every scenario builds its template repositories and project under pytest's temp 
 
 ## Scenarios
 
-Rows marked *added* are checks written with this suite, not taken from a probe log.
+Rows marked *added* are checks written with this suite, not taken from a probe log. Rows marked *expected failure* list a strict `xfail` that asserts the target behavior; the Claim column states what the code does today.
 
 | ID | Question | Claim | Tests |
 | --- | --- | --- | --- |
@@ -36,14 +38,14 @@ Rows marked *added* are checks written with this suite, not taken from a probe l
 | S12 control | Does forced data reach the old copy? | No: it renders from the answers file, also with `data={}`. | `test_update_mechanics.py::TestEachCopyRendersItsOwnRelease`; *added*: `::test_forced_data_never_reaches_the_old_copy` |
 | S13 | What happens to a recorded answer the new type or choices reject? | Forced: raw `ValueError` before any render. Castable: carried as the new type. Vanilla: silently replaced by the default. | `test_question_changes.py::TestRetypedQuestion` |
 | S14 | Does a renamed question's value survive behind a migration? | Lock order or a migration in both layers: yes. Reverse order with project's migration only: streamlit records the default, which reaches the README. | `test_question_changes.py::TestRenamedQuestion` |
-| S14 *added* | Does the update questionnaire pass respect the migration? | No: it forces the renamed question's default over the migrated answer in both layers, either order. | `test_question_changes.py::TestRenamedQuestion::test_update_questionnaire_pass_forces_the_renamed_questions_default` |
+| S14 *added*, *expected failure* | Should the update questionnaire pass respect the migration? | No: it forces the renamed question's default over the migrated answer in both layers, either order. | `test_question_changes.py::TestRenamedQuestion::test_update_questionnaire_pass_keeps_the_migrated_answer` (target: both layers record and render the migrated answer) |
 | S15 | What does a validator the recorded answer fails do? | Forced: `ValueError` before render. Vanilla: fails if the default is invalid too, else silently swaps in the default. | `test_question_changes.py::TestTightenedValidator` |
 | S16 | Where do tasks run? | Compose: once each, in the destination, in the final layer's context. Update: the layer's own task in the old copy, in place and in the new copy. | `test_update_mechanics.py::TestTasks` |
 | S17 | Can the unified questionnaire run interactively in-process? | Yes via prompt_toolkit pipe input; prompts show streamlit's overrides; `project_name` defaults to the scratch directory's name. | `test_prompting.py::TestInteractivePrompting` |
-| S18 | Can Boilerplate compose from git-repository layers? | No: `git_index_modes`' path keys fail the composer's JSON check, also via `new`; without that attribute it works and records the latest tag. | `test_sources.py::TestComposeFromGitSources` |
+| S18, *expected failure* | Should Boilerplate compose from git-repository layers? | Not yet: `git_index_modes`' path keys fail the composer's JSON check, also via `new`; without that attribute it works and records the latest tag. | `test_sources.py::TestComposeFromGitSources::test_compose_succeeds_from_git_repository_layers`, `::test_new_exits_zero_from_git_repository_layers` (target: composing and `new` succeed); the counterfactual `::test_without_git_index_modes_both_composes_record_the_latest_tag` passes |
 | S19 | Can a descendant use an ancestor's file-path extension? | Only once it is registered as a module; registered per render's ref it updates, registered at the target only it silently stays. | `test_extensions.py::TestRegistrationAtCompose`, `::TestRegistrationPerRef` |
 | S20 | Does a conflicting user edit pause the update? | Yes: inline markers, no exception, README unmerged with stages 1-3, no `.rej`. | `test_update_mechanics.py::TestConflictPauses` |
-| S21 | What does the shipped `new` record, and is `update` a command? | Every answers file records the whole merged questionnaire; `update` exits 3, no such command. | `test_cli_baseline.py` |
+| S21, *expected failure* | Should each answers file record only its own layer's view, and should `update` be a command? | Not yet: every answers file records the whole merged questionnaire; `update` exits 3, no such command. | `test_cli_baseline.py::TestShippedNew::test_each_answers_file_records_only_its_layers_scoped_view` (target: project's file lacks streamlit's questions), `::test_update_help_exits_zero` (target: `boilerplate update --help` exits 0); the other `TestShippedNew` tests pass |
 | S22 | Does a three-layer chain scope and update cleanly? | Yes in both orders; the leaf's override reaches every layer that asks the question. | `test_views.py::TestChain`, `::TestChainUpdates` |
 | D17 | Which spellings of another template's extension file resolve? | Walk-out relative: locally only. Drive-less absolute: everywhere. Drive-letter absolute (Windows): never, it splits at the drive colon. | `test_extensions.py::TestFilePathSpellings` |
 | *added* | Do a layer's own answers beat its ancestors' in the scoped data? | Yes. | `test_update_mechanics.py::test_layers_own_recorded_answer_beats_its_ancestors` |
