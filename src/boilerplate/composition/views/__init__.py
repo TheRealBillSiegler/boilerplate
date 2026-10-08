@@ -13,6 +13,7 @@ from boilerplate.composition.views.layer_view_builder import (
     is_layer_local_extension,
     view_config,
 )
+from boilerplate.composition.views.scope_composition import scope_composition
 
 __all__ = [
     "AncestorExtension",
@@ -23,5 +24,6 @@ __all__ = [
     "extension_module_name",
     "is_layer_local_extension",
     "registered_ancestor_extensions",
+    "scope_composition",
     "view_config",
 ]
