@@ -8,10 +8,12 @@ collection fails loudly here during CI rather than at render time for a user.
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 
 from boilerplate.integrations.copier_types import (
     Template,
     Worker,
+    load_answersfile_data,
     template_public_attr_names,
 )
 
@@ -40,3 +42,20 @@ class TestCopierTypesShim:
         # invisible to dir(cls) and were silently dropped from extracted
         # configs and the merger's layer-local set.
         assert "url" in template_public_attr_names(Template)
+
+
+class TestLoadAnswersfileData:
+    """The shim re-exports Copier's answers-file reader with the shape we rely on."""
+
+    def test_missing_file_reads_as_an_empty_dict(self, tmp_path: Path) -> None:
+        assert load_answersfile_data(tmp_path, ".copier-answers.absent.yml") == {}
+
+    def test_present_file_reads_as_its_mapping(self, tmp_path: Path) -> None:
+        (tmp_path / ".copier-answers.x.yml").write_text(
+            "_commit: v1\nname: demo\n", encoding="utf-8"
+        )
+
+        assert load_answersfile_data(tmp_path, ".copier-answers.x.yml") == {
+            "_commit": "v1",
+            "name": "demo",
+        }

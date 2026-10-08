@@ -14,6 +14,9 @@ delegation rule in docs/design/03-template-system.md (YAML Parsing Rules). It
 loads configuration only; ``_tasks``/``_migrations`` entries are read as plain
 data and never executed.
 
+``load_answersfile_data`` is the reader Copier applies to a project's answers
+file; reading recorded answers through it reads them the way Copier does.
+
 Importing them here, from the modules where copier actually defines them, keeps
 that coupling localized to one place. When a copier upgrade relocates these
 symbols, this module is the only thing that needs to change. The dependency is
@@ -26,6 +29,7 @@ import functools
 
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
+from copier._user_data import load_answersfile_data
 
 
 @functools.cache
@@ -67,6 +71,7 @@ __all__ = [
     "DEFAULT_EXCLUDE",
     "Template",
     "Worker",
+    "load_answersfile_data",
     "load_template_config",
     "template_public_attr_names",
 ]
