@@ -16,6 +16,7 @@ from typing import Any, NamedTuple
 import pytest
 
 from boilerplate.common.exceptions import (
+    ActionRequiredError,
     RecordedAnswerRejectedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
@@ -23,8 +24,9 @@ from boilerplate.common.exceptions import (
 )
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
+from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.updater import Updater
-from boilerplate.models import MigrationStatus
+from boilerplate.models import BoilerplateLock, MigrationStatus
 from boilerplate.project_state.lock_builder import build_lock
 from boilerplate.project_state.lock_file import read_lock, write_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
@@ -423,3 +425,170 @@ class TestACommitPastATag:
             "core": "2.0.0",
             "service": "1.2.0",
         }
+
+
+def publish_release(repo: Path, tag: str) -> None:
+    """Publish `tag` as a new release of the layer repository `repo`.
+
+    The release changes nothing a layer renders; it carries the new version in
+    ``boilerplate.yml`` and a note, which is all a release needs to be the
+    latest one.
+    """
+    manifest = repo / "boilerplate.yml"
+    text = manifest.read_text(encoding="utf-8")
+    current = next(
+        line.split(":", 1)[1].strip()
+        for line in text.splitlines()
+        if line.startswith("version:")
+    )
+    write(manifest, text.replace(f"version: {current}", f"version: {tag}", 1))
+    commit_all(repo, f"release {tag}", tag)
+
+
+def resolve_conflict(project: Path, relative: str) -> None:
+    """Resolve the conflict in `relative` the way a user does: keep both sides."""
+    path = project / relative
+    kept = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.startswith(("<<<<<<<", "=======", ">>>>>>>"))
+    ]
+    write(path, "\n".join(kept) + "\n")
+    commit_all(project, "resolve the conflict")
+
+
+class PausedWalk(NamedTuple):
+    """A diamond walk that paused on a conflict in service's guide.
+
+    Attributes:
+        family: The private family the project was composed from.
+        project: The checkout the pause left behind.
+        error: The pause the walk raised.
+        lock: The lock the pause left in place.
+    """
+
+    family: Family
+    project: Path
+    error: ActionRequiredError
+    lock: BoilerplateLock
+
+
+@pytest.fixture(scope="module")
+def paused(tmp_path_factory: pytest.TempPathFactory) -> Iterator[PausedWalk]:
+    """Walk the diamond with a user line at the end of service's guide."""
+    work = tmp_path_factory.mktemp("paused-walk")
+    private = build_family(work / "private")
+    with temp_dir_inside(work):
+        project = compose_locked_family(private, work, "app", BASE)
+        add_user_line(project / "SERVICE.md")
+        lock = read_lock(project)
+        try:
+            Updater().update(project, request(AFTER))
+        except ActionRequiredError as error:
+            yield PausedWalk(private, project, error, lock)
+        else:
+            pytest.fail("the walk was expected to pause")
+
+
+@pytest.mark.xdist_group("update-walk-paused")
+class TestConflictPause:
+    """A release that clashes with a user edit pauses the walk at its layer."""
+
+    def test_raises_the_pause_with_the_remediation(self, paused: PausedWalk) -> None:
+        """Tell the user to resolve, commit and rerun, or to stash the update."""
+        assert paused.error.remediation == (
+            "Resolve conflicts and commit, then run 'boilerplate update' again. "
+            "'git reset' and then 'git stash --include-untracked' set the partial update aside."
+        )
+
+    def test_the_message_names_the_layer_and_the_conflicted_file(
+        self, paused: PausedWalk
+    ) -> None:
+        """Say where the walk stopped and what to resolve."""
+        assert (
+            str(paused.error) == "Layer 'service' left merge conflicts in: SERVICE.md."
+        )
+
+    def test_the_checkout_shows_the_file_unmerged(self, paused: PausedWalk) -> None:
+        """Leave the conflicted guide as git reports an unmerged path."""
+        status = git(paused.project, "status", "--porcelain").splitlines()
+
+        assert "UU SERVICE.md" in status
+
+    def test_the_finished_layers_are_brought_back(self, paused: PausedWalk) -> None:
+        """Apply core's update, which finished before the pause."""
+        assert answers_file(paused.project, "core")["_commit"] == "2.0.0"
+
+    def test_layers_after_the_pause_are_left_alone(self, paused: PausedWalk) -> None:
+        """Run no later layer over the unresolved tree."""
+        assert answers_file(paused.project, "docs")["_commit"] == "1.0.0"
+
+    def test_the_conflict_record_lists_the_targets(self, paused: PausedWalk) -> None:
+        """Record where every layer was going, for the rerun."""
+        (record,) = read_migrations(paused.project)
+
+        assert (record.status, record.targets) == (MigrationStatus.CONFLICT, AFTER)
+
+    def test_the_conflict_record_lists_the_finished_layers(
+        self, paused: PausedWalk
+    ) -> None:
+        """Name the layers the walk completed, the conflicted one among them."""
+        (record,) = read_migrations(paused.project)
+
+        assert record.finished == ("core", "service")
+
+    def test_no_lock_is_written(self, paused: PausedWalk) -> None:
+        """Leave the lock of the last complete operation."""
+        assert read_lock(paused.project) == paused.lock
+
+
+@pytest.fixture(scope="module")
+def resumed(paused: PausedWalk) -> Iterator[UpdateOutcome]:
+    """Resolve the conflict, publish newer releases and run the update again."""
+    resolve_conflict(paused.project, "SERVICE.md")
+    for layer in ("service", "docs"):
+        publish_release(paused.family.repos[layer], "1.3.0")
+    with temp_dir_inside(paused.project.parent):
+        yield Updater().update(paused.project)
+
+
+@pytest.mark.xdist_group("update-walk-paused")
+class TestResumeAfterAConflict:
+    """The rerun finishes the paused update to the targets it recorded."""
+
+    def test_skips_the_layers_the_paused_walk_finished(
+        self, resumed: UpdateOutcome
+    ) -> None:
+        """Run only the layers after the conflicted one."""
+        assert (resumed.skipped, resumed.updated) == (
+            ("core", "service"),
+            ("docs", "app"),
+        )
+
+    def test_updates_to_the_recorded_targets_not_the_latest(
+        self, paused: PausedWalk, resumed: UpdateOutcome
+    ) -> None:
+        """Keep docs at 1.2.0 although 1.3.0 was published after the pause."""
+        assert resumed.status is UpdateStatus.UPDATED
+        assert answers_file(paused.project, "docs")["_commit"] == "1.2.0"
+
+    def test_writes_the_lock_at_the_targets(
+        self, paused: PausedWalk, resumed: UpdateOutcome
+    ) -> None:
+        """Record the finished update in the lock."""
+        lock = read_lock(paused.project)
+
+        assert resumed.status is UpdateStatus.UPDATED
+        assert {layer.name: str(layer.version) for layer in lock.layers} == AFTER
+
+    def test_appends_a_success_record_after_the_conflict(
+        self, paused: PausedWalk, resumed: UpdateOutcome
+    ) -> None:
+        """Log the rerun as a new record, leaving the conflict record terminal."""
+        records = read_migrations(paused.project)
+
+        assert resumed.status is UpdateStatus.UPDATED
+        assert [(r.id, r.status) for r in records] == [
+            ("1", MigrationStatus.CONFLICT),
+            ("2", MigrationStatus.SUCCESS),
+        ]
