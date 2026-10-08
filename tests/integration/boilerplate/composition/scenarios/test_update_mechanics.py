@@ -14,6 +14,13 @@ from typing import Any, NamedTuple
 
 import pytest
 
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    compose_project,
+    git,
+    recorded_answers,
+    update_layer,
+)
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     LICENSE_FILE,
@@ -31,13 +38,6 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     substitute,
     temp_dir_inside,
     write,
-)
-from tests.boilerplate.templates.conftest import (
-    commit_all,
-    compose_project,
-    git,
-    recorded_answers,
-    update_layer,
 )
 
 # ------------------------------------------------------------------ S12 control

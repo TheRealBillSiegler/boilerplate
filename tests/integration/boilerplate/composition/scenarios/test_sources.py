@@ -17,6 +17,11 @@ import pytest
 
 from boilerplate.composition.serialization import yaml_utils
 from boilerplate.integrations.copier_types import Template
+from tests.boilerplate.templates.conftest import (
+    compose,
+    compose_project,
+    render_full_view,
+)
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     answers_file,
@@ -24,11 +29,6 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     build_repos,
     temp_dir_inside,
     write,
-)
-from tests.boilerplate.templates.conftest import (
-    compose,
-    compose_project,
-    render_full_view,
 )
 
 
