@@ -279,9 +279,10 @@ Template source repositories SHOULD be treated as critical infrastructure. The l
 
 `update` runs the walk in a detached git worktree of the project, so the user's checkout changes only when the update has finished or paused on a conflict. `add` uses the same staging ([Part 2.4](#adding-a-layer)).
 
-1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git worktree add --detach`) in the system temp directory, inside a uniquely named folder whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
+1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git -c core.hooksPath=<null device> worktree add --detach`) in the system temp directory, inside a uniquely named folder whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
     - The worktree shares the repository's config, so line-ending, filter and LFS settings match the user's checkout.
     - A detached HEAD adds no branch to the repository.
+    - `git worktree add` runs the repository's `post-checkout` hook (observed with git 2.55), so Boilerplate MUST create the worktree with hooks disabled, as Copier runs its own git commands where a hook would interfere (`-c core.hooksPath=<null device>`, `copier/_main.py` lines 1615-1616). The null device is `os.devnull`.
     - Boilerplate MUST commit in the worktree with git's plumbing (`git write-tree`, `git commit-tree`, `git update-ref`), so the user's hooks do not run.
 2. **Walk.** Boilerplate MUST run the walk ([design 04 §Safe Update](04-composition-engine.md#safe-update)) in the worktree, ancestors first, and commit after each layer. Copier refuses to update a project with uncommitted changes, so the commit is what lets Copier update the next layer.
 3. **Fail.** Any error, a cancelled prompt or a rejected answer MUST remove the worktree. The user's checkout never changed, and no lock is written.
