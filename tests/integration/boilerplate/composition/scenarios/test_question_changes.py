@@ -21,10 +21,8 @@ from typing import Any, NamedTuple
 
 import pytest
 
-from boilerplate.composition.updating import (
-    ScopedWorker,
-    read_recorded_answers_by_layer,
-)
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
+from boilerplate.composition.updating import read_recorded_answers_by_layer
 from tests.boilerplate.templates.conftest import (
     ask_merged_questionnaire,
     commit_all,

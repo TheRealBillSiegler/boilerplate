@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.composition.updating import RenderRole, render_role
+from boilerplate.composition.rendering.render_role import RenderRole, render_role
 from boilerplate.integrations.copier_types import (
     NEW_COPY_DIR_PREFIX,
     OLD_COPY_DIR_PREFIX,

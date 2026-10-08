@@ -19,7 +19,8 @@ from typing import Any, NamedTuple, TypedDict, Unpack
 import pytest
 import yaml
 
-from boilerplate.composition.updating import ScopedWorker, render_role
+from boilerplate.composition.rendering.render_role import render_role
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.views import LayerView
 from boilerplate.project_state.lock_builder import build_lock
 from boilerplate.project_state.lock_file import write_lock

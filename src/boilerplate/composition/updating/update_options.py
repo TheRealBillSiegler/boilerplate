@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, ConfigDict
 
-from boilerplate.composition.updating.scoped_worker import ScopedWorker
+from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 
 
 class UpdateOptions(BaseModel):
