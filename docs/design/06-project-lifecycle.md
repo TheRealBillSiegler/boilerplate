@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document specifies the lifecycle of a Boilerplate-managed project: creation, update, adoption, and ejection — covering workflows, lock file management, rollback, and migration records.
+This document specifies the lifecycle of a Boilerplate-managed project: creation, update, layer addition, adoption, and ejection — covering workflows, lock file management, rollback, and migration records.
 
 ---
 
@@ -27,7 +27,7 @@ Environment-domain state files (`.boilerplate/environment.yml`) are documented i
 
 ### Concurrency
 
-The universal advisory-lock rule and timeout default are defined in [07-operational-quality.md §Concurrency Control](07-operational-quality.md#concurrency-control). It applies to every mutating Boilerplate operation: `new`, `update`, `adopt`, `eject`, `env apply`. Project-domain specifics:
+The universal advisory-lock rule and timeout default are defined in [07-operational-quality.md §Concurrency Control](07-operational-quality.md#concurrency-control). It applies to every mutating Boilerplate operation: `new`, `update`, `add`, `adopt`, `eject`, `env apply`. Project-domain specifics:
 
 - **Lock target (existing project)**: the `boilerplate.lock` file itself.
 - **Lock target (`new`)**: a `.boilerplate-lock-{destination_name}` file created in the destination's parent directory. The file is created if absent and removed after the `new` operation completes.
@@ -382,6 +382,60 @@ See [07-operational-quality.md](07-operational-quality.md) for all performance t
 
 ---
 
+## Part 2.4: Adding a layer { #adding-a-layer }
+
+### Overview
+
+Adding a layer applies one more template to a project Boilerplate already manages and records it in `boilerplate.lock`. The result MUST equal what one more by-hand `copier copy` of the layer with its own answers file would produce: Copier's documented idiom for [applying multiple templates to the same subproject](https://copier.readthedocs.io/en/stable/configuring/#applying-multiple-templates-to-the-same-subproject), which is the reference point the composition answers to ([ADR-015](adr-015-idiomatic-artifacts.md)). The CLI contract is in [05-cli-reference.md §add](05-cli-reference.md#add).
+
+### Preconditions
+
+The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.md#add), checked before any file changes, with the working tree check the same as the update [Pre-Flight Check](#pre-flight-check) without its `--force` override. Each failure exits with code `3`.
+
+### Add pipeline
+
+```text
+1. Resolve  →  Resolve the template and its extends
+2. Ask      →  Ask the new layer's own questions
+3. Answers  →  Take answers to ancestors' questions as update takes them
+4. Render   →  Render the layer's scoped view with Copier's copy
+5. Return   →  Bring the result back as uncommitted changes
+6. Lock     →  Write boilerplate.lock with the layer appended
+7. Record   →  Append a migration record
+8. Tasks    →  Run the new layer's tasks once
+```
+
+1. **Resolve** the template and its `extends`.
+2. **Ask** only the new layer's own questions, with defaults from the merged template of the project's layers plus the new one.
+3. **Take answers** to ancestors' questions the same way update takes them ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
+4. **Render** the layer's scoped view with Copier's `copy`, using the same staging and rollback as update ([Pre-Merge Backup](#pre-merge-backup), [Step 5: Rollback](#step-5-rollback)).
+5. **Bring the result back** as uncommitted changes.
+6. **Write `boilerplate.lock`** with the new layer appended at the end of the topological order. A new layer has no descendants, so last is always valid.
+7. **Append a migration record** to `.boilerplate/migrations.yml`. The record carries no classification, as for `created` and `adopted` records: no prior version of the layer exists to compare.
+8. **Run the new layer's tasks once**, as at compose, against the finished project.
+
+### Files
+
+The new layer renders into the existing tree as the by-hand copy would. A file another layer already rendered is overwritten and shows in the uncommitted diff, where the user reviews it before committing. A template intended to be added later SHOULD render only files no other layer renders.
+
+### Choices inside a layer
+
+A layer that offers alternatives (CI providers, docs site generators) SHOULD ask one choice question and render conditional paths: Copier skips any path whose rendered name is empty, so the unchosen alternatives render nothing. Changing the choice later is an answer change on `update` (`--set`), merged by Copier's update.
+
+### Acceptance Criteria
+
+| Scenario | Expected Outcome |
+|----------|-----------------|
+| Layer added to a managed project with a clean tree | Layer rendered as uncommitted changes, lock written with the layer last in topological order, migration recorded, exit `0` |
+| Project not managed (`boilerplate.lock` missing) | Error pointing to `boilerplate adopt`; no files modified, exit `3` |
+| Dirty working tree | Error naming the uncommitted changes; no files modified, exit `3` |
+| Template already in the project | Error pointing to `boilerplate update`; no files modified, exit `3` |
+| An ancestor the layer `extends` is not in the lock | Error naming each missing layer with the remediation `boilerplate add <ancestor>` first; no files modified, exit `3` |
+| An ancestor's recorded version fails the layer's `extends` constraint | Error naming the ancestor, its recorded version and the constraint, with the remediation `boilerplate update` first; no files modified, exit `3` |
+| Failure mid-add | Staging cleaned, failed migration record, remediation guidance printed, exit `1` |
+
+---
+
 ## Part 2.5: Project Adoption
 
 ### Overview
@@ -474,7 +528,7 @@ Ejection is a no-op only when NEITHER `boilerplate.lock` NOR `.boilerplate/` is 
 
 ### Concurrency and Locking
 
-Ejection is a mutating operation and MUST acquire the standard advisory mutex on the project before removing state, under the universal rule in [§Concurrency](#concurrency) (same as `new`, `update`, `adopt`, and `env apply`). The lock target is the project's `boilerplate.lock` file when present; for an environment-only project (no lock, only `.boilerplate/`), the mutex falls back to the `new`-style sentinel (`.boilerplate-lock-{destination_name}` in the project's parent directory).
+Ejection is a mutating operation and MUST acquire the standard advisory mutex on the project before removing state, under the universal rule in [§Concurrency](#concurrency) (same as `new`, `update`, `add`, `adopt`, and `env apply`). The lock target is the project's `boilerplate.lock` file when present; for an environment-only project (no lock, only `.boilerplate/`), the mutex falls back to the `new`-style sentinel (`.boilerplate-lock-{destination_name}` in the project's parent directory).
 
 ### No Recovery Needed
 
