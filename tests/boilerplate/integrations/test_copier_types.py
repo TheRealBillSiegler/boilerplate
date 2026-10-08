@@ -13,6 +13,8 @@ from pathlib import Path
 from boilerplate.integrations.copier_types import (
     NEW_COPY_DIR_PREFIX,
     OLD_COPY_DIR_PREFIX,
+    AnswersMap,
+    Question,
     Template,
     Worker,
     load_answersfile_data,
@@ -32,6 +34,15 @@ class TestCopierTypesShim:
     def test_symbols_originate_from_copier(self) -> None:
         assert Template.__module__.startswith("copier")
         assert Worker.__module__.startswith("copier")
+
+    def test_question_and_answers_map_are_the_classes_a_worker_asks_with(
+        self,
+    ) -> None:
+        """Re-export the pair Worker._ask builds, to validate an answer as it does."""
+        assert (Question.__module__, AnswersMap.__module__) == (
+            "copier._user_data",
+            "copier._user_data",
+        )
 
     def test_template_public_attr_names_reflects_public_fields(self) -> None:
         names = template_public_attr_names(Template)
