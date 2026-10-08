@@ -1,5 +1,6 @@
 """Removing the staging folders an interrupted run left behind."""
 
+import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -42,6 +43,19 @@ class TestRemoveStaleStaging:
 
         assert removed == (folder,)
         assert not folder.exists()
+        assert registered_worktrees(project) == 1
+
+    def test_cleanup_prunes_the_registration_of_a_worktree_whose_folder_is_gone(
+        self, project: Path, staging_root: Path, tmp_path: Path
+    ) -> None:
+        orphan = tmp_path / "users-own-worktree"
+        git(project, "worktree", "add", "--detach", str(orphan), "HEAD")
+        shutil.rmtree(orphan)
+        stale = leave_behind(project, staging_root)
+        later = started_at(stale) + timedelta(hours=2)
+
+        remove_stale_staging(staging_root, now=later)
+
         assert registered_worktrees(project) == 1
 
     def test_fresh_folder_is_left_alone(

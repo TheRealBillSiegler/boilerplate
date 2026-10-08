@@ -1,5 +1,6 @@
 """Creating and removing the staging worktree of a throwaway project."""
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -49,6 +50,20 @@ class TestRelativeProject:
             destination = IntentJournal.read(stage.folder).destination
             assert Path(destination).is_absolute()
             assert Path(destination) == project.resolve()
+
+
+class TestDiscardLeavesOtherRegistrations:
+    def test_discard_does_not_prune_the_users_own_stale_registration(
+        self, project: Path, staging_root: Path, tmp_path: Path
+    ) -> None:
+        orphan = tmp_path / "users-own-worktree"
+        git(project, "worktree", "add", "--detach", str(orphan), "HEAD")
+        shutil.rmtree(orphan)
+
+        with staging(project, staging_root):
+            pass
+
+        assert git(project, "worktree", "list", "--porcelain").count("worktree ") == 2
 
 
 class TestCreate:
