@@ -192,6 +192,48 @@ class InvalidDataError(BoilerplateError):
         )
 
 
+class RecordedAnswerRejectedError(BoilerplateError):
+    """Raised when a layer's update step finds a recorded answer its target rejects.
+
+    The check runs inside the layer's step, after the layer's migrations and
+    Copier's re-read of the answers file, so a migration that repairs a
+    recorded answer clears it first. The target view's question rejects the
+    answer by type, choices or validator; Copier would otherwise drop it and
+    record the new default without a word.
+
+    Attributes:
+        layer: The layer whose answers file records the answer.
+        question: The question the answer is for.
+        value: The recorded answer.
+        reason: Why the target view's question rejects it.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layer: str = "",
+        question: str = "",
+        value: object = None,
+        reason: str = "",
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_INPUT_ANSWER_REJECTED."""
+        super().__init__(
+            message,
+            error_code="BP_INPUT_ANSWER_REJECTED",
+            remediation=kwargs.pop(
+                "remediation",
+                f"Pass a valid value with --set {question or '<question>'}=<value>.",
+            ),
+            **kwargs,
+        )
+        self.layer = layer
+        self.question = question
+        self.value = value
+        self.reason = reason
+
+
 class InteractiveModeRequiresTtyError(BoilerplateError):
     """Raised when an interactive render is requested but stdin is not a TTY.
 
