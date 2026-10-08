@@ -318,7 +318,7 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 **`--non-interactive`**: Take every question's default without prompting, as Copier's `--defaults` does. A recorded answer is the default of its question, so existing answers from each layer's `.copier-answers.<layer>.yml` are reused and a new question takes its declared default.
 
-**`--answers` and `--set`**: Both are laid over the data each layer's step receives, as Copier's own `--data` is laid over the answers it reads.
+**`--answers` and `--set`**: Both are laid over the data each layer's step receives, as Copier's own `--data` is laid over the answers it reads. A value supplied for a question whose recorded answer the target view rejects replaces that answer, and Copier validates the supplied value instead.
 
 **Default behavior**: Compute the update plan, display it, then prompt the user for confirmation before applying. This is one command, one flow — not a two-step dry-run-then-apply cycle.
 
