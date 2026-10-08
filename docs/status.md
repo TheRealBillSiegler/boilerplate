@@ -9,7 +9,7 @@ This page tracks how much of Boilerplate's [design specification](design/01-over
 
 ## At a glance
 
-The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. *Reproducibility and lifecycle* (lock files, project updates, three-way merge) exists only as library code that no command calls yet, while *catalog federation* (remote/Git sources, trust tiers, search) and the *environment-provisioning subsystem* are design-only.
+The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. *Reproducibility and lifecycle* is partly there: `new` writes the lock file, while project updates and three-way merge exist only as library code that no command calls yet. By contrast, *catalog federation* (remote/Git sources, trust tiers, search) and the *environment-provisioning subsystem* are design-only.
 
 | Design area | Status |
 | --- | --- |
@@ -56,8 +56,9 @@ The most mature area. The resolution → graph → merge → render pipeline wor
 - :material-circle-outline:{ .status-design } Graph size/depth limits — `BP_GRAPH_*` covers cycles only
 - :material-circle-outline:{ .status-design } `CopierWorker` abstraction — Copier's `Worker` is invoked directly; the isolation interface design 04 specifies does not exist
 - :material-check-circle:{ .status-shipped } Per-layer answers files — each bundled template declares `_answers_file: .copier-answers.<layer>.yml` and ships the answers-file stub; Copier writes one per layer natively during that layer's render, and no canonical `.copier-answers.yml` is written (design 04's per-layer `_answers_file:` contract, the foundation for per-layer update)
+- :material-check-circle:{ .status-shipped } Scoped rendering — `boilerplate new` asks the merged questionnaire once, then renders each layer under its scoped view (the questions and extensions of that layer and its ancestors), so each answers file records only its own scope; ancestors' file-path extensions load for the descendants that use them (`composition/rendering/engine.py`, `composition/views/`)
 
-The merged `_jinja_extensions` union (see [What gets merged](reference/merging.md#what-gets-merged)) lets a question default or task use a sibling layer's filter instead of crashing.
+The questionnaire pass sees the merged `_jinja_extensions` union (see [What gets merged](reference/merging.md#what-gets-merged)), so a question default can use any layer's filter instead of crashing; the merged tasks run once, on the last layer.
 
 ### 05 — CLI reference :material-progress-clock:{ .status-partial }
 
@@ -68,9 +69,9 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
 
-- :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). **It does not write a lock file.**
-- :material-progress-clock:{ .status-partial } Lock-file generation (`boilerplate.lock`) — `read_lock` and `write_lock` read and write it atomically (`project_state/lock_file.py`); no command calls `write_lock`, so `new` still writes none
-- :material-progress-clock:{ .status-partial } Project update (`update` command), three-way merge, migration records, and rollback — the per-layer update step, update-version resolution, and the migrations log (`read_migrations`, `append_migration`) exist as library code that no command calls; the `update` command and rollback are not implemented
+- :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). It ends by writing `boilerplate.lock` (`composition/rendering/creation_lock.py`).
+- :material-progress-clock:{ .status-partial } Lock-file generation (`boilerplate.lock`) — `new` writes it after a successful render: each layer's name, version, source, commit (null for a bundled folder), checksum, and a hash of each answers file. No command reads it yet
+- :material-circle-outline:{ .status-design } Project update (`update` command), three-way merge, migration records, and rollback — none implemented
 
 ### 07 — Operational quality :material-progress-clock:{ .status-partial }
 
@@ -97,14 +98,14 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 ### 10 — Security :material-progress-clock:{ .status-partial }
 
 - :material-progress-clock:{ .status-partial } YAML safety — boilerplate-owned files load through the shared hardened loader (`common/yaml_loading.py`): safe-load semantics plus duplicate mapping keys as errors and capped alias expansion, per design 03's YAML parsing rules; `copier.yml` parsing is delegated to Copier's own loader; `validate` warns on custom YAML tags in `boilerplate.yml`
-- :material-progress-clock:{ .status-partial } Execution posture — template tasks and Jinja extensions run under Copier's `unsafe` grant, scoped per layer to what that layer's Worker invocation loads (for extensions that is the composition-wide merged union — see design area 04 above), per the accepted permissive posture in [ADR-003](design/adr-003-permissive-execution.md); trust-gated execution is deferred until remote sources ship
+- :material-progress-clock:{ .status-partial } Execution posture — template tasks and Jinja extensions run under Copier's `unsafe` grant, scoped per layer to what that layer's Worker invocation loads (for extensions that is the layer's scoped view, its own and its ancestors' union, and the composition-wide union for the questionnaire pass — see design area 04 above), per the accepted permissive posture in [ADR-003](design/adr-003-permissive-execution.md); trust-gated execution is deferred until remote sources ship
 - :material-circle-outline:{ .status-design } Checksums, signatures, trust verification, and Jinja2 sandbox enforcement — no code exists
 
 ## CLI: specified vs implemented
 
 | Command | Status | Notes |
 | --- | --- | --- |
-| `new` | :material-progress-clock:{ .status-partial } Partial | Renders projects (incl. answers supplied with `--data`/`--data-file`); does not write a lock file (`cli/commands/new.py`) |
+| `new` | :material-progress-clock:{ .status-partial } Partial | Renders projects (incl. answers supplied with `--data`/`--data-file`) and writes `boilerplate.lock` (`cli/commands/new.py`) |
 | `list` | :material-check-circle:{ .status-shipped } | `cli/commands/templates.py` |
 | `compose` | :material-check-circle:{ .status-shipped } | `cli/commands/compose.py` |
 | `graph` | :material-check-circle:{ .status-shipped } | `cli/commands/graph.py` |
@@ -129,7 +130,7 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 
 These are specified in the design docs but have **no user-facing implementation** today — listed here so expectations are clear:
 
-1. **Lock files (`boilerplate.lock`)** — the model and file I/O exist, but no command writes or reads the lock yet.
+1. **Using the lock (`boilerplate.lock`)** — `new` writes it, but no command reads it: there is no `lock verify`, `status` or `update`.
 2. **Project update lifecycle** — no `update` command, version diffing, or apply.
 3. **Three-way merge / conflict resolution** — only configuration-schema merging exists. The target semantics (conflict-pause, safe-orphan, never-auto-delete) are specified in [ADR-007](design/adr-007-update-model.md).
 4. **Migration records & rollback** — the record model and log file I/O exist; nothing appends a record, and there is no rollback.
@@ -147,4 +148,4 @@ These are specified in the design docs but have **no user-facing implementation*
 
 ---
 
-*This page reflects the state of the `develop` line at the date above. Please update it in the same PR whenever a feature moves between states.*
+*This page reflects the state of the `develop` line. Please update it in the same PR whenever a feature moves between states.*

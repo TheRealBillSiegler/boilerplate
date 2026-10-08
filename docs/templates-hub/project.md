@@ -33,7 +33,8 @@ my-app/
 │   └── my_app/
 │       └── test_module.py  # Tests for the example module (sample_module, default on)
 ├── uv.lock                 # Pinned deps (written by the post-generation tasks)
-└── .copier-answers.project.yml  # Merged answer set, for future updates
+├── .copier-answers.project.yml  # This layer's answers, for future updates
+└── boilerplate.lock        # Each layer's version, source and checksum
 ```
 
 Post-generation tasks create the virtual environment and `uv.lock` and initialize a git repository (skipped with `--no-tasks`).

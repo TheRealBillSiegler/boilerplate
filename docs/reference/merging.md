@@ -31,7 +31,7 @@ Composing the app template produces a single questionnaire: `python_version` def
 
 ## What gets merged
 
-Each layer renders through its own Copier `Worker` invocation, applied in composition order. Layers are not isolated: every layer's Worker receives the merged `_jinja_extensions` union and the answers collected so far, so a later layer renders with earlier layers' answers and filters available.
+`boilerplate new` asks the merged questionnaire once, over every layer's questions, and a question default can use a filter from any layer's `_jinja_extensions`. Each layer then renders through its own Copier `Worker` invocation, applied in composition order, under its scoped view: the questions and importable `_jinja_extensions` of that layer and its ancestors, answered from that one pass. A layer's files and questions can use only what its own layer or an ancestor declares; a sibling's or a descendant's questions, filters and hooks are not visible to it. A file-path extension an ancestor declares (`_extensions/file.py:Class`) loads from that ancestor for each descendant that renders, and a layer's `.copier-answers.<layer>.yml` records its scoped view's answers only.
 
 - Non-underscore keys (questions): merged across layers to form a single questionnaire.
     - dicts: later layer keys override earlier ones (shallow override).
