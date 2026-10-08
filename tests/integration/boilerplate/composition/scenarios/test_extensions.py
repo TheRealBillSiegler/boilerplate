@@ -21,6 +21,16 @@ import yaml
 from jinja2.exceptions import TemplateAssertionError
 
 from boilerplate.integrations.copier_types import Template
+from tests.boilerplate.templates.conftest import (
+    LayerView,
+    ScopedWorker,
+    commit_all,
+    compose_project,
+    init_repo,
+    layer_chain,
+    layer_view,
+    update_layer,
+)
 from tests.integration.boilerplate.composition.scenarios.builders import (
     ANSWERS,
     CLEAN,
@@ -34,16 +44,6 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     substitute,
     temp_dir_inside,
     write,
-)
-from tests.boilerplate.templates.conftest import (
-    LayerView,
-    ScopedWorker,
-    commit_all,
-    compose_project,
-    init_repo,
-    layer_chain,
-    layer_view,
-    update_layer,
 )
 
 LOADER = "copier_template_extensions.TemplateExtensionLoader"
