@@ -17,10 +17,9 @@ from boilerplate import __version__
 from boilerplate.common.exceptions import MissingRequiredAnswersError
 from boilerplate.composition.models.composition import Composition
 from boilerplate.composition.models.composition_layer import CompositionLayer
-from boilerplate.composition.models.json_types import JSON
 from boilerplate.composition.rendering.creation_lock import write_creation_lock
+from boilerplate.composition.rendering.grants_unsafe import grants_unsafe
 from boilerplate.composition.rendering.models.execution_context import ExecutionContext
-from boilerplate.composition.rendering.models.merged_template import MergedTemplate
 from boilerplate.composition.rendering.questionnaire import ask_questionnaire
 from boilerplate.composition.rendering.worker_options import WorkerOptions
 from boilerplate.composition.rendering.worker_session import worker_session
@@ -29,7 +28,6 @@ from boilerplate.composition.views import (
     LayerView,
     build_layer_view,
     scope_composition,
-    view_config,
 )
 from boilerplate.integrations.copier_types import DEFAULT_EXCLUDE
 from boilerplate.integrations.copier_types import Template as CopierTemplate
@@ -184,13 +182,6 @@ class RenderEngine:
             layer_tasks_value = tasks_value if is_final_layer else []
             view = self._scoped_view(composition, layer, is_final_layer=is_final_layer)
 
-            merged_template = self._build_merged_template(
-                template_path=layer.path,
-                view=view,
-                tasks_value=layer_tasks_value,
-                fallback_version=layer.version,
-            )
-
             skip_tasks_flag = (not is_final_layer) or bool(ctx.skip_tasks)
 
             # `unsafe` bypasses Copier's own consent gate for jinja_extensions
@@ -200,7 +191,7 @@ class RenderEngine:
             # view declares no extension keeps unsafe=False when it runs no
             # tasks, the permissive posture of
             # docs/design/adr-003-permissive-execution.md.
-            layer_needs_unsafe = bool(merged_template.jinja_extensions) or (
+            layer_needs_unsafe = grants_unsafe(layer, view) or (
                 bool(layer_tasks_value) and not skip_tasks_flag
             )
 
@@ -222,7 +213,12 @@ class RenderEngine:
                 "exclude": _WORKER_EXCLUDES,
             }
 
-            with worker_session(worker_opts, merged_template, view) as worker:
+            with worker_session(
+                worker_opts,
+                view,
+                tasks=layer_tasks_value,
+                fallback_version=layer.version,
+            ) as worker:
                 worker.run_copy()  # Critical operation that can fail silently
 
         write_creation_lock(
@@ -304,51 +300,6 @@ class RenderEngine:
                 continue  # has a default Copier will use
             missing.append(name)
         return missing
-
-    @staticmethod
-    def _build_merged_template(
-        *,
-        template_path: Path,
-        view: LayerView,
-        tasks_value: list[JSON],
-        fallback_version: str | None = None,
-    ) -> CopierTemplate:
-        """Construct a `MergedTemplate`: view questions, tasks, extensions, skip list.
-
-        Args:
-            template_path: Path to the template layer on disk.
-            view: The layer's scoped view: its questions and the importable
-                extensions of its own layer and its ancestors, which this
-                layer's Worker needs to render them.
-            tasks_value: Optional Copier tasks to expose via config.
-            fallback_version: The layer's ``boilerplate.yml`` version, reported
-                as the template version when the layer is not a git
-                repository; a git-derived version takes precedence.
-
-        Returns:
-            A template object suitable for `copier.Worker`.
-        """
-        # An empty skip list for every layer: Copier checks `skip_if_exists`
-        # before the overwrite flag, so a declared list would keep a file out
-        # of a forced render. A layer's declared list governs only that
-        # layer's own `copier update`
-        # (docs/design/04-composition-engine.md §Per-Layer Render Loop).
-        cfg = view_config(view, skip_if_exists=[])
-        if tasks_value:
-            cfg["tasks"] = tasks_value
-        # No `ref`: Copier's default resolution (latest tag for a git-backed
-        # layer, plain copy otherwise) is the provenance contract of
-        # docs/design/adr-015-idiomatic-artifacts.md — a render must record a
-        # `_commit` that stays resolvable, and `HEAD` on a dirty template
-        # records a hash that only ever existed inside Copier's throwaway
-        # clone. `MergedTemplate` still accepts a ref so an explicit
-        # author-loop opt-in can supply one; nothing does today.
-        return MergedTemplate(
-            str(template_path),
-            dict(view.questions),
-            cfg,
-            fallback_version=fallback_version,
-        )
 
 
 __all__ = ["RenderEngine", "final_template_info"]

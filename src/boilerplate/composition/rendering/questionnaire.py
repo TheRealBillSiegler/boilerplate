@@ -6,13 +6,13 @@ from pathlib import Path
 from typing import Any
 
 from boilerplate.composition.models.composition import Composition
-from boilerplate.composition.rendering.models.merged_template import MergedTemplate
+from boilerplate.composition.rendering.grants_unsafe import grants_unsafe
 from boilerplate.composition.rendering.questionnaire_answers import (
     QuestionnaireAnswers,
 )
 from boilerplate.composition.rendering.worker_options import WorkerOptions
 from boilerplate.composition.rendering.worker_session import worker_session
-from boilerplate.composition.views import build_layer_view, view_config
+from boilerplate.composition.views import build_layer_view
 
 
 def ask_questionnaire(
@@ -46,19 +46,16 @@ def ask_questionnaire(
     """
     view = build_layer_view(composition)
     first = composition.layers[0]
-    template = MergedTemplate(
-        str(first.path), dict(view.questions), view_config(view, skip_if_exists=[])
-    )
     options: WorkerOptions = {
         "src_path": str(first.path),
         "dst_path": destination,
         "data": dict(data),
         "user_defaults": dict(user_defaults),
         "defaults": defaults,
-        "unsafe": bool(template.jinja_extensions),
+        "unsafe": grants_unsafe(first, view),
         "quiet": True,
     }
-    with worker_session(options, template, view) as worker:
+    with worker_session(options, view) as worker:
         worker._ask()  # pyright: ignore[reportPrivateUsage]
         return QuestionnaireAnswers(
             dict(worker.answers.user),

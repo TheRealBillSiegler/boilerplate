@@ -57,8 +57,8 @@ ALLOWED_SEAMS: dict[str, str] = {
         "Filesystem fault injection: a staging folder removed between its "
         "journal read and its owner check cannot be timed deterministically."
     ),
-    "boilerplate.composition.rendering.worker_session.Worker": (
-        "Copier's worker; a real one renders to disk."
+    "boilerplate.composition.rendering.worker_session.ScopedWorker": (
+        "Boilerplate's Copier Worker subclass; a real one renders to disk."
     ),
     "boilerplate.composition.staging.copy_back.run_git": (
         "Fault injection: git's restore failing partway through a copy back (a "
