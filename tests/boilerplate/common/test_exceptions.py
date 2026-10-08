@@ -37,6 +37,7 @@ from boilerplate.common.exceptions import (
     TemplateNotFoundError,
     UpdateCheckoutChangedError,
     UpdateConflictPausedError,
+    UpdateCopyBackFailedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdatePathObstructedError,
@@ -107,6 +108,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     AddAncestorsMissingError: "BP_UPDATE_ANCESTORS_MISSING",
     AddAncestorVersionError: "BP_UPDATE_ANCESTOR_VERSION_MISMATCH",
     ConcurrencyContentionError: "BP_CONCURRENCY_CONTENTION",
+    UpdateCopyBackFailedError: "BP_UPDATE_COPY_BACK_FAILED",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
