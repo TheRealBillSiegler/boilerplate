@@ -414,7 +414,7 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 `add` and `update` stay separate operations: `add` never changes a layer already in the project.
 
-**Interrupted runs**: A run cut off while it copies the layer back or finishes is completed by running the same command again, when the working tree holds only what the run wrote. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
+**Interrupted runs**: A run cut off while it copies the layer back, writes the lock or appends the record is completed by running the same command again, when the working tree holds only what the run wrote; the rerun ends with that run's exit code and adds nothing new. A run cut off while the layer's tasks run leaves no marker, because `add` runs its tasks after the record, so the rerun stops with `BP_UPDATE_LAYER_ALREADY_ADDED` and the layer's tasks are run by hand. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
 
 **Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
 
