@@ -640,15 +640,15 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateDowngradeError` | `3` | Before any layer runs, a target is older than the version a layer's answers file records in `_commit`, or a recorded `_commit` yields no version (`BP_UPDATE_DOWNGRADE_REJECTED`) |
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
 | `UpdatePathObstructedError` | `3` | Before the copy back, a path the walk added already exists in the checkout as an ignored file or directory (`BP_UPDATE_PATH_OBSTRUCTED`) |
-| `UpdateInterruptedError` | `3` | The restore marker shows an earlier run cut off while restoring its result into the working tree, and the rerun cannot finish it: another command, a moved HEAD, a working tree that differs from the run's result, or a run a conflict had paused (`BP_UPDATE_INTERRUPTED`) |
+| `UpdateInterruptedError` | `3` | The restore marker shows an earlier run cut off while restoring its result into the working tree, and the rerun cannot finish it: another command, a moved HEAD, a working tree that differs from the run's result, a run a conflict had paused, or a marker file that does not parse (`BP_UPDATE_INTERRUPTED`) |
 | `UpdateCopyBackFailedError` | `1` | Copying the staging worktree back failed partway; the checkout was undone to the starting commit, the staging worktree is kept, the restore marker and its ref are removed and no record is appended (`BP_UPDATE_COPY_BACK_FAILED`) |
 | `ProjectNotManagedError` | `3` | `add` found no `boilerplate.lock` in the project (`BP_UPDATE_PROJECT_NOT_MANAGED`) |
 | `LayerAlreadyAddedError` | `3` | `add` named a template the lock already lists (`BP_UPDATE_LAYER_ALREADY_ADDED`) |
 | `AddAncestorsMissingError` | `3` | A template the new layer extends is not in the lock (`BP_UPDATE_ANCESTORS_MISSING`) |
 | `AddAncestorVersionError` | `3` | An ancestor's recorded version fails the new layer's `extends` reference (`BP_UPDATE_ANCESTOR_VERSION_MISMATCH`) |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
-| `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely |
-| `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back |
+| `UpdateSubmodulesUnsupportedError` | `3` | `update` or `add` finds a `.gitmodules` file in the project, so the staging worktree cannot be created safely (`BP_UPDATE_SUBMODULES_UNSUPPORTED`) |
+| `UpdateCheckoutChangedError` | `3` | The user's checkout changed during the walk, so the staging worktree is discarded before the copy back (`BP_UPDATE_CHECKOUT_CHANGED`) |
 | `MergeConflictError` | `1` | Two layers declare incompatible values for the same configuration key |
 
 Unrecognized exceptions outside this hierarchy MUST exit with code `1` (`FAILURE`). Exit-code semantics (what each code means) are specified in [§Exit Codes](#exit-codes) below.
