@@ -7,9 +7,6 @@ Copier's ``Template`` exposes ``git_index_modes`` for a git-backed template,
 keyed by ``PurePosixPath``; the composer's JSON check rejects those keys.
 """
 
-import os
-import subprocess
-import sys
 from pathlib import Path
 from typing import NamedTuple
 
@@ -26,6 +23,7 @@ from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     FAMILY_PROJECT,
     answers_file,
+    run_boilerplate,
 )
 
 COMPOSED = ("core", "service")
@@ -77,26 +75,16 @@ class TestComposeFromGitSources:
         self, git_sources: GitSources, tmp_path: Path
     ) -> None:
         """S18: `boilerplate new` from git-repository layers exits 0."""
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "boilerplate",
-                "new",
-                "service",
-                str(tmp_path / "family-app"),
-                "--templates-dir",
-                str(git_sources.templates_dir),
-                "--non-interactive",
-                "--no-tasks",
-                "--data",
-                f"project_name={FAMILY_PROJECT}",
-            ],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-            check=False,
+        result = run_boilerplate(
+            "new",
+            "service",
+            str(tmp_path / "family-app"),
+            "--templates-dir",
+            str(git_sources.templates_dir),
+            "--non-interactive",
+            "--no-tasks",
+            "--data",
+            f"project_name={FAMILY_PROJECT}",
         )
 
         assert result.returncode == 0

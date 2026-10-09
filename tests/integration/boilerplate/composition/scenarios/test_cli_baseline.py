@@ -5,10 +5,8 @@ every layer under the full view, so every layer's answers file records the
 whole merged questionnaire; and there is no `update` command yet.
 """
 
-import os
 import re
 import subprocess
-import sys
 from collections.abc import Iterator
 from pathlib import Path
 from typing import NamedTuple
@@ -19,23 +17,12 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     PROJECT_RECORDED,
     answers_file,
     check_bundled_questionnaire,
+    run_boilerplate,
     temp_dir_inside,
 )
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 LAYERS = ("project", "streamlit")
-
-
-def _boilerplate(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [sys.executable, "-m", "boilerplate", *args],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-        cwd=cwd,
-        check=False,
-    )
 
 
 class NewRun(NamedTuple):
@@ -52,7 +39,7 @@ def new_run(tmp_path_factory: pytest.TempPathFactory) -> Iterator[NewRun]:
     root = tmp_path_factory.mktemp("cli")
     project = root / "probe-app"
     with temp_dir_inside(root):
-        result = _boilerplate(
+        result = run_boilerplate(
             "new",
             "streamlit",
             str(project),
@@ -123,6 +110,6 @@ class TestShippedNew:
 )
 def test_update_help_exits_zero(tmp_path: Path) -> None:
     """S21: `boilerplate update --help` exits 0."""
-    result = _boilerplate("update", "--help", cwd=tmp_path)
+    result = run_boilerplate("update", "--help", cwd=tmp_path)
 
     assert result.returncode == 0
