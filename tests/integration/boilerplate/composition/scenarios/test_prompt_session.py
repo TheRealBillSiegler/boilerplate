@@ -2,14 +2,13 @@
 
 ``drive_prompts`` hands each of Copier's prompt calls exactly the keystrokes of
 the questions that call shows, then end of input. A typed answer a validator
-rejects therefore ends the run with Copier's ``InteractiveSessionError`` for
-end of input during prompting, where a pipe that stays open would leave the
-prompt waiting for a correction nobody types.
+rejects therefore ends the run at once with an error caused by end of input,
+where a pipe that stays open would leave the prompt waiting for a correction
+nobody types. Which exception wraps that end of input depends on the path that
+raised, so the claim is the cause, not the wrapper.
 """
 
 from pathlib import Path
-
-from copier.errors import InteractiveSessionError
 
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
@@ -24,10 +23,19 @@ BASE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
 AFTER = {**BASE, "docs": "1.1.0"}
 
 
+def _causes(error: BaseException | None) -> list[BaseException]:
+    """Return `error` and everything in its cause and context chain."""
+    chain: list[BaseException] = []
+    while error is not None and error not in chain:
+        chain.append(error)
+        error = error.__cause__ or error.__context__
+    return chain
+
+
 class TestRejectedTypedAnswer:
     """Docs 1.1.0 rejects an empty `docs_site_name`; the harness types one."""
 
-    def test_the_run_ends_with_the_end_of_input_error(
+    def test_the_run_ends_with_an_error_caused_by_end_of_input(
         self, family: Family, tmp_path: Path
     ) -> None:
         """Fail the run at once instead of waiting for a retyped answer."""
@@ -49,4 +57,4 @@ class TestRejectedTypedAnswer:
             {"docs_site_name": ""},
         )
 
-        assert isinstance(session.error, InteractiveSessionError)
+        assert any(isinstance(e, EOFError) for e in _causes(session.error))
