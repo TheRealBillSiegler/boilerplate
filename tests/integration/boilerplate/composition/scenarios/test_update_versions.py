@@ -29,6 +29,8 @@ from boilerplate.composition.updating import (
 )
 from boilerplate.composition.updating.versions import (
     LayerVersions,
+    VersionResolution,
+    plan_resume,
     read_layer_versions,
     resolve_versions,
 )
@@ -84,6 +86,16 @@ def conflict_record(tags: Mapping[str, str], finished: list[str]) -> MigrationRe
         targets=dict(tags),
         finished=tuple(finished),
     )
+
+
+def plan_and_resolve(
+    layers: tuple[LayerVersions, ...],
+    planned: Mapping[str, SerializableVersion],
+    record: MigrationRecord | None,
+    explicit: Mapping[str, SerializableVersion] | None = None,
+) -> VersionResolution:
+    """Plan the resume from `record` as the walk planner does, then resolve."""
+    return resolve_versions(layers, planned, plan_resume(layers, record, explicit))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -203,7 +215,7 @@ class TestAPausedWalkResumesFromItsRecord:
     ):
         lock = paused.write_lock(BASE)
         record = conflict_record(self.RECORD_TAGS, ["core", "service"])
-        return resolve_versions(paused.layers(lock), targets(planned), record, explicit)
+        return plan_and_resolve(paused.layers(lock), targets(planned), record, explicit)
 
     def test_the_answers_files_record_what_the_paused_walk_did(
         self, paused_project: Project
@@ -266,7 +278,7 @@ class TestAPausedWalkResumesFromItsRecord:
         lock = set_aside.write_lock(BASE)
         record = conflict_record(self.RECORD_TAGS, ["core", "service"])
 
-        resolution = resolve_versions(
+        resolution = plan_and_resolve(
             set_aside.layers(lock),
             targets({**PAUSED, "core": "3.0.0"}),
             record,
@@ -291,7 +303,7 @@ class TestAmbiguousDriftStops:
         )
 
         with pytest.raises(UpdateLayerDriftError) as caught:
-            resolve_versions(
+            plan_and_resolve(
                 project.layers(lock),
                 targets({**BASE, "core": "3.0.0", "service": "1.2.0", "app": "1.1.0"}),
                 record,
@@ -306,7 +318,7 @@ class TestAmbiguousDriftStops:
         lock = project.write_lock(BASE)
 
         with pytest.raises(UpdateLayerDriftError) as caught:
-            resolve_versions(
+            plan_and_resolve(
                 project.layers(lock),
                 targets({**BASE, "core": "2.0.0", "service": "1.2.0", "app": "1.1.0"}),
                 None,
@@ -322,7 +334,7 @@ class TestAmbiguousDriftStops:
         project.hand_run("service", "1.1.0")
         lock = project.write_lock(BASE)
 
-        resolution = resolve_versions(
+        resolution = plan_and_resolve(
             project.layers(lock),
             targets({**BASE, "service": "1.2.0", "app": "1.1.0"}),
             None,
@@ -345,7 +357,7 @@ class TestDowngradesStopBeforeAnyLayerRuns:
         lock = project.write_lock({**BASE, "service": "1.2.0"})
 
         with pytest.raises(UpdateDowngradeError) as caught:
-            resolve_versions(
+            plan_and_resolve(
                 project.layers(lock), targets({**BASE, "service": "1.1.0"}), None
             )
 

@@ -106,8 +106,7 @@ def plan_walk(
     resolution = resolve_versions(
         layer_versions,
         {layer: planned[layer] for layer in layers} if resume is None else {},
-        last_record,
-        explicit_versions or None,
+        resume,
     )
     target_releases: Releases = (
         {layer: (explicit_releases | latest_releases)[layer] for layer in layers}
