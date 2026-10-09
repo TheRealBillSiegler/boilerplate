@@ -283,8 +283,14 @@ class UpdateWalk:
         )
 
     def _record(self) -> None:
-        """Append the update's record: ``success``, or ``failed`` after a kept task."""
-        assert self._lock is not None
+        """Append the update's record: ``success``, or ``failed`` after a kept task.
+
+        Raises:
+            RuntimeError: If the lock was not written first, which the finisher
+                always does for a complete update.
+        """
+        if self._lock is None:
+            raise RuntimeError("The update's record is written after its lock.")
         recorder = UpdateRecorder(self._inputs.project, self._inputs.plan.lock)
         if self._failed is None:
             recorder.success(self._lock.root_template)
