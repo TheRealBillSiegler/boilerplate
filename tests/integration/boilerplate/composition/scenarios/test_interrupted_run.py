@@ -354,6 +354,21 @@ class TestFinishingACutOffPause:
             original.finished,
         )
 
+    def test_the_record_names_the_locks_root_whatever_the_marker_order(
+        self, paused_before_its_record: PausedRun
+    ) -> None:
+        """Move from and to the root the lock ends with, not the marker's last key."""
+        project = paused_before_its_record.project
+        marker = read_marker(project)
+        assert marker is not None
+        root_first = dict(reversed(list(marker.targets.items())))
+        write_marker(project, marker.model_copy(update={"targets": root_first}))
+
+        Updater().run(project, UpdateRequest(targets=AFTER))
+
+        (record,) = read_migrations(project)
+        assert record.to_version == paused_before_its_record.record.to_version
+
     def test_the_rerun_ends_with_the_pause(
         self, paused_before_its_record: PausedRun
     ) -> None:
