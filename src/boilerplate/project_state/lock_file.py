@@ -14,14 +14,13 @@ from boilerplate.common.exceptions import (
     LockSchemaUnsupportedError,
 )
 from boilerplate.common.yaml_loading import load_yaml
-from boilerplate.models import BoilerplateLock
+from boilerplate.models import LOCK_SCHEMA_MAJOR, LOCK_SCHEMA_VERSION, BoilerplateLock
 from boilerplate.project_state.atomic_write import write_text_atomically
 
 __all__ = ["LOCK_FILE_NAME", "read_lock", "write_lock"]
 
 LOCK_FILE_NAME: Final = "boilerplate.lock"
 
-_SUPPORTED_MAJOR: Final = 1
 _SCHEMA = re.compile(r"^boilerplate/lock@(\d+)(?:\.\d+)*$")
 
 
@@ -64,12 +63,12 @@ def _check_schema(raw: dict[str, object]) -> None:
             f"{LOCK_FILE_NAME} has an unrecognized schema_version: {schema!r}."
         )
     major = int(match.group(1))
-    if major > _SUPPORTED_MAJOR:
+    if major > LOCK_SCHEMA_MAJOR:
         raise LockSchemaUnsupportedError(
             f"{LOCK_FILE_NAME} uses schema {schema}; this tool supports "
-            f"boilerplate/lock@{_SUPPORTED_MAJOR}."
+            f"{LOCK_SCHEMA_VERSION}."
         )
-    if major < _SUPPORTED_MAJOR:
+    if major < LOCK_SCHEMA_MAJOR:
         raise LockReadFailedError(f"{LOCK_FILE_NAME} has an unknown schema {schema}.")
 
 
