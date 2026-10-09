@@ -3,7 +3,6 @@
 
 from pathlib import Path
 
-from packaging.version import Version
 from pydantic import ValidationError
 
 from boilerplate.common.exceptions import MetadataValidationError
@@ -69,7 +68,7 @@ def plan_add(
     check_ancestors(
         request.name,
         meta.extends,
-        {entry.name: Version(str(entry.version)) for entry in lock.layers},
+        {entry.name: entry.version for entry in lock.layers},
         lambda layer: (
             _load_meta(
                 checkouts.get(at_lock[layer].source, at_lock[layer].ref).path, layer
