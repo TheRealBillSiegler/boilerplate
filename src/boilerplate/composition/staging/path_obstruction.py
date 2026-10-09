@@ -121,17 +121,12 @@ def _is_obstructed(
 
     Nothing resolves through symlinks: a link occupies its own name.
     """
-    if _lexists(project, path) and path not in tracked_dirs:
+    if (project / path).exists(follow_symlinks=False) and path not in tracked_dirs:
         return True
     return any(
         parent not in tracked
         and parent not in tracked_dirs
-        and _lexists(project, parent)
+        and (project / parent).exists(follow_symlinks=False)
         and (not (project / parent).is_dir() or (project / parent).is_symlink())
         for parent in _parents(path)
     )
-
-
-def _lexists(project: Path, relative: str) -> bool:
-    """Check that `relative` exists in the checkout, a dangling symlink included."""
-    return (project / relative).is_symlink() or (project / relative).exists()
