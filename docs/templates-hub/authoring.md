@@ -64,8 +64,11 @@ description:
   default: "A new Python project."
 
 _tasks:
-  - ["{{ _copier_python }}", _scripts/post_generation.py]
+  - command: ["{{ _copier_python }}", _scripts/post_generation.py]
+    when: "{{ _copier_operation == 'copy' }}"
 ```
+
+The `when` guard limits the task to creation: the script removes itself after it runs, and Copier does not restore a file the project deleted, so the task must not run again on update.
 
 ### Key Copier directives
 
