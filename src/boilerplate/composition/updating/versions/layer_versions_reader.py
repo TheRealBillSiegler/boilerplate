@@ -7,6 +7,7 @@ from pathlib import Path
 from boilerplate.composition.updating.versions.layer_versions import LayerVersions
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.types.serializable_version import SerializableVersion
 
@@ -15,7 +16,7 @@ __all__ = ["read_layer_versions"]
 
 def _recorded_commit(project: Path, layer: str) -> tuple[str | None, str | None]:
     """Return the ``_commit`` and ``_src_path`` the layer's answers file records."""
-    recorded = load_answersfile_data(project, f".copier-answers.{layer}.yml") or {}
+    recorded = load_answersfile_data(project, answers_file_name(layer)) or {}
     commit = recorded.get("_commit")
     source = recorded.get("_src_path")
     return (
