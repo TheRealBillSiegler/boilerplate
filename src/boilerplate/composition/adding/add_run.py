@@ -2,6 +2,7 @@
 # Spec: docs/design/06-project-lifecycle.md §Part 2: Project Update
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 from boilerplate.common.exceptions import UpdateTaskFailedError
@@ -54,7 +55,6 @@ class AddRun:
         self._inputs = inputs
         self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
-        self._secrets: dict[str, Any] = {}
 
     def execute(self) -> AddOutcome:
         """Run the plan.
@@ -73,7 +73,7 @@ class AddRun:
             operation=IntentOperation.ADD,
             template_ref=f"{plan.layer}@{plan.version}",
         ) as staging:
-            self._secrets = copy_layer(
+            secrets = copy_layer(
                 staging.path,
                 plan.release,
                 plan.view,
@@ -89,11 +89,18 @@ class AddRun:
             )
             staging.commit_layer(f"Add {plan.layer} {plan.release.ref}")
             staging.copy_back()
-            return self._finish(staging)
+            return self._finish(staging, secrets)
 
-    def _finish(self, staging: StagingWorktree) -> AddOutcome:
-        """Run the tasks, then write the lock and the record, or undo the add."""
-        failed = self._run_tasks()
+    def _finish(
+        self, staging: StagingWorktree, secrets: Mapping[str, Any]
+    ) -> AddOutcome:
+        """Run the tasks, then write the lock and the record, or undo the add.
+
+        Args:
+            staging: The worktree the layer was copied through.
+            secrets: The secret answers the copy ended with, for the tasks.
+        """
+        failed = self._run_tasks(secrets)
         if failed is None:
             return self._complete(staging, None)
         untracked = staging.untracked_in_checkout()
@@ -103,8 +110,11 @@ class AddRun:
             return self._outcome(AddStatus.UNDONE)
         return self._complete(staging, failed)
 
-    def _run_tasks(self) -> FailedTask | None:
+    def _run_tasks(self, secrets: Mapping[str, Any]) -> FailedTask | None:
         """Run the layer's own tasks once in the user's checkout.
+
+        Args:
+            secrets: The secret answers the copy ended with, for the tasks.
 
         Returns:
             The task that failed; ``None`` when they all passed or none ran.
@@ -117,7 +127,7 @@ class AddRun:
                 self._inputs.project,
                 plan.release,
                 plan.view,
-                TaskRun(tasks=plan.tasks, secrets=self._secrets),
+                TaskRun(tasks=plan.tasks, secrets=secrets),
                 UpdateOptions(quiet=self._inputs.request.quiet),
             )
         except TaskError as error:
