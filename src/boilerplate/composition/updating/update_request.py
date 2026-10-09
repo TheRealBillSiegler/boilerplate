@@ -11,9 +11,10 @@ class UpdateRequest(BaseModel):
 
     Attributes:
         targets: Explicit target refs keyed by layer, as ``--target-version``
-            names them; a layer not named moves to its latest release. A paused
-            walk's recorded targets bind, and a ref that differs from them is
-            refused.
+            names them (a bare version is the root template's, keyed by the
+            lock's ``root_name``); a layer not named moves to its latest release,
+            and a name the lock does not list is refused. A paused walk's
+            recorded targets bind, and a ref that differs from them is refused.
         supplied: Values the user supplies, such as ``--set`` and ``--answers``;
             data for the questions of every layer whose scope holds them.
         interactive: Whether each layer's step prompts for its questions, with

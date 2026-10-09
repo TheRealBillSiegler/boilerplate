@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 
 import pytest
 
+from boilerplate.common.exceptions import UpdateConflictPausedError
 from boilerplate.composition.adding import (
     AddOutcome,
     AddRequest,
@@ -262,6 +263,37 @@ class TestUpdateAfterAdds:
         self, updated: Updated
     ) -> None:
         assert "license" in answers_file(updated.project, "ci")
+
+
+class TestPauseAfterAdds:
+    """An update of a grown project that pauses records the root template's move."""
+
+    @pytest.fixture(scope="class")
+    def paused(self, grown: Grown) -> Iterator[Path]:
+        """Edit service's guide, then update every layer so service conflicts."""
+        project = copy_project(grown.project, grown.work / "paused" / "family-app")
+        with temp_dir_inside(grown.work / "paused"):
+            add_user_line(project / "SERVICE.md")
+            with pytest.raises(UpdateConflictPausedError):
+                Updater().update(project, UpdateRequest(targets=AFTER))
+            yield project
+
+    def test_the_conflict_record_moves_the_root_template_not_the_last_layer(
+        self, paused: Path
+    ) -> None:
+        """Name `service` in both versions: the last layer of the lock is `ci` (02)."""
+        record = read_migrations(paused)[-1]
+
+        assert (record.status, record.from_version, record.to_version) == (
+            MigrationStatus.CONFLICT,
+            "service@1.0.0",
+            "service@1.2.0",
+        )
+
+    def test_the_conflict_record_lists_the_finished_layers_in_lock_order(
+        self, paused: Path
+    ) -> None:
+        assert read_migrations(paused)[-1].finished == ("core", "service")
 
 
 class TestSwitchingTheChoice:
