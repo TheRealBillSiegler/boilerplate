@@ -3,7 +3,7 @@
 S10 adds a question an ancestor declares and a descendant overrides, under
 three update mechanisms; S12 removes one; S13 retypes one; S14 renames one
 behind a before-stage migration; S15 adds a validator the recorded answer
-fails. As in the probes, S12-S15 force the scoped answers (the layer's
+fails. S12-S15 force the scoped answers (the layer's
 chain, own on top) without the update questionnaire pass, or run a vanilla
 update, ``data={}``, which leaves Copier to read the layer's answers file
 alone; S10b and the last S14 test add the pass. S10a, S10b and S12-S15 run on
@@ -78,7 +78,7 @@ class Mechanism(NamedTuple):
     data: dict[str, Any] | None = None
 
 
-# The probes' scoped data: the chain's recorded answers, no questionnaire pass.
+# The scoped data: the chain's recorded answers, no questionnaire pass.
 SCOPED = Mechanism(ask_unanswered=False)
 WITH_PASS = Mechanism()
 VANILLA = Mechanism(data={})
