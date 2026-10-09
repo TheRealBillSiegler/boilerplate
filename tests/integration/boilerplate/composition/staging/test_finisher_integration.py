@@ -13,7 +13,11 @@ from pathlib import Path
 import pytest
 
 from boilerplate.common.exceptions import UpdateCopyBackFailedError
-from boilerplate.composition.staging import IntentOperation, StagingWorktree
+from boilerplate.composition.staging import (
+    IntentJournal,
+    IntentOperation,
+    StagingWorktree,
+)
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.staging.restore_marker_file import (
@@ -137,6 +141,32 @@ class TestOrder:
         _, kept = finish(project, staging_root, seen, keep=False)
 
         assert (kept, seen.calls) == (False, ["tasks"])
+
+
+class TestJournal:
+    def test_records_the_locking_phase_before_the_lock(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Name ``locking`` in the journal before the lock, as design 02 defines it."""
+        phases: list[str] = []
+
+        def write_lock() -> None:
+            folder = next(staging_root.iterdir())
+            phases.append(IntentJournal.read(folder).phase)
+
+        with staging(project, staging_root, IntentOperation.UPDATE) as stage:
+            stage.commit_layer("layer one")
+            finisher = Finisher.for_staging(
+                stage,
+                operation=RestoreOperation.UPDATE,
+                kind=RestoreKind.COMPLETE,
+                targets=TARGETS,
+                steps=FinishSteps(write_record=lambda: None, write_lock=write_lock),
+            )
+            finisher.copy_back(stage)
+            finisher.finish()
+
+        assert phases == ["locking"]
 
 
 class TestMarker:

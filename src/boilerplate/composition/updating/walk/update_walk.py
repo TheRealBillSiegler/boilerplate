@@ -201,7 +201,7 @@ class UpdateWalk:
             targets=self._targets(),
             steps=FinishSteps(
                 write_record=self._record,
-                write_lock=lambda: self._write_lock(staging),
+                write_lock=self._write_lock,
                 run_tasks=lambda: self._run_tasks(staging),
             ),
         )
@@ -257,12 +257,11 @@ class UpdateWalk:
             return FailedTask.from_error(error)
         return None
 
-    def _write_lock(self, staging: StagingWorktree) -> None:
+    def _write_lock(self) -> None:
         """Write the lock the finished update describes."""
         inputs = self._inputs
         self._lock = write_update_lock(
             inputs.project,
-            staging,
             inputs.plan.lock,
             self._boilerplate_version,
             inputs.checkouts,
