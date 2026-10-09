@@ -4,13 +4,9 @@ import logging
 import os
 from pathlib import Path
 
-from plumbum.commands.processes import ProcessExecutionError
-
 from boilerplate.integrations.copier_types import get_git
 
 _logger = logging.getLogger(__name__)
-
-__all__ = ["ProcessExecutionError", "run_git"]
 
 
 def run_git(cwd: Path, *args: str, stdin: str | None = None) -> str:
@@ -29,7 +25,7 @@ def run_git(cwd: Path, *args: str, stdin: str | None = None) -> str:
         The command's standard output.
 
     Raises:
-        ProcessExecutionError: If git exits non-zero.
+        plumbum.commands.processes.ProcessExecutionError: If git exits non-zero.
     """
     command = get_git(cwd)["-c", f"core.hooksPath={os.devnull}", *args]
     _logger.debug("git -C %s %s", cwd, " ".join(args))
