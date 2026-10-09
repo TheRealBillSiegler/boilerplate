@@ -4,8 +4,11 @@ from pathlib import Path
 from typing import Any
 
 from boilerplate.integrations.copier_types import load_answersfile_data
-
-_ANSWERS_FILE_GLOB = ".copier-answers.*.yml"
+from boilerplate.project_state.answers_file import (
+    ANSWERS_FILE_GLOB,
+    answers_file_name,
+    layer_of_answers_file,
+)
 
 
 def read_recorded_answers(project: Path, layer: str) -> dict[str, Any]:
@@ -19,7 +22,7 @@ def read_recorded_answers(project: Path, layer: str) -> dict[str, Any]:
         The recorded answers without Copier's ``_``-prefixed keys; empty when
         the layer has no answers file.
     """
-    recorded = load_answersfile_data(project, f".copier-answers.{layer}.yml") or {}
+    recorded = load_answersfile_data(project, answers_file_name(layer)) or {}
     return {k: v for k, v in recorded.items() if not str(k).startswith("_")}
 
 
@@ -34,6 +37,7 @@ def read_recorded_answers_by_layer(project: Path) -> dict[str, dict[str, Any]]:
         ``.copier-answers.<layer>.yml`` file in `project`.
     """
     names = (
-        path.name.split(".")[2] for path in sorted(project.glob(_ANSWERS_FILE_GLOB))
+        layer_of_answers_file(path.name)
+        for path in sorted(project.glob(ANSWERS_FILE_GLOB))
     )
     return {layer: read_recorded_answers(project, layer) for layer in names}
