@@ -298,4 +298,5 @@ class UpdateWalk:
             paused_at=paused_at,
             conflicts=conflicts,
             warnings=(*self._inputs.plan.warnings, *self._uncarried),
+            ignored_left=self._failure.ignored_left,
         )

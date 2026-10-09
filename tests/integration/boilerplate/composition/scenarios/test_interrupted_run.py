@@ -24,6 +24,7 @@ from boilerplate.composition.staging.restore_marker_file import (
     write_marker,
 )
 from boilerplate.composition.updating import Updater, UpdateRequest, UpdateStatus
+from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
 from boilerplate.models import (
     MigrationRecord,
     MigrationStatus,
@@ -38,7 +39,10 @@ from boilerplate.project_state.migrations_file import (
     read_migrations,
 )
 from tests.boilerplate.templates.conftest import commit_all, git
-from tests.integration.boilerplate.composition.adding.layers import build_layer
+from tests.integration.boilerplate.composition.adding.layers import (
+    IGNORED_THEN_FAILING_TASK,
+    build_layer,
+)
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     add_user_line,
@@ -226,6 +230,32 @@ class TestInterruptedAdd:
         LayerAdder().add(cut_off_add, tasked)
 
         assert lines(cut_off_add / ".tasked-marker") == ["ran"]
+
+
+class TestUndoOfACutOffAdd:
+    def test_the_rerun_names_the_ignored_output_its_undo_left(
+        self, project: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Cover the rerun's own task run: name the ignored folder the task made."""
+        build_layer(project.parent, "failing", copier=IGNORED_THEN_FAILING_TASK)
+        failing = AddRequest(
+            name="failing", source=(project.parent / "repos" / "failing").as_posix()
+        )
+        monkeypatch.setattr(
+            "boilerplate.composition.adding.add_run.run_tasks", interrupted
+        )
+        with pytest.raises(KeyboardInterrupt):
+            LayerAdder().add(project, failing)
+        monkeypatch.undo()
+
+        outcome = LayerAdder(
+            on_task_failure=lambda _failed: TaskFailureChoice.UNDO
+        ).add(project, failing)
+
+        assert (outcome.status, outcome.ignored_left) == (
+            AddStatus.UNDONE,
+            ("dist/",),
+        )
 
 
 def at_phase(project: Path, phase: RestorePhase) -> None:

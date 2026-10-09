@@ -215,7 +215,11 @@ class InterruptedUpdate:
 
     def _outcome(self, status: UpdateStatus) -> UpdateOutcome:
         """Describe how the cut-off update ended."""
-        return UpdateOutcome(status=status, updated=tuple(self._marker.targets))
+        return UpdateOutcome(
+            status=status,
+            updated=tuple(self._marker.targets),
+            ignored_left=self._failure.ignored_left,
+        )
 
 
 def _versions(lock: BoilerplateLock) -> dict[str, str]:

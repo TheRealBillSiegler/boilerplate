@@ -647,15 +647,25 @@ FAILING_TASK = """  - command:
       - -c
       - "raise SystemExit(7)"
 """
+IGNORED_THEN_FAILING_TASK = """  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "import pathlib; pathlib.Path('dist').mkdir(); pathlib.Path('dist/out.txt').write_text('out'); raise SystemExit(7)"
+"""
 MARKER_TASK_END = "file=open('.core-operation-marker', 'a', encoding='utf-8'))\"\n"
 
 
-def add_failing_task(repo: Path) -> None:
+def add_failing_task(repo: Path, task: str = FAILING_TASK) -> None:
     """Add a task that exits non-zero to the core release being published."""
     config = repo / "copier.yml"
     text = config.read_text(encoding="utf-8")
     assert MARKER_TASK_END in text
-    write(config, text.replace(MARKER_TASK_END, MARKER_TASK_END + FAILING_TASK, 1))
+    write(config, text.replace(MARKER_TASK_END, MARKER_TASK_END + task, 1))
+
+
+def add_ignored_then_failing_task(repo: Path) -> None:
+    """Add a task that writes into the ignored ``dist/`` folder, then fails."""
+    add_failing_task(repo, IGNORED_THEN_FAILING_TASK)
 
 
 class FailedTaskWalk(NamedTuple):
@@ -681,7 +691,9 @@ class FailedTaskWalk(NamedTuple):
 
 
 def walk_with_a_failing_task(
-    work: Path, choice: TaskFailureChoice | None
+    work: Path,
+    choice: TaskFailureChoice | None,
+    add_task: Callable[[Path], None] = add_failing_task,
 ) -> FailedTaskWalk:
     """Update core to a release whose task fails, answering the failure with `choice`.
 
@@ -689,12 +701,13 @@ def walk_with_a_failing_task(
         work: A directory to build the family and the project in.
         choice: What the handler answers; ``None`` for the default handler, which
             keeps the files.
+        add_task: Adds the failing task to the core release being published.
 
     Returns:
         The project and what the walk did.
     """
     private = build_family(work / "private")
-    publish_release(private.repos["core"], "1.0.1", add_failing_task)
+    publish_release(private.repos["core"], "1.0.1", add_task)
     asked: list[FailedTask] = []
 
     def handler(failed: FailedTask) -> TaskFailureChoice:
@@ -729,6 +742,78 @@ def undone_failure(tmp_path_factory: pytest.TempPathFactory) -> FailedTaskWalk:
     return walk_with_a_failing_task(
         tmp_path_factory.mktemp("undone-failure"), TaskFailureChoice.UNDO
     )
+
+
+@pytest.fixture(scope="module")
+def undone_after_ignored_output(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> FailedTaskWalk:
+    """Update with a task that writes an ignored folder and fails; undo the update."""
+    return walk_with_a_failing_task(
+        tmp_path_factory.mktemp("undone-ignored-output"),
+        TaskFailureChoice.UNDO,
+        add_ignored_then_failing_task,
+    )
+
+
+@pytest.mark.xdist_group("update-walk-undone-ignored-output")
+class TestAnUndoThatLeavesIgnoredOutput:
+    """An undone update names the ignored folder a task made and keeps it."""
+
+    def test_names_the_ignored_folder_in_the_outcome(
+        self, undone_after_ignored_output: FailedTaskWalk
+    ) -> None:
+        """Say what the undo left, as design 06 §Step 5 says."""
+        outcome = undone_after_ignored_output.outcome
+
+        assert outcome is not None
+        assert (outcome.status, outcome.ignored_left) == (
+            UpdateStatus.UNDONE,
+            ("dist/",),
+        )
+
+    def test_keeps_the_folder_on_disk(
+        self, undone_after_ignored_output: FailedTaskWalk
+    ) -> None:
+        """Delete nothing git ignores."""
+        folder = undone_after_ignored_output.project / "dist"
+
+        assert (folder / "out.txt").read_bytes() == b"out"
+
+
+def cut_off_tasks(*_args: object, **_kwargs: object) -> None:
+    """Stand in for the walk's task run, cut off by Ctrl-C as it starts."""
+    raise KeyboardInterrupt
+
+
+class TestAnUndoOfACutOffRunThatLeavesIgnoredOutput:
+    """The rerun that finishes a cut-off update names what its undo left."""
+
+    def test_names_the_ignored_folder_in_the_outcome(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Cover the rerun's own task run, not only the walk's."""
+        private = build_family(tmp_path / "private")
+        publish_release(private.repos["core"], "1.0.1", add_ignored_then_failing_task)
+        targets = {"core": "1.0.1", "service": "1.0.0"}
+        with temp_dir_inside(tmp_path):
+            project = compose_locked_family(private, tmp_path, "service", SERVICE_BASE)
+            monkeypatch.setattr(
+                "boilerplate.composition.updating.walk.update_walk.run_tasks",
+                cut_off_tasks,
+            )
+            with pytest.raises(KeyboardInterrupt):
+                Updater().update(project, request(targets))
+            monkeypatch.undo()
+
+            outcome = Updater(
+                on_task_failure=lambda _failed: TaskFailureChoice.UNDO
+            ).update(project, request(targets))
+
+        assert (outcome.status, outcome.ignored_left) == (
+            UpdateStatus.UNDONE,
+            ("dist/",),
+        )
 
 
 @pytest.mark.xdist_group("update-walk-kept-failure")

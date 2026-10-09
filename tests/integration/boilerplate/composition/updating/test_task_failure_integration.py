@@ -5,7 +5,9 @@ caller, which keeps the updated files or returns the checkout to its starting
 commit; a kept failure is reported once the run has recorded itself.
 """
 
+import logging
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,7 +17,12 @@ from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.task_failure import TaskFailure
 from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
 from boilerplate.integrations.copier_types import TaskError
-from tests.boilerplate.templates.conftest import commit_all, git, init_repo
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    git,
+    ignore_locally,
+    init_repo,
+)
 
 
 @pytest.fixture
@@ -104,6 +111,144 @@ class TestRun:
 
         with pytest.raises(RuntimeError, match="runner crashed"):
             failure.run(crash, project=project, start_commit=head(project))
+
+
+def write_ignored_then_fail(project: Path) -> Callable[[], None]:
+    """Return a task that writes an ignored file and an ignored folder, then fails."""
+
+    def task() -> None:
+        (project / "task.log").write_bytes(b"log\n")
+        (project / "build").mkdir()
+        (project / "build" / "out.bin").write_bytes(b"out\n")
+        failing_task()
+
+    return task
+
+
+class TestIgnoredLeftByAnUndo:
+    """An undo names the ignored entries the tasks made and never deletes them."""
+
+    def test_names_the_ignored_file_and_folder_the_tasks_made(
+        self, project: Path
+    ) -> None:
+        """Report what the undo left, as design 06 §Step 5 says."""
+        ignore_locally(project, "task.log")
+        ignore_locally(project, "build/")
+        failure = TaskFailure(undo)
+
+        failure.run(
+            write_ignored_then_fail(project),
+            project=project,
+            start_commit=head(project),
+        )
+
+        assert failure.ignored_left == ("build/", "task.log")
+
+    def test_leaves_those_entries_on_disk(self, project: Path) -> None:
+        """Delete nothing git ignores: the user decides what to do with it."""
+        ignore_locally(project, "task.log")
+        ignore_locally(project, "build/")
+        failure = TaskFailure(undo)
+
+        failure.run(
+            write_ignored_then_fail(project),
+            project=project,
+            start_commit=head(project),
+        )
+
+        assert [
+            (project / "task.log").read_bytes(),
+            (project / "build" / "out.bin").read_bytes(),
+        ] == [b"log\n", b"out\n"]
+
+    def test_logs_a_warning_naming_them(
+        self, project: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Warn at the level a user sees by default."""
+        ignore_locally(project, "task.log")
+        failure = TaskFailure(undo)
+
+        with caplog.at_level(logging.WARNING):
+            failure.run(
+                write_ignored_then_fail(project),
+                project=project,
+                start_commit=head(project),
+            )
+
+        assert [
+            record.levelno
+            for record in caplog.records
+            if "task.log" in record.getMessage()
+        ] == [logging.WARNING]
+
+    def test_the_warning_says_a_change_inside_an_existing_folder_is_not_listed(
+        self, project: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """State the limit design 06 names, so a missing entry is not read as none."""
+        ignore_locally(project, "task.log")
+        failure = TaskFailure(undo)
+
+        with caplog.at_level(logging.WARNING):
+            failure.run(
+                write_ignored_then_fail(project),
+                project=project,
+                start_commit=head(project),
+            )
+
+        assert (
+            "Changes inside an ignored folder that was already there, "
+            "such as .venv, are not listed."
+        ) in caplog.text
+
+    def test_skips_an_ignored_entry_that_was_there_before_the_tasks(
+        self, project: Path
+    ) -> None:
+        """Compare with the entries noted before the tasks ran."""
+        ignore_locally(project, "task.log")
+        ignore_locally(project, "build/")
+        (project / "build").mkdir()
+        (project / "build" / "old.bin").write_bytes(b"old\n")
+
+        def task() -> None:
+            (project / "task.log").write_bytes(b"log\n")
+            failing_task()
+
+        failure = TaskFailure(undo)
+
+        failure.run(task, project=project, start_commit=head(project))
+
+        assert failure.ignored_left == ("task.log",)
+
+    def test_does_not_see_a_change_inside_an_ignored_folder_that_existed(
+        self, project: Path
+    ) -> None:
+        """Name entries, not their contents: git lists an ignored folder once."""
+        ignore_locally(project, ".venv/")
+        (project / ".venv").mkdir()
+        (project / ".venv" / "old.txt").write_bytes(b"old\n")
+
+        def task() -> None:
+            (project / ".venv" / "new.txt").write_bytes(b"new\n")
+            failing_task()
+
+        failure = TaskFailure(undo)
+
+        failure.run(task, project=project, start_commit=head(project))
+
+        assert failure.ignored_left == ()
+
+    def test_a_kept_failure_names_nothing(self, project: Path) -> None:
+        """Report only after an undo; a kept run leaves its files anyway."""
+        ignore_locally(project, "task.log")
+        failure = TaskFailure(keep)
+
+        failure.run(
+            write_ignored_then_fail(project),
+            project=project,
+            start_commit=head(project),
+        )
+
+        assert failure.ignored_left == ()
 
 
 class TestRaiseIfFailed:
