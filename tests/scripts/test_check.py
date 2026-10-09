@@ -79,18 +79,36 @@ class TestScenarioChoice:
 
     def test_an_unreadable_diff_runs_them(self) -> None:
         """Run the scenarios when the diff against the merge base cannot be read."""
-        run, reason = scenario_choice("abc1234", None)
+        run, _ = scenario_choice("abc1234", None)
 
-        assert (run, "could not diff" in reason) == (True, True)
+        assert run is True
 
-    def test_a_composition_path_runs_them_and_names_it(self) -> None:
-        """Run the scenarios and say which path differs."""
-        run, reason = scenario_choice("abc1234", ["README.md", "uv.lock"])
+    def test_an_unreadable_diff_says_so(self) -> None:
+        """Name the failed diff as the reason for running the scenarios."""
+        _, reason = scenario_choice("abc1234", None)
 
-        assert (run, "uv.lock" in reason) == (True, True)
+        assert "could not diff" in reason
+
+    def test_a_composition_path_runs_them(self) -> None:
+        """Run the scenarios when a changed path is a composition path."""
+        run, _ = scenario_choice("abc1234", ["README.md", "uv.lock"])
+
+        assert run is True
+
+    def test_a_composition_path_is_named(self) -> None:
+        """Say which composition path differs."""
+        _, reason = scenario_choice("abc1234", ["README.md", "uv.lock"])
+
+        assert "uv.lock" in reason
 
     def test_other_paths_skip_them(self) -> None:
         """Skip the scenarios when no changed path is a composition path."""
-        run, reason = scenario_choice("abc1234", ["README.md", "docs/index.md"])
+        run, _ = scenario_choice("abc1234", ["README.md", "docs/index.md"])
 
-        assert (run, "no composition path" in reason) == (False, True)
+        assert run is False
+
+    def test_other_paths_say_why(self) -> None:
+        """Name the absence of a composition path as the reason for skipping."""
+        _, reason = scenario_choice("abc1234", ["README.md", "docs/index.md"])
+
+        assert "no composition path" in reason
