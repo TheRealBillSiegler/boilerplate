@@ -84,7 +84,7 @@ Boilerplate manages the toolchain across its full lifecycle — installation, ve
 
 Boilerplate MUST orchestrate established external tools (Copier, package managers, version checkers) instead of reimplementing their responsibilities. Ownership boundaries between Boilerplate and integrated tools MUST be explicit in every operation.
 
-Boilerplate MUST use all of its underlying technologies idiomatically and set the example of doing so. Where the design departs from a technology's idiom, it MUST name the departure and the reason.
+Boilerplate MUST use all of its underlying technologies idiomatically, as each technology's own documentation describes, and set the example of doing so. Where the design departs from a technology's idiom, it MUST name the departure and the reason. [ADR-015](adr-015-idiomatic-artifacts.md) is the principle's worked instance.
 
 ### Versioning and compatibility
 
