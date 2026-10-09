@@ -334,17 +334,17 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 
 ### Step 5: Failure and conflict
 
-**Failure.** Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (`1` for an unexpected failure, `3` for a rejected answer, `130` for a cancelled prompt). A task failure after the copy back follows [design 04 §Safe Update](04-composition-engine.md#safe-update): a terminal offers to keep the files or undo the update, and `--non-interactive` keeps the files, writes the lock, names the failed task and how to rerun it, and exits `1`.
+**Failure.** Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (`1` for an unexpected failure, `3` for a rejected answer, `130` for a cancelled prompt). A copy back that fails partway is undone and appends no record ([Staging worktree](#staging-worktree)). A task failure after the copy back follows [design 04 §Safe Update](04-composition-engine.md#safe-update): a terminal offers to keep the files or undo the update, and `--non-interactive` keeps the files, writes the lock, names the failed task and how to rerun it, and exits `1`.
 
 **Conflict.** When a layer's update returns conflicts, Boilerplate:
 
 - stops the walk, so later layers are not invoked;
 - brings back the layers finished so far into the user's checkout as uncommitted changes, with Copier's conflict markers in the conflicted files;
 - reports each conflicted file path and the originating layer;
-- exits with code `4` (`ACTION_REQUIRED`) and writes no lock;
+- appends a `conflict` record, exits with code `4` (`ACTION_REQUIRED`) and writes no lock;
 - prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git stash --include-untracked' sets the partial update aside."`
 
-The user resolves and commits as with plain Copier, then reruns `boilerplate update`. The rerun resumes from the `conflict` record ([design 04 §Safe Update](04-composition-engine.md#safe-update)), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records `success`. An explicit `--target-version` that differs from the record stops with `BP_UPDATE_TARGET_MISMATCH` until the user sets the partial update aside, after which the record no longer binds and `update` plans afresh. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so `git stash --include-untracked` sets the whole partial update aside, modified and added files alike, and keeps it recoverable; `git clean` would also delete any file the user has created since.
+The user resolves and commits as with plain Copier, then reruns `boilerplate update`. The rerun resumes from the `conflict` record ([design 04 §Safe Update](04-composition-engine.md#safe-update)), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records `success`. An explicit `--target-version` that differs from the record stops with `BP_UPDATE_TARGET_MISMATCH` until the user sets the partial update aside, after which the record no longer binds and `update` plans afresh. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so `git stash --include-untracked` sets the whole partial update aside, modified and added files alike, and keeps it recoverable; `git clean` would also delete any file the user has created since. A run cut off before it appends its record is finished or set aside as [Interrupted copy back](#interrupted-copy-back) describes.
 
 The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
 
@@ -423,31 +423,33 @@ On successful update:
 
 1. Write new `boilerplate.lock` (same format as creation, updated `updated_at`)
 2. Append a migration record to `.boilerplate/migrations.yml`
+3. Remove the restore marker and its ref ([Interrupted copy back](#interrupted-copy-back))
 
 ### Migration Records
 
-`.boilerplate/migrations.yml` is an append-only YAML file. Each entry records one update operation.
+`.boilerplate/migrations.yml` is an append-only YAML file. Each entry records one finished operation.
 
-Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, `timestamp` (ISO 8601 UTC), `status` (full enumeration in [02 — Data Models](02-data-models.md): `in_progress`, `success`, `failed`, `conflict`, `adopted`, `created`), `error`, and `classification` (`PATCH`/`MINOR`/`MAJOR`). See [02-data-models.md](02-data-models.md) for the full schema.
+Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, `timestamp` (ISO 8601 UTC), `status` (full enumeration in [02 — Data Models](02-data-models.md): `success`, `failed`, `conflict`, `adopted`, `created`), `error`, and `classification` (`PATCH`/`MINOR`/`MAJOR`). See [02-data-models.md](02-data-models.md) for the full schema.
 
-**Invariants** (the generic two-phase write protocol is specified in [§02 MigrationRecord](02-data-models.md#migrationrecord); the project-specific timing below is owned here):
+**Invariants** (the status values are specified in [§02 MigrationRecord](02-data-models.md#migrationrecord); the project-specific timing below is owned here):
 
-- Entries MUST be append-only. Existing entries MUST NOT be modified except the `status` field during the two-phase write.
-- Failed and conflict entries MUST be recorded. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, the migration record's status is updated to `conflict` and the record names each layer's target version and the layers the walk finished ([02 §MigrationRecord](02-data-models.md#migrationrecord)). When the update fails with code `1` (unexpected error), the status is updated to `failed`. The `status: success` value is written only when a run completes every layer.
+- Entries MUST be append-only. An existing entry MUST NOT be modified.
+- A finished operation appends exactly one record: `success`, `conflict`, `failed`, `created` or `adopted`. There is no `in_progress` status. A run that leaves the checkout unchanged appends none: a failure before the copy back, or a copy back that fails and is undone. The state of a run cut off while it copies back is kept in the restore marker, not in the log ([Interrupted copy back](#interrupted-copy-back)).
+- Failed and conflict entries MUST be recorded. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, a `conflict` record is appended that names each layer's target version and the layers the walk finished ([02 §MigrationRecord](02-data-models.md#migrationrecord)). When a task fails after the copy back and the update exits with code `1`, a `failed` record is appended. The `status: success` value is written only when a run completes every layer.
 - The file MUST be created with the initial `created` MigrationRecord on project creation (per Step 5 above), not as an empty file. The audit log is complete from inception.
 - Writes to `migrations.yml` MUST follow the single-file tmp-then-rename recipe in [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern); the temporary file is `migrations.tmp.{random_suffix}`.
-- The initial `in_progress` record is appended when the copy back starts, after the check that the user's checkout is unchanged; a run that fails or is cancelled before then changes nothing in the checkout and appends no record. The `in_progress` record names every layer's target, as a `conflict` record does. When the last record is still `in_progress`, an earlier update was interrupted after its copy back started, and `update` MUST stop with `BP_UPDATE_INTERRUPTED` before any layer runs, naming that update's targets; `git stash --include-untracked` sets its uncommitted changes aside. Terminal-status writes follow per-status timing:
-  - `success` MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the rerun after a conflict, `success` is appended as a new record (per [Step 5](#step-5-failure-and-conflict)) — the prior `in_progress` record was already advanced to `conflict` at exit 4 and stays terminal.
+- The record is appended once, when the operation ends, and the restore marker and its ref are removed only after that. Per-status timing:
+  - `success` MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the rerun after a conflict, `success` is appended as a new record (per [Step 5](#step-5-failure-and-conflict)) and the `conflict` record stays unmodified.
   - `conflict` is written at exit 4 (ACTION_REQUIRED) when merge conflicts are detected. No lock file is written on this path per [Step 5](#step-5-failure-and-conflict) — conflict is a deliberate pause state, not a completed update, so the AFTER-lock-write rule does not apply to it.
-  - `failed` is written when a task fails after the copy back. Under `--non-interactive` the files are kept and the lock file is written on that path; a terminal user who undoes the update leaves the checkout as it was and no record.
+  - `failed` is written when a task fails after the copy back. Under `--non-interactive` the files are kept and the lock file is written on that path; a terminal user who undoes the update leaves the checkout as it was and no record, and the marker and the ref are removed.
 
-**Known limitation**: The lock file write and migration record append are two separate atomic operations with no transactional guarantee across both. If the process crashes after writing the lock file but before appending the migration record, the missing migration entry is a minor inconsistency — re-running `update` detects the lock is current and no work is needed. The migration log is advisory, not authoritative.
+**Known limitation**: The lock file write and migration record append are two separate atomic operations with no transactional guarantee across both. The restore marker is removed only after the record, so a crash between the lock and the record leaves the marker at `phase` `recording`, and the rerun appends the record ([Interrupted copy back](#interrupted-copy-back)); a crash between the record and the marker's removal leaves a marker that rule 1 removes. The migration log is advisory, not authoritative.
 
 **Migration invariants**:
 
 - Entries MUST be append-only and chronologically ordered by `timestamp`. Implementations MUST NOT reorder, delete, or rewrite prior entries.
 - On the update path, `boilerplate.lock` MUST be regenerated only after a successful update operation; the lock is the authoritative source of completed-update truth.
-- A failed update that stops before the copy back MUST leave the project in its pre-update state with no migration record. A `failed` MigrationRecord is written only when a task fails after the copy back, and it MUST itself be written atomically per §Atomic Staged Write Pattern.
+- A failed update that stops before the copy back, or whose copy back fails and is undone, MUST leave the project in its pre-update state with no migration record. A `failed` MigrationRecord is written only when a task fails after the copy back, and it MUST itself be written atomically per §Atomic Staged Write Pattern.
 
 ### Corruption recovery
 
