@@ -305,7 +305,7 @@ sequenceDiagram
         B->>R: Plumbing commit of the layer
     end
     B->>U: Checkout unchanged, no obstruction
-    B->>R: Write restore marker, pin the ref
+    B->>R: Pin the ref, write restore marker
     B->>U: Copy back
     B->>U: Run tasks
     B->>U: Write lock
