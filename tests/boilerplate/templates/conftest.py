@@ -427,7 +427,8 @@ def update_layer(
             rule takes them from the declaring ancestors instead.
         secrets: Secret answers given earlier in the same update.
         walk_answers: Each layer's recorded answers when the walk began,
-            keyed by layer name; by default, read when the step starts.
+            keyed by layer name; by default, read now, for a walk that begins
+            with this step.
         old_templates: The directory the old copy's view is composed from,
             for an update whose layer keeps its ref while an ancestor moves,
             so `templates` cannot hold both; by default `templates` at the
@@ -474,7 +475,13 @@ def update_layer(
         LayerRelease(layer=layer, source=source, ref=ref),
         UpdateViews(old_view, target_view),
         inputs=StepInputs(
-            supplied=supplied, secrets=secrets or {}, walk_answers=walk_answers
+            supplied=supplied,
+            secrets=secrets or {},
+            walk_answers=(
+                read_recorded_answers_by_layer(project)
+                if walk_answers is None
+                else walk_answers
+            ),
         ),
         options=UpdateOptions(
             skip_tasks=skip_tasks,
