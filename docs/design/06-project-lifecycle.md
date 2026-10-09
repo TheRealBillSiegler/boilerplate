@@ -176,7 +176,7 @@ When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE
 - Read each layer's `.copier-answers.<layer>.yml` to retrieve the answers used for the current project state. Each layer's answers file records the answers to its own and its ancestors' questions, the questions of its [scoped view](04-composition-engine.md#scoped-view); the walk passes each layer's `copier update` invocation the data [design 04 §Safe Update](04-composition-engine.md#safe-update) specifies.
 - For each layer, compute the SHA-256 hash of the raw `.copier-answers.<layer>.yml` file contents and compare against the corresponding entry in `copier_answers_file_hashes` in `boilerplate.lock`. If any layer's hash differs, emit a WARNING: `"Answer state for layer '{layer}' may have been externally modified since the last Boilerplate operation. The update will use the current .copier-answers.{layer}.yml contents."`. The update proceeds despite the mismatch — the warning is informational, not blocking.
 - If any required answers file is missing or corrupted, fail with a clear error before proceeding.
-- Three more checks run before any layer does: layer drift, an incomplete answers file and, on a resume, targets that differ from the pending `conflict` record's ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each stops the update with its own error, listed in the outcomes table below.
+- Before any layer runs, three more checks, each stopping the update with its own error listed in the outcomes table below, look for layer drift, an incomplete answers file and, on a resume, targets that differ from the pending `conflict` record's ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
 
 ### Step 2: Resolve Target
 
