@@ -36,7 +36,7 @@ from boilerplate.models import (
     RestoreOperation,
     RestorePhase,
 )
-from tests.boilerplate.templates.conftest import git
+from tests.boilerplate.templates.conftest import git, ignore_locally
 from tests.integration.boilerplate.composition.staging.conftest import (
     disk_full,
     file_in_use,
@@ -466,14 +466,6 @@ def cut_off_marker(
     return marker
 
 
-def ignore(project: Path, pattern: str) -> None:
-    """Make git ignore `pattern` in `project` through its own exclude file."""
-    exclude = project / ".git" / "info" / "exclude"
-    exclude.parent.mkdir(exist_ok=True)
-    with exclude.open("a", encoding="utf-8", newline="\n") as handle:
-        handle.write(f"{pattern}\n")
-
-
 class TestResume:
     @pytest.mark.parametrize(
         ("operation", "phase", "order"),
@@ -562,7 +554,7 @@ class TestResume:
             operation=RestoreOperation.UPDATE,
             phase=RestorePhase.COPY_BACK,
         )
-        ignore(project, "added.txt")
+        ignore_locally(project, "added.txt")
         (project / "added.txt").write_bytes(b"mine\n")
         seen = Seen(project)
 
@@ -581,7 +573,7 @@ class TestResume:
             operation=RestoreOperation.UPDATE,
             phase=RestorePhase.COPY_BACK,
         )
-        ignore(project, "added.txt")
+        ignore_locally(project, "added.txt")
         (project / "added.txt").write_bytes(b"added\n")
         seen = Seen(project)
 
