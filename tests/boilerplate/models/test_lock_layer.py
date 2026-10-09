@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from boilerplate.models import LockLayer
+from boilerplate.models import JoinedVia, LockLayer
 from boilerplate.types import SerializableVersion
 
 CHECKSUM = "sha256:" + "a" * 64
@@ -51,6 +51,39 @@ class TestLockLayerHappyPath:
         )
 
         assert dumped["version"] == "1.1.0"
+
+
+class TestLockLayerJoinedVia:
+    """A layer records how it joined the project: through extends or through add."""
+
+    def test_a_layer_without_the_field_joined_through_extends(self) -> None:
+        """Read a lock written before the field existed as an extends layer."""
+        layer = LockLayer.model_validate(_fields())
+
+        assert layer.joined_via is JoinedVia.EXTENDS
+
+    def test_reads_the_add_origin(self) -> None:
+        layer = LockLayer.model_validate(_fields(joined_via="add"))
+
+        assert layer.joined_via is JoinedVia.ADD
+
+    @pytest.mark.parametrize("origin", ["extends", "add"])
+    def test_serializes_the_origin_as_its_name(self, origin: str) -> None:
+        dumped = LockLayer.model_validate(_fields(joined_via=origin)).model_dump(
+            mode="json"
+        )
+
+        assert dumped["joined_via"] == origin
+
+    def test_serializes_the_default_origin(self) -> None:
+        """Write the field on every entry, so a reader never has to default it."""
+        dumped = LockLayer.model_validate(_fields()).model_dump(mode="json")
+
+        assert dumped["joined_via"] == "extends"
+
+    def test_rejects_an_origin_the_schema_does_not_name(self) -> None:
+        with pytest.raises(ValidationError):
+            LockLayer.model_validate(_fields(joined_via="adopt"))
 
 
 class TestLockLayerSadPath:

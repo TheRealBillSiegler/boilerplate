@@ -3,6 +3,7 @@
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from boilerplate.models.joined_via import JoinedVia
 from boilerplate.types.serializable_version import SerializableVersion
 
 __all__ = ["LockLayer"]
@@ -19,6 +20,8 @@ class LockLayer(BaseModel):
     Attributes:
         name: The template name.
         version: The exact version rendered.
+        joined_via: How the layer joined the project; a lock that omits the
+            field reads as ``extends``.
         source: The URI or filesystem path of the template.
         commit: The git commit hash of the template at render time, if any.
         checksum: The digest of the template source directory, prefixed with
@@ -35,6 +38,7 @@ class LockLayer(BaseModel):
 
     name: str = Field(min_length=1)
     version: SerializableVersion
+    joined_via: JoinedVia = JoinedVia.EXTENDS
     source: str
     commit: str | None = None
     checksum: str = Field(pattern=_CHECKSUM_PATTERN)
