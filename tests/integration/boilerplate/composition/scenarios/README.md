@@ -2,7 +2,7 @@
 
 Reproducible evidence for the composition design: each test re-runs one scenario against real Copier and git and asserts what was observed. These are not product tests. They live under `tests/integration/`, so `uv run pytest` collects them, and a collection hook marks each one `scenario`. Deselect them with `-m "not scenario"`; the CI test job and the local gate do, and run them separately only when a composition path changed ([CI pipeline](../../../../../docs/governance/ci.md#composition-scenarios)). A full run takes about five minutes on a developer laptop with xdist.
 
-Most scenarios run on a made-up family of five Python-project templates (`core`, `service`, `docs`, `ci`, `app`) kept as data in `tests/fixtures/family/`. A few stay on the bundled `project` and `streamlit` layers, because the family cannot express what they claim; the table says which.
+Most scenarios run on a made-up family of six Python-project templates (`core`, `service`, `docs`, `ci`, `app`, and `handbook`, which only the add scenarios use) kept as data in `tests/fixtures/family/`. A few stay on the bundled `project` and `streamlit` layers, because the family cannot express what they claim; the table says which.
 
 Two scenarios assert target behavior the code does not yet have. They are strict expected failures (`xfail`): they pass the run while the gap exists and fail it once the gap closes, at which point remove the marker.
 
@@ -16,11 +16,11 @@ uv run pytest tests/integration/boilerplate/composition/scenarios/test_views.py 
 uv run pytest tests/integration/boilerplate/composition -m scenario -k TestRenamedQuestion  # one scenario, by its test class
 ```
 
-Every scenario builds its template repositories and project under pytest's temp directory and points `TMP`, `TEMP` and `TMPDIR` there, so Copier's clones and update copies stay inside it; git checks out with LF endings there, whatever `core.autocrlf` says. The scoped-view harness lives in `tests/boilerplate/templates/conftest.py`, over the view builder and the update pieces in `src/boilerplate/composition/views/` and `updating/`; `builders.py` holds the project builders and readers, `family.py` (one folder up) builds the family, and `extensions/` holds the bundled-layer scenarios' probe-only Jinja extensions.
+Every scenario builds its template repositories and project under pytest's temp directory and points `TMP`, `TEMP` and `TMPDIR` there, so Copier's clones and update copies stay inside it; git checks out with LF endings there, whatever `core.autocrlf` says. The scoped-view harness lives in `tests/boilerplate/templates/conftest.py`, over the view builder, the render engine and the update pieces in `src/boilerplate/composition/views/`, `rendering/` and `updating/`; `builders.py` holds the project builders and readers, `family.py` (one folder up) builds the family, and `extensions/` holds the bundled-layer scenarios' probe-only Jinja extensions.
 
 ## How the harness works
 
-The harness stands in for the part of a compose-and-update engine that does not exist yet, the compose loop with its questionnaire pass and the walk that calls each layer's update step, so the scenarios drive Boilerplate's real pieces and Copier directly. Five views of it follow.
+The harness drives Boilerplate's real engine pieces, the compose loop with its questionnaire pass and each layer's update step, and Copier directly. Five views of it follow.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -42,8 +42,10 @@ The harness stands in for the part of a compose-and-update engine that does not 
 │   composition/views:         │                              │
 │     build_layer_view ·       │                              │
 │     build_step_view          │                              │
+│   composition/rendering:     │                              │
+│     RenderEngine ·           │                              │
+│     ScopedWorker             │                              │
 │   composition/updating:      │                              │
-│     ScopedWorker ·           │                              │
 │     build_step_data ·        │                              │
 │     update_layer             │                              │
 ├──────────────────────────────┴──────────────────────────────┤
@@ -53,7 +55,7 @@ The harness stands in for the part of a compose-and-update engine that does not 
 └─────────────────────────────────────────────────────────────┘
 ```
 
-The harness stands in for the compose-and-update engine that doesn't exist yet. Views come from Boilerplate's real resolver, composer and view builder, update renders from its real `ScopedWorker` over Copier's Worker, and compose renders from Copier's real Worker.
+Views come from Boilerplate's real resolver, composer and view builder, compose renders through its real `RenderEngine`, and update renders through its real `ScopedWorker` over Copier's Worker.
 
 ```text
 tests/fixtures/family/core/
@@ -191,10 +193,10 @@ Rows marked *added* are checks written with this suite. Rows marked *expected fa
 | C4 | Do both layers update cleanly to their next releases, in either order and view? | Yes: user line kept once, core's `LICENSE` appears, service's `port` takes its new type, both answers files end at the new tags. *Bundled:* updates under the full view keep rendering a descendant's hook in project's files. | `test_views.py::TestWalkThroughReleases`; *bundled*: `::TestImportableExtensionsInViews::test_project_file_renders_the_description_its_view_allows` |
 | S10a | Scoped update, no questionnaire pass: does app's override of a question core 1.1.0 adds land? | No: core renders and records MIT; app records MIT or Apache-2.0 by order. | `test_question_changes.py::TestAddedQuestionWithOverride::test_override_reaches_only_the_layers_its_mechanism_lets_it[S10a-*]` |
 | S10b | Does one pass over the full view at the target fix it? | Yes: Apache-2.0 in `LICENSE` and both answers files, either order. The step runs no such pass; the test supplies the pass's answers as data, a control for S25. | same test `[S10b-*]`, `::test_questionnaire_pass_answers_the_new_question_with_the_override` |
-| S10c *bundled* | Does the full view see the override? | Yes: Apache-2.0 everywhere. The project is composed under the full view through `RenderEngine`, which registers no ancestor's file-path extension, so the family's app still cannot be composed that way (`No filter named 'docs_anchor'`). Updating app under the full view works, since the views `ScopedWorker` renders under register them. | `test_question_changes.py::TestAddedQuestionUnderTheFullView` |
+| S10c *bundled* | Does the full view see the override? | Yes: Apache-2.0 everywhere. The project is composed under the full view (`render_full_view`, the pre-scoped render kept as a counterfactual), which registers no ancestor's file-path extension, so the family's app still cannot be composed that way (`No filter named 'docs_anchor'`). Updating app under the full view works, since the views `ScopedWorker` renders under register them. | `test_question_changes.py::TestAddedQuestionUnderTheFullView` |
 | S11 | Does a diamond scope each layer to its transitive ancestors and update cleanly? | Yes, in the scoped view: each view adds its ancestry's questions, app renders through docs' filter, docs then app update with the user line kept and only they move. *Bundled:* the same in the full view, docs' importable filter reaches only views that descend from docs, and an edit beside a changed line conflicts in both views. | `test_views.py::TestDiamond`, `::TestDiamondUpdates`; *bundled*: `::TestBundledDiamond`, `::TestBundledDiamondUpdates` |
 | S12 | Does removing a question break the old copy? | No: the old copy renders the recorded `use_tests: false` (no smoke test); the answers file drops the key; service, not yet updated, keeps it. | `test_question_changes.py::TestRemovedQuestion` |
-| S12 control | Does forced data reach the old copy? | No: it renders from the answers file, also with `data={}`. | `../updating/test_scoped_worker_integration.py::TestEachCopyRendersItsOwnRelease`; *added*: `::test_forced_data_never_reaches_the_old_copy` |
+| S12 control | Does forced data reach the old copy? | No: it renders from the answers file, also with `data={}`. | `../rendering/test_scoped_worker_integration.py::TestEachCopyRendersItsOwnRelease`; *added*: `::test_forced_data_never_reaches_the_old_copy` |
 | S13 | What happens to a recorded answer the new type or choices reject? | Forced as data: raw `ValueError` before any render, for the declaring layer and a descendant. Through the step: a non-interactive step raises `RecordedAnswerRejectedError` first (S28). Castable: carried as the new type. Vanilla: silently replaced by the default. The project stays untouched unless the release ships a migration, which runs first: core 2.1.0 rewrites the recorded Python version before the forced one is rejected. | `test_question_changes.py::TestRetypedQuestion`; *bundled*: `::TestNarrowedChoiceOnTheBundledLayers` (the narrowed choice with no migration) |
 | S14 | Does a renamed question's value survive behind a migration? | Lock order: yes. Reverse order, with only core shipping the migration: service records the default. | `test_question_changes.py::TestRenamedQuestion` |
 | S14 *added* | Does the update step keep a renamed question's migrated answer? | Yes, ancestors first: with no questionnaire pass, both layers record and render the migrated answer. | `test_question_changes.py::TestRenamedQuestion::test_ancestors_first_update_step_keeps_the_migrated_answer` |
