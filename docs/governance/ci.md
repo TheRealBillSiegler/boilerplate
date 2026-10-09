@@ -75,7 +75,7 @@ A PR that changes `src/` and adds tests must show at least one added test failin
 
 ## Commit messages
 
-Every commit in a PR must be a conventional commit under 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of the gate, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; the gate treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
+Every commit in a PR must be a conventional commit whose first line is at most 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of the gate, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; the gate treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
 
 ## The docs job
 
