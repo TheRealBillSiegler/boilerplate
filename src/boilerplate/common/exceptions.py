@@ -376,12 +376,17 @@ _SET_ASIDE_REMEDIATION = (
     "then run 'boilerplate update' again."
 )
 
-# A paused update leaves its conflicted files as unmerged index entries, which
-# ``git stash`` refuses; ``git reset`` returns the index to HEAD and keeps the
-# working tree, so it comes first.
+RESET_THEN_STASH = "'git reset' and then 'git stash --include-untracked'"
+"""The commands that set a partial run aside, as every remediation words them.
+
+A paused run leaves its conflicted files as unmerged index entries, which
+``git stash`` refuses; ``git reset`` returns the index to HEAD and keeps the
+working tree, so it comes first.
+"""
+
 _RESET_AND_SET_ASIDE_REMEDIATION = (
-    "Run 'git reset' and then 'git stash --include-untracked' to set the "
-    "partial update aside, then run 'boilerplate update' again."
+    f"Run {RESET_THEN_STASH} to set the partial update aside, then run "
+    "'boilerplate update' again."
 )
 
 
@@ -634,10 +639,8 @@ class UpdateInterruptedError(BoilerplateError):
 
     An earlier update or add was cut off while it restored its result into the
     working tree or finished afterwards: its changes may sit uncommitted in the
-    checkout. The remediation is ``git reset`` and then
-    ``git stash --include-untracked``, which set them aside; the reset comes
-    first because ``git stash`` refuses the unmerged entries a paused run
-    leaves.
+    checkout. Each stop words its own remediation, built from
+    ``RESET_THEN_STASH`` or naming the command to rerun.
 
     Attributes:
         targets: Each layer's target version the interrupted run was moving to.
@@ -651,16 +654,7 @@ class UpdateInterruptedError(BoilerplateError):
         **kwargs: str | None,
     ) -> None:
         """Initialize with default error code BP_UPDATE_INTERRUPTED."""
-        super().__init__(
-            message,
-            error_code="BP_UPDATE_INTERRUPTED",
-            remediation=kwargs.pop(
-                "remediation",
-                "Run 'git reset' and then 'git stash --include-untracked' to set "
-                "the interrupted run's changes aside, then run the command again.",
-            ),
-            **kwargs,
-        )
+        super().__init__(message, error_code="BP_UPDATE_INTERRUPTED", **kwargs)
         self.targets = dict(targets or {})
 
 
