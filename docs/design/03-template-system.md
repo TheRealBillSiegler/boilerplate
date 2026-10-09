@@ -161,13 +161,13 @@ The `copier.yml` file contains four categories of configuration that Boilerplate
 
 #### Task Execution Safety
 
-Task execution is **default-deny**: tasks never run without explicit operator consent. Before executing any accumulated tasks, Boilerplate MUST display the full list of tasks that will run (template layer name + command) and prompt the user for confirmation unless `--yes` or `--non-interactive` is passed. A `--no-tasks` flag (canonical name) MUST be supported to suppress all task execution without prompting. All executed tasks MUST be logged at INFO level including: task command string, source template layer, execution order index, exit code, and duration. Task stdout and stderr MUST be captured and logged at DEBUG level. This audit trail enables post-incident investigation of what tasks ran and what they produced.
+Task execution is **default-deny**: tasks never run without explicit operator consent. Before executing any accumulated tasks, Boilerplate MUST display the full list of tasks that will run (template layer name + command) and prompt the user for confirmation unless `--yes` is passed. A `--no-tasks` flag (canonical name) MUST be supported to suppress all task execution without prompting. All executed tasks MUST be logged at INFO level including: task command string, source template layer, execution order index, exit code, and duration. Task stdout and stderr MUST be captured and logged at DEBUG level. This audit trail enables post-incident investigation of what tasks ran and what they produced.
 
 Under the current binary trust model, the consent requirement splits into two rows:
 
 | Template trust | Requirement to run tasks                                       |
 |----------------|----------------------------------------------------------------|
-| trusted        | User confirmation (or `--yes` / `--non-interactive`)           |
+| trusted        | User confirmation (or `--yes`)                                 |
 | untrusted      | User confirmation AND `--allow-tasks` (or `--allow-untrusted`) |
 
 If an untrusted template's tasks are not authorized by `--allow-tasks` (or `--allow-untrusted`), those tasks MUST be skipped with a warning listing the skipped commands.
