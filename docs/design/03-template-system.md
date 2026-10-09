@@ -308,7 +308,7 @@ These invariants MUST hold across the Boilerplate ↔ Copier boundary; violation
 - Boilerplate MUST never write any layer's `.copier-answers.<layer>.yml`; only Copier does.
 - Render MUST leave no partial destination state on failure (staging-then-move, per §07 Atomic Staged Write Pattern).
 - `boilerplate.lock` MUST be written only after Copier returns success.
-- On `update`, the staging worktree MUST exist from the start of the walk until the copy back or the failure that removes it, and the user's checkout MUST stay unchanged until the copy back.
+- On `update`, the staging worktree MUST exist from the start of the walk until the run ends or a failure removes it, and the user's checkout MUST stay unchanged until the copy back.
 
 Failure attribution for boundary violations follows the [§07 Error Attribution table](07-operational-quality.md#error-attribution): infrastructure failures (missing submodule, invalid YAML include) attribute to `Git` or `YAML`; render conflicts attribute to `Copier`; lock or migration record failures attribute to `Boilerplate`.
 
