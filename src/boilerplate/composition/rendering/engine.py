@@ -95,8 +95,12 @@ def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo
         name = fallback_name
 
     try:
-        # No `ref`, matching `_build_merged_template`: this description of
-        # "the template" must name the same revision the render wrote.
+        # No ref, matching the compose render: the engine hands the Worker no
+        # vcs_ref, so ScopedWorker.template builds the MergedTemplate at
+        # Copier's default resolution (latest tag for a git-backed layer, plain
+        # copy otherwise), the provenance contract of
+        # docs/design/adr-015-idiomatic-artifacts.md; this description of "the
+        # template" must name the same revision the render wrote.
         copier_template = CopierTemplate(url=str(final_path))
         return TemplateInfo(
             name=name,
@@ -113,7 +117,7 @@ def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo
 
 
 class RenderEngine:
-    """Asks the merged questionnaire once, then renders each layer under its view."""
+    """Ask the merged questionnaire once, then render each layer under its view."""
 
     def __init__(self, boilerplate_version: str = __version__) -> None:
         """Prepare an engine that stamps the locks it writes with a tool version.
