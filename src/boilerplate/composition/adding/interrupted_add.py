@@ -6,7 +6,6 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.adding.add_lock_writer import write_add_lock
 from boilerplate.composition.adding.add_outcome import AddOutcome
 from boilerplate.composition.adding.add_plan import AddPlan
@@ -18,13 +17,12 @@ from boilerplate.composition.adding.add_status import AddStatus
 from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
-from boilerplate.composition.updating.failed_task import FailedTask
-from boilerplate.composition.updating.keep_or_undo import keep_or_undo
+from boilerplate.composition.updating.task_failure import TaskFailure
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
-from boilerplate.integrations.copier_types import TaskError, load_answersfile_data
+from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock, RestoreMarker
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
@@ -64,12 +62,11 @@ class InterruptedAdd:
         self._project = project
         self._marker = marker
         self._request = request
-        self._on_task_failure = on_task_failure
+        self._failure = TaskFailure(on_task_failure)
         self._boilerplate_version = boilerplate_version
         ((self._layer, self._version),) = marker.targets.items()
         self._start = read_committed_lock(project, marker.start_commit)
         self._plan: AddPlan | None = None
-        self._failed: FailedTask | None = None
 
     def finish(self) -> AddOutcome:
         """Finish the cut-off add.
@@ -105,7 +102,7 @@ class InterruptedAdd:
                     write_record=lambda: record_add(
                         AddRecorder(self._project),
                         f"{self._layer}@{self._version}",
-                        self._failed,
+                        self._failure.failed,
                     ),
                     write_lock=lambda: self._write_lock(planned, checkouts),
                     run_tasks=lambda: self._run_tasks(planned),
@@ -113,12 +110,7 @@ class InterruptedAdd:
             ).resume()
         if not kept:
             return self._outcome(AddStatus.UNDONE)
-        if self._failed is not None:
-            raise UpdateTaskFailedError(
-                add_failure_message(self._failed),
-                task=self._failed.command,
-                remediation=self._failed.rerun,
-            )
+        self._failure.raise_if_failed(add_failure_message)
         return self._outcome(AddStatus.ADDED)
 
     def _plan_add(self, checkouts: ReleaseCheckouts, workdir: Path) -> AddPlan:
@@ -158,8 +150,8 @@ class InterruptedAdd:
         if self._request.no_tasks:
             return True
         plan = planned()
-        try:
-            run_tasks(
+        return self._failure.run(
+            lambda: run_tasks(
                 self._project,
                 plan.release,
                 plan.view,
@@ -169,15 +161,10 @@ class InterruptedAdd:
                     interactive=self._request.interactive,
                     skip_answered=True,
                 ),
-            )
-        except TaskError as error:
-            failed = FailedTask.from_error(error)
-            if not keep_or_undo(
-                self._project, self._marker.start_commit, failed, self._on_task_failure
-            ):
-                return False
-            self._failed = failed
-        return True
+            ),
+            project=self._project,
+            start_commit=self._marker.start_commit,
+        )
 
     def _outcome(self, status: AddStatus) -> AddOutcome:
         """Describe how the cut-off add ended."""

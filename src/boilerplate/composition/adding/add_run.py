@@ -5,7 +5,6 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.adding.add_inputs import AddInputs
 from boilerplate.composition.adding.add_lock_writer import write_add_lock
 from boilerplate.composition.adding.add_outcome import AddOutcome
@@ -16,16 +15,15 @@ from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.updating.failed_task import FailedTask
-from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating.step_inputs import StepInputs
+from boilerplate.composition.updating.task_failure import TaskFailure
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
-from boilerplate.integrations.copier_types import TaskError
 from boilerplate.models import RestoreOperation
 
 _logger = logging.getLogger(__name__)
@@ -89,10 +87,9 @@ class AddRun:
             boilerplate_version: The version of the tool, recorded in the lock.
         """
         self._inputs = inputs
-        self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
         self._warnings: tuple[str, ...] = ()
-        self._failed: FailedTask | None = None
+        self._failure = TaskFailure(on_task_failure)
 
     def execute(self) -> AddOutcome:
         """Run the plan.
@@ -156,60 +153,8 @@ class AddRun:
         finisher.copy_back()
         if not finisher.finish():
             return self._outcome(AddStatus.UNDONE)
-        if self._failed is not None:
-            raise UpdateTaskFailedError(
-                add_failure_message(self._failed),
-                task=self._failed.command,
-                remediation=self._failed.rerun,
-            )
+        self._failure.raise_if_failed(add_failure_message)
         return self._outcome(AddStatus.ADDED)
-
-    def _run_tasks(self, staging: StagingWorktree, secrets: Mapping[str, Any]) -> bool:
-        """Run the layer's own tasks once in the user's checkout.
-
-        A task that fails is handed to the caller's handler, which keeps the
-        files or undoes the add.
-
-        Args:
-            staging: The worktree the layer was copied through.
-            secrets: The secret answers the copy ended with, for the tasks.
-
-        Returns:
-            Whether the files are kept.
-        """
-        failed = self._task_failure(secrets)
-        if failed is None:
-            return True
-        if not keep_or_undo(
-            staging.project, staging.start_commit, failed, self._on_task_failure
-        ):
-            return False
-        self._failed = failed
-        return True
-
-    def _task_failure(self, secrets: Mapping[str, Any]) -> FailedTask | None:
-        """Run the layer's tasks and return the one that failed.
-
-        Args:
-            secrets: The secret answers the copy ended with, for the tasks.
-
-        Returns:
-            The task that failed; ``None`` when they all passed or none ran.
-        """
-        plan = self._inputs.plan
-        if self._inputs.request.no_tasks or not plan.tasks:
-            return None
-        try:
-            run_tasks(
-                self._inputs.project,
-                plan.release,
-                plan.view,
-                TaskRun(operation="copy", tasks=plan.tasks, secrets=secrets),
-                UpdateOptions(quiet=self._inputs.request.quiet),
-            )
-        except TaskError as error:
-            return FailedTask.from_error(error)
-        return None
 
     def _write_lock(self) -> None:
         """Write the lock with the new layer last."""
@@ -226,7 +171,46 @@ class AddRun:
         record_add(
             AddRecorder(self._inputs.project),
             f"{plan.layer}@{plan.version}",
-            self._failed,
+            self._failure.failed,
+        )
+
+    def _run_tasks(self, staging: StagingWorktree, secrets: Mapping[str, Any]) -> bool:
+        """Run the layer's own tasks once in the user's checkout.
+
+        A task that fails is handed to the caller's handler, which keeps the
+        files or undoes the add.
+
+        Args:
+            staging: The worktree the layer was copied through.
+            secrets: The secret answers the copy ended with, for the tasks.
+
+        Returns:
+            Whether the files are kept.
+        """
+        return self._failure.run(
+            lambda: self._run_layer_tasks(secrets),
+            project=staging.project,
+            start_commit=staging.start_commit,
+        )
+
+    def _run_layer_tasks(self, secrets: Mapping[str, Any]) -> None:
+        """Run the layer's tasks, unless the request or the layer has none to run.
+
+        Args:
+            secrets: The secret answers the copy ended with, for the tasks.
+
+        Raises:
+            TaskError: If a task fails.
+        """
+        plan = self._inputs.plan
+        if self._inputs.request.no_tasks or not plan.tasks:
+            return
+        run_tasks(
+            self._inputs.project,
+            plan.release,
+            plan.view,
+            TaskRun(operation="copy", tasks=plan.tasks, secrets=secrets),
+            UpdateOptions(quiet=self._inputs.request.quiet),
         )
 
     def _outcome(self, status: AddStatus) -> AddOutcome:
