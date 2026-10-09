@@ -5,15 +5,13 @@ import logging
 import tempfile
 from pathlib import Path
 
-from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.staging.unmerged_entries import list_unmerged_paths
-from boilerplate.composition.updating.failed_task import FailedTask
-from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.layer_release import LayerRelease
 from boilerplate.composition.updating.release_views import ReleaseViews
+from boilerplate.composition.updating.task_failure import TaskFailure
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.task_runner import run_tasks
@@ -29,7 +27,6 @@ from boilerplate.composition.updating.walk.update_walk import (
     conflict_message,
     update_failure_message,
 )
-from boilerplate.integrations.copier_types import TaskError
 from boilerplate.models import BoilerplateLock, RestoreKind, RestoreMarker
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
@@ -70,10 +67,9 @@ class InterruptedUpdate:
         self._project = project
         self._marker = marker
         self._request = request
-        self._on_task_failure = on_task_failure
+        self._failure = TaskFailure(on_task_failure)
         self._boilerplate_version = boilerplate_version
         self._start = read_committed_lock(project, marker.start_commit)
-        self._failed: FailedTask | None = None
 
     def finish(self) -> UpdateOutcome:
         """Finish the cut-off update.
@@ -110,12 +106,7 @@ class InterruptedUpdate:
             ).resume()
         if not kept:
             return self._outcome(UpdateStatus.UNDONE)
-        if self._failed is not None:
-            raise UpdateTaskFailedError(
-                update_failure_message(self._failed),
-                task=self._failed.command,
-                remediation=self._failed.rerun,
-            )
+        self._failure.raise_if_failed(update_failure_message)
         return self._outcome(UpdateStatus.UPDATED)
 
     def _record_pause(self) -> UpdateOutcome:
@@ -187,8 +178,8 @@ class InterruptedUpdate:
         sources = read_layer_sources(self._project, self._start)
         releases = recorded_releases(sources, self._targets)
         root = self._root
-        try:
-            run_tasks(
+        return self._failure.run(
+            lambda: run_tasks(
                 self._project,
                 LayerRelease(layer=root, source=sources[root], ref=releases[root].ref),
                 views.step_view(root, releases),
@@ -200,15 +191,10 @@ class InterruptedUpdate:
                     interactive=self._request.interactive,
                     skip_answered=True,
                 ),
-            )
-        except TaskError as error:
-            failed = FailedTask.from_error(error)
-            if not keep_or_undo(
-                self._project, self._marker.start_commit, failed, self._on_task_failure
-            ):
-                return False
-            self._failed = failed
-        return True
+            ),
+            project=self._project,
+            start_commit=self._marker.start_commit,
+        )
 
     def _write_lock(self, checkouts: ReleaseCheckouts) -> None:
         """Write the lock at the targets, unless the cut-off run already did."""
@@ -221,10 +207,11 @@ class InterruptedUpdate:
     def _record(self) -> None:
         """Append ``success``, or ``failed`` after a task the user kept."""
         root_template = read_lock(self._project).root_template
-        if self._failed is None:
+        failed = self._failure.failed
+        if failed is None:
             self._recorder().success(root_template)
         else:
-            self._recorder().failed(root_template, update_failure_message(self._failed))
+            self._recorder().failed(root_template, update_failure_message(failed))
 
     def _outcome(self, status: UpdateStatus) -> UpdateOutcome:
         """Describe how the cut-off update ended."""
