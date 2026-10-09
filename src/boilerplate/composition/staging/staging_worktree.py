@@ -2,7 +2,7 @@
 
 import logging
 import tempfile
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
@@ -184,30 +184,6 @@ class StagingWorktree:
             phase: The phase to record.
         """
         self._write_journal(phase)
-
-    def untracked_in_checkout(self) -> tuple[str, ...]:
-        """List the files the user's checkout has that git neither tracks nor ignores.
-
-        After a copy back these are the files the update added, and the files a
-        task wrote; listing them is what lets ``undo_copy_back`` remove exactly
-        those.
-
-        Returns:
-            The paths relative to the checkout.
-        """
-        return list_untracked_paths(self.project)
-
-    def undo_copy_back(self, untracked: Sequence[str]) -> None:
-        """Return the user's checkout to the state it had when staging began.
-
-        Tracked files are restored from the starting commit, working tree and
-        index both, and the listed files are removed.
-
-        Args:
-            untracked: The files to remove, as ``untracked_in_checkout`` listed
-                them after the copy back and the tasks.
-        """
-        undo_working_tree(self.project, self.start_commit, untracked)
 
     def copy_back(
         self, *, paused: bool = False, on_start: Callable[[], None] | None = None
