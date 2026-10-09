@@ -369,13 +369,14 @@ class TestCopierVersionLine:
     """Copier's "Copying from template version" line names a real version.
 
     Seam: the progress line Copier writes to stderr when a layer renders.
-    Source of truth: the layer's ``boilerplate.yml`` version (``0.1.0`` in the
-    fixtures) for a plain folder, and the git tag (``v1.0.0``) for a
-    git-backed template, whose version Copier uses to choose migrations.
+    Source of truth: the layer version the composition carries, which is the
+    ``0.1.0`` literal in ``_plain_single_layer_composition`` for a plain
+    folder, and the git tag (``v1.0.0``) for a git-backed template, whose
+    version Copier uses to choose migrations.
     Breaks if the engine stops supplying the version, or overrides a git one.
     """
 
-    def test_plain_folder_reports_its_boilerplate_yml_version(
+    def test_plain_folder_reports_the_layer_version(
         self,
         plain_base_template: Path,
         tmp_path: Path,
