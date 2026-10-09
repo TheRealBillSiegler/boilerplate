@@ -399,7 +399,17 @@ class AnswersFileIncompleteError(BoilerplateError):
         **kwargs: str | None,
     ) -> None:
         """Initialize with default error code BP_UPDATE_ANSWERS_INCOMPLETE."""
-        super().__init__(message, error_code="BP_UPDATE_ANSWERS_INCOMPLETE", **kwargs)
+        super().__init__(
+            message,
+            error_code="BP_UPDATE_ANSWERS_INCOMPLETE",
+            remediation=kwargs.pop(
+                "remediation",
+                "Undo the hand-run update that trimmed the answers file with "
+                "'git revert' of the commit that holds it, then run "
+                "'boilerplate update' again.",
+            ),
+            **kwargs,
+        )
         self.missing: Mapping[str, tuple[str, ...]] = {
             layer: tuple(keys) for layer, keys in (missing or {}).items()
         }

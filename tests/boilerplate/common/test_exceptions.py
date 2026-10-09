@@ -372,6 +372,20 @@ class TestAnswersFileIncompleteError:
     def test_missing_defaults_to_empty(self) -> None:
         assert AnswersFileIncompleteError("incomplete").missing == {}
 
+    def test_default_remediation_reverts_the_hand_run_update(self) -> None:
+        """Design 07: undo the trimming update with git revert, then update again."""
+        err = AnswersFileIncompleteError("incomplete")
+
+        assert all(
+            phrase in (err.remediation or "")
+            for phrase in ("git revert", "boilerplate update")
+        )
+
+    def test_an_explicit_remediation_wins(self) -> None:
+        err = AnswersFileIncompleteError("incomplete", remediation="Do this.")
+
+        assert err.remediation == "Do this."
+
 
 class TestUpdateLayerDriftError:
     """A drift stop names the remediation unless the caller words its own."""
