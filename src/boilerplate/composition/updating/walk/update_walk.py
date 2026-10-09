@@ -4,18 +4,17 @@
 import logging
 from typing import Any
 
-from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.staging.walk_pause import WalkPause
 from boilerplate.composition.updating.failed_task import FailedTask
-from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.layer_updater import update_layer
 from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating.step_inputs import StepInputs
+from boilerplate.composition.updating.task_failure import TaskFailure
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.task_runner import run_tasks
@@ -25,7 +24,6 @@ from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.walk.update_lock_writer import write_update_lock
 from boilerplate.composition.updating.walk.update_recorder import UpdateRecorder
 from boilerplate.composition.updating.walk.walk_inputs import WalkInputs
-from boilerplate.integrations.copier_types import TaskError
 from boilerplate.models import BoilerplateLock, RestoreOperation
 
 _logger = logging.getLogger(__name__)
@@ -94,12 +92,11 @@ class UpdateWalk:
             boilerplate_version: The version of the tool, recorded in the lock.
         """
         self._inputs = inputs
-        self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
         self._ran: list[str] = []
         self._uncarried: list[str] = []
         self._secrets: dict[str, Any] = {}
-        self._failed: FailedTask | None = None
+        self._failure = TaskFailure(on_task_failure)
         self._lock: BoilerplateLock | None = None
 
     def execute(self) -> UpdateOutcome:
@@ -226,12 +223,7 @@ class UpdateWalk:
         finisher.copy_back()
         if not finisher.finish():
             return self._outcome(UpdateStatus.UNDONE)
-        if self._failed is not None:
-            raise UpdateTaskFailedError(
-                update_failure_message(self._failed),
-                task=self._failed.command,
-                remediation=self._failed.rerun,
-            )
+        self._failure.raise_if_failed(update_failure_message)
         return self._outcome(UpdateStatus.UPDATED)
 
     def _run_tasks(self, staging: StagingWorktree) -> bool:
@@ -243,38 +235,28 @@ class UpdateWalk:
         Returns:
             Whether the files are kept.
         """
-        failed = self._task_failure()
-        if failed is None:
-            return True
-        if not keep_or_undo(
-            staging.project, staging.start_commit, failed, self._on_task_failure
-        ):
-            return False
-        self._failed = failed
-        return True
+        return self._failure.run(
+            self._run_plan_tasks,
+            project=staging.project,
+            start_commit=staging.start_commit,
+        )
 
-    def _task_failure(self) -> FailedTask | None:
-        """Run the tasks and return the one that failed.
+    def _run_plan_tasks(self) -> None:
+        """Run the plan's tasks, unless the request or the plan has none to run.
 
-        Returns:
-            The task that failed; ``None`` when they all passed or none ran.
+        Raises:
+            TaskError: If a task fails.
         """
         inputs = self._inputs
         if inputs.request.no_tasks or not inputs.plan.tasks:
-            return None
-        try:
-            run_tasks(
-                inputs.project,
-                inputs.plan.final_release,
-                inputs.plan.task_view,
-                TaskRun(
-                    operation="update", tasks=inputs.plan.tasks, secrets=self._secrets
-                ),
-                UpdateOptions(quiet=inputs.request.quiet),
-            )
-        except TaskError as error:
-            return FailedTask.from_error(error)
-        return None
+            return
+        run_tasks(
+            inputs.project,
+            inputs.plan.final_release,
+            inputs.plan.task_view,
+            TaskRun(operation="update", tasks=inputs.plan.tasks, secrets=self._secrets),
+            UpdateOptions(quiet=inputs.request.quiet),
+        )
 
     def _write_lock(self) -> None:
         """Write the lock the finished update describes."""
@@ -296,12 +278,11 @@ class UpdateWalk:
         if self._lock is None:
             raise RuntimeError("The update's record is written after its lock.")
         recorder = UpdateRecorder(self._inputs.project, self._inputs.plan.lock)
-        if self._failed is None:
+        failed = self._failure.failed
+        if failed is None:
             recorder.success(self._lock.root_template)
         else:
-            recorder.failed(
-                self._lock.root_template, update_failure_message(self._failed)
-            )
+            recorder.failed(self._lock.root_template, update_failure_message(failed))
 
     def _outcome(
         self,
