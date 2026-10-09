@@ -68,10 +68,14 @@ A layer updates with `copier update` when its answers file records a `_commit`, 
 uv run --project "$BP" copier update --trust --defaults \
   --answers-file .copier-answers.streamlit.yml \
   --data-file .copier-answers.project.yml \
+  --data project_slug=probe-app \
+  --data package_name=probe_app \
   --vcs-ref <tag>
 ```
 
 Pass the answers file of each ancestor layer as `--data-file`, one flag per ancestor; `streamlit` extends `project`, so `project`'s file is the one here. A base layer such as `project` needs none.
+
+Pass the two derived names too, as in the compose step: no answers file records them. Without `package_name`, Copier exits 0 and silently skips every file in a `<package_name>` folder under `src/` and `tests/`. Use the names your project has.
 
 Omit `--vcs-ref` to take the latest tag. Update one layer at a time, lower layers first: the `layers` list in `boilerplate.lock` is the order, and without a lock you read the templates' `extends` chains. `_src_path` in each answers file must be an absolute path or URL.
 
