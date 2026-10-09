@@ -7,8 +7,8 @@ from pathlib import Path
 
 from boilerplate.composition.staging.operation_lock import operation_lock
 from boilerplate.composition.staging.preflight import require_repository_root
-from boilerplate.models import RestoreOperation
-from boilerplate.project_state.interrupted_run import require_no_interrupted_run
+from boilerplate.models import RestoreMarker, RestoreOperation
+from boilerplate.project_state.interrupted_run import resolve_interrupted_run
 
 __all__ = ["preflight"]
 
@@ -16,13 +16,14 @@ __all__ = ["preflight"]
 @contextmanager
 def preflight(
     project: Path, operation: RestoreOperation, *, timeout: float | None = None
-) -> Generator[None]:
+) -> Generator[RestoreMarker | None]:
     """Hold the operation lock over a run, after the checks that come first.
 
     The checks run in design 06's order: the project is a git repository root
     with a commit, the operation lock is taken, and the restore-marker rules
     run, so no other Boilerplate operation interleaves with them and a cut-off
-    run's marker is dealt with before anything reads the working tree. The
+    run's marker is dealt with before anything reads the working tree. When the
+    block gets a marker, it finishes that run and plans none; otherwise the
     clean-tree and submodule checks (``check_project_ready``) come next, inside
     the block.
 
@@ -33,7 +34,8 @@ def preflight(
             ``BOILERPLATE_LOCK_TIMEOUT`` (default 60) when omitted.
 
     Yields:
-        Nothing; the lock is held for the duration of the block.
+        The marker of a cut-off run to finish, or ``None`` to go on as a fresh
+        run; the lock is held for the duration of the block.
 
     Raises:
         UpdateProjectNotReadyError: If the project is not a git repository root
@@ -44,5 +46,4 @@ def preflight(
     """
     require_repository_root(project)
     with operation_lock(project, timeout=timeout):
-        require_no_interrupted_run(project, operation)
-        yield
+        yield resolve_interrupted_run(project, operation)

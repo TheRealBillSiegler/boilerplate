@@ -16,6 +16,9 @@ from boilerplate.composition.updating.task_failure_handler import (
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
+from boilerplate.composition.updating.walk.interrupted_update import (
+    InterruptedUpdate,
+)
 from boilerplate.composition.updating.walk.update_walk import (
     UpdateWalk,
     conflict_message,
@@ -75,7 +78,8 @@ class Updater:
         A layer whose update leaves conflicts pauses the walk: the layers
         finished so far and the conflicted files are in the checkout, and this
         raises. Run it again after resolving and committing to finish the update
-        to the targets the pause recorded.
+        to the targets the pause recorded. An update cut off after its walk is
+        finished by the next one, which then plans nothing of its own.
 
         Args:
             project: The project, a clean git repository root with a
@@ -168,20 +172,35 @@ class Updater:
                 in the checkout as a file or directory git ignores.
         """
         request = request or UpdateRequest()
-        with (
-            preflight(project, RestoreOperation.UPDATE, timeout=self._lock_timeout),
-            ReleaseCheckouts() as checkouts,
-            tempfile.TemporaryDirectory(
-                prefix="boilerplate-views-", ignore_cleanup_errors=True
-            ) as workdir,
-        ):
+        with preflight(
+            project, RestoreOperation.UPDATE, timeout=self._lock_timeout
+        ) as interrupted:
+            if interrupted is not None:
+                return InterruptedUpdate(
+                    project,
+                    interrupted,
+                    request,
+                    on_task_failure=self._on_task_failure,
+                    boilerplate_version=self._boilerplate_version,
+                ).finish()
             check_project_ready(project)
-            lock = read_lock(project)
-            plan = plan_walk(project, request, lock, checkouts, Path(workdir))
-            for warning in plan.warnings:
-                _logger.warning(warning)
-            return UpdateWalk(
-                WalkInputs(project, request, plan, checkouts),
-                on_task_failure=self._on_task_failure,
-                boilerplate_version=self._boilerplate_version,
-            ).execute()
+            with (
+                ReleaseCheckouts() as checkouts,
+                tempfile.TemporaryDirectory(
+                    prefix="boilerplate-views-", ignore_cleanup_errors=True
+                ) as workdir,
+            ):
+                lock = read_lock(project)
+                plan = plan_walk(project, request, lock, checkouts, Path(workdir))
+                for warning in plan.warnings:
+                    _logger.warning(warning)
+                return UpdateWalk(
+                    WalkInputs(
+                        project=project,
+                        request=request,
+                        plan=plan,
+                        checkouts=checkouts,
+                    ),
+                    on_task_failure=self._on_task_failure,
+                    boilerplate_version=self._boilerplate_version,
+                ).execute()
