@@ -158,6 +158,16 @@ class TestRemove:
         assert not folder.exists()
         assert git(project, "worktree", "list", "--porcelain").count("worktree ") == 1
 
+    @pytest.mark.parametrize("name", ["folder", "start_commit", "last_commit"])
+    def test_staging_state_is_unavailable_after_exit(
+        self, project: Path, staging_root: Path, name: str
+    ) -> None:
+        with staging(project, staging_root) as stage:
+            pass
+
+        with pytest.raises(RuntimeError, match=r"The staging worktree is not active."):
+            getattr(stage, name)
+
     def test_project_is_untouched_by_create_and_remove(
         self, project: Path, staging_root: Path
     ) -> None:
