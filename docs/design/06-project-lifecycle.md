@@ -314,7 +314,7 @@ sequenceDiagram
     B->>R: Remove the worktree
 ```
 
-1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git -c core.hooksPath=<null device> worktree add --detach`) in the system temp directory, inside a uniquely named folder whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
+1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git -c core.hooksPath=<null device> worktree add --detach`) in the system temp directory, inside a uniquely named folder, created owner-only ([10 §File Permissions](10-security.md#file-permissions)), whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
     - The worktree shares the repository's config, so line-ending, filter and LFS settings match the user's checkout.
     - A detached HEAD adds no branch to the repository.
     - `git worktree add` runs the repository's `post-checkout` hook (observed with git 2.55), so Boilerplate MUST create the worktree with hooks disabled, as Copier runs its own git commands where a hook would interfere (`-c core.hooksPath=<null device>`, as `Worker._apply_update` does, read at Copier 9.18.1). The null device is `os.devnull`.
