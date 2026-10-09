@@ -3,8 +3,7 @@
 import sys
 import time
 from pathlib import Path
-from types import TracebackType
-from typing import IO, Self
+from typing import IO
 
 if sys.platform == "win32":
     import msvcrt
@@ -33,11 +32,6 @@ class FileLock:
         """
         self.path = path
         self._handle: IO[bytes] | None = None
-
-    @property
-    def held(self) -> bool:
-        """Whether this lock currently holds the file."""
-        return self._handle is not None
 
     def try_acquire(self) -> bool:
         """Take the lock if no one else holds it, without waiting.
@@ -91,19 +85,6 @@ class FileLock:
             _unlock_first_byte(handle)
         finally:
             handle.close()
-
-    def __enter__(self) -> Self:
-        """Return the lock, which the caller acquired already."""
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        """Release the lock."""
-        self.release()
 
 
 def _lock_first_byte(handle: IO[bytes]) -> None:
