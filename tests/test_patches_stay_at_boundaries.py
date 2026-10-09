@@ -58,7 +58,9 @@ ALLOWED_SEAMS: dict[str, str] = {
         "journal read and its owner check cannot be timed deterministically."
     ),
     "boilerplate.composition.rendering.worker_session.ScopedWorker": (
-        "Boilerplate's Copier Worker subclass; a real one renders to disk."
+        "Fault injection: a real Worker cannot be pushed into a prompt failure or "
+        "a cancellation on every platform, and a stand-in that raises them is the "
+        "only reliable way to show the translation to Boilerplate's own errors."
     ),
     "boilerplate.composition.staging.copy_back.run_git": (
         "Fault injection: git's restore failing partway through a copy back (a "
