@@ -126,6 +126,20 @@ class TestRemoveStaleStaging:
         assert removed == ()
         assert (broken / JOURNAL_NAME).exists()
 
+    def test_journal_that_is_not_utf8_is_left_for_inspection(
+        self, staging_root: Path
+    ) -> None:
+        broken = staging_root / "boilerplate-staging-binary"
+        broken.mkdir()
+        (broken / JOURNAL_NAME).write_bytes(bytes([0xFF, 0xFE]))
+
+        removed = remove_stale_staging(
+            staging_root, now=datetime.now(UTC) + timedelta(days=30)
+        )
+
+        assert removed == ()
+        assert (broken / JOURNAL_NAME).exists()
+
     def test_folder_of_a_deleted_project_is_still_removed(
         self, project: Path, staging_root: Path
     ) -> None:
