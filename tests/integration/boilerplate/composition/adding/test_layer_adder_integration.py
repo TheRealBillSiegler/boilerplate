@@ -49,6 +49,7 @@ from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
     compose_locked_family,
+    copy_project,
     lines,
     tree,
 )
@@ -264,10 +265,38 @@ def worktree_count(project: Path) -> int:
     return git(project, "worktree", "list", "--porcelain").count("worktree ")
 
 
+def locked_family(
+    family: Family,
+    factory: pytest.TempPathFactory,
+    label: str,
+    root: str,
+    tags: dict[str, str],
+) -> Path:
+    """Compose the family up to `root`, lock and commit it in a new `factory` folder."""
+    work = factory.mktemp(label)
+    with temp_dir_inside(work):
+        return compose_locked_family(family, work, root, tags)
+
+
+@pytest.fixture(scope="module")
+def _locked_project(family: Family, tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Compose core and service once; tests take `project`, never this shared path."""
+    return locked_family(family, tmp_path_factory, "locked", "service", BASE)
+
+
+def private_copy(locked: Path, under: Path) -> Path:
+    """Copy the locked project, git history included, to the same place under `under`.
+
+    The copy keeps the project's folder name and its parent's, because the tests
+    build one-off layers in ``project.parent``.
+    """
+    return copy_project(locked, under / locked.parent.name / locked.name)
+
+
 @pytest.fixture
-def project(family: Family, tmp_path: Path) -> Path:
-    """Compose core and service, lock them and commit."""
-    return compose_locked_family(family, tmp_path, "service", BASE)
+def project(_locked_project: Path, tmp_path: Path) -> Path:
+    """Return a private copy of the locked project, so a test may change it."""
+    return private_copy(_locked_project, tmp_path)
 
 
 @pytest.fixture
@@ -286,6 +315,7 @@ def staging_folders(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return created
 
 
+@pytest.mark.xdist_group("add-locked-project")
 class TestRefusals:
     """Each precondition fails with its error before a staging folder exists."""
 
@@ -413,6 +443,7 @@ class TestRefusals:
         )
 
 
+@pytest.mark.xdist_group("add-locked-project")
 class TestMidAddError:
     """An error after staging began leaves the checkout as it was."""
 
@@ -430,15 +461,31 @@ class TestMidAddError:
         assert worktree_count(project) == 1
 
 
+@pytest.fixture(scope="module")
+def _locked_core(family: Family, tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Compose core, whose ``.gitignore`` ignores ``dist/``, once for the module."""
+    return locked_family(
+        family, tmp_path_factory, "locked-core", "core", {"core": "1.0.0"}
+    )
+
+
 class CoreOnly:
-    """Tests that start from core on its own, locked and committed."""
+    """Tests that start from core on its own, locked and committed.
+
+    The subclasses sit in groups of their own on purpose: under ``--dist loadgroup``
+    a module fixture is built once per worker that receives one of its groups, so
+    spreading the classes over several groups costs up to one extra build of the
+    locked core per worker and in return keeps the slow classes from queuing on a
+    single worker. Do not merge the groups to save builds without timing a run.
+    """
 
     @pytest.fixture
-    def project(self, family: Family, tmp_path: Path) -> Path:
-        """Compose core on its own, lock it and commit."""
-        return compose_locked_family(family, tmp_path, "core", {"core": "1.0.0"})
+    def project(self, _locked_core: Path, tmp_path: Path) -> Path:
+        """Return a private copy of the locked core project, so a test may change it."""
+        return private_copy(_locked_core, tmp_path)
 
 
+@pytest.mark.xdist_group("add-own-tasks")
 class TestOwnTasks(CoreOnly):
     """The added layer's own tasks run once, after the copy back."""
 
@@ -499,6 +546,7 @@ class TestOwnTasks(CoreOnly):
         assert "deploy_token" not in answers_file(secretive, "secretive")
 
 
+@pytest.mark.xdist_group("add-failed-task")
 class TestAFailedTask(CoreOnly):
     """A failed task is kept or undone as an update's is."""
 
@@ -582,6 +630,7 @@ class TestAFailedTask(CoreOnly):
         ) == (AddStatus.UNDONE, ("dist/",), True, True)
 
 
+@pytest.mark.xdist_group("add-ignored-files")
 class TestIgnoredFileTheLayerWrote(CoreOnly):
     """An ignored file the layer wrote is named, and left behind."""
 
@@ -627,6 +676,7 @@ class TestIgnoredFileTheLayerWrote(CoreOnly):
 GRANT_PROBE = {"grant.txt.jinja": "{{ _copier_conf.unsafe }}\n"}
 
 
+@pytest.mark.xdist_group("add-unsafe-grant")
 class TestUnsafeGrant(CoreOnly):
     """The add copy grants Copier's ``unsafe`` only for an extension the layer loads.
 
