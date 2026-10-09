@@ -32,7 +32,16 @@ flowchart TD
 
 ## The dispatcher: `changes`
 
-The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed. It also flags **composition** when a changed file is under `src/boilerplate/cli/`, `src/boilerplate/composition/`, `src/boilerplate/integrations/`, `src/boilerplate/models/`, `src/boilerplate/templates/`, `tests/integration/boilerplate/composition/`, `tests/boilerplate/templates/` or `tests/fixtures/family/`, or is `uv.lock` or the workflow file itself; the scenarios job runs only then.
+The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed. It also flags **composition** when a changed file matches one of these paths; the scenarios job runs only then.
+
+| Path | Why it counts |
+| --- | --- |
+| `src/boilerplate/` | The scenarios drive the CLI, which reaches every package there |
+| `tests/integration/boilerplate/composition/` | The scenarios themselves |
+| `tests/boilerplate/templates/` | The template fixtures the scenarios build on |
+| `tests/fixtures/family/` | The made-up template family |
+| `uv.lock` | The scenarios run against the locked dependency versions |
+| `.github/workflows/ci.yml` | The workflow itself |
 
 | Event | BASE | HEAD |
 | --- | --- | --- |

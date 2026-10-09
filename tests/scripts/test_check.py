@@ -15,13 +15,20 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from check import scenario_choice, touches_composition
 
-# One path under each entry of the CI workflow's composition list.
+# One path under each entry of the CI workflow's composition list, and one in
+# each package under ``src/boilerplate/`` (the scenarios run the whole CLI).
 COMPOSITION_PATHS = [
     "src/boilerplate/cli/commands/new.py",
+    "src/boilerplate/common/exceptions.py",
+    "src/boilerplate/catalog/catalog.py",
     "src/boilerplate/composition/composer.py",
+    "src/boilerplate/constants.py",
     "src/boilerplate/integrations/copier/runner.py",
     "src/boilerplate/models/layer.py",
+    "src/boilerplate/repository/directory_repository.py",
+    "src/boilerplate/settings/settings.py",
     "src/boilerplate/templates/project/copier.yml",
+    "src/boilerplate/types/template_specifier.py",
     "tests/integration/boilerplate/composition/scenarios/test_views.py",
     "tests/boilerplate/templates/conftest.py",
     "tests/fixtures/family/core/1.0.0/copier.yml",
@@ -41,12 +48,11 @@ class TestTouchesComposition:
     @pytest.mark.parametrize(
         "path",
         [
-            "src/boilerplate/catalog/index.py",
             "tests/integration/boilerplate/cli/test_new.py",
             "docs/governance/ci.md",
             "uv.lock.bak",
             ".github/workflows/release.yml",
-            "src/boilerplate/composition_notes.md",
+            "tests/integration/boilerplate/composition_notes.md",
         ],
     )
     def test_a_path_outside_every_entry_does_not(self, path: str) -> None:
