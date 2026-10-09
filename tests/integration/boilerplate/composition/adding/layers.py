@@ -23,6 +23,16 @@ _ANSWERS = (
 )
 
 
+# Writes into ``dist/``, which a core-based project ignores, then exits non-zero.
+IGNORED_THEN_FAILING_TASK = """\
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "import pathlib; pathlib.Path('dist').mkdir(); pathlib.Path('dist/out.txt').write_text('out'); raise SystemExit(3)"
+"""
+
+
 def build_layer(
     root: Path,
     name: str,

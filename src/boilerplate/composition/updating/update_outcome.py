@@ -20,6 +20,9 @@ class UpdateOutcome(BaseModel):
         conflicts: The conflicted paths of the paused layer, as git lists them.
         warnings: What the walk found and went on from: layers that disagree with
             the lock, answers files edited since the lock, a different Copier.
+        ignored_left: The ignored files and folders a task made that the undo
+            of the update left in place; empty unless the update was undone. A
+            change inside an ignored folder that already existed is not seen.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -30,6 +33,7 @@ class UpdateOutcome(BaseModel):
     paused_at: str | None = None
     conflicts: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
+    ignored_left: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def _check_pause(self) -> Self:
