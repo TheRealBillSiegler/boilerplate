@@ -1,6 +1,8 @@
 """Copying back a worktree whose last layer paused on a conflict."""
 
+import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -164,6 +166,35 @@ class TestSymlinksInAPausedCopyBack:
             stage.copy_back(paused=True)
 
         assert (project / "shared").readlink() == Path(link_target)
+
+    def test_directory_link_is_copied_as_a_directory_link(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Copy a link to a directory back still a directory link.
+
+        The seam is ``StagingWorktree.copy_back``; the source of truth is the
+        link kind the worktree holds. It fails if the copy recreates the link
+        as a file link, which Windows does when the target is not yet in the
+        checkout. ``aaa`` sorts before ``libdir``, so its target is absent when
+        the link is written.
+        """
+        with staging(project, staging_root) as stage:
+            (stage.path / "libdir").mkdir()
+            (stage.path / "libdir" / "inner.txt").write_text("x\n", encoding="utf-8")
+            try:
+                (stage.path / "aaa").symlink_to("libdir", target_is_directory=True)
+            except OSError:
+                pytest.skip("creating a symlink needs a privilege this machine lacks")
+
+            stage.copy_back(paused=True)
+
+        link = project / "aaa"
+        assert link.is_symlink()
+        if sys.platform == "win32":
+            kind = link.lstat().st_file_attributes & stat.FILE_ATTRIBUTE_DIRECTORY
+            assert kind, "the link is a file link, not a directory link"
+        else:
+            assert link.is_dir()
 
     @pytest.mark.parametrize(
         "link_target",
