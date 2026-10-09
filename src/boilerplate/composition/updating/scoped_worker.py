@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from copier.errors import InvalidTypeError
 from pydantic import ConfigDict
@@ -26,11 +26,11 @@ from boilerplate.composition.views import (
 from boilerplate.integrations.copier_types import (
     MISSING,
     AnswersMap,
+    CopierOperation,
     Question,
     Template,
     Worker,
-    copy_operation,
-    update_operation,
+    copier_operation,
 )
 
 _logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         with registered_ancestor_extensions(self.render_view.ancestor_extensions):
             super().run_update()
 
-    def run_tasks(self, operation: Literal["copy", "update"] = "update") -> None:
+    def run_tasks(self, operation: CopierOperation = "update") -> None:
         """Run the template's tasks against the finished project as an update's.
 
         The project is the composed whole by now, so the tasks run once against
@@ -141,7 +141,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         """
         with (
             registered_ancestor_extensions(self.render_view.ancestor_extensions),
-            copy_operation() if operation == "copy" else update_operation(),
+            copier_operation(operation),
         ):
             super()._ask()
             self._execute_tasks(self.template.tasks)

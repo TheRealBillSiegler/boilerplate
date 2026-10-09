@@ -19,15 +19,15 @@ from boilerplate.integrations.copier_types import (
     NEW_COPY_DIR_PREFIX,
     OLD_COPY_DIR_PREFIX,
     AnswersMap,
+    CopierOperation,
     Question,
     SandboxedEnvironment,
     TaskError,
     Template,
     Worker,
-    copy_operation,
+    copier_operation,
     load_answersfile_data,
     template_public_attr_names,
-    update_operation,
 )
 
 
@@ -122,7 +122,7 @@ class TestQuestionWithoutADefault:
         assert question.get_default() is MISSING
 
 
-class TestUpdateOperation:
+class TestCopierOperation:
     """The shim sets the ContextVar Copier's task runner reads its operation from."""
 
     def test_task_runner_reads_the_operation_from_the_context_variable(self) -> None:
@@ -141,39 +141,24 @@ class TestUpdateOperation:
 
         assert setters == ["run_copy", "run_recopy", "run_update"]
 
-    def test_operation_is_update_inside_the_block_and_unset_after(self) -> None:
-        """Set ``"update"`` for the block, then restore the unset variable."""
-        with update_operation():
+    @pytest.mark.parametrize("operation", ["copy", "update"])
+    def test_operation_is_set_inside_the_block_and_unset_after(
+        self, operation: CopierOperation
+    ) -> None:
+        """Set the named operation for the block, then restore the unset variable."""
+        with copier_operation(operation):
             inside = _operation.get()
 
-        assert inside == "update"
+        assert inside == operation
         with pytest.raises(LookupError):
             _operation.get()
 
-    def test_operation_is_restored_when_the_block_raises(self) -> None:
+    @pytest.mark.parametrize("operation", ["copy", "update"])
+    def test_operation_is_restored_when_the_block_raises(
+        self, operation: CopierOperation
+    ) -> None:
         """Reset the variable on the way out of a failure too."""
-        with pytest.raises(RuntimeError), update_operation():
-            raise RuntimeError("boom")
-
-        with pytest.raises(LookupError):
-            _operation.get()
-
-
-class TestCopyOperation:
-    """The shim sets the operation of a task run that follows a copy."""
-
-    def test_operation_is_copy_inside_the_block_and_unset_after(self) -> None:
-        """Set ``"copy"`` for the block, then restore the unset variable."""
-        with copy_operation():
-            inside = _operation.get()
-
-        assert inside == "copy"
-        with pytest.raises(LookupError):
-            _operation.get()
-
-    def test_operation_is_restored_when_the_block_raises(self) -> None:
-        """Reset the variable on the way out of a failure too."""
-        with pytest.raises(RuntimeError), copy_operation():
+        with pytest.raises(RuntimeError), copier_operation(operation):
             raise RuntimeError("boom")
 
         with pytest.raises(LookupError):

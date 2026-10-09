@@ -36,8 +36,8 @@ fixed commit identity); the staging worktree runs its git calls through it too.
 Copier runs exits non-zero. Plumbum arrives only through Copier, so the source
 imports it from here rather than from plumbum directly.
 
-``update_operation`` and ``copy_operation`` set Copier's private ``_operation``
-ContextVar to ``"update"`` or ``"copy"`` for a block. Only ``run_copy``,
+``copier_operation`` sets Copier's private ``_operation`` ContextVar to
+``"update"`` or ``"copy"`` (``CopierOperation``) for a block. Only ``run_copy``,
 ``run_recopy`` and ``run_update`` set it, and Copier's task runner reads it to
 give a task ``_copier_operation``; the task runs that follow an update or an add
 call the task runner outside those three, so they set the variable themselves.
@@ -59,7 +59,7 @@ these are private symbols copier may move without a deprecation cycle.
 import dataclasses
 import functools
 from collections.abc import Generator
-from contextlib import AbstractContextManager, contextmanager
+from contextlib import contextmanager
 from typing import Literal
 
 from copier._jinja_ext import SandboxedEnvironment
@@ -70,6 +70,8 @@ from copier._user_data import AnswersMap, Question, load_answersfile_data
 from copier._vcs import get_git
 from copier.errors import TaskError
 from plumbum.commands.processes import ProcessExecutionError
+
+type CopierOperation = Literal["copy", "update"]
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
 NEW_COPY_DIR_PREFIX = f"{Worker.__module__}.new_copy."
@@ -111,10 +113,18 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
 
 
 @contextmanager
-def _operation_as(operation: Literal["copy", "update"]) -> Generator[None]:
+def copier_operation(operation: CopierOperation) -> Generator[None]:
     """Run a block with Copier's ``_operation`` ContextVar set to `operation`.
 
-    The variable is restored on the way out, also when the block raises.
+    Inside the block Copier's task runner gives each task
+    ``_copier_operation == operation``, as it does during ``run_copy`` or
+    ``run_update``, so a template may guard a task by the operation. The
+    variable is restored on the way out, also when the block raises.
+
+    Args:
+        operation: The operation the block runs under; ``"update"`` for the
+            tasks that follow an update, ``"copy"`` for those that follow an
+            add, which a by-hand copy of the layer runs under ``copy``.
 
     Yields:
         Nothing; the operation is set for the duration of the block.
@@ -126,50 +136,22 @@ def _operation_as(operation: Literal["copy", "update"]) -> Generator[None]:
         _operation.reset(token)
 
 
-def update_operation() -> AbstractContextManager[None]:
-    """Run a block under Copier's ``update`` operation.
-
-    Inside the block Copier's task runner gives each task
-    ``_copier_operation == "update"``, as it does during ``run_update``, so a
-    template may guard a creation-only task. The variable is restored on the
-    way out, also when the block raises.
-
-    Returns:
-        A context manager that sets the operation for the duration of the block.
-    """
-    return _operation_as("update")
-
-
-def copy_operation() -> AbstractContextManager[None]:
-    """Run a block under Copier's ``copy`` operation.
-
-    Inside the block Copier's task runner gives each task
-    ``_copier_operation == "copy"``, as it does during ``run_copy``. Adding a
-    layer runs the layer's tasks after the copy back, outside ``run_copy``, and
-    a by-hand copy would have run them under this operation.
-
-    Returns:
-        A context manager that sets the operation for the duration of the block.
-    """
-    return _operation_as("copy")
-
-
 __all__ = [
     "DEFAULT_EXCLUDE",
     "MISSING",
     "NEW_COPY_DIR_PREFIX",
     "OLD_COPY_DIR_PREFIX",
     "AnswersMap",
+    "CopierOperation",
     "ProcessExecutionError",
     "Question",
     "SandboxedEnvironment",
     "TaskError",
     "Template",
     "Worker",
-    "copy_operation",
+    "copier_operation",
     "get_git",
     "load_answersfile_data",
     "load_template_config",
     "template_public_attr_names",
-    "update_operation",
 ]
