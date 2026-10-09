@@ -429,7 +429,7 @@ The plan artifact produced by the update pipeline. Summarizes what will change i
 
 ### MigrationRecord
 
-An entry in `.boilerplate/migrations.yml` recording one update operation.
+An entry in `.boilerplate/migrations.yml` recording one finished operation.
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -437,30 +437,27 @@ An entry in `.boilerplate/migrations.yml` recording one update operation.
 | `from_version` | string or null | Root template specifier before the operation (e.g., `"streamlit@0.1.0"`). `null` for `created` records (no prior state), `add` records (the added layer had no prior state) and `adopted` records (no prior Boilerplate state — the project existed under Copier but not under Boilerplate). |
 | `to_version` | string | Root template specifier after the operation (e.g., `"streamlit@0.2.0"`). For `created` and `adopted` records, this is the template specifier the project is now bound to; for an `add` record, it is the specifier of the added layer. |
 | `timestamp` | ISO 8601 datetime | UTC timestamp |
-| `status` | enum | One of `in_progress`, `success`, `failed`, `conflict`, `adopted`, `created`; see [MigrationRecord status state machine](#migrationrecord-status-state-machine) for terminal values, exit-code mapping, and two-phase write semantics. |
+| `status` | enum | One of `success`, `failed`, `conflict`, `adopted`, `created`; see [MigrationRecord status state machine](#migrationrecord-status-state-machine) for the exit-code mapping and when each value is written. |
 | `error` | string or null | Error message if status is not `success` (or `created`/`adopted`, both of which are success-shaped terminal values) |
 | `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created`, `adopted` and `add` records (no prior-version comparison applies). |
-| `targets` | map[string, string] or null | On a `conflict` or `in_progress` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
+| `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
 | `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
 
-**Invariants**: Entries MUST be append-only. Failed and conflict entries MUST be recorded.
+**Invariants**: Entries MUST be append-only, and an existing entry MUST NOT be modified. Failed and conflict entries MUST be recorded.
 
 #### MigrationRecord status state machine
 
-`status` carries one transient value (`in_progress`) and five terminal values. Terminal values map to CLI exit codes:
+`status` carries five values, each written once when the operation ends. They map to CLI exit codes:
 
 | Status | Exit code | Meaning |
 | --- | --- | --- |
-| `in_progress` | — (transient) | The copy back from the staging worktree has started; record is awaiting in-place update to a terminal status. |
 | `success` | 0 | Normal completion of an update. |
 | `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. The record names each layer's target version and the layers the paused walk finished, which is what `update` resumes from ([04 §Safe Update](04-composition-engine.md#safe-update)). |
 | `failed` | 1 | Unrecoverable error. |
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
 
-**Two-phase write (update and add operations)**: For `update` and `add` operations, the MigrationRecord MUST be appended with `status: in_progress` when the copy back from the staging worktree starts, and then updated in-place to a terminal value after the lock file has been successfully written. An operation that fails before the copy back changes nothing in the project and appends no record.
-
-**Single-phase write (adopt and create)**: For `adopt` and `create` operations the record is written once with the corresponding terminal status (no `in_progress` phase) because these pipelines write only Boilerplate-owned state files and have no merge-conflict path.
+**Single write when the operation ends**: Every operation appends its record once, with its final status, when the operation ends, and never modifies an entry afterwards. `update` and `add` append a `success` record after the lock file has been written. An operation that leaves the checkout unchanged, such as one that fails before the copy back or whose copy back fails and is undone, appends no record. The state of a copy back cut off midway is kept in the [RestoreMarker](#restoremarker), not in the log. `adopt` and `create` write only Boilerplate-owned state files and have no merge-conflict path.
 
 ---
 
