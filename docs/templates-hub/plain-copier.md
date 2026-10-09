@@ -67,15 +67,18 @@ A layer updates with `copier update` when its answers file records a `_commit`, 
 ```bash
 uv run --project "$BP" copier update --trust --defaults \
   --answers-file .copier-answers.streamlit.yml \
+  --data-file .copier-answers.project.yml \
   --vcs-ref <tag>
 ```
+
+Pass the answers file of each ancestor layer as `--data-file`, one flag per ancestor; `streamlit` extends `project`, so `project`'s file is the one here. A base layer such as `project` needs none.
 
 Omit `--vcs-ref` to take the latest tag. Update one layer at a time, lower layers first: the `layers` list in `boilerplate.lock` is the order, and without a lock you read the templates' `extends` chains. `_src_path` in each answers file must be an absolute path or URL.
 
 Two limits come with updating one layer by hand:
 
-- **The answers file shrinks.** After the update, the layer's file holds only the questions its own `copier.yml` declares, so answers inherited from a parent drop out of it.
-- **A changed line that renders an unrecorded value conflicts.** Copier renders the old copy from the answers file alone, so a value the file lacks, such as the computed `package_name`, renders empty there and your rendered value reads as your edit. A release that changes that line produces an inline conflict (`<<<<<<<`) in that file and nowhere else. `--data` does not help, because it never reaches the old copy. Resolve the conflict in the file and commit.
+- **The answers file shrinks.** After the update, the layer's file holds only the questions its own `copier.yml` declares, so answers inherited from a parent drop out of it. The `--data-file` supplies them from then on, so pass it on every update: without it, the next update renders the inherited answers empty.
+- **A changed line that renders an unrecorded value conflicts.** Copier renders the old copy from the answers file alone, so a value the file lacks, such as the computed `package_name`, renders empty there and your rendered value reads as your edit. A release that changes that line produces an inline conflict (`<<<<<<<`) in that file and nowhere else. `--data` and `--data-file` do not help, because neither reaches the old copy. Resolve the conflict in the file and commit.
 
 ## Bundled layers are copy-only
 
