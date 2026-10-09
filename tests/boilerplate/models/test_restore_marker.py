@@ -59,6 +59,17 @@ class TestRestoreMarkerHappyPath:
 
         assert list(marker.targets) == ["core", "service"]
 
+    def test_an_add_records_the_tasks_phase(self) -> None:
+        """Accept an add whose tasks run: design 02 gives it the update's phases."""
+        marker = RestoreMarker.model_validate(
+            _fields(operation="add", phase="tasks", targets={"docs": "1.0.0"})
+        )
+
+        assert (marker.operation, marker.phase) == (
+            RestoreOperation.ADD,
+            RestorePhase.TASKS,
+        )
+
     def test_an_add_records_the_recording_phase(self) -> None:
         """Accept an add whose copy back has ended: it passes to ``recording``."""
         marker = RestoreMarker.model_validate(
@@ -87,13 +98,12 @@ class TestRestoreMarkerSadPath:
             pytest.param({"kind": "partial"}, id="unknown-kind"),
             pytest.param({"phase": "locking"}, id="unknown-phase"),
             pytest.param({"started_at": "2026-10-09T12:00:00"}, id="naive-start"),
-            pytest.param({"operation": "add", "phase": "tasks"}, id="add-in-tasks"),
             pytest.param({"kind": "paused", "phase": "tasks"}, id="paused-in-tasks"),
         ],
     )
     def test_rejects_a_marker_design_02_does_not_allow(
         self, overrides: dict[str, object]
     ) -> None:
-        """Refuse what design 02 rules out: an add and a paused run never run tasks."""
+        """Refuse what design 02 rules out: a paused run never runs tasks."""
         with pytest.raises(ValidationError):
             RestoreMarker.model_validate(_fields(**overrides))
