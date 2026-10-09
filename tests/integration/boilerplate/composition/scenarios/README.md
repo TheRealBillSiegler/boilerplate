@@ -142,7 +142,6 @@ pytest session
 └─ tests/integration/boilerplate/composition/scenarios/conftest.py
      isolated_temp      autouse: TMP, TEMP and TMPDIR → the test's tmp_path,
                         so Copier's clones and old/new copies stay inside it
-     probe_extensions   makes the probe-only extension modules importable
      collection hook    marks every test in the folder `scenario`
 ```
 
