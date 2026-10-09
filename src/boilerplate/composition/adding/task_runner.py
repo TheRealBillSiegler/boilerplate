@@ -29,7 +29,9 @@ def run_add_tasks(
         view: The layer's view at the releases it was added against.
         work: The layer's own tasks and the secret answers the copy asked, for
             tasks that use them.
-        options: How the run goes; only ``quiet`` and the worker class apply.
+        options: How the run goes: ``quiet``, the worker class, and
+            ``interactive`` and ``skip_answered``, which a rerun of a
+            cut-off run sets so a secret the tasks use is asked again.
 
     Raises:
         TaskError: If a task exits non-zero; it names the command.
@@ -43,7 +45,8 @@ def run_add_tasks(
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
         data=dict(work.secrets),
         vcs_ref=release.ref,
-        defaults=True,
+        defaults=not options.interactive,
+        skip_answered=options.skip_answered,
         overwrite=True,
         quiet=options.quiet,
         unsafe=True,

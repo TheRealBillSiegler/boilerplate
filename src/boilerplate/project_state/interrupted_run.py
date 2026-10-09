@@ -2,7 +2,7 @@
 # Spec: docs/design/06-project-lifecycle.md §Interrupted copy back
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 from boilerplate.common.exceptions import UpdateInterruptedError
@@ -11,15 +11,18 @@ from boilerplate.composition.staging.restore_marker_file import (
     read_marker,
     remove_marker,
 )
+from boilerplate.integrations.copier_types import ProcessExecutionError
 from boilerplate.models import (
     MigrationRecord,
     MigrationStatus,
+    RestoreKind,
     RestoreMarker,
     RestoreOperation,
+    RestorePhase,
 )
 from boilerplate.project_state.migrations_file import read_migrations
 
-__all__ = ["require_no_interrupted_run"]
+__all__ = ["resolve_interrupted_run"]
 
 _logger = logging.getLogger(__name__)
 
@@ -29,32 +32,42 @@ _SET_ASIDE = (
 )
 
 
-def require_no_interrupted_run(project: Path, operation: RestoreOperation) -> None:
+def resolve_interrupted_run(
+    project: Path, operation: RestoreOperation
+) -> RestoreMarker | None:
     """Apply the restore-marker rules before an update or an add plans anything.
 
     Call it inside the operation lock and before anything reads the working
-    tree, which a cut-off run may have left dirty. With no marker, a ref left
-    without one is removed. A marker whose run appended its record since it
-    began, or one that no longer binds because the working tree is clean, is
-    removed and the command goes on as a fresh run.
+    tree, which a cut-off run may have left dirty. The first rule that matches
+    decides. With no marker, a ref left without one is removed. A marker whose
+    run appended its record since it began, or one that no longer binds
+    because the working tree is clean, is removed, and the command goes on as
+    a fresh run. A marker of another command, or of a run whose HEAD has
+    moved, stops the command. Otherwise the cut-off run can be finished: a run
+    cut off in its tasks or as it recorded always can, and one cut off in its
+    copy back can when it was complete and every path that differs from the
+    starting commit matches the result commit.
 
     Args:
         project: The project, a git repository root.
         operation: The command that is starting.
 
+    Returns:
+        The marker of the run to finish; ``None`` to go on as a fresh run.
+
     Raises:
         UpdateInterruptedError: If the marker belongs to another command, HEAD
-            moved since the run began, or the working tree still holds what the
-            cut-off run left; the error names the run's targets. Also if the
-            marker does not parse.
+            moved since the run began, or a copy back was cut off that cannot
+            be repeated; the error names the run's targets. Also if the marker
+            does not parse.
     """
     marker = read_marker(project)
     if marker is None:
         remove_marker(project)
-        return
+        return None
     if _run_finished(marker, read_migrations(project)):
         remove_marker(project)
-        return
+        return None
     if not run_git(project, "status", "--porcelain").strip():
         _logger.warning(
             "Removed the restore marker of an earlier run (moving to %s): the "
@@ -62,7 +75,7 @@ def require_no_interrupted_run(project: Path, operation: RestoreOperation) -> No
             _named(marker),
         )
         remove_marker(project)
-        return
+        return None
     if marker.operation is not operation:
         raise _stop(
             marker,
@@ -73,7 +86,21 @@ def require_no_interrupted_run(project: Path, operation: RestoreOperation) -> No
         )
     if run_git(project, "rev-parse", "HEAD").strip() != marker.start_commit:
         raise _stop(marker, " HEAD has moved since it began.")
-    raise _stop(marker, " Its changes are in your working tree.")
+    if marker.phase is not RestorePhase.COPY_BACK:
+        return marker
+    if marker.kind is RestoreKind.PAUSED:
+        raise _stop(
+            marker,
+            " A conflict had paused it, and its conflicted files cannot be "
+            "restored again.",
+        )
+    if not _matches_result(project, marker.result_commit):
+        raise _stop(
+            marker,
+            " Your working tree differs from its result: edited since, or left "
+            "half written.",
+        )
+    return marker
 
 
 def _run_finished(marker: RestoreMarker, records: Sequence[MigrationRecord]) -> bool:
@@ -89,6 +116,57 @@ def _run_finished(marker: RestoreMarker, records: Sequence[MigrationRecord]) -> 
         return dict(last.targets or {}) == dict(marker.targets)
     layer, version = list(marker.targets.items())[-1]
     return last.to_version == f"{layer}@{version}"
+
+
+def _matches_result(project: Path, result_commit: str) -> bool:
+    """Check that every path that differs from HEAD matches `result_commit`.
+
+    The comparison goes through git, so line-ending and filter settings apply
+    as they do to the copy back: a tracked path is compared with ``git diff
+    --quiet``, and an added one by its ``git hash-object`` against the blob
+    the result commit holds.
+    """
+    for code, path in _changed_paths(project):
+        if code == "??":
+            if not _added_matches(project, result_commit, path):
+                return False
+        elif not _tracked_matches(project, result_commit, path):
+            return False
+    return True
+
+
+def _changed_paths(project: Path) -> Iterator[tuple[str, str]]:
+    """Yield the status code and path of each entry ``git status`` lists."""
+    listing = run_git(
+        project, "status", "--porcelain=v1", "-z", "--untracked-files=all"
+    )
+    entries = iter(listing.split("\0"))
+    for entry in entries:
+        if not entry:
+            continue
+        code, path = entry[:2], entry[3:]
+        if code[0] in "RC":
+            next(entries, None)
+        yield code, path
+
+
+def _tracked_matches(project: Path, result_commit: str, path: str) -> bool:
+    """Check whether the tracked `path` matches `result_commit`, deletion included."""
+    try:
+        run_git(project, "diff", "--quiet", result_commit, "--", f":(literal){path}")
+    except ProcessExecutionError:
+        return False
+    return True
+
+
+def _added_matches(project: Path, result_commit: str, path: str) -> bool:
+    """Check whether the untracked `path` is the blob `result_commit` holds."""
+    try:
+        expected = run_git(project, "rev-parse", f"{result_commit}:{path}").strip()
+        found = run_git(project, "hash-object", "--", path).strip()
+    except ProcessExecutionError:
+        return False
+    return found == expected
 
 
 def _named(marker: RestoreMarker) -> str:

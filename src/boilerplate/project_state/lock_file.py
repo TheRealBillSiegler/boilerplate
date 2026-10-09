@@ -17,28 +17,41 @@ from boilerplate.common.yaml_loading import load_yaml
 from boilerplate.models import LOCK_SCHEMA_MAJOR, LOCK_SCHEMA_VERSION, BoilerplateLock
 from boilerplate.project_state.atomic_write import write_text_atomically
 
-__all__ = ["LOCK_FILE_NAME", "read_lock", "write_lock"]
+__all__ = ["LOCK_FILE_NAME", "parse_lock", "read_lock", "write_lock"]
 
 LOCK_FILE_NAME: Final = "boilerplate.lock"
 
 _SCHEMA = re.compile(r"^boilerplate/lock@(\d+)(?:\.\d+)*$")
 
 
-def _read_mapping(path: Path) -> dict[str, object]:
-    """Parse `path` as a YAML mapping.
+def _read_text(path: Path) -> str:
+    """Read the lock file at `path`.
 
     Raises:
-        LockReadFailedError: If the file is missing, unreadable, not YAML or
-            not a mapping.
+        LockReadFailedError: If the file is missing or unreadable.
     """
     try:
-        raw = load_yaml(path.read_text(encoding="utf-8"))
+        return path.read_text(encoding="utf-8")
     except FileNotFoundError as error:
         raise LockReadFailedError(
             f"{LOCK_FILE_NAME} not found in {path.parent}.",
             remediation="Run 'boilerplate new' or 'boilerplate adopt' to create it.",
         ) from error
-    except (OSError, UnicodeDecodeError, yaml.YAMLError) as error:
+    except (OSError, UnicodeDecodeError) as error:
+        raise LockReadFailedError(
+            f"{LOCK_FILE_NAME} cannot be parsed: {error}"
+        ) from error
+
+
+def _parse_mapping(text: str) -> dict[str, object]:
+    """Parse `text` as a YAML mapping.
+
+    Raises:
+        LockReadFailedError: If the text is not YAML or not a mapping.
+    """
+    try:
+        raw = load_yaml(text)
+    except yaml.YAMLError as error:
         raise LockReadFailedError(
             f"{LOCK_FILE_NAME} cannot be parsed: {error}"
         ) from error
@@ -90,7 +103,28 @@ def read_lock(project: Path) -> BoilerplateLock:
         LockSchemaUnsupportedError: If the schema major is newer than this
             tool supports.
     """
-    raw = _read_mapping(project / LOCK_FILE_NAME)
+    return parse_lock(_read_text(project / LOCK_FILE_NAME))
+
+
+def parse_lock(text: str) -> BoilerplateLock:
+    """Parse the text of a lock file, failing closed on anything untrusted.
+
+    The schema is checked before any other field, so a lock from a newer
+    generation is refused rather than partly parsed.
+
+    Args:
+        text: The lock file's content.
+
+    Returns:
+        The parsed lock.
+
+    Raises:
+        LockReadFailedError: If the text is not YAML, not a mapping or does not
+            match the lock schema.
+        LockSchemaUnsupportedError: If the schema major is newer than this
+            tool supports.
+    """
+    raw = _parse_mapping(text)
     _check_schema(raw)
     try:
         return BoilerplateLock.model_validate(raw)

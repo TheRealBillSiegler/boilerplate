@@ -8,33 +8,44 @@ rules inside the operation lock, before anything reads the working tree.
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 
 from boilerplate.common.exceptions import (
+    ActionRequiredError,
     UpdateInterruptedError,
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
 )
-from boilerplate.composition.adding import AddRequest, LayerAdder
+from boilerplate.composition.adding import AddRequest, AddStatus, LayerAdder
 from boilerplate.composition.staging.restore_marker_file import (
     read_marker,
     write_marker,
 )
 from boilerplate.composition.updating import Updater, UpdateRequest, UpdateStatus
 from boilerplate.models import (
+    MigrationRecord,
     MigrationStatus,
     RestoreKind,
     RestoreMarker,
     RestoreOperation,
     RestorePhase,
 )
-from boilerplate.project_state.migrations_file import read_migrations
+from boilerplate.project_state.lock_file import read_lock
+from boilerplate.project_state.migrations_file import (
+    MIGRATIONS_FILE,
+    read_migrations,
+)
 from tests.boilerplate.templates.conftest import commit_all, git
 from tests.integration.boilerplate.composition.adding.layers import build_layer
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
+    add_user_line,
+    answers_file,
+    append,
     compose_locked_family,
+    lines,
 )
 
 BASE = {"core": "1.0.0", "service": "1.0.0"}
@@ -190,18 +201,263 @@ class TestInterruptedAdd:
         marker = read_marker(cut_off_add)
 
         assert marker is not None
-        assert (marker.operation, marker.phase) == (
-            RestoreOperation.ADD,
-            RestorePhase.TASKS,
-        )
+        assert marker.phase is RestorePhase.TASKS
 
     def test_appends_no_record(self, cut_off_add: Path) -> None:
         """Write no record before the tasks: an add records after them."""
         assert statuses(cut_off_add) == []
 
-    def test_the_rerun_stops_with_the_interrupted_error(
+    def test_the_rerun_finishes_the_add(
         self, cut_off_add: Path, tasked: AddRequest
     ) -> None:
-        """Stop the same command on the marker its working tree still holds."""
-        with pytest.raises(UpdateInterruptedError):
-            LayerAdder().add(cut_off_add, tasked)
+        """Run the tasks, write the lock and append success (rule 5)."""
+        outcome = LayerAdder().add(cut_off_add, tasked)
+
+        assert (
+            outcome.status,
+            [entry.name for entry in read_lock(cut_off_add).layers][-1],
+            statuses(cut_off_add),
+        ) == (AddStatus.ADDED, "tasked", [MigrationStatus.SUCCESS])
+
+    def test_the_rerun_runs_the_layers_tasks(
+        self, cut_off_add: Path, tasked: AddRequest
+    ) -> None:
+        """Run the tasks the cut-off add never finished (rule 5)."""
+        LayerAdder().add(cut_off_add, tasked)
+
+        assert lines(cut_off_add / ".tasked-marker") == ["ran"]
+
+
+def at_phase(project: Path, phase: RestorePhase) -> None:
+    """Rewrite the project's marker at `phase`, as a run cut off there leaves it."""
+    marker = read_marker(project)
+    assert marker is not None
+    write_marker(project, marker.at_phase(phase))
+
+
+class TestFinishingACutOffUpdate:
+    """The same update again finishes a run cut off after its walk (rules 4 to 6)."""
+
+    def test_a_run_cut_off_in_its_tasks_is_finished(self, cut_off_update: Path) -> None:
+        """Run the tasks again, write the lock and append success (rule 5)."""
+        outcome = Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        assert (outcome.status, statuses(cut_off_update)) == (
+            UpdateStatus.UPDATED,
+            [MigrationStatus.SUCCESS],
+        )
+
+    def test_the_finished_run_runs_the_tasks(self, cut_off_update: Path) -> None:
+        """Run the composition's tasks the cut-off run never ran (rule 5)."""
+        Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        assert lines(cut_off_update / ".core-task-marker") == ["core task ran"]
+
+    def test_the_finished_run_writes_the_lock_at_the_targets(
+        self, cut_off_update: Path
+    ) -> None:
+        """Record the cut-off run's targets in the lock."""
+        Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        lock = read_lock(cut_off_update)
+        assert {entry.name: str(entry.version) for entry in lock.layers} == AFTER
+
+    def test_the_finished_run_leaves_no_marker(self, cut_off_update: Path) -> None:
+        """Remove the marker once the record is appended."""
+        Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        assert read_marker(cut_off_update) is None
+
+    def test_a_copy_back_cut_off_before_every_file_is_repeated(
+        self, cut_off_update: Path
+    ) -> None:
+        """Repeat the copy back from the result commit (rule 4)."""
+        at_phase(cut_off_update, RestorePhase.COPY_BACK)
+        git(cut_off_update, "checkout", "--", ".copier-answers.core.yml")
+
+        outcome = Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        assert (outcome.status, answers_file(cut_off_update, "core")["_commit"]) == (
+            UpdateStatus.UPDATED,
+            "1.1.0",
+        )
+
+    def test_a_copy_back_edited_since_stops(self, cut_off_update: Path) -> None:
+        """Stop when a path differs from the result commit (rule 4)."""
+        at_phase(cut_off_update, RestorePhase.COPY_BACK)
+        append(cut_off_update / ".copier-answers.core.yml", "# my edit\n")
+
+        with pytest.raises(UpdateInterruptedError, match="differs from its result"):
+            Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+    def test_a_run_cut_off_as_it_recorded_runs_no_tasks(
+        self, cut_off_update: Path
+    ) -> None:
+        """Write the lock and the record only (rule 6)."""
+        at_phase(cut_off_update, RestorePhase.RECORDING)
+
+        Updater().update(cut_off_update, UpdateRequest(targets=AFTER))
+
+        assert (
+            statuses(cut_off_update),
+            (cut_off_update / ".core-task-marker").exists(),
+        ) == ([MigrationStatus.SUCCESS], False)
+
+
+class PausedRun(NamedTuple):
+    """A paused update whose conflict record a crash took, and that record."""
+
+    project: Path
+    record: MigrationRecord
+
+
+@pytest.fixture
+def paused_before_its_record(project: Path) -> PausedRun:
+    """Pause an update on a conflict, then undo its record as a crash would.
+
+    The record is taken back out of the log and the marker the run held until
+    then is written again, at the ``recording`` phase of a paused run.
+    """
+    add_user_line(project / "SERVICE.md")
+    outcome = Updater().run(project, UpdateRequest(targets=AFTER))
+    assert outcome.status is UpdateStatus.PAUSED
+    (record,) = read_migrations(project)
+    (project / MIGRATIONS_FILE).unlink()
+    commit = git(project, "rev-parse", "HEAD").strip()
+    write_marker(
+        project,
+        RestoreMarker(
+            operation=RestoreOperation.UPDATE,
+            kind=RestoreKind.PAUSED,
+            phase=RestorePhase.RECORDING,
+            start_commit=commit,
+            result_commit=commit,
+            targets=AFTER,
+            started_at=record.timestamp - timedelta(seconds=1),
+        ),
+    )
+    return PausedRun(project, record)
+
+
+class TestFinishingACutOffPause:
+    def test_the_rerun_appends_the_conflict_record(
+        self, paused_before_its_record: PausedRun
+    ) -> None:
+        """Append the paused run's conflict record, as it would have (rule 6)."""
+        Updater().run(paused_before_its_record.project, UpdateRequest(targets=AFTER))
+
+        (record,) = read_migrations(paused_before_its_record.project)
+        original = paused_before_its_record.record
+        assert (record.status, record.targets, record.finished) == (
+            original.status,
+            original.targets,
+            original.finished,
+        )
+
+    def test_the_rerun_ends_with_the_pause(
+        self, paused_before_its_record: PausedRun
+    ) -> None:
+        """End with the paused run's exit: the conflict pause, code 4."""
+        with pytest.raises(ActionRequiredError):
+            Updater().update(
+                paused_before_its_record.project, UpdateRequest(targets=AFTER)
+            )
+
+    def test_a_paused_copy_back_cut_off_stops(
+        self, paused_before_its_record: PausedRun
+    ) -> None:
+        """Stop: no commit holds a paused run's conflicted files (rule 4)."""
+        at_phase(paused_before_its_record.project, RestorePhase.COPY_BACK)
+
+        with pytest.raises(UpdateInterruptedError, match="conflict had paused it"):
+            Updater().update(
+                paused_before_its_record.project, UpdateRequest(targets=AFTER)
+            )
+
+
+def cut_off_lock_write(*_args: object, **_kwargs: object) -> None:
+    """Stand in for the add's lock write, cut off by Ctrl-C as it starts."""
+    raise KeyboardInterrupt
+
+
+class TestFinishingACutOffAdd:
+    @pytest.fixture
+    def cut_off_add(
+        self, project: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> tuple[Path, AddRequest]:
+        """Add a tasked layer with a file of its own; cut the run off at the lock."""
+        build_layer(
+            project.parent, "tasked", copier=TASK, files={"TASKED.md": "tasked\n"}
+        )
+        tasked = AddRequest(
+            name="tasked", source=(project.parent / "repos" / "tasked").as_posix()
+        )
+        monkeypatch.setattr(
+            "boilerplate.composition.adding.add_run.write_add_lock", cut_off_lock_write
+        )
+        with pytest.raises(KeyboardInterrupt):
+            LayerAdder().add(project, tasked)
+        monkeypatch.undo()
+        return project, tasked
+
+    def test_leaves_a_marker_at_the_recording_phase(
+        self, cut_off_add: tuple[Path, AddRequest]
+    ) -> None:
+        """Mark an add's run ``recording`` once its tasks have run."""
+        marker = read_marker(cut_off_add[0])
+
+        assert marker is not None
+        assert marker.phase is RestorePhase.RECORDING
+
+    def test_the_rerun_writes_the_lock_and_the_record(
+        self, cut_off_add: tuple[Path, AddRequest]
+    ) -> None:
+        """Finish the add: the lock lists the layer and success is recorded (rule 6)."""
+        project, tasked = cut_off_add
+
+        outcome = LayerAdder().add(project, tasked)
+
+        assert (
+            outcome.status,
+            [entry.name for entry in read_lock(project).layers][-1],
+            statuses(project),
+        ) == (AddStatus.ADDED, "tasked", [MigrationStatus.SUCCESS])
+
+    def test_the_rerun_runs_the_tasks_no_second_time(
+        self, cut_off_add: tuple[Path, AddRequest]
+    ) -> None:
+        """Run no tasks at ``recording``: the cut-off add ran them (rule 6)."""
+        project, tasked = cut_off_add
+
+        LayerAdder().add(project, tasked)
+
+        assert lines(project / ".tasked-marker") == ["ran"]
+
+    def test_a_copy_back_cut_off_before_every_file_is_repeated(
+        self, cut_off_add: tuple[Path, AddRequest]
+    ) -> None:
+        """Repeat the copy back from the result commit (rule 4).
+
+        A run cut off in its copy back has run no task, so the file the task
+        wrote goes with the rewound phase.
+        """
+        project, tasked = cut_off_add
+        at_phase(project, RestorePhase.COPY_BACK)
+        (project / ".tasked-marker").unlink()
+        (project / ".copier-answers.tasked.yml").unlink()
+
+        outcome = LayerAdder().add(project, tasked)
+
+        assert (outcome.status, answers_file(project, "tasked")["_commit"]) == (
+            AddStatus.ADDED,
+            "1.0.0",
+        )
+
+    def test_an_update_stops_naming_the_add(
+        self, cut_off_add: tuple[Path, AddRequest]
+    ) -> None:
+        """Stop another command, naming the one to rerun (rule 3)."""
+        with pytest.raises(UpdateInterruptedError) as stop:
+            Updater().update(cut_off_add[0], UpdateRequest(targets=AFTER))
+
+        assert "boilerplate add" in (stop.value.remediation or "")

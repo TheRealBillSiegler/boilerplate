@@ -11,6 +11,7 @@ from boilerplate.composition.adding.add_outcome import AddOutcome
 from boilerplate.composition.adding.add_planner import plan_add
 from boilerplate.composition.adding.add_request import AddRequest
 from boilerplate.composition.adding.add_run import AddRun
+from boilerplate.composition.adding.interrupted_add import InterruptedAdd
 from boilerplate.composition.staging import IntentOperation, check_project_ready
 from boilerplate.composition.staging.operation_preflight import preflight
 from boilerplate.composition.updating.task_failure_handler import (
@@ -92,13 +93,17 @@ class LayerAdder:
             raise ProjectNotManagedError(
                 "Project is not managed by Boilerplate. Use 'boilerplate adopt' first."
             )
-        with (
-            preflight(project, RestoreOperation.ADD, timeout=self._lock_timeout),
-            ReleaseCheckouts() as checkouts,
-            tempfile.TemporaryDirectory(
-                prefix="boilerplate-views-", ignore_cleanup_errors=True
-            ) as workdir,
-        ):
+        with preflight(
+            project, RestoreOperation.ADD, timeout=self._lock_timeout
+        ) as interrupted:
+            if interrupted is not None:
+                return InterruptedAdd(
+                    project,
+                    interrupted,
+                    request,
+                    on_task_failure=self._on_task_failure,
+                    boilerplate_version=self._boilerplate_version,
+                ).finish()
             lock = read_lock(project)
             if any(entry.name == request.name for entry in lock.layers):
                 raise LayerAlreadyAddedError(
@@ -106,9 +111,15 @@ class LayerAdder:
                     "Use 'boilerplate update' instead."
                 )
             check_project_ready(project, IntentOperation.ADD)
-            plan = plan_add(project, request, lock, checkouts, Path(workdir))
-            return AddRun(
-                AddInputs(project, request, plan, checkouts),
-                on_task_failure=self._on_task_failure,
-                boilerplate_version=self._boilerplate_version,
-            ).execute()
+            with (
+                ReleaseCheckouts() as checkouts,
+                tempfile.TemporaryDirectory(
+                    prefix="boilerplate-views-", ignore_cleanup_errors=True
+                ) as workdir,
+            ):
+                plan = plan_add(project, request, lock, checkouts, Path(workdir))
+                return AddRun(
+                    AddInputs(project, request, plan, checkouts),
+                    on_task_failure=self._on_task_failure,
+                    boilerplate_version=self._boilerplate_version,
+                ).execute()

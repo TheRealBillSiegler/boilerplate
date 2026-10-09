@@ -31,7 +31,9 @@ def run_update_tasks(
         view: The root layer's view at the target releases.
         work: The composition's accumulated tasks and the secret answers the
             walk asked, for tasks that use them.
-        options: How the run goes; only ``quiet`` and the worker class apply.
+        options: How the run goes: ``quiet``, the worker class, and
+            ``interactive`` and ``skip_answered``, which a rerun of a
+            cut-off run sets so a secret the tasks use is asked again.
 
     Raises:
         TaskError: If a task exits non-zero; it names the command.
@@ -45,7 +47,8 @@ def run_update_tasks(
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
         data=dict(work.secrets),
         vcs_ref=release.ref,
-        defaults=True,
+        defaults=not options.interactive,
+        skip_answered=options.skip_answered,
         overwrite=True,
         quiet=options.quiet,
         unsafe=True,
