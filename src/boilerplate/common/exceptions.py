@@ -576,3 +576,16 @@ class UpdateTaskFailedError(BoilerplateError):
         """Initialize with default error code BP_UPDATE_TASK_FAILED."""
         super().__init__(message, error_code="BP_UPDATE_TASK_FAILED", **kwargs)
         self.task = task
+
+
+class UpdateConflictPausedError(ActionRequiredError):
+    """Raised when a layer's update left merge conflicts and the walk paused.
+
+    The layers finished so far are in the working tree with Copier's conflict
+    markers and no lock is written. The user resolves the conflicts and commits,
+    then runs the update again, which resumes from the pause.
+    """
+
+    def __init__(self, message: str = "", **kwargs: str | None) -> None:
+        """Initialize with default error code BP_UPDATE_CONFLICT_PAUSED."""
+        super().__init__(message, error_code="BP_UPDATE_CONFLICT_PAUSED", **kwargs)

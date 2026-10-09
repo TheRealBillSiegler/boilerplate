@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from boilerplate import __version__
-from boilerplate.common.exceptions import ActionRequiredError
+from boilerplate.common.exceptions import UpdateConflictPausedError
 from boilerplate.composition.staging import check_project_ready
 from boilerplate.composition.updating.task_failure_handler import (
     TaskFailureHandler,
@@ -81,7 +81,7 @@ class Updater:
             What the walk did: updated, or undone after a failed task.
 
         Raises:
-            ActionRequiredError: If a layer's update left conflicts.
+            UpdateConflictPausedError: If a layer's update left conflicts.
             UpdateTaskFailedError: If a task failed and the files were kept.
             UpdateProjectNotReadyError: If the project is dirty or not a
                 repository root.
@@ -100,7 +100,7 @@ class Updater:
         """
         outcome = self.run(project, request)
         if outcome.status is UpdateStatus.PAUSED:
-            raise ActionRequiredError(
+            raise UpdateConflictPausedError(
                 conflict_message(outcome.paused_at or "", outcome.conflicts),
                 remediation=_PAUSE_REMEDIATION,
             )
