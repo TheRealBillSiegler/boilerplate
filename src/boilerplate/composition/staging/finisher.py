@@ -1,7 +1,7 @@
 """Finish an update or an add after its walk: the copy back and what follows it."""
 # Spec: docs/design/06-project-lifecycle.md §Interrupted copy back
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Self
 
@@ -36,7 +36,12 @@ class Finisher:
     """
 
     def __init__(
-        self, project: Path, marker: RestoreMarker, steps: FinishSteps
+        self,
+        project: Path,
+        marker: RestoreMarker,
+        steps: FinishSteps,
+        *,
+        journal: Callable[[str], None] | None = None,
     ) -> None:
         """Prepare to finish the run `marker` describes.
 
@@ -44,10 +49,14 @@ class Finisher:
             project: The user's checkout.
             marker: The run's marker, at the phase the run has reached.
             steps: The operation's lock, record and tasks.
+            journal: Records a phase in the staging's intent journal; it is
+                told ``locking`` before the lock is written. ``None`` for a
+                run that has no staging any more.
         """
         self._project = project
         self._marker = marker
         self._steps = steps
+        self._journal = journal
 
     @classmethod
     def for_staging(
@@ -84,6 +93,7 @@ class Finisher:
                 started_at=staging.started_at,
             ),
             steps,
+            journal=staging.record_phase,
         )
 
     def copy_back(self, staging: StagingWorktree) -> None:
@@ -142,6 +152,8 @@ class Finisher:
         """Write the lock and the record under the ``recording`` phase, then unmark."""
         self._advance(RestorePhase.RECORDING)
         if self._marker.kind is RestoreKind.COMPLETE:
+            if self._journal is not None:
+                self._journal("locking")
             self._steps.write_lock()
         self._steps.write_record()
         remove_marker(self._project)
