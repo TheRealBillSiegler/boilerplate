@@ -182,6 +182,7 @@ When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE
 - Each layer the lock lists resolves its own target version, using the same deterministic rules as project creation. Default: the latest available version of that layer that the `extends` constraints of the lock's layers allow.
 - Support explicit target versions: `--target-version <version>` names the root template's target, and `--target-version <layer>@<version>`, repeatable, names the target of the layer called `<layer>` in the lock.
 - A target that names a layer the lock does not list MUST stop `update` before anything is staged with `BP_UPDATE_LAYER_UNKNOWN`, naming each unknown layer and listing the project's layers.
+- An explicit `<layer>@<version>` that the `extends` constraint of another layer in the lock excludes MUST stop `update` before anything is staged with `BP_UPDATE_TARGET_EXCLUDED`, naming the layer, the requested version and the constraining layer.
 - Downgrades MUST be rejected, with no flag to override. Before the walk starts, `update` MUST compare each layer's target version with the version that layer's answers file records in `_commit`, parsed the way Copier parses it, with Copier's own `Template.version` (a `git describe` string such as `v2.0.0-3-gabc1234` reads as a post-release of `2.0.0`, which sorts after `2.0.0`). When any target is older, `update` MUST stop before any layer changes with `BP_UPDATE_DOWNGRADE_REJECTED`, naming the layer, its recorded version and the target. The same rule applies when a recorded `_commit` yields no version. The way back from an applied update is reverting the commit that recorded it.
 
 ### Step 3: Build UpdatePlan
@@ -481,6 +482,7 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
 | `--target-version <layer>@<version>` names a layer the lock does not list | `BP_UPDATE_LAYER_UNKNOWN` naming each unknown layer and listing the project's layers; nothing staged, exit `3` |
+| `--target-version <layer>@<version>` names a version another lock layer's `extends` constraint excludes | `BP_UPDATE_TARGET_EXCLUDED` naming the layer, the version and the constraining layer; nothing staged, exit `3` |
 | A layer `add` introduced, which the root's target version does not reach | Stays in the lock, walks to its own target, is not reported as `REMOVED` |
 | Failure mid-update | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
 | Copy back fails partway | Checkout restored to the starting commit, worktree kept and named, marker and ref removed, no migration record, `BP_UPDATE_COPY_BACK_FAILED`, exit `1` |
