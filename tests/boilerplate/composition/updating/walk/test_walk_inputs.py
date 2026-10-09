@@ -23,7 +23,7 @@ def plan(two_layer_lock: BoilerplateLock, core_release: LayerRelease) -> WalkPla
         steps=(),
         skipped=(),
         targets={"core": SerializableVersion("1.0.0")},
-        root_release=core_release,
+        final_release=core_release,
         task_view=LayerView(questions={}, extensions=()),
         tasks=(),
         warnings=(),
