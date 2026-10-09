@@ -42,6 +42,7 @@ from boilerplate.models import (
     MigrationRecord,
     MigrationStatus,
 )
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.lock_file import read_lock, write_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.types import SerializableVersion
@@ -382,7 +383,7 @@ def _recorded(project: Project) -> dict[str, dict[str, Any]]:
 
 def _trim_to_own_keys(project: Project, layer: str, own: set[str]) -> None:
     """Rewrite `layer`'s answers file as a vanilla hand-run update leaves it."""
-    path = project.root / f".copier-answers.{layer}.yml"
+    path = project.root / answers_file_name(layer)
     recorded = yaml.safe_load(path.read_text(encoding="utf-8"))
     kept = {k: v for k, v in recorded.items() if k.startswith("_") or k in own}
     path.write_text(yaml.safe_dump(kept), encoding="utf-8", newline="\n")
