@@ -18,7 +18,8 @@ class ResumePlan(BaseModel):
             resumed walk skips them.
         remaining: The layers the resumed walk runs, in the lock's order.
         targets: The version every layer was being updated to when the walk
-            paused; the resumed walk uses these, never the latest release.
+            paused, in the lock's order; the resumed walk uses these, never
+            the latest release.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

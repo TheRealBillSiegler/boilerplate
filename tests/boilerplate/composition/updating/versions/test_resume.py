@@ -48,6 +48,20 @@ class TestAPausedWalkResumes:
         assert plan is not None
         assert plan.remaining == ("service", "app")
 
+    def test_targets_keep_the_locks_walk_order(self) -> None:
+        """Order the targets as the walk runs, root last, not as the record keeps them.
+
+        The migrations file is written with sorted keys, so a record's targets
+        read back alphabetically; the restore marker takes its walk-ordered
+        targets from this plan (design 02 §RestoreMarker).
+        """
+        alphabetical = dict(sorted(TARGETS.items()))
+
+        plan = plan_resume(_layers(), conflict(alphabetical, ["core"]))
+
+        assert plan is not None
+        assert list(plan.targets) == ["core", "service", "app"]
+
     def test_an_explicit_target_equal_to_the_recorded_one_is_accepted(self) -> None:
         plan = plan_resume(
             _layers(), conflict(TARGETS, ["core", "service"]), {"app": v("1.1.0")}
