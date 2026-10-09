@@ -227,6 +227,24 @@ class TestResolveBase:
             commit_lint.resolve_base(None, head=unrelated_sha, repo_root=local)
 
 
+class TestMain:
+    """`main` reports a range it cannot resolve instead of raising."""
+
+    def test_an_unresolvable_base_exits_2(self) -> None:
+        """The `main` docstring reserves exit code 2 for an unresolvable range."""
+        assert commit_lint.main(["--base", "no-such-ref-anywhere"]) == 2
+
+    def test_an_unresolvable_base_names_the_range_on_stderr(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        commit_lint.main(["--base", "no-such-ref-anywhere"])
+
+        assert (
+            "error: cannot resolve no-such-ref-anywhere..HEAD"
+            in capsys.readouterr().err
+        )
+
+
 class TestAllowedPrefixes:
     """This repo's `allowed_prefixes` override in `pyproject.toml`.
 
