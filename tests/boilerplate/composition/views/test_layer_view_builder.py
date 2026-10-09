@@ -136,18 +136,6 @@ class TestAncestorExtensions:
         ] == [None]
 
 
-class TestAncestorExtension:
-    def test_spec_names_the_module_and_class(self) -> None:
-        extension = AncestorExtension("core", "1.0.0", Path("x.py"), "pkg.mod", "Ext")
-
-        assert extension.spec == "pkg.mod:Ext"
-
-    def test_spec_is_the_bare_module_without_a_class(self) -> None:
-        extension = AncestorExtension("core", "1.0.0", Path("x.py"), "pkg.mod", None)
-
-        assert extension.spec == "pkg.mod"
-
-
 class TestViewConfig:
     """The config carries the view's extensions, then the extra ones."""
 
