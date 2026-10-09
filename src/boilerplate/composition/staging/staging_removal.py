@@ -6,10 +6,8 @@ import stat
 from collections.abc import Callable
 from pathlib import Path
 
-from boilerplate.composition.staging.git_commands import (
-    ProcessExecutionError,
-    run_git,
-)
+from boilerplate.composition.staging.git_commands import run_git
+from boilerplate.integrations.copier_types import ProcessExecutionError
 
 _logger = logging.getLogger(__name__)
 
