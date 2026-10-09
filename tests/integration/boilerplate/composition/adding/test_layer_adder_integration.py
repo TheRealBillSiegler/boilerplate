@@ -6,6 +6,7 @@ lock with the layer last, the migration record and the keep-or-undo handling of 
 failed task.
 """
 
+import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -26,6 +27,7 @@ from boilerplate.composition.adding import (
     AddStatus,
     LayerAdder,
 )
+from boilerplate.composition.staging.stale_cleanup import STAGING_PREFIX
 from boilerplate.models import MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
@@ -202,13 +204,43 @@ def project(family: Family, tmp_path: Path) -> Path:
     return compose_locked_family(family, tmp_path, "service", BASE)
 
 
+@pytest.fixture
+def staging_folders(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Record the prefix of every temporary directory the run creates."""
+    created: list[str] = []
+    real = tempfile.mkdtemp
+
+    def spy(
+        suffix: str | None = None, prefix: str | None = None, dir: str | None = None
+    ) -> str:
+        created.append(prefix or "")
+        return real(suffix, prefix, dir)
+
+    monkeypatch.setattr(tempfile, "mkdtemp", spy)
+    return created
+
+
 class TestRefusals:
-    """Each precondition fails with its error and leaves the project as it was."""
+    """Each precondition fails with its error before a staging folder exists."""
+
+    def test_the_spy_sees_the_staging_folder_of_a_valid_add(
+        self, family: Family, project: Path, staging_folders: list[str]
+    ) -> None:
+        """Show the spy works: an add that passes every check stages."""
+        LayerAdder().add(
+            project, ask(family, "docs", "1.0.0", {"docs_generator": "mkdocs"})
+        )
+
+        assert STAGING_PREFIX in staging_folders
 
     def refuse(
-        self, project: Path, request: AddRequest, error: type[BoilerplateError]
+        self,
+        project: Path,
+        request: AddRequest,
+        error: type[BoilerplateError],
+        staging_folders: list[str],
     ) -> BoilerplateError:
-        """Run the add, expect `error`, and check nothing changed."""
+        """Run the add, expect `error`, and check nothing changed or was staged."""
         before = snapshot(project)
 
         with pytest.raises(error) as stop:
@@ -216,20 +248,29 @@ class TestRefusals:
 
         assert snapshot(project) == before
         assert worktree_count(project) == 1
+        assert STAGING_PREFIX not in staging_folders
         return stop.value
 
-    def test_an_unmanaged_project(self, family: Family, project: Path) -> None:
+    def test_an_unmanaged_project(
+        self, family: Family, project: Path, staging_folders: list[str]
+    ) -> None:
         (project / LOCK_FILE_NAME).unlink()
         commit_all(project, "unmanage")
 
-        error = self.refuse(project, ask(family, "docs"), ProjectNotManagedError)
+        error = self.refuse(
+            project, ask(family, "docs"), ProjectNotManagedError, staging_folders
+        )
 
         assert "boilerplate adopt" in str(error.remediation)
 
-    def test_a_dirty_tree(self, family: Family, project: Path) -> None:
-        (project / "notes.txt").write_text("uncommitted\n", encoding="utf-8")
+    def test_a_dirty_tree(
+        self, family: Family, project: Path, staging_folders: list[str]
+    ) -> None:
+        (project / "notes.txt").write_text("uncommittedBSN", encoding="utf-8")
 
-        error = self.refuse(project, ask(family, "docs"), UpdateProjectNotReadyError)
+        error = self.refuse(
+            project, ask(family, "docs"), UpdateProjectNotReadyError, staging_folders
+        )
 
         assert str(error) == (
             "Working tree has uncommitted changes. "
@@ -237,25 +278,33 @@ class TestRefusals:
         )
 
     def test_a_layer_already_in_the_project(
-        self, family: Family, project: Path
+        self, family: Family, project: Path, staging_folders: list[str]
     ) -> None:
-        error = self.refuse(project, ask(family, "service"), LayerAlreadyAddedError)
+        error = self.refuse(
+            project, ask(family, "service"), LayerAlreadyAddedError, staging_folders
+        )
 
         assert "boilerplate update" in str(error.remediation)
 
-    def test_a_missing_ancestor(self, family: Family, tmp_path: Path) -> None:
+    def test_a_missing_ancestor(
+        self, family: Family, tmp_path: Path, staging_folders: list[str]
+    ) -> None:
         core_only = compose_locked_family(family, tmp_path, "core", {"core": "1.0.0"})
 
-        error = self.refuse(core_only, ask(family, "app"), AddAncestorsMissingError)
+        error = self.refuse(
+            core_only, ask(family, "app"), AddAncestorsMissingError, staging_folders
+        )
 
         assert isinstance(error, AddAncestorsMissingError)
         assert error.layers == ("service", "docs")
 
-    def test_an_ancestor_too_old(self, project: Path) -> None:
+    def test_an_ancestor_too_old(
+        self, project: Path, staging_folders: list[str]
+    ) -> None:
         pinned = build_layer(project.parent, "pinned", extends="core@2.0.0")
         request = AddRequest(name="pinned", source=pinned.as_posix())
 
-        error = self.refuse(project, request, AddAncestorVersionError)
+        error = self.refuse(project, request, AddAncestorVersionError, staging_folders)
 
         assert isinstance(error, AddAncestorVersionError)
         assert (error.ancestor, error.recorded, error.constraint) == (
