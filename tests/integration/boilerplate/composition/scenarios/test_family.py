@@ -27,9 +27,9 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
     make_git_project,
     on_own_worker,
-    temp_dir_inside,
     tree,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 ANSWERS = {"project_name": "Family App"}
 LAYERS = ("core", "service", "docs", "ci", "app")

@@ -6,9 +6,7 @@ from pathlib import Path
 import pytest
 
 from tests.integration.boilerplate.composition.family import Family, build_family
-from tests.integration.boilerplate.composition.scenarios.builders import (
-    temp_dir_inside,
-)
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 
 @pytest.fixture(scope="session")
