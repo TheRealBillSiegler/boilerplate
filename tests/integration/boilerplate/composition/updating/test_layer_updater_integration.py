@@ -8,6 +8,7 @@ layer now sits at and the answers the update forced.
 from pathlib import Path
 
 import pytest
+from copier.errors import UnsafeTemplateError
 
 from boilerplate.composition.updating import (
     LayerRelease,
@@ -30,7 +31,14 @@ BEFORE = {"core": "2.1.0", "service": "1.0.0"}
 AFTER = {"core": "3.0.0", "service": "1.0.0"}
 
 
-def _update_core(family: Family, project: Path, work: Path, **data: str) -> None:
+def _update_core(
+    family: Family,
+    project: Path,
+    work: Path,
+    *,
+    needs_unsafe: bool = True,
+    **data: str,
+) -> None:
     update_layer(
         project,
         LayerRelease(
@@ -39,6 +47,7 @@ def _update_core(family: Family, project: Path, work: Path, **data: str) -> None
         UpdateViews(
             layer_view("core", templates_at(family, work, BEFORE)),
             layer_view("core", templates_at(family, work, AFTER)),
+            needs_unsafe=needs_unsafe,
         ),
         StepInputs(supplied=data, walk_answers=read_recorded_answers_by_layer(project)),
     )
@@ -62,3 +71,16 @@ class TestUpdateLayer:
         _update_core(family, project, tmp_path, project_name="FORCED")
 
         assert answers_file(project, "core")["project_name"] == "FORCED"
+
+
+class TestUnsafeGrant:
+    """The step grants Copier's ``unsafe`` only when its views say it is needed."""
+
+    def test_a_step_that_needs_no_grant_leaves_copiers_consent_gate_closed(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Core declares extensions, tasks and migrations, so Copier refuses it."""
+        project = compose_family(family, tmp_path, "service", BEFORE)
+
+        with pytest.raises(UnsafeTemplateError):
+            _update_core(family, project, tmp_path, needs_unsafe=False)
