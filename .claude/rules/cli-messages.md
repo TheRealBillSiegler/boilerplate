@@ -29,7 +29,7 @@ One shape for every warning `Display.warning` prints — a deprecation notice or
 
 ```text
 ⚠️  'boilerplate <old>' is deprecated and will be removed in v2.0.0. Use 'boilerplate <new>' instead.
-    See: <release-notes-url>
+    See: <migration-guide-url>
 ```
 
 One line naming what's affected, the removal version, and the replacement, with an optional indented continuation line for a pointer (`See: <url>`) or other detail. `Display.warning` itself prints no glyph — the `warning` style carries the signal the source example's `⚠️` carries in plain text — so a call site that wants the glyph adds it inline. `validate`'s `WARN  <check name>` header plus its indented `-> <message>` line already follows this header-plus-continuation structure.
