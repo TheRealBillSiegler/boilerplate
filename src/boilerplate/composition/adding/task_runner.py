@@ -38,7 +38,7 @@ def run_add_tasks(
     if not work.tasks:
         return
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
-        src_path=str(release.source),
+        src_path=release.source,
         dst_path=project,
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
         data=dict(work.secrets),

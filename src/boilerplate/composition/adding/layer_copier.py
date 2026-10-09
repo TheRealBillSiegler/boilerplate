@@ -50,7 +50,7 @@ def copy_layer(
         secrets=inputs.secrets,
     )
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
-        src_path=str(release.source),
+        src_path=release.source,
         dst_path=project,
         answers_file=Path(f".copier-answers.{release.layer}.yml"),
         data=data,
