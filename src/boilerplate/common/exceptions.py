@@ -634,10 +634,10 @@ class UpdateInterruptedError(BoilerplateError):
 
     An earlier update or add was cut off while it restored its result into the
     working tree or finished afterwards: its changes may sit uncommitted in the
-    checkout. The remediation is
-    ``git reset`` and then ``git stash --include-untracked``, which set them
-    aside; the reset comes first because ``git stash`` refuses the unmerged
-    entries a paused run leaves.
+    checkout. The remediation is ``git reset`` and then
+    ``git stash --include-untracked``, which set them aside; the reset comes
+    first because ``git stash`` refuses the unmerged entries a paused run
+    leaves.
 
     Attributes:
         targets: Each layer's target version the interrupted run was moving to.
