@@ -163,7 +163,7 @@ proto writes `.protolock` to the project root after successful installation, rec
 
 ---
 
-## Part 3.5: Package Requirement Validation
+## Part 3.5: Package Requirements
 
 ### Purpose
 
@@ -181,8 +181,8 @@ For a package with no covering provider, requirements stay **advisory, not autom
 
 ### Pipeline Integration
 
-- **Plan display**: When packages are declared for the current platform, the provisioning plan MUST include a `Package requirements:` section listing each package and its install command. This gives the user visibility before confirming.
-- **Post-install check**: Package validation runs AFTER proto has installed all tools but BEFORE the provenance record is written. Package validation failures are warnings, not errors, and do not block provisioning. Warnings are appended to the success-path output and also surface via `env status`.
+- **Plan display**: When packages are declared for the current platform, the provisioning plan MUST include a `Package requirements:` section listing each package with the provider that installs it, or the command to install it by hand when no provider covers it. This gives the user visibility before confirming.
+- **Post-install check**: Covered packages install with the tools in step 4; a failed covered install raises `BP_ENV_APPLY_FAILED`, the same as a failed tool install: no record is written, and rerunning recovers. Uncovered packages are still checked after the installs and before the provenance record is written, and a missing one only warns. Warnings are appended to the success-path output and also surface via `env status`.
 
 ### `env status` Integration
 
@@ -200,7 +200,7 @@ The `env status` command SHOULD check package availability for the current platf
 1. Resolve       →  Load profile, resolve extends chain, merge tool versions, enforce allowlist
 2. Plan/Confirm  →  Diff current vs. resolved; prompt for confirmation
 3. Generate      →  Acquire advisory lock; write .prototools via staged write
-4. Proto Install →  Invoke proto install for all resolved tools
+4. Proto Install →  Invoke proto install for all resolved tools; install covered packages through their provider
 5. Record Write  →  Write .boilerplate/environment.yml; release lock
 ```
 
@@ -228,9 +228,9 @@ Acquires the advisory lock per [07-operational-quality.md §Concurrency Control]
 
 ### 4 — Proto Install
 
-Invokes proto to install each resolved tool, subject to the timeout defined in §Proto Integration. Progress is reported when running interactively.
+Invokes proto to install each resolved tool, subject to the timeout defined in §Proto Integration. It also installs covered packages through their provider (see §Part 3.5), with the same failure rule. Progress is reported when running interactively.
 
-**If any installation fails**: the lock is released and `BP_ENV_APPLY_FAILED` is raised with the failing tool name, version, and proto output. The provenance record is not written; re-running `env apply` is the recovery path.
+**If any installation fails, tool or covered package**: the lock is released and `BP_ENV_APPLY_FAILED` is raised with the failing tool or package name, version, and installer output. The provenance record is not written; re-running `env apply` is the recovery path.
 
 ### 5 — Record Write
 
