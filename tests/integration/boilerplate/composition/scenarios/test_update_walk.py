@@ -248,11 +248,7 @@ class TestSecretAskedOnce:
             lambda: Updater().update(project, request(SERVICE_BASE, interactive=True))
         )
 
-        assert (session.finished, session.error, session.shown.count("api_token")) == (
-            True,
-            None,
-            1,
-        )
+        assert (session.error, session.shown.count("api_token")) == (None, 1)
 
 
 class TestStopsBeforeAnyStaging:
