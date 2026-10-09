@@ -8,7 +8,10 @@ from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating.step_inputs import StepInputs
-from boilerplate.composition.updating.update_data import build_step_data
+from boilerplate.composition.updating.update_data import (
+    build_step_data,
+    declaring_ancestors_answers,
+)
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_views import UpdateViews
 
@@ -32,6 +35,14 @@ def update_layer(
     read from their answers files when the step starts, and the values given
     to it (``build_step_data``).
 
+    Copier builds the old copy from the layer's own answers file alone, so a
+    file a hand-run vanilla update trimmed would render the ancestors'
+    questions at their defaults. The worker fills each key that file lacks
+    from the answers the declaring layer recorded when the walk began
+    (``inputs.walk_answers``), so a change an ancestor's step makes in the same
+    walk stays out of the merge base. The in-place render then records the full
+    answers again.
+
     Args:
         project: The composed project, a git repository with a clean tree.
         release: The layer to update and the release to move it to.
@@ -53,12 +64,20 @@ def update_layer(
     """
     options = options or UpdateOptions()
     inputs = inputs or StepInputs()
+    recorded_by_layer = read_recorded_answers_by_layer(project)
     data = build_step_data(
         layer=release.layer,
         declared_by=views.target.declared_by,
-        recorded_by_layer=read_recorded_answers_by_layer(project),
+        recorded_by_layer=recorded_by_layer,
         supplied=inputs.supplied,
         secrets=inputs.secrets,
+    )
+    old_copy_fill = declaring_ancestors_answers(
+        layer=release.layer,
+        declared_by=views.old.declared_by,
+        recorded_by_layer=(
+            recorded_by_layer if inputs.walk_answers is None else inputs.walk_answers
+        ),
     )
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=str(release.source),
@@ -75,6 +94,7 @@ def update_layer(
         layer=release.layer,
         old_view=views.old,
         target_view=views.target,
+        old_copy_fill=old_copy_fill,
     ) as worker:
         worker.run_update()
         return {

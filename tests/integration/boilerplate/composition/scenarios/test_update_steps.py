@@ -13,16 +13,31 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
+from copier import run_update
 from copier.errors import UserMessageError
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
-from tests.boilerplate.templates.conftest import commit_all, recorded_answers
+from boilerplate.composition.updating import (
+    ScopedWorker,
+    check_answers_complete,
+    read_recorded_answers_by_layer,
+)
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    layer_view,
+    recorded_answers,
+)
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     AUTHOR,
+    FAMILY_PROJECT,
     answers_file,
     compose_family,
+    copy_project,
     lines,
+    recording_worker,
+    require,
+    templates_at,
     update_family_layer,
 )
 from tests.integration.boilerplate.composition.scenarios.prompt_session import (
@@ -500,3 +515,135 @@ class TestSecretAskedOnce:
         self._step(family, project, tmp_path, "core")
 
         assert "api_token" not in answers_file(project, "core")
+
+
+HAND_RUN_BEFORE = {"core": "1.0.0", "service": "1.0.0"}
+HAND_RUN = {"core": "1.0.0", "service": "1.1.0"}
+HAND_RUN_TARGET = {"core": "1.0.0", "service": "1.2.0"}
+CORE_KEYS = ("project_name", "author_name", "use_tests")
+
+
+@pytest.fixture(scope="module")
+def hand_run_service(
+    family: Family, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[Path]:
+    """Compose service, then update service to 1.1.0 by hand with plain Copier.
+
+    Plain ``copier update`` records only the questions service's own
+    ``copier.yml`` asks, so service's answers file loses core's keys.
+    """
+    work = tmp_path_factory.mktemp("hand-run")
+    with temp_dir_inside(work):
+        project = compose_family(
+            family, work, "service", HAND_RUN_BEFORE, {"author_name": AUTHOR}
+        )
+        run_update(
+            project,
+            answers_file=".copier-answers.service.yml",
+            vcs_ref=HAND_RUN["service"],
+            defaults=True,
+            overwrite=True,
+            unsafe=True,
+            skip_tasks=True,
+            quiet=True,
+        )
+        commit_all(project, "hand-run service 1.1.0")
+        trimmed = answers_file(project, "service")
+        require(
+            not any(key in trimmed for key in CORE_KEYS),
+            "a plain copier update of service trims core's keys from its file",
+        )
+        yield project
+
+
+def walk_after_the_hand_run(
+    family: Family,
+    project: Path,
+    work: Path,
+    data: Mapping[str, Any] | None = None,
+    service_worker: type[ScopedWorker] = ScopedWorker,
+) -> None:
+    """Check the answers files, then walk core and service to their targets.
+
+    The answers files are read once, before any layer runs, as the walk does.
+    """
+    walk_answers = read_recorded_answers_by_layer(project)
+    recorded_views = templates_at(family, work, HAND_RUN)
+    check_answers_complete(
+        {name: layer_view(name, recorded_views) for name in ("core", "service")},
+        {layer: set(answers) for layer, answers in walk_answers.items()},
+    )
+    for layer in ("core", "service"):
+        update_family_layer(
+            family,
+            project,
+            root="service",
+            layer=layer,
+            before=HAND_RUN,
+            after=HAND_RUN_TARGET,
+            work=work,
+            data=data or {},
+            step_views=True,
+            walk_answers=walk_answers,
+            worker_type=service_worker if layer == "service" else ScopedWorker,
+        )
+        commit_all(project, f"update {layer}")
+
+
+class TestATrimmedAnswersFileHeals:
+    """Design 04: the walk fills a trimmed file for the old copy; Copier records it.
+
+    Service is updated by hand from 1.0.0 to 1.1.0 with plain Copier, then the
+    walk moves it to 1.2.0 with core staying at 1.0.0.
+    """
+
+    @pytest.fixture(scope="class")
+    def walked(
+        self,
+        family: Family,
+        hand_run_service: Path,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> Iterator[tuple[Path, dict[str, str | None]]]:
+        """Walk a copy of the hand-run project, recording service's old copy."""
+        work = tmp_path_factory.mktemp("healed")
+        with temp_dir_inside(work):
+            project = copy_project(hand_run_service, work / "project")
+            worker, recording = recording_worker(["SERVICE.md"])
+            walk_after_the_hand_run(family, project, work, service_worker=worker)
+            yield project, recording.copies["old_copy"]
+
+    def test_the_old_copy_renders_cores_recorded_answer(
+        self, walked: tuple[Path, dict[str, str | None]]
+    ) -> None:
+        """The merge base names the project, not the old copy's temp directory."""
+        old_copy = walked[1]["SERVICE.md"] or ""
+
+        assert old_copy.splitlines()[0] == f"# Running {FAMILY_PROJECT} as a service"
+
+    def test_service_file_records_cores_answers_again(
+        self, walked: tuple[Path, dict[str, str | None]]
+    ) -> None:
+        """Copier's in-place render rewrites the file with core's answers."""
+        recorded = recorded_answers(walked[0], "service")
+
+        assert {key: recorded.get(key) for key in CORE_KEYS} == {
+            "project_name": FAMILY_PROJECT,
+            "author_name": AUTHOR,
+            "use_tests": True,
+        }
+
+    def test_a_rename_in_the_same_walk_reaches_service_guide(
+        self, family: Family, hand_run_service: Path, tmp_path: Path
+    ) -> None:
+        """The fill reads core's file before core's step records the new name.
+
+        Read when service's step starts, the merge base would already hold the
+        new name, and the guide would keep the old one.
+        """
+        project = copy_project(hand_run_service, tmp_path / "project")
+
+        walk_after_the_hand_run(
+            family, project, tmp_path, data={"project_name": "Renamed App"}
+        )
+
+        assert lines(project / "SERVICE.md")[0] == "# Running Renamed App as a service"
