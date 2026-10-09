@@ -350,11 +350,11 @@ def force_recorded_answers(
     templates_dir: Path | None = None,
     full_view: bool = False,
 ) -> dict[str, Any]:
-    """Return the answers the rule an update step replaced forced as data.
+    """Return `layer`'s chain of recorded answers as data, a control for the step.
 
-    The recorded answers of `layer`'s chain, ancestors first and the layer's own
-    on top, which outrank the layer's own answers file in Copier. An update step
-    no longer passes them; a scenario forces them to show what that did.
+    The chain runs ancestors first with the layer's own answers on top. Passed as
+    Copier data, they outrank the layer's own answers file. The step's own rule
+    takes its answers from the declaring ancestors instead.
 
     Args:
         project: The composed project.
@@ -422,8 +422,8 @@ def update_layer(
         data: Values supplied to the step, as data for the questions in the
             layer's scope; ``{}`` supplies none.
         force_recorded: Whether to supply the recorded answers of `layer`'s
-            chain too, own on top (``force_recorded_answers``): the rule the
-            step replaced, to show what it did.
+            chain too, own on top (``force_recorded_answers``); the step's
+            rule takes them from the declaring ancestors instead.
         secrets: Secret answers given earlier in the same update.
         old_templates: The directory the old copy's view is composed from,
             for an update whose layer keeps its ref while an ancestor moves,
