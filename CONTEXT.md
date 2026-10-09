@@ -146,7 +146,7 @@ The file under the project's git directory, paired with the ref `refs/worktree/b
 The conflict-detected update workflow Boilerplate provides over Copier's per-layer merge: it runs in a staging worktree and pauses on conflict. See design 04 §Safe update for the implementation.
 
 **slot**:  
-One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Boilerplate fills the inner-loop slots with one opinionated tool each; templates fill slots *within* those slots (each tool's per-project configuration).
+One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Each first-party template fills the inner-loop slots of its ecosystem with one opinionated tool each; the template then fills slots *within* those slots (each tool's per-project configuration).
 
 **substrate**:  
 A layer's enforcement mode — `enforced` (Boilerplate's own runtime gates and rejects on violation, with no opt-out) or `preconfigured` (defaults are shipped; user-runnable gating scaffolding executes the check in third-party venues; the user MAY opt out). Per-layer assignments live in PROD-001 `enforcement_layers`.
