@@ -19,10 +19,15 @@ A curated scaffolder paired with a managed development environment. Lock files k
 
 Boilerplate has two surfaces:
 
-- **Managed development environment** — preconfigured `uv`, `ruff`, `pyright`, `pytest`, and VS Code workspace settings, installed and version-pinned via `boilerplate env apply`.
+- **Managed development environment** — the toolchain each template's profile declares (for Python: `uv`, `ruff`, `pyright`, `pytest`, and VS Code workspace settings), installed and version-pinned via `boilerplate env apply`.
 - **CLI and template system** — `boilerplate new` scaffolds a project from a curated template; `boilerplate update` applies upstream template changes to existing projects safely; `boilerplate list` and `boilerplate compose` make the catalog navigable.
 
-**The slot model.** A development environment decomposes into recurring roles — **slots** — catalogued in [The Development Environment Landscape](dev-environment-landscape.md). Boilerplate fills the inner-loop slots with one opinionated, preconfigured tool each; its templates then fill slots *within* those slots, pre-wiring each tool's per-project configuration (rule sets, strictness, markers, workspace settings). Slots Boilerplate does not opine on are out of scope by design — "should Boilerplate also do X?" is answered by whether X is an inner-loop slot.
+**The slot model.** A development environment decomposes into recurring roles — **slots** — catalogued in [The Development Environment Landscape](dev-environment-landscape.md). Each first-party template declares, through its required profile, the slots its kind of project needs, with one opinionated, preconfigured tool per slot:
+
+- **Declared slots** — the inner-loop slots of the template's ecosystem, plus any secondary toolchain.
+- **Slots within those slots** — the template pre-wires each tool's per-project configuration (rule sets, strictness, markers, workspace settings).
+
+The environment installs and verifies what the profile declares. Slots no first-party template requires are out of scope; the [landscape page](dev-environment-landscape.md#how-boilerplate-maps-onto-the-landscape) states the rule.
 
 Principle enforcement spans two substrates: Boilerplate's runtime *enforces* its own invariants, and the artifacts it ships *preconfigure* principles as machine-checkable defaults. Per-layer assignments are specified in PROD-001 `enforcement_layers`; shipped vs planned gating content lives in PROD-001 `shipped_gating_scaffolding`.
 
@@ -56,7 +61,7 @@ Every created or managed project MUST be reproducible across machines and time. 
 
 ### Templates and environments are both first-class surfaces
 
-The template system is the primary surface; the managed development environment is a real, deliberately thin companion surface. A change to one MUST keep the other aligned: a new CLI behavior that affects scaffolding MUST be reflected in template guidance; a new toolchain capability MUST be reflected in environment profiles; documentation MUST update alongside both.
+The template system is the primary surface; the managed development environment is a real companion surface, scoped to installing and verifying what templates declare. A change to one MUST keep the other aligned: a new CLI behavior that affects scaffolding MUST be reflected in template guidance; a new toolchain capability MUST be reflected in environment profiles; documentation MUST update alongside both.
 
 > *In practice:* `boilerplate new` and `boilerplate env apply` are independent operations, not phases of one workflow. Templates declare what gets rendered; profiles declare what tools render and run it. The first-party `project` template ships with both a `boilerplate.yml` (template surface) and a corresponding `boilerplate-env.yml` (environment surface).
 
