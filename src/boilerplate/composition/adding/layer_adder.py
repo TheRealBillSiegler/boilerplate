@@ -89,10 +89,6 @@ class LayerAdder:
             UpdatePathObstructedError: If a path the layer added already exists
                 in the checkout as a file or directory git ignores.
         """
-        if not (project / LOCK_FILE_NAME).is_file():
-            raise ProjectNotManagedError(
-                "Project is not managed by Boilerplate. Use 'boilerplate adopt' first."
-            )
         with preflight(
             project, RestoreOperation.ADD, timeout=self._lock_timeout
         ) as interrupted:
@@ -104,6 +100,11 @@ class LayerAdder:
                     on_task_failure=self._on_task_failure,
                     boilerplate_version=self._boilerplate_version,
                 ).finish()
+            if not (project / LOCK_FILE_NAME).is_file():
+                raise ProjectNotManagedError(
+                    "Project is not managed by Boilerplate. "
+                    "Use 'boilerplate adopt' first."
+                )
             lock = read_lock(project)
             if any(entry.name == request.name for entry in lock.layers):
                 raise LayerAlreadyAddedError(
