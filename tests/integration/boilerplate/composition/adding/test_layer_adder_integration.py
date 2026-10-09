@@ -33,6 +33,10 @@ from boilerplate.composition.adding import (
 from boilerplate.composition.staging.stale_cleanup import STAGING_PREFIX
 from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
+from boilerplate.composition.updating.task_failure_handler import (
+    TaskFailureHandler,
+    keep_files,
+)
 from boilerplate.models import MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
@@ -75,6 +79,12 @@ _tasks:
       - "print('{{ deploy_token }}', file=open('.token-marker', 'a', encoding='utf-8'))"
 """
 IGNORED = "dist/generated.txt"
+STATE_TASK = """_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "import pathlib; log = pathlib.Path('.boilerplate/migrations.yml'); print(log.exists(), 'seen' in pathlib.Path('boilerplate.lock').read_text(encoding='utf-8'), file=open('.state-seen', 'w', encoding='utf-8'))"
+"""
 
 
 def ask(
@@ -114,6 +124,11 @@ def ask_built(project: Path, name: str, **options: bool) -> AddRequest:
 def undo(_failed: FailedTask) -> TaskFailureChoice:
     """Choose to undo the add, as a user at a prompt may."""
     return TaskFailureChoice.UNDO
+
+
+def keep(_failed: FailedTask) -> TaskFailureChoice:
+    """Choose to keep the files, as a user at a prompt may."""
+    return TaskFailureChoice.KEEP
 
 
 class Added(NamedTuple):
@@ -434,6 +449,19 @@ class TestOwnTasks(CoreOnly):
 
         assert not (project / ".tasked-marker").exists()
 
+    def test_the_task_runs_before_the_lock_and_the_record(self, project: Path) -> None:
+        """Run the tasks first: design 06 §Add pipeline orders Tasks, Lock, Record.
+
+        The task looks for the migration log, which a project of core alone has
+        none of before the add appends its record, and for the layer in the
+        lock, and writes what it found.
+        """
+        build_layer(project.parent, "seen", copier=STATE_TASK)
+
+        LayerAdder().add(project, ask_built(project, "seen"))
+
+        assert lines(project / ".state-seen") == ["False False"]
+
     @pytest.fixture
     def secretive(self, project: Path) -> Path:
         """Add a layer whose task reads a secret answer; return the project."""
@@ -479,10 +507,22 @@ class TestAFailedTask(CoreOnly):
             "failing",
         ]
 
-    def test_the_kept_add_is_recorded_as_failed(self, project: Path) -> None:
+    @pytest.mark.parametrize(
+        "on_task_failure",
+        [
+            pytest.param(keep_files, id="non-interactive"),
+            pytest.param(keep, id="terminal-keeps"),
+        ],
+    )
+    def test_the_kept_add_is_recorded_as_failed(
+        self, project: Path, on_task_failure: TaskFailureHandler
+    ) -> None:
+        """Append a failed record, as design 06 §Step 5 says for a kept add."""
         build_layer(project.parent, "failing", copier=FAILING_TASK)
         with pytest.raises(UpdateTaskFailedError):
-            LayerAdder().add(project, ask_built(project, "failing"))
+            LayerAdder(on_task_failure=on_task_failure).add(
+                project, ask_built(project, "failing")
+            )
 
         (record,) = read_migrations(project)
 

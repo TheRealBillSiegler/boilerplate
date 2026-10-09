@@ -1,8 +1,8 @@
 """The shared finisher of an update or an add, and the restore marker it keeps.
 
 Design 06 §Staging worktree orders what follows the walk: a complete update runs
-its tasks, then writes the lock and appends the record; §Add pipeline: an add runs
-its tasks, then writes the lock and appends the record; §Step 5: a paused
+its tasks, then writes the lock and appends the record; §Add pipeline: an add
+does the same, its tasks before its lock and its record; §Step 5: a paused
 update appends its conflict record and writes no lock. §Interrupted copy back:
 the ref and then the marker are written before the copy back changes a file,
 the phase advances as the run proceeds, and both are removed after the record.
@@ -142,13 +142,14 @@ class TestOrder:
 
         assert seen.calls == order
 
-    def test_an_undone_update_writes_no_lock_and_no_record(
-        self, project: Path, staging_root: Path
+    @pytest.mark.parametrize("operation", list(RestoreOperation))
+    def test_an_undone_run_writes_no_lock_and_no_record(
+        self, project: Path, staging_root: Path, operation: RestoreOperation
     ) -> None:
-        """Stop after the tasks when they undo the update."""
+        """Stop after the tasks when they undo the update or the add."""
         seen = Seen(project)
 
-        _, kept = finish(project, staging_root, seen, keep=False)
+        _, kept = finish(project, staging_root, seen, operation=operation, keep=False)
 
         assert (kept, seen.calls) == (False, ["tasks"])
 
@@ -180,14 +181,15 @@ class TestJournal:
 
 
 class TestMarker:
+    @pytest.mark.parametrize("operation", list(RestoreOperation))
     def test_the_tasks_run_under_a_marker_of_the_run(
-        self, project: Path, staging_root: Path
+        self, project: Path, staging_root: Path, operation: RestoreOperation
     ) -> None:
-        """Describe the run in the marker while a complete update's tasks run."""
+        """Describe the run in the marker while a complete run's tasks run."""
         seen = Seen(project)
         start = head(project)
 
-        result, _ = finish(project, staging_root, seen)
+        result, _ = finish(project, staging_root, seen, operation=operation)
 
         marker = seen.markers["tasks"]
         assert marker is not None
@@ -199,12 +201,12 @@ class TestMarker:
             marker.result_commit,
             dict(marker.targets),
         ) == (
-            RestoreOperation.UPDATE,
+            operation,
             RestoreKind.COMPLETE,
             RestorePhase.TASKS,
             start,
             result,
-            TARGETS,
+            targets_of(operation),
         )
 
     def test_the_ref_pins_the_result_while_the_run_finishes(
@@ -233,6 +235,9 @@ class TestMarker:
                 RestoreOperation.ADD, RestoreKind.COMPLETE, "lock", id="add-lock"
             ),
             pytest.param(
+                RestoreOperation.ADD, RestoreKind.COMPLETE, "record", id="add-record"
+            ),
+            pytest.param(
                 RestoreOperation.UPDATE, RestoreKind.PAUSED, "record", id="paused"
             ),
         ],
@@ -253,22 +258,6 @@ class TestMarker:
         marker = seen.markers[step]
         assert marker is not None
         assert marker.phase is RestorePhase.RECORDING
-
-    def test_an_adds_tasks_run_at_the_tasks_phase(
-        self, project: Path, staging_root: Path
-    ) -> None:
-        """Mark an add's tasks phase as an update's: its tasks run before its record."""
-        seen = Seen(project)
-
-        result, _ = finish(project, staging_root, seen, operation=RestoreOperation.ADD)
-
-        marker = seen.markers["tasks"]
-        assert marker is not None
-        assert (marker.operation, marker.phase, seen.refs["tasks"]) == (
-            RestoreOperation.ADD,
-            RestorePhase.TASKS,
-            result,
-        )
 
     @pytest.mark.parametrize("keep", [True, False], ids=["finished", "undone"])
     def test_no_marker_and_no_ref_remain_after_the_run(

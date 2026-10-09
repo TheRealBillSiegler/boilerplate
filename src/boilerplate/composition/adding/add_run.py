@@ -68,9 +68,10 @@ class AddRun:
 
     The layer copies into the worktree, which is committed so the copy back can
     restore the checkout from it. The checkout then holds the layer as
-    uncommitted changes, the layer's tasks run there once, and the lock and the
-    migration record are written. A task that fails after the copy back is handed
-    to the caller's handler, which keeps the add or undoes it.
+    uncommitted changes, the layer's tasks run there once, against the finished
+    project, and the lock and the migration record are written. A task that
+    fails is handed to the caller's handler, which keeps the add, recorded as
+    failed, or undoes it, leaving no record.
     """
 
     def __init__(
