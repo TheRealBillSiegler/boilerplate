@@ -443,7 +443,7 @@ An entry in `.boilerplate/migrations.yml` recording one finished operation.
 | `error` | string or null | Error message if status is not `success` (or `created`/`adopted`, both of which are success-shaped terminal values) |
 | `classification` | enum or null | `PATCH`, `MINOR`, or `MAJOR` for `update` records; `null` for `created`, `adopted` and `add` records (no prior-version comparison applies). |
 | `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
-| `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
+| `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. The run builds it from the [RestoreMarker](#restoremarker): the marker's `finished` followed by its `paused_layer` ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). `null` on every other record. |
 
 **Invariants**: Entries MUST be append-only, and an existing entry MUST NOT be modified. A `conflict` record MUST be appended when a conflict pauses an update, and a `failed` record when a task fails after the copy back.
 
@@ -504,6 +504,8 @@ A restore marker keeps the state of an `update` or `add` run that is copying its
 | `start_commit` | string | The commit HEAD pointed at when the run began |
 | `result_commit` | string | The staging worktree's last per-layer commit, `start_commit` when no layer finished |
 | `targets` | map[string, string] | Each layer of the walk keyed by `LockLayer.name` with the version the walk was updating it to, as in a `conflict` record |
+| `finished` | list[string] | The names of the layers whose steps the walk finished, in walk order, the paused layer excluded. Empty when `kind` is `complete`. |
+| `paused_layer` | string | The name of the layer whose merge left conflict markers, which no commit holds and which follows the finished layers in walk order. Absent when `kind` is `complete`. |
 | `started_at` | ISO 8601 | When the run began |
 
 **File location**: `git rev-parse --git-path boilerplate-restore.json`, which resolves under the git directory of the worktree the command runs in.
