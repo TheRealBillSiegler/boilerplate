@@ -36,6 +36,8 @@ from tests.boilerplate.templates.conftest import git
 from tests.integration.boilerplate.composition.staging.conftest import head
 from tests.integration.boilerplate.composition.staging.test_copy_back_failure_integration import (
     disk_full,
+    file_in_use,
+    restore_and_undo_dying,
     restore_dying_after_one_file,
 )
 
@@ -296,6 +298,44 @@ class TestMarker:
             None,
             "",
         )
+
+    @pytest.mark.parametrize(
+        ("undo_failure", "raised"),
+        [
+            pytest.param(file_in_use(), UpdateCopyBackFailedError, id="undo-fails"),
+            pytest.param(KeyboardInterrupt(), KeyboardInterrupt, id="undo-cut-off"),
+        ],
+    )
+    def test_a_failed_undo_keeps_the_marker_and_the_ref(
+        self,
+        project: Path,
+        staging_root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        undo_failure: BaseException,
+        raised: type[BaseException],
+    ) -> None:
+        """Keep both for the rerun when the checkout could not be restored.
+
+        Design 06 removes them because the checkout is back at its pre-update
+        state; here it is not, and rule 4 of the rerun needs the marker at
+        ``copy_back`` and the ref pinning the result.
+        """
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_and_undo_dying(undo_failure),
+        )
+
+        with pytest.raises(raised):
+            finish(project, staging_root, Seen(project))
+        marker = read_marker(project)
+        pinned = git(project, "for-each-ref", "--format=%(objectname)", RESTORE_REF)
+        kept = (
+            None
+            if marker is None
+            else (marker.phase, pinned.strip() == marker.result_commit)
+        )
+
+        assert kept == (RestorePhase.COPY_BACK, True)
 
     def test_an_interrupted_task_run_leaves_the_marker_at_the_tasks_phase(
         self, project: Path, staging_root: Path
