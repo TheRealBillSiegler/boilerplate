@@ -127,6 +127,27 @@ def repo_with_own_remote_copy_as_upstream(tmp_path: Path) -> tuple[Path, str]:
     return local, shared_sha
 
 
+@pytest.fixture
+def repo_whose_branch_name_ends_in_develop(tmp_path: Path) -> tuple[Path, str]:
+    """Build a repo whose branch `topic/develop` tracks its own pushed copy.
+
+    The upstream's last path segment is ``develop``, but it is the branch's
+    own copy, not the integration branch.
+
+    Returns:
+        The repo's working directory and the SHA of the commit both branches
+        share (what ``resolve_base`` should return).
+    """
+    local, shared_sha = _clone_of_seeded_remote(tmp_path)
+    _git(local, "checkout", "-b", "topic/develop")
+    _commit_file(local, "b.txt", "feat: add b")
+    _git(local, "update-ref", "refs/remotes/origin/topic/develop", "HEAD")
+    _git(local, "config", "branch.topic/develop.remote", "origin")
+    _git(local, "config", "branch.topic/develop.merge", "refs/heads/topic/develop")
+
+    return local, shared_sha
+
+
 class TestResolveBase:
     def test_auto_detects_the_upstream_tracking_branch(
         self, repo_with_upstream: tuple[Path, str]
@@ -166,6 +187,13 @@ class TestResolveBase:
         local, shared_sha = repo_with_own_remote_copy_as_upstream
         # Using origin/feature (== HEAD) as the base would return HEAD itself
         # rather than the shared ancestor.
+        assert commit_lint.resolve_base(None, repo_root=local) == shared_sha
+
+    def test_a_branch_named_like_develop_tracking_its_own_copy_is_not_the_base(
+        self, repo_whose_branch_name_ends_in_develop: tuple[Path, str]
+    ) -> None:
+        """An upstream counts as the base only when it is the integration branch."""
+        local, shared_sha = repo_whose_branch_name_ends_in_develop
         assert commit_lint.resolve_base(None, repo_root=local) == shared_sha
 
     def test_a_remote_develop_with_no_shared_history_is_skipped(
