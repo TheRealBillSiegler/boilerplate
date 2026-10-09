@@ -25,14 +25,12 @@ from typing import Final
 
 _REPO_ROOT: Final = Path(__file__).resolve().parent.parent
 
-# The paths whose change turns the scenarios on. Keep in step with the
-# ``composition`` output of the ``changes`` job in ``.github/workflows/ci.yml``.
+# The paths whose change turns the scenarios on. All of ``src/boilerplate/``
+# counts: the scenarios drive the CLI, which reaches every package under it.
+# Keep in step with the ``composition`` output of the ``changes`` job in
+# ``.github/workflows/ci.yml``.
 _COMPOSITION_DIRS: Final = (
-    "src/boilerplate/cli/",
-    "src/boilerplate/composition/",
-    "src/boilerplate/integrations/",
-    "src/boilerplate/models/",
-    "src/boilerplate/templates/",
+    "src/boilerplate/",
     "tests/integration/boilerplate/composition/",
     "tests/boilerplate/templates/",
     "tests/fixtures/family/",
