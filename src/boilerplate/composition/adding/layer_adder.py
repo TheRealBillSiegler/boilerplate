@@ -12,11 +12,12 @@ from boilerplate.composition.adding.add_planner import plan_add
 from boilerplate.composition.adding.add_request import AddRequest
 from boilerplate.composition.adding.add_run import AddRun
 from boilerplate.composition.staging import IntentOperation, check_project_ready
-from boilerplate.composition.staging.operation_lock import operation_lock
+from boilerplate.composition.staging.operation_preflight import preflight
 from boilerplate.composition.updating.task_failure_handler import (
     TaskFailureHandler,
     keep_files,
 )
+from boilerplate.models import RestoreOperation
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 
@@ -82,13 +83,17 @@ class LayerAdder:
                 Copier's own, not a ``BoilerplateError``.
             ConcurrencyContentionError: If another operation on the project
                 still holds its lock when the timeout passes.
+            UpdateInterruptedError: If a restore marker shows a run cut off
+                after its walk that this one cannot finish.
+            UpdatePathObstructedError: If a path the layer added already exists
+                in the checkout as a file or directory git ignores.
         """
         if not (project / LOCK_FILE_NAME).is_file():
             raise ProjectNotManagedError(
                 "Project is not managed by Boilerplate. Use 'boilerplate adopt' first."
             )
         with (
-            operation_lock(project, timeout=self._lock_timeout),
+            preflight(project, RestoreOperation.ADD, timeout=self._lock_timeout),
             ReleaseCheckouts() as checkouts,
             tempfile.TemporaryDirectory(
                 prefix="boilerplate-views-", ignore_cleanup_errors=True

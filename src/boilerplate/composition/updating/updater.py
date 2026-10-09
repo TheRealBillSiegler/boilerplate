@@ -8,7 +8,7 @@ from pathlib import Path
 from boilerplate import __version__
 from boilerplate.common.exceptions import UpdateConflictPausedError
 from boilerplate.composition.staging import check_project_ready
-from boilerplate.composition.staging.operation_lock import operation_lock
+from boilerplate.composition.staging.operation_preflight import preflight
 from boilerplate.composition.updating.task_failure_handler import (
     TaskFailureHandler,
     keep_files,
@@ -22,6 +22,7 @@ from boilerplate.composition.updating.walk.update_walk import (
 )
 from boilerplate.composition.updating.walk.walk_inputs import WalkInputs
 from boilerplate.composition.updating.walk.walk_planner import plan_walk
+from boilerplate.models import RestoreOperation
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 
@@ -161,16 +162,20 @@ class Updater:
             UpdateCheckoutChangedError: If the checkout changed during the walk.
             ConcurrencyContentionError: If another operation on the project
                 still holds its lock when the timeout passes.
+            UpdateInterruptedError: If a restore marker shows a run cut off
+                after its walk that this one cannot finish.
+            UpdatePathObstructedError: If a path the walk added already exists
+                in the checkout as a file or directory git ignores.
         """
         request = request or UpdateRequest()
-        check_project_ready(project)
         with (
-            operation_lock(project, timeout=self._lock_timeout),
+            preflight(project, RestoreOperation.UPDATE, timeout=self._lock_timeout),
             ReleaseCheckouts() as checkouts,
             tempfile.TemporaryDirectory(
                 prefix="boilerplate-views-", ignore_cleanup_errors=True
             ) as workdir,
         ):
+            check_project_ready(project)
             lock = read_lock(project)
             plan = plan_walk(project, request, lock, checkouts, Path(workdir))
             for warning in plan.warnings:
