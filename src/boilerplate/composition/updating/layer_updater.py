@@ -44,11 +44,21 @@ def update_layer(
     walk stays out of the merge base. The in-place render then records the full
     answers again.
 
+    The step grants Copier's ``unsafe``, its permission to load extensions and
+    run tasks and migrations, only when ``views.unsafe_for`` says Copier's own
+    check would flag the step: the policy compose follows with
+    ``grants_unsafe``, so a layer that loads and runs nothing keeps Copier's
+    consent gate. The grant is no wider than that check, because ``unsafe`` also
+    switches off Copier's check that a render stays inside the project. It
+    depends on `options` for one case: the target release's tasks count only
+    when the step does not skip them.
+
     Args:
         project: The composed project, a git repository with a clean tree.
         release: The layer to update and the release to move it to.
         views: The view of the layer and its ancestors at the recorded
-            releases and at the target releases.
+            releases and at the target releases, and whether they need the
+            ``unsafe`` grant.
         inputs: The values the user supplies and the secrets given earlier in
             the same update, as data for the questions in the layer's scope,
             and every layer's recorded answers as the walk began.
@@ -63,6 +73,8 @@ def update_layer(
     Raises:
         RecordedAnswerRejectedError: If a non-interactive step finds a recorded
             answer of the layer that the target view rejects.
+        UnsafeTemplateError: If the layer's releases hold a feature Copier
+            refuses without the grant and ``views.unsafe_for`` is false.
     """
     options = options or UpdateOptions()
     recorded_by_layer = read_recorded_answers_by_layer(project)
@@ -88,7 +100,7 @@ def update_layer(
         skip_answered=options.skip_answered,
         overwrite=True,
         quiet=options.quiet,
-        unsafe=True,
+        unsafe=views.unsafe_for(skip_tasks=options.skip_tasks),
         skip_tasks=options.skip_tasks,
         layer=release.layer,
         old_view=views.old,
