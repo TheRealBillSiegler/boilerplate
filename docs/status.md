@@ -114,6 +114,7 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 | `version` | :material-check-circle:{ .status-shipped } | `cli/commands/version.py` — beyond design 05's specified areas, which define `--version` as a global flag only |
 | `config` | :material-circle-outline:{ .status-design } | Retired with the Profile system; a repurposed `config` for the profile is designed, deferred |
 | `update` | :material-circle-outline:{ .status-design } | No update lifecycle |
+| `add` | :material-circle-outline:{ .status-design } | Not implemented |
 | `status` | :material-circle-outline:{ .status-design } | Not implemented |
 | `adopt` | :material-circle-outline:{ .status-design } | Not implemented |
 | `eject` | :material-circle-outline:{ .status-design } | Not implemented |
