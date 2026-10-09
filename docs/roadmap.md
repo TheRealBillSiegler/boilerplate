@@ -23,7 +23,7 @@ The design documents are well-factored, but two seams cross document boundaries 
 | 0 | Release gate: CI, error codes, YAML hardening, determinism, content audit | — | Small–medium per item |
 | 1 | Provenance and atomicity for `new` (lock file, atomic render) | 0 | Large |
 | 2 | Read-side lock tooling (`lock verify`, local-only) | 1 | Medium |
-| 3 | `update` + `adopt` + `eject` — the longest pole | 1 (interface dep on 4 for remote) | Large |
+| 3 | `update` + `add` + `adopt` + `eject` — the longest pole | 1 (interface dep on 4 for remote) | Large |
 | 4 | Catalog federation and remote sources | 1; parallel with 3 | Large |
 | 5 | Environment provisioning | 0 (topology contract), 1 (primitives); parallel with 3 and 4 | Large |
 | 6 | Observability track (cross-cutting) | Any time after 0 | Medium |
@@ -54,7 +54,7 @@ Every later lifecycle feature stands on these two units. They are sequential, no
 
 `lock verify` only, explicitly scoped **local-only**: checksum recompute and answers-file hash compare against the lock written in Phase 1 (medium). `status` is deferred to Phase 3 — it must report drift, which requires the fetch layer (Phase 4) or at minimum the update machinery to have meaningful output; shipping it in Phase 2 would imply guarantees it cannot yet check. Source-reachability checks arrive with Phase 4's fetch layer; environment-state reporting arrives with Phase 5.
 
-## Phase 3 — `update` + `adopt` (longest pole)
+## Phase 3 — `update` + `add` + `adopt` (longest pole)
 
 Ship **local-source update first**; remote-source update has a declared interface dependency on Phase 4's fetch layer (large overall).
 
@@ -64,7 +64,7 @@ Prerequisites inside the composition engine, in order:
 2. Per-layer answers-file consumption (the per-layer answers files projects already carry).
 3. Version-conflict detection and graph size/depth limits.
 
-Then the three-way merge envelope — `UpdatePlan`, the staging worktree, and the restore marker that keeps an interrupted copy back in git (`new`'s staging pattern needs neither, so Phase 1 defers it) — and finally `adopt`, which reuses the same machinery to bring an existing project under lock management. The conflict-pause / safe-orphan / never-auto-delete semantics governing this envelope are specified in [ADR-007](design/adr-007-update-model.md).
+Then the three-way merge envelope — `UpdatePlan`, the staging worktree, and the restore marker that keeps an interrupted copy back in git (`new`'s staging pattern needs neither, so Phase 1 defers it) — then `add`, which stages and copies back through the same worktree and restore marker to add a layer to a managed project, and finally `adopt`, which reuses the same machinery to bring an existing project under lock management. The conflict-pause / safe-orphan / never-auto-delete semantics governing this envelope are specified in [ADR-007](design/adr-007-update-model.md).
 
 `status` ships here rather than in Phase 2: reporting drift requires the update machinery to have a meaningful reference point, and source-reachability checks require Phase 4's fetch layer. A Phase 2 `status` would silently omit the most useful signals.
 
@@ -109,7 +109,7 @@ Unsequenced planned scope — an item leaves the backlog once a phase adopts it 
 - **Author lint** — fails the build when a layer's delta unnecessarily repeats a base default.
 - **Generated-project CI scaffolding** — templates ship CI configuration for the generated project itself, not just the three quality-check commands you wire into your own CI provider.
 - **A deploy-time and runtime guardrail layer** — checks that run after generation, not only at scaffold time.
-- **Design 05's confirmation contracts** — plan-then-prompt for mutating commands: `update`, `env apply`, and `eject` show their plan before acting.
+- **Design 05's confirmation contracts** — plan-then-prompt for mutating commands: `update`, `add`, `env apply`, and `eject` show their plan before acting.
 - **A backward-compatibility test suite** — pins the public surfaces (CLI, template contract, lock schema) and fails CI on an accidental break.
 
 ## Release workstream
