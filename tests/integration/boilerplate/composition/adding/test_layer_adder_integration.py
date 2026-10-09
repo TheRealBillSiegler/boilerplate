@@ -357,6 +357,19 @@ class TestRefusals:
             "Commit or stash them before running boilerplate add."
         )
 
+    def test_the_working_tree_is_checked_before_the_lock_lists_the_layer(
+        self, family: Family, project: Path, staging_folders: list[str]
+    ) -> None:
+        """Check a clean tree before the layer's presence, in design 05's table order.
+
+        A dirty tree that also lists the layer stops as not ready.
+        """
+        (project / "notes.txt").write_text("uncommitted\n", encoding="utf-8")
+
+        self.refuse(
+            project, ask(family, "service"), UpdateProjectNotReadyError, staging_folders
+        )
+
     def test_a_layer_already_in_the_project(
         self, family: Family, project: Path, staging_folders: list[str]
     ) -> None:
