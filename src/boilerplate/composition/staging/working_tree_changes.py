@@ -71,7 +71,14 @@ def apply_working_tree_changes(worktree: Path, project: Path) -> None:
             if target.is_symlink():
                 # Writing through the existing link would change what it points at.
                 target.unlink()
-            shutil.copy2(source, target, follow_symlinks=False)
+            if source.is_symlink():
+                # Windows needs to be told a link points at a directory, and
+                # copy2 cannot tell it when the target is not yet in the checkout.
+                target.symlink_to(
+                    source.readlink(), target_is_directory=source.is_dir()
+                )
+            else:
+                shutil.copy2(source, target)
         else:
             target.unlink(missing_ok=True)
         _logger.debug("Applied the worktree's change to %s", relative)
