@@ -67,9 +67,15 @@ class TestScenarioChoice:
 
     def test_an_unknown_merge_base_runs_them(self) -> None:
         """Run the scenarios when the merge base with origin/develop is unknown."""
-        run, reason = scenario_choice(None, [])
+        run, _ = scenario_choice(None, [])
 
-        assert (run, "no merge base" in reason) == (True, True)
+        assert run is True
+
+    def test_an_unknown_merge_base_says_so(self) -> None:
+        """Name the missing merge base as the reason for running the scenarios."""
+        _, reason = scenario_choice(None, [])
+
+        assert "no merge base" in reason
 
     def test_an_unreadable_diff_runs_them(self) -> None:
         """Run the scenarios when the diff against the merge base cannot be read."""
