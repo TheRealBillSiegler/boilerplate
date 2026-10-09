@@ -48,6 +48,9 @@ def _run(argv: Sequence[str], *, repo_root: Path) -> str:
 
     Returns:
         The command's stdout, stripped of surrounding whitespace.
+
+    Raises:
+        subprocess.CalledProcessError: If the command exits non-zero.
     """
     result = subprocess.run(
         argv,
