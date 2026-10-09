@@ -18,6 +18,7 @@ from typing import Any, NamedTuple, TypedDict, Unpack
 
 import pytest
 import yaml
+from copier import run_update
 
 from boilerplate.composition.rendering.render_role import render_role
 from boilerplate.composition.rendering.scoped_worker import ScopedWorker
@@ -377,6 +378,30 @@ def update_family_layer(
         templates={new: templates_at(family, work, after)},
         old_templates=templates_at(family, work, before),
         **options,
+    )
+
+
+def update_by_hand(project: Path, layer: str, vcs_ref: str) -> None:
+    """Mirror a plain ``copier update`` of one layer through ``run_update``.
+
+    The documented command runs from the project root with the layer's answers
+    file and a target tag; this call takes the same inputs through Copier's
+    public API, with the prompts, tasks and trust questions answered up front.
+
+    Args:
+        project: The committed, git-backed project.
+        layer: The layer whose answers file selects what updates.
+        vcs_ref: The tag to update the layer to.
+    """
+    run_update(
+        project,
+        answers_file=answers_file_name(layer),
+        vcs_ref=vcs_ref,
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+        skip_tasks=True,
+        quiet=True,
     )
 
 

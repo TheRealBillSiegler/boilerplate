@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from copier import run_update
 
 from tests.boilerplate.templates.conftest import commit_all, git, rehome_layer
 from tests.integration.boilerplate.composition.family import Family
@@ -26,6 +25,7 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
     compose_family,
     copy_project,
+    update_by_hand,
 )
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
@@ -73,17 +73,8 @@ def base(
 
 
 def _update_by_hand(project: Path) -> None:
-    """Mirror the documented service-layer ``copier update`` via ``run_update``."""
-    run_update(
-        project,
-        answers_file=ANSWERS_FILE,
-        vcs_ref="1.3.0",
-        defaults=True,
-        overwrite=True,
-        unsafe=True,
-        skip_tasks=True,
-        quiet=True,
-    )
+    """Update the service layer to its 1.3.0 release, as the documented command does."""
+    update_by_hand(project, "service", "1.3.0")
 
 
 def _record_the_computed_value(project: Path) -> None:

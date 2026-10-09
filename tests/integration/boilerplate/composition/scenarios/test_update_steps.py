@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
-from copier import run_update
 from copier.errors import UserMessageError
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
@@ -38,6 +37,7 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     recording_worker,
     require,
     templates_at,
+    update_by_hand,
     update_family_layer,
 )
 from tests.integration.boilerplate.composition.scenarios.prompt_session import (
@@ -537,16 +537,7 @@ def hand_run_service(
         project = compose_family(
             family, work, "service", HAND_RUN_BEFORE, {"author_name": AUTHOR}
         )
-        run_update(
-            project,
-            answers_file=".copier-answers.service.yml",
-            vcs_ref=HAND_RUN["service"],
-            defaults=True,
-            overwrite=True,
-            unsafe=True,
-            skip_tasks=True,
-            quiet=True,
-        )
+        update_by_hand(project, "service", HAND_RUN["service"])
         commit_all(project, "hand-run service 1.1.0")
         trimmed = answers_file(project, "service")
         require(
