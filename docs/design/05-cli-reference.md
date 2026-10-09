@@ -729,7 +729,7 @@ Run automated regression tests for a template using fixture directories. See §0
 
 Runs health checks and reports issues with remediation guidance.
 
-**Checks**: Settings loadable, template directories exist, Copier available, Git available, catalog sources reachable, environment profiles valid, Windows `core.longpaths` enabled (Windows only), WSL2 proto binary not from Windows host (WSL2 only). In a project, `doctor` also reports each disagreement between a layer's answers file and `boilerplate.lock` ([04 §Safe Update](04-composition-engine.md#safe-update)) and each layer whose answers file lacks the key of a question of its scoped view at the recorded versions that is neither secret nor hidden (hidden meaning its `when` evaluates false under the recorded answers), naming the layer and the missing keys.
+**Checks**: Settings loadable, template directories exist, Copier available, Git available, catalog sources reachable, environment profiles valid, Windows `core.longpaths` enabled (Windows only), WSL2 proto binary not from Windows host (WSL2 only). In a project, `doctor` also reports each disagreement between a layer's answers file and `boilerplate.lock` ([04 §Safe Update](04-composition-engine.md#safe-update)) and each layer whose answers file lacks the key of a question of its scoped view at the recorded versions that is neither secret nor hidden ([04 §Safe Update](04-composition-engine.md#safe-update)), naming the layer and the missing keys.
 
 **Output** (unified check-result format):
 
