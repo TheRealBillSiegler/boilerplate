@@ -15,7 +15,6 @@ from boilerplate.composition.adding.add_recorder import AddRecorder
 from boilerplate.composition.adding.add_request import AddRequest
 from boilerplate.composition.adding.add_run import add_failure_message, record_add
 from boilerplate.composition.adding.add_status import AddStatus
-from boilerplate.composition.adding.task_runner import run_add_tasks
 from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
@@ -23,6 +22,7 @@ from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
+from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.integrations.copier_types import TaskError, load_answersfile_data
 from boilerplate.models import BoilerplateLock, RestoreMarker
@@ -159,11 +159,11 @@ class InterruptedAdd:
             return True
         plan = planned()
         try:
-            run_add_tasks(
+            run_tasks(
                 self._project,
                 plan.release,
                 plan.view,
-                TaskRun(tasks=plan.tasks, secrets={}),
+                TaskRun(operation="copy", tasks=plan.tasks, secrets={}),
                 UpdateOptions(
                     quiet=self._request.quiet,
                     interactive=self._request.interactive,

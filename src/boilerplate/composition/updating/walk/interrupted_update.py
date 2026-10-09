@@ -16,7 +16,7 @@ from boilerplate.composition.updating.layer_release import LayerRelease
 from boilerplate.composition.updating.release_views import ReleaseViews
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
-from boilerplate.composition.updating.task_runner import run_update_tasks
+from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
@@ -180,11 +180,13 @@ class InterruptedUpdate:
         releases = recorded_releases(sources, self._targets)
         root = self._root
         try:
-            run_update_tasks(
+            run_tasks(
                 self._project,
                 LayerRelease(layer=root, source=sources[root], ref=releases[root].ref),
                 views.step_view(root, releases),
-                TaskRun(tasks=tuple(views.tasks(releases)), secrets={}),
+                TaskRun(
+                    operation="update", tasks=tuple(views.tasks(releases)), secrets={}
+                ),
                 UpdateOptions(
                     quiet=self._request.quiet,
                     interactive=self._request.interactive,
