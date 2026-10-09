@@ -4,7 +4,7 @@
 
 **Date**: 2026-06-22 **Deciders**: Project team (Bill Siegler)
 
-> **Scope note.** The *shape* recorded here — proto as one provider behind an abstraction — is load-bearing for how the pillar grows, and it reconciles a coherence gap (see Context). Until the pillar is built, [08 §Behavior During `env apply`](08-environment-provisioning.md) stands: `env apply` validates-and-warns and does not install, and the toolchain bootstrap is a **user-run** script (`install.ps1`); proto orchestration and this protocol are deferred.
+> **Scope note.** The *shape* recorded here — proto as one provider behind an abstraction — is load-bearing for how the pillar grows, and it reconciles a coherence gap (see Context).
 
 ## Context
 
@@ -13,9 +13,9 @@ Environment Provisioning is specified around **proto** as the toolchain installe
 1. **Proto-optional provisioning.** The bootstrap script (`install.ps1`) provisions tools via `winget`, not proto. A user who wants a winget-based toolchain with **no proto at all** has no first-class way to express it; with `ProtoWorker` as the only interface, proto is a floor, not a choice.
 2. **A "custom command" escape hatch with a promotion path.** The desire to run an ad-hoc provisioning step and *later* "roll it up into something managed."
 
-Both collide with the project's non-negotiable **Reproducibility is mandatory** ([01-overview.md §Core Principles](01-overview.md)) and the fail-closed trust model: an arbitrary command is non-deterministic, non-pinnable arbitrary code. They also collide with a stated MUST: [08 §Behavior During `env apply`](08-environment-provisioning.md) — *"Boilerplate MUST NOT invoke package managers on the user's behalf"* (packages are advisory; the pillar validates-and-warns only).
+Both collide with the project's non-negotiable **Reproducibility is mandatory** ([01-overview.md §Core Principles](01-overview.md)) and the fail-closed trust model: an arbitrary command is non-deterministic, non-pinnable arbitrary code.
 
-A design exploration (prior art: mise backends, asdf plugins, devcontainer Features vs lifecycle hooks, Copier `_tasks`, proto/Nix; plus adversarial verification against this repo's own principles) converged on the model below. **Key reconciliation of that MUST:** the MUST governs the *orchestrated* `boilerplate env apply` flow. `install.ps1` invoking `winget` is **user-run bootstrap** — the *user* invokes the package manager, not Boilerplate — so user-run bootstrap honors that MUST unchanged. Only the orchestrated provider protocol (Boilerplate invoking a gated installer) reverses it, and this ADR owns that reversal for target-state.
+A design exploration (prior art: mise backends, asdf plugins, devcontainer Features vs lifecycle hooks, Copier `_tasks`, proto/Nix; plus adversarial verification against this repo's own principles) converged on the model below. `install.ps1` invoking `winget` is **user-run bootstrap** — the *user* invokes the package manager, not Boilerplate. The orchestrated provider protocol (Boilerplate invoking a gated installer) is the only path by which Boilerplate installs a package, and the Trust paragraph below gates it.
 
 ## Decision
 
@@ -63,8 +63,8 @@ Recorded version is a **floor** honored on re-apply: declaration > recorded floo
 
 ## Consequences
 
-- **The target narrows 08's blanket prohibition.** Until the pillar is built, validate-and-warn and the user-run `install.ps1` bootstrap stand and the MUST holds; the target replaces "MUST NOT invoke" with "MUST NOT invoke **except** via an allowlisted, pinned, consented provider."
-- **Design-doc changes this forces when the pillar is built:** generalize `ProtoWorker` → Provider Protocol in [01](01-overview.md) and [08](08-environment-provisioning.md); admit first-party providers (`pinned-artifact`) in [ADR-001](adr-001-build-vs-adopt.md)'s pure-orchestrator framing; amend [02 §EnvironmentProvisionRecord](02-data-models.md) (`provider_states` is a resolution input, recorded-version-as-floor) and resolve the `tools`-map vs `provider_states` duplication (derive `tools`); rewrite [08 §Behavior During `env apply`](08-environment-provisioning.md) for the gated-provision reversal.
+- **Installation is gated.** Boilerplate installs a package only through an allowlisted, pinned provider, or through one the user consents to at the prompt, per the Trust paragraph above. The user-run `install.ps1` bootstrap invokes the package manager itself, so it sits outside this rule.
+- **Design-doc changes this decision forces:** generalize `ProtoWorker` → Provider Protocol in [01](01-overview.md) and [08](08-environment-provisioning.md); admit first-party providers (`pinned-artifact`) in [ADR-001](adr-001-build-vs-adopt.md)'s pure-orchestrator framing; amend [02 §EnvironmentProvisionRecord](02-data-models.md) (`provider_states` is a resolution input, recorded-version-as-floor) and resolve the `tools`-map vs `provider_states` duplication (derive `tools`).
 - **Naming hazards:** the plain-file `profile.toml` loader ([ADR-010](adr-010-profile.md), `settings/profile.py`) vs the `EnvironmentProfile` (`boilerplate-env.yml`) overload; "provider" also names catalog/template git-sources. The `package-index` kind overlaps the `profile.toml` loader — prefer *extending* that loader over reinventing it.
 - **Build decomposition (target):** Unit 1 = Provider Protocol + `provider_states` + `pinned-artifact` (the proto-*less* tracer-bullet that proves the abstraction) → Unit 2a = proto refactored in + `system-package` + `package-index` → Unit 2b = active/named configs. Strictly sequential; 2a/2b depend on Unit 1's registry + schema. Substrate/`platform` becoming required on `boilerplate-env.yml` is a breaking change → major bump, spec the migration.
 
