@@ -13,6 +13,7 @@ from boilerplate.composition.updating import (
     LayerRelease,
     StepInputs,
     UpdateViews,
+    read_recorded_answers_by_layer,
     update_layer,
 )
 from tests.boilerplate.templates.conftest import layer_view
@@ -37,7 +38,7 @@ def _update_core(family: Family, project: Path, work: Path, **data: str) -> None
             layer_view("core", templates_at(family, work, BEFORE)),
             layer_view("core", templates_at(family, work, AFTER)),
         ),
-        StepInputs(supplied=data),
+        StepInputs(supplied=data, walk_answers=read_recorded_answers_by_layer(project)),
     )
 
 
