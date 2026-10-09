@@ -16,8 +16,8 @@ class AddRecorder:
     """Appends the record of one add to the project's migration log.
 
     The record names the added layer in ``to_version`` and has no ``from_version``
-    or classification: the layer had no prior version to compare with. It is
-    appended once, in its terminal status.
+    or classification: the layer had no prior version to compare with. The log
+    is append-only, and an add appends one record, when it ends.
     """
 
     def __init__(self, project: Path) -> None:
@@ -37,7 +37,7 @@ class AddRecorder:
         self._append(MigrationStatus.SUCCESS, to_version)
 
     def failed(self, to_version: str, error: str) -> None:
-        """Record an add whose task failed after the copy back.
+        """Record an add whose task failed after the copy back and was kept.
 
         Args:
             to_version: The added layer's specifier, ``name@version``.
