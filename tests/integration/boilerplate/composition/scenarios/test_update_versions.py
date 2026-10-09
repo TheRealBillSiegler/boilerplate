@@ -43,6 +43,7 @@ from boilerplate.models import (
     MigrationStatus,
 )
 from boilerplate.project_state.lock_file import read_lock, write_lock
+from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.types import SerializableVersion
 from tests.boilerplate.templates.conftest import (
     commit_all,
@@ -147,7 +148,8 @@ class Project:
 
     def layers(self, lock: BoilerplateLock) -> tuple[LayerVersions, ...]:
         """Read every layer's versions from the lock and the answers files."""
-        return read_layer_versions(self.root, lock, self.ancestors)
+        with ReleaseCheckouts() as checkouts:
+            return read_layer_versions(self.root, lock, self.ancestors, checkouts)
 
     def hand_run(self, layer: str, tag: str) -> None:
         """Record that `layer` was updated by hand to `tag`, and commit it."""

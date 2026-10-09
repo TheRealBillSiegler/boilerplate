@@ -13,7 +13,7 @@ import pytest
 from packaging.version import Version
 from plumbum.commands.processes import ProcessExecutionError
 
-from boilerplate.integrations.copier_types import recorded_commit_version
+from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from tests.boilerplate.templates.conftest import commit_all, git
 from tests.integration.boilerplate.composition.family import Family
 
@@ -22,6 +22,12 @@ pytestmark = pytest.mark.scenario
 
 def _describe(repo: Path) -> str:
     return git(repo, "describe", "--tags", "--always").strip()
+
+
+def _version_of(source: str, commit: str) -> Version | None:
+    """Return `commit` of `source` read as a version, through a checkout."""
+    with ReleaseCheckouts() as checkouts:
+        return checkouts.get(source, commit).version
 
 
 @pytest.fixture()
@@ -37,16 +43,14 @@ class TestARecordedTag:
 
     @pytest.mark.parametrize("tag", ["1.0.0", "1.1.0", "2.0.0"])
     def test_reads_the_tag_as_its_version(self, core_repo: Path, tag: str) -> None:
-        assert recorded_commit_version(str(core_repo), tag) == Version(tag)
+        assert _version_of(str(core_repo), tag) == Version(tag)
 
     def test_agrees_with_the_commit_copier_records_for_that_tag(
         self, core_repo: Path
     ) -> None:
         git(core_repo, "checkout", "-q", "1.1.0")
 
-        assert recorded_commit_version(str(core_repo), _describe(core_repo)) == Version(
-            "1.1.0"
-        )
+        assert _version_of(str(core_repo), _describe(core_repo)) == Version("1.1.0")
 
 
 class TestACommitPastATag:
@@ -61,7 +65,7 @@ class TestACommitPastATag:
         described = _describe(core_repo)
         assert described.startswith("1.1.0-2-g")
 
-        version = recorded_commit_version(str(core_repo), described)
+        version = _version_of(str(core_repo), described)
 
         assert version is not None
         assert version.base_version == "1.1.0"
@@ -77,7 +81,7 @@ class TestACommitPastATag:
         described = _describe(core_repo)
         assert described.startswith("v2.5.0-1-g")
 
-        version = recorded_commit_version(str(core_repo), described)
+        version = _version_of(str(core_repo), described)
 
         assert version is not None
         assert version.base_version == "2.5.0"
@@ -93,10 +97,10 @@ class TestACommitThatIsNotAVersion:
         plain = tmp_path / "plain"
         shutil.copytree(family.releases["core"]["1.0.0"], plain)
 
-        assert recorded_commit_version(str(plain), "1.0.0") is None
+        assert _version_of(str(plain), "1.0.0") is None
 
     def test_a_ref_the_repository_lacks_raises_instead_of_reading_as_none(
         self, core_repo: Path
     ) -> None:
         with pytest.raises(ProcessExecutionError):
-            recorded_commit_version(str(core_repo), "9.9.9")
+            _version_of(str(core_repo), "9.9.9")

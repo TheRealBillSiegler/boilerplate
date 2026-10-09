@@ -68,7 +68,6 @@ from copier._types import MISSING
 from copier._user_data import AnswersMap, Question, load_answersfile_data
 from copier._vcs import get_git
 from copier.errors import TaskError
-from packaging.version import Version
 from plumbum.commands.processes import ProcessExecutionError
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
@@ -110,34 +109,6 @@ def template_public_attr_names(cls: type[Template]) -> frozenset[str]:
     return frozenset(names)
 
 
-def recorded_commit_version(src_path: str, commit: str) -> Version | None:
-    """Read a recorded ``_commit`` as the version Copier reads it as.
-
-    Copier records ``git describe --tags --always`` of the template in
-    ``_commit``: a bare tag at a release, ``<tag>-<n>-g<hash>`` past one.
-    ``Template.version`` turns that into a PEP 440 version, so a version read
-    here compares the way Copier's own update compares them. Reading it checks
-    the commit out of the template's repository, which clones it.
-
-    Args:
-        src_path: The template source the answers file records in ``_src_path``.
-        commit: The answers file's ``_commit`` value.
-
-    Returns:
-        The version, or ``None`` when the source is not a git repository or the
-        commit reads as no version.
-
-    Raises:
-        plumbum.commands.processes.ProcessExecutionError: If the source cannot
-            check the commit out, as when its history was rewritten.
-    """
-    template = Template(url=src_path, ref=commit)
-    try:
-        return template.version
-    finally:
-        template._cleanup()  # pyright: ignore[reportPrivateUsage]
-
-
 @contextmanager
 def update_operation() -> Generator[None]:
     """Run a block under Copier's ``update`` operation.
@@ -172,7 +143,6 @@ __all__ = [
     "get_git",
     "load_answersfile_data",
     "load_template_config",
-    "recorded_commit_version",
     "template_public_attr_names",
     "update_operation",
 ]
