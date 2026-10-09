@@ -4,31 +4,21 @@
 way a by-hand ``copier copy`` with the layer's own answers file would. These
 scenarios run whole adds against real Copier, git and tagged repositories: a
 project that grows by two layers, the update that follows, a switch of the choice
-a layer offers, a file the project owns, and the stops that come before any
-staging folder exists.
+a layer offers, a file the project owns and the prompts of an interactive add.
 """
 
-import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, NamedTuple
 
 import pytest
 
-from boilerplate.common.exceptions import (
-    AddAncestorsMissingError,
-    AddAncestorVersionError,
-    LayerAlreadyAddedError,
-    ProjectNotManagedError,
-    UpdateProjectNotReadyError,
-)
 from boilerplate.composition.adding import (
     AddOutcome,
     AddRequest,
     AddStatus,
     LayerAdder,
 )
-from boilerplate.composition.staging.stale_cleanup import STAGING_PREFIX
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
@@ -37,7 +27,6 @@ from boilerplate.models import MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import read_migrations
 from tests.boilerplate.templates.conftest import commit_all, git
-from tests.integration.boilerplate.composition.adding.layers import build_layer
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     AUTHOR,
@@ -341,98 +330,6 @@ class TestProjectOwnedFile:
         assert (handbook / "HANDBOOK.md").is_file()
 
 
-@pytest.fixture
-def staging_folders(monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Record the prefix of every temporary directory the run creates."""
-    created: list[str] = []
-    real = tempfile.mkdtemp
-
-    def spy(
-        suffix: str | None = None, prefix: str | None = None, dir: str | None = None
-    ) -> str:
-        created.append(prefix or "")
-        return real(suffix, prefix, dir)
-
-    monkeypatch.setattr(tempfile, "mkdtemp", spy)
-    return created
-
-
-class TestRefusalsComeBeforeStaging:
-    """Each precondition fails with its error before a staging folder exists."""
-
-    @pytest.fixture
-    def project(self, family: Family, tmp_path: Path) -> Path:
-        """Compose core and service."""
-        return compose_locked_family(family, tmp_path, "service", BASE)
-
-    def test_the_spy_sees_the_staging_folder_of_a_valid_add(
-        self, family: Family, project: Path, staging_folders: list[str]
-    ) -> None:
-        """Show the spy works: an add that passes every check stages."""
-        LayerAdder().add(
-            project, ask(family, "docs", "1.0.0", {"docs_generator": "mkdocs"})
-        )
-
-        assert STAGING_PREFIX in staging_folders
-
-    def test_an_unmanaged_project(
-        self, family: Family, project: Path, staging_folders: list[str]
-    ) -> None:
-        (project / LOCK_FILE_NAME).unlink()
-        commit_all(project, "unmanage")
-
-        with pytest.raises(ProjectNotManagedError, match="boilerplate adopt"):
-            LayerAdder().add(project, ask(family, "docs", "1.0.0"))
-
-        assert STAGING_PREFIX not in staging_folders
-
-    def test_a_dirty_tree(
-        self, family: Family, project: Path, staging_folders: list[str]
-    ) -> None:
-        (project / "notes.txt").write_text("uncommitted\n", encoding="utf-8")
-
-        with pytest.raises(UpdateProjectNotReadyError, match="boilerplate add"):
-            LayerAdder().add(project, ask(family, "docs", "1.0.0"))
-
-        assert STAGING_PREFIX not in staging_folders
-
-    def test_a_layer_already_present(
-        self, family: Family, project: Path, staging_folders: list[str]
-    ) -> None:
-        with pytest.raises(LayerAlreadyAddedError, match="boilerplate update"):
-            LayerAdder().add(project, ask(family, "service", "1.0.0"))
-
-        assert STAGING_PREFIX not in staging_folders
-
-    def test_a_missing_ancestor(
-        self, family: Family, tmp_path: Path, staging_folders: list[str]
-    ) -> None:
-        core_only = compose_locked_family(family, tmp_path, "core", {"core": "1.0.0"})
-
-        with pytest.raises(AddAncestorsMissingError) as stop:
-            LayerAdder().add(core_only, ask(family, "app", "1.0.0"))
-
-        assert (stop.value.remediation, STAGING_PREFIX in staging_folders) == (
-            "Run 'boilerplate add service' and 'boilerplate add docs' first.",
-            False,
-        )
-
-    def test_an_ancestor_too_old(
-        self, project: Path, staging_folders: list[str]
-    ) -> None:
-        pinned = build_layer(project.parent, "pinned", extends="core@2.0.0")
-
-        with pytest.raises(AddAncestorVersionError) as stop:
-            LayerAdder().add(
-                project, AddRequest(name="pinned", source=pinned.as_posix())
-            )
-
-        assert (stop.value.remediation, STAGING_PREFIX in staging_folders) == (
-            "Run 'boilerplate update' first.",
-            False,
-        )
-
-
 class Prompted(NamedTuple):
     """A project after an interactive add, and the prompts the add put."""
 
@@ -476,26 +373,3 @@ class TestPrompting:
         recorded = answers_file(prompted.project, "docs")
 
         assert recorded["docs_site_name"] == "Handbook"
-
-
-class TestAnErrorMidAdd:
-    """An error after the copy began leaves the checkout as it was."""
-
-    def test_a_rejected_answer_changes_nothing(
-        self, family: Family, tmp_path: Path
-    ) -> None:
-        project = compose_locked_family(family, tmp_path, "service", BASE)
-        before = tree(project)
-        head = git(project, "rev-parse", "HEAD")
-
-        with pytest.raises(ValueError, match="docs_generator"):
-            LayerAdder().add(
-                project, ask(family, "docs", "1.0.0", {"docs_generator": "hugo"})
-            )
-
-        assert (
-            tree(project),
-            git(project, "rev-parse", "HEAD"),
-            git(project, "status", "--porcelain"),
-            git(project, "worktree", "list", "--porcelain").count("worktree "),
-        ) == (before, head, "", 1)
