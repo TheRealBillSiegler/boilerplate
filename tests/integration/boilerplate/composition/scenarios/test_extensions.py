@@ -48,10 +48,10 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     merge_state,
     on_own_worker,
     substitute,
-    temp_dir_inside,
     templates_at,
     write,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 LOADER = "copier_template_extensions.TemplateExtensionLoader"
 FIRST_RELEASES = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}

@@ -34,10 +34,10 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     merge_state,
     recording_worker,
     substitute,
-    temp_dir_inside,
     update_family_layer,
     write,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 # ------------------------------------------------------------------ S16
 

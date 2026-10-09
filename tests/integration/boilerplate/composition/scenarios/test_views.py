@@ -53,7 +53,6 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     merge_state,
     on_own_worker,
     substitute,
-    temp_dir_inside,
     templates_at,
     tree,
     update_family_layer,
@@ -62,6 +61,7 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
 from tests.integration.boilerplate.composition.scenarios.extensions.leak_hook import (
     LEAKED,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 LOADER = "copier_template_extensions.TemplateExtensionLoader"
 SLUGIFY = "boilerplate.templates._jinja_extensions.slugify:SlugifyExtension"

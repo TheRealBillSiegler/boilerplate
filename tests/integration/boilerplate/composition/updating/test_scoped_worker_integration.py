@@ -19,9 +19,9 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     Recording,
     compose_family,
     recording_worker,
-    temp_dir_inside,
     update_family_layer,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 pytestmark = [pytest.mark.scenario]
 
