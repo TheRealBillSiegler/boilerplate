@@ -100,7 +100,8 @@ def build_layer_view(composition: Composition) -> LayerView:
         The merged questions and the importable extension union, and the
         file-path extension specs of every layer but the last as the files at
         their releases; the last layer's own file-path specs are left to
-        Copier. It also names the layer that declares each question.
+        Copier. It also names the layer that declares each question and
+        carries the accumulated ``_secret_questions``.
     """
     raw = composition.final.get("_jinja_extensions")
     extensions = (
@@ -113,11 +114,15 @@ def build_layer_view(composition: Composition) -> LayerView:
         for layer in composition.layers[:-1]
         for extension in _ancestor_extensions(layer)
     )
+    secrets = composition.final.get("_secret_questions")
     return LayerView(
         dict(composition.merged_questions_schema),
         extensions,
         ancestor_extensions,
         declaring_layers(composition),
+        frozenset(str(name) for name in secrets)
+        if isinstance(secrets, list)
+        else frozenset(),
     )
 
 

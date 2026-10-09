@@ -28,6 +28,14 @@ class TestRequiredAnswerKeys:
     def test_a_secret_question_is_not(self) -> None:
         assert set(required_answer_keys(_view(api_token={"secret": True}))) == set()
 
+    def test_a_question_the_secret_questions_directive_names_is_not(self) -> None:
+        """Copier records no answer for a name `_secret_questions` lists."""
+        view = LayerView(
+            {"name": {}, "api_token": {}}, (), secret_questions=frozenset({"api_token"})
+        )
+
+        assert set(required_answer_keys(view)) == {"name"}
+
     def test_a_derived_question_is_not(self) -> None:
         view = _view(package_name={"default": "{{ x }}", "when": False})
 
