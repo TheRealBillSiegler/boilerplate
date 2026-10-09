@@ -24,6 +24,7 @@ from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock, RestoreMarker
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 
@@ -115,9 +116,7 @@ class InterruptedAdd:
 
     def _plan_add(self, checkouts: ReleaseCheckouts, workdir: Path) -> AddPlan:
         """Plan the add again at the release the layer's answers file records."""
-        recorded = load_answersfile_data(
-            self._project, f".copier-answers.{self._layer}.yml"
-        )
+        recorded = load_answersfile_data(self._project, answers_file_name(self._layer))
         return plan_add(
             self._project,
             AddRequest(
