@@ -12,9 +12,11 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
+import yaml
 
 from tests.integration.boilerplate.composition.scenarios.builders import (
     PROJECT_RECORDED,
+    TEMPLATES,
     answers_file,
     check_bundled_questionnaire,
     run_boilerplate,
@@ -23,6 +25,14 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 LAYERS = ("project", "streamlit")
+
+
+def bundled_version(layer: str) -> str:
+    """Return the version a bundled layer's boilerplate.yml declares."""
+    manifest = yaml.safe_load(
+        (TEMPLATES / layer / "boilerplate.yml").read_text(encoding="utf-8")
+    )
+    return str(manifest["version"])
 
 
 class NewRun(NamedTuple):
@@ -80,11 +90,14 @@ class TestShippedNew:
             "streamlit": PROJECT_RECORDED | {"container_registry", "_src_path"},
         }
 
-    def test_bundled_layers_record_no_template_version(self, new_run: NewRun) -> None:
-        """S21: bundled layers are not git roots, so both render version None."""
+    def test_bundled_layers_render_at_their_own_versions(self, new_run: NewRun) -> None:
+        """S21: each bundled layer renders at its own boilerplate.yml version."""
         stderr = ANSI.sub("", new_run.result.stderr)
+        rendered = re.findall(
+            r"^Copying from template version (\S+)$", stderr, re.MULTILINE
+        )
 
-        assert stderr.count("Copying from template version None") == len(LAYERS)
+        assert rendered == [bundled_version(layer) for layer in LAYERS]
 
     def test_streamlit_overwrites_projects_readme(self, new_run: NewRun) -> None:
         """S21: the streamlit layer reports README as a conflict it overwrites."""
