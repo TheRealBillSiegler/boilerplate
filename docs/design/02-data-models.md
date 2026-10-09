@@ -484,10 +484,10 @@ An intent journal records the in-progress state of a mutating operation for cras
 
 | Operation | Phase identifiers | Phase semantics |
 | --- | --- | --- |
-| `create`, `update`, `add`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
+| `create`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
 | `env_apply` | `staging`, `committing`, `locking` | Same three identifiers as project operations, but `locking` names the Record Write stage (Stage 6) — `environment.yml` is a provenance record, not a lock file. See [EnvironmentProvisionRecord](#environmentprovisionrecord) and §08 Stage 6. |
 
-**Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above. For `update` and `add`, the journal identifies the staging folder for stale cleanup only; recovery of a cut-off copy back reads the [RestoreMarker](#restoremarker).
+**Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above. `update` and `add` have no phase vocabulary of their own: the journal identifies the staging folder for stale cleanup only, and recovery of a cut-off copy back reads the [RestoreMarker](#restoremarker), whose `phase` is their one recovery vocabulary.
 
 ---
 
