@@ -370,7 +370,7 @@ flowchart LR
 
 Implementations MUST:
 
-1. Isolate all Copier API usage behind the `CopierWorker` interface (see [Copier Worker Interface](#copier-worker-interface)).
+1. Isolate all Copier API usage behind the [Copier Worker Interface](#copier-worker-interface).
 2. Include integration tests that verify the per-layer render loop produces the correct destination tree against the declared Copier version.
 3. Treat Copier version upgrades as requiring explicit validation, not automatic adoption.
 
