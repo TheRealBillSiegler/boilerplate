@@ -69,7 +69,7 @@ ON_WINDOWS = sys.platform == "win32"
 # Copier's own API in a fresh interpreter: pytest's import hooks would turn the
 # loader's first `__import__` attempt on a path into a ValueError the loader
 # does not catch, where a plain interpreter raises ImportError and the loader
-# falls back to the file path, as in the probe's standalone run.
+# falls back to the file path, as in a standalone run.
 RENDER = (
     "import sys\n"
     "from copier import run_copy\n"
