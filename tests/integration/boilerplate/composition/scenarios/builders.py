@@ -487,7 +487,7 @@ class VanillaWorker(ScopedWorker):
 
 
 def by_ref_worker(recorded_ref: str, target_ref: str) -> type[ScopedWorker]:
-    """Return a worker that keys its views by template ref, as the first design did.
+    """Return a worker that keys views by ref, a control for the per-render view.
 
     It looks the view up by the ref Copier sets on the render, in a mapping
     from the recorded ref to the old view and the target ref to the target
