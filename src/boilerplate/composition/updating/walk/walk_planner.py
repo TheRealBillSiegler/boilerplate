@@ -1,7 +1,7 @@
 """Plan an update walk: every check that comes before staging."""
 # Spec: docs/design/06-project-lifecycle.md §Update Pipeline
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from boilerplate.composition.updating.answers_completeness import (
@@ -15,6 +15,9 @@ from boilerplate.composition.updating.release_ref import ReleaseRef
 from boilerplate.composition.updating.release_views import ReleaseViews
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.versions import (
+    LayerVersions,
+    ResumePlan,
+    VersionResolution,
     plan_resume,
     read_layer_versions,
     resolve_versions,
@@ -27,6 +30,7 @@ from boilerplate.composition.updating.walk.layer_sources import read_layer_sourc
 from boilerplate.composition.updating.walk.lock_releases import lock_releases
 from boilerplate.composition.updating.walk.target_releases import (
     Releases,
+    Versions,
     named_releases,
     recorded_releases,
 )
@@ -90,25 +94,16 @@ def plan_walk(
     )
     records = read_migrations(project)
     last_record = records[-1] if records else None
-
     explicit_releases, explicit_versions = named_releases(
         sources, dict(request.targets), checkouts
     )
     resume = plan_resume(layer_versions, last_record, explicit_versions or None)
-    latest = {layer: None for layer in layers if layer not in request.targets}
-    latest_releases, latest_versions = (
-        named_releases(sources, latest, checkouts) if resume is None else ({}, {})
-    )
-    planned = explicit_versions | latest_versions
-    resolution = resolve_versions(
-        layer_versions,
-        {layer: planned[layer] for layer in layers} if resume is None else {},
-        resume,
-    )
-    target_releases: Releases = (
-        {layer: (explicit_releases | latest_releases)[layer] for layer in layers}
+    resolution, target_releases = (
+        _fresh_targets(
+            sources, checkouts, layer_versions, explicit_releases, explicit_versions
+        )
         if resume is None
-        else recorded_releases(sources, resolution.targets)
+        else _resumed_targets(sources, layer_versions, resume)
     )
 
     steps = tuple(
@@ -141,6 +136,59 @@ def plan_walk(
             *(warning.message for warning in resolution.warnings),
         ),
     )
+
+
+def _fresh_targets(
+    sources: Mapping[str, str],
+    checkouts: ReleaseCheckouts,
+    layer_versions: Sequence[LayerVersions],
+    explicit_releases: Releases,
+    explicit_versions: Versions,
+) -> tuple[VersionResolution, Releases]:
+    """Resolve a fresh update: the named layers to their targets, the rest to latest.
+
+    Args:
+        sources: The template source of every layer, keyed by layer name.
+        checkouts: The release checkouts of the update.
+        layer_versions: What the lock and the answers files say about every
+            layer, in the lock's order.
+        explicit_releases: The releases the request's named layers resolve to.
+        explicit_versions: The versions the request's named layers resolve to.
+
+    Returns:
+        The resolution of the versions and the release every layer moves to.
+    """
+    layers = [layer.name for layer in layer_versions]
+    latest = {layer: None for layer in layers if layer not in explicit_releases}
+    latest_releases, latest_versions = named_releases(sources, latest, checkouts)
+    planned = explicit_versions | latest_versions
+    resolution = resolve_versions(
+        layer_versions, {layer: planned[layer] for layer in layers}, None
+    )
+    releases = explicit_releases | latest_releases
+    return resolution, {layer: releases[layer] for layer in layers}
+
+
+def _resumed_targets(
+    sources: Mapping[str, str],
+    layer_versions: Sequence[LayerVersions],
+    resume: ResumePlan,
+) -> tuple[VersionResolution, Releases]:
+    """Resolve a resumed update: every layer to the target the paused update recorded.
+
+    Args:
+        sources: The template source of every layer, keyed by layer name.
+        layer_versions: What the lock and the answers files say about each layer.
+        resume: The plan that resumes the paused update.
+
+    Returns:
+        The resolution of the versions and the release every layer moves to.
+
+    Raises:
+        TemplateNotFoundError: If a source has no tag for a recorded target.
+    """
+    resolution = resolve_versions(layer_versions, {}, resume)
+    return resolution, recorded_releases(sources, resolution.targets)
 
 
 def _step(
