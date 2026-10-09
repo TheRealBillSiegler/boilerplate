@@ -99,7 +99,7 @@ Interactive platforms and hosted environments for learning Python, prototyping, 
 
 ## How Boilerplate maps onto the landscape
 
-Boilerplate fills the **inner-loop slots** — the roles a developer exercises on every edit-check-test-commit cycle — with one opinionated, preconfigured pick each:
+Each first-party template fills the **inner-loop slots** of its ecosystem — the roles a developer exercises on every edit-check-test-commit cycle — with one opinionated, preconfigured pick each, declared through the profile the template requires. The Python picks:
 
 | Slot | Pick |
 | --- | --- |
@@ -112,7 +112,7 @@ Boilerplate fills the **inner-loop slots** — the roles a developer exercises o
 
 Two rules give the mapping its shape:
 
-- **Templates fill slots within the inner-loop slots.** The environment picks the tool; the shipped templates pre-wire that tool's per-project configuration — Ruff's rule set, Pyright's strictness, pytest's options, the `.vscode/` workspace settings — and scaffold adjacent slots such as CI/CD and documentation generation as [gating scaffolding](01-overview.md#glossary) the user opts into.
-- **Slots Boilerplate does not opine on are out of scope by design.** The remaining landscape (profiling, serverless, IaC, PaaS, data tooling, …) is a scope boundary: "should Boilerplate also do X?" is answered by whether X is an inner-loop slot.
+- **Templates declare their slots and fill them.** A template's required profile names the tool per slot, including any secondary toolchain its kind of project needs (the `streamlit` template needs Docker and Bash; on Windows, WSL2); the environment installs and verifies what the profile declares; the template pre-wires each tool's per-project configuration — Ruff's rule set, Pyright's strictness, pytest's options, the `.vscode/` workspace settings — and scaffolds adjacent slots such as CI/CD and documentation generation as [gating scaffolding](01-overview.md#glossary) the user opts into.
+- **Slots no first-party template requires are out of scope by design.** The remaining landscape (profiling, serverless, IaC, PaaS, data tooling, …) is a scope boundary: "should Boilerplate also do X?" is answered by whether some first-party template's kind of project needs X on its golden path. Containerization enters through the `streamlit` template's required profile.
 
 The development environment built from these picks is itself a first-class, managed surface — installation, verification, update, and drift detection across its lifecycle — per [01-overview.md §Environment lifecycle is managed](01-overview.md#environment-lifecycle-is-managed) and the provisioning design in [§08](08-environment-provisioning.md) / [ADR-009](adr-009-environment-provider-protocol.md).
