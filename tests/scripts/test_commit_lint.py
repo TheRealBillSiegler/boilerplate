@@ -265,6 +265,7 @@ class TestMain:
     def test_an_unresolvable_base_names_the_range_on_stderr(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
+        """The message names the range, per `main`'s documented exit-2 contract."""
         commit_lint.main(["--base", "no-such-ref-anywhere"])
 
         assert (
