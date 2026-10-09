@@ -6,10 +6,11 @@ from boilerplate.composition.updating import (
     read_recorded_answers,
     read_recorded_answers_by_layer,
 )
+from boilerplate.project_state.answers_file import answers_file_name
 
 
 def _record(project: Path, layer: str, text: str) -> None:
-    (project / f".copier-answers.{layer}.yml").write_text(text, encoding="utf-8")
+    (project / answers_file_name(layer)).write_text(text, encoding="utf-8")
 
 
 class TestReadRecordedAnswers:

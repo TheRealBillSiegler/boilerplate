@@ -30,6 +30,7 @@ from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.updater import Updater
 from boilerplate.models import BoilerplateLock, MigrationStatus
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.lock_builder import build_lock
 from boilerplate.project_state.lock_file import read_lock, write_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
@@ -290,7 +291,7 @@ class TestStopsBeforeAnyStaging:
         """Refuse a project where a hand-run update moved a layer and its ancestor."""
         project = compose_locked_family(family, tmp_path, "service", SERVICE_BASE)
         for layer in ("core", "service"):
-            answers = project / f".copier-answers.{layer}.yml"
+            answers = project / answers_file_name(layer)
             text = answers.read_text(encoding="utf-8")
             write(answers, text.replace("_commit: 1.0.0", "_commit: 1.1.0"))
         commit_all(project, "hand-run updates")
