@@ -88,6 +88,7 @@ def calculate_line_totals(order_items: list[OrderItem]) -> list[float]:
 - One test module per source module. Mirror the `src/` path: `src/api/auth/claims.py` → `tests/api/auth/test_claims.py`.
 - Use test classes within a file to segment scenarios (happy path, sad path, boundary cases).
 - Do not split test classes for one source module across multiple files.
+- The one exception to mirroring `src/` is `tests/integration/boilerplate/composition/scenarios/`, whose tests span modules; see `tests/AGENTS.md`.
 
 ### Markers
 
