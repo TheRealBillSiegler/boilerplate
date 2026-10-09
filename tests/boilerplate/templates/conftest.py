@@ -557,6 +557,22 @@ def commit_all(repo: Path, message: str, tag: str | None = None) -> None:
         git(repo, "tag", tag)
 
 
+def ignore_locally(repo: Path, pattern: str) -> None:
+    """Make git ignore `pattern` in `repo` through its own exclude file.
+
+    The pattern is not committed, so a file that matches it is ignored in the
+    checkout without any tracked ``.gitignore`` having to name it.
+
+    Args:
+        repo: The git working tree to ignore the pattern in.
+        pattern: A gitignore pattern, such as ``build/``.
+    """
+    exclude = repo / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    with exclude.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(f"{pattern}\n")
+
+
 def copy_layer_into(layer: Path, repo: Path) -> None:
     """Copy a layer's tree into `repo`, ready for `git init`.
 
