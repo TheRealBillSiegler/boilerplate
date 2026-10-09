@@ -272,16 +272,20 @@ def result_commit(project: Path) -> str:
 
 
 def mark_copy_back(
-    project: Path, result: str, kind: RestoreKind = RestoreKind.COMPLETE
+    project: Path, result: str, paused_layer: str | None = None
 ) -> RestoreMarker:
-    """Write the marker of a run cut off in its copy back from `result`."""
+    """Write the marker of a run cut off in its copy back from `result`.
+
+    A run with a `paused_layer` is one a conflict paused there.
+    """
     marker = RestoreMarker(
         operation=RestoreOperation.UPDATE,
-        kind=kind,
+        kind=RestoreKind.COMPLETE if paused_layer is None else RestoreKind.PAUSED,
         phase=RestorePhase.COPY_BACK,
         start_commit=head(project),
         result_commit=result,
         targets=TARGETS,
+        paused_layer=paused_layer,
         started_at=STARTED,
     )
     pin_result(project, result)
@@ -331,7 +335,7 @@ class TestRunToFinish:
     def test_a_paused_copy_back_stops(self, project: Path) -> None:
         """Stop a paused copy back, whose conflicted files no commit holds (rule 4)."""
         result = result_commit(project)
-        mark_copy_back(project, result, RestoreKind.PAUSED)
+        mark_copy_back(project, result, paused_layer="core")
         git(project, "restore", f"--source={result}", "--worktree", "--", ":/")
 
         with pytest.raises(UpdateInterruptedError, match="conflict had paused it"):

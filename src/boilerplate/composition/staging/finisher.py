@@ -13,6 +13,7 @@ from boilerplate.composition.staging.restore_marker_file import (
     write_marker,
 )
 from boilerplate.composition.staging.staging_worktree import StagingWorktree
+from boilerplate.composition.staging.walk_pause import WalkPause
 from boilerplate.models import (
     RestoreKind,
     RestoreMarker,
@@ -65,19 +66,20 @@ class Finisher:
         staging: StagingWorktree,
         *,
         operation: RestoreOperation,
-        kind: RestoreKind,
         targets: Mapping[str, str],
         steps: FinishSteps,
+        paused: WalkPause | None = None,
     ) -> Self:
         """Prepare to finish the run whose walk `staging` holds.
 
         Args:
             staging: The active staging of the run, its walk done.
             operation: The command the run belongs to.
-            kind: Whether the walk finished every layer or a conflict paused it.
             targets: Each layer of the walk, in walk order, with its target
                 version.
             steps: The operation's lock, record and tasks.
+            paused: Where a conflict paused the walk; ``None`` when the walk
+                finished every layer.
 
         Returns:
             The finisher, its marker at the ``copy_back`` phase.
@@ -86,11 +88,13 @@ class Finisher:
             staging.project,
             RestoreMarker(
                 operation=operation,
-                kind=kind,
+                kind=RestoreKind.COMPLETE if paused is None else RestoreKind.PAUSED,
                 phase=RestorePhase.COPY_BACK,
                 start_commit=staging.start_commit,
                 result_commit=staging.last_commit,
                 targets=dict(targets),
+                finished=() if paused is None else paused.finished,
+                paused_layer=None if paused is None else paused.layer,
                 started_at=staging.started_at,
             ),
             steps,

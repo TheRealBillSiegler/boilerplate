@@ -8,6 +8,7 @@ from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
+from boilerplate.composition.staging.walk_pause import WalkPause
 from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.layer_updater import update_layer
@@ -25,7 +26,7 @@ from boilerplate.composition.updating.walk.update_lock_writer import write_updat
 from boilerplate.composition.updating.walk.update_recorder import UpdateRecorder
 from boilerplate.composition.updating.walk.walk_inputs import WalkInputs
 from boilerplate.integrations.copier_types import TaskError
-from boilerplate.models import BoilerplateLock, RestoreKind, RestoreOperation
+from boilerplate.models import BoilerplateLock, RestoreOperation
 
 _logger = logging.getLogger(__name__)
 
@@ -178,26 +179,28 @@ class UpdateWalk:
 
         The layers finished so far, the paused layer included, are copied back
         with the paused layer's conflict markers and unmerged index entries. The
-        conflict record names every layer's target and the finished layers; no
-        lock is written.
+        marker keeps the finished layers and the paused one apart, and the
+        conflict record names every layer's target and the finished layers,
+        the paused one last; no lock is written.
         """
         plan = self._inputs.plan
         paused_at = self._ran[-1]
+        finished = (*plan.skipped, *self._ran[:-1])
 
         def record_conflict() -> None:
             UpdateRecorder(self._inputs.project, plan.lock).conflict(
                 f"{plan.root}@{plan.targets[plan.root]}",
                 conflict_message(paused_at, conflicts),
                 targets=plan.targets,
-                finished=(*plan.skipped, *self._ran),
+                finished=(*finished, paused_at),
             )
 
         finisher = Finisher.for_staging(
             staging,
             operation=RestoreOperation.UPDATE,
-            kind=RestoreKind.PAUSED,
             targets=self._targets(),
             steps=FinishSteps(write_record=record_conflict),
+            paused=WalkPause(finished=finished, layer=paused_at),
         )
         finisher.copy_back(staging)
         finisher.finish()
@@ -213,7 +216,6 @@ class UpdateWalk:
         finisher = Finisher.for_staging(
             staging,
             operation=RestoreOperation.UPDATE,
-            kind=RestoreKind.COMPLETE,
             targets=self._targets(),
             steps=FinishSteps(
                 write_record=self._record,
