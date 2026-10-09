@@ -53,6 +53,11 @@ class BoilerplateLock(BaseModel):
     copier_answers_file_hashes: Mapping[str, str] | None = None
     layers: tuple[LockLayer, ...] = Field(min_length=1)
 
+    @property
+    def root_name(self) -> str:
+        """The name of the root template, which ``add`` never changes."""
+        return self.root_template.partition("@")[0]
+
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
         """Reject an unsupported schema, duplicate layers and stray hashes.

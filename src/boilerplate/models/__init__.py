@@ -6,6 +6,7 @@ from boilerplate.models.boilerplate_lock import (
     BoilerplateLock,
 )
 from boilerplate.models.change_classification import ChangeClassification
+from boilerplate.models.joined_via import JoinedVia
 from boilerplate.models.lock_layer import LockLayer
 from boilerplate.models.migration_record import MigrationRecord
 from boilerplate.models.migration_status import MigrationStatus
@@ -18,6 +19,7 @@ __all__ = [
     "SCHEMA_VERSION",
     "BoilerplateLock",
     "ChangeClassification",
+    "JoinedVia",
     "LockLayer",
     "MigrationRecord",
     "MigrationStatus",
