@@ -17,7 +17,12 @@ from boilerplate.composition.staging.copy_back import (
     list_untracked_paths,
     undo_working_tree,
 )
-from tests.boilerplate.templates.conftest import commit_all, git, init_repo
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    git,
+    ignore_locally,
+    init_repo,
+)
 from tests.integration.boilerplate.composition.staging.conftest import head
 
 
@@ -288,6 +293,27 @@ class TestUndoCopyBack:
             undo_working_tree(project, stage.start_commit, listed)
 
         assert (project / "mine.txt").read_text(encoding="utf-8") == "mine\n"
+
+    def test_leaves_an_ignored_file_and_an_ignored_folder(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Keep what git ignores: the undo lists and removes only untracked files."""
+        ignore_locally(project, "task.log")
+        ignore_locally(project, "build/")
+        with staging(project, staging_root) as stage:
+            self.copy_back_changes(stage)
+            (project / "task.log").write_bytes(b"log\n")
+            (project / "build").mkdir()
+            (project / "build" / "out.bin").write_bytes(b"out\n")
+
+            undo_working_tree(
+                project, stage.start_commit, list_untracked_paths(project)
+            )
+
+        assert [
+            (project / "task.log").read_bytes(),
+            (project / "build" / "out.bin").read_bytes(),
+        ] == [b"log\n", b"out\n"]
 
     def test_undoes_what_a_task_wrote_and_staged(
         self, project: Path, staging_root: Path
