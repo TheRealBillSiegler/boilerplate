@@ -43,10 +43,11 @@ Available now:
 - **Configuration & question merging** — combine layers into one coherent scaffold
 - **Dependency graphs** — visualize template relationships with `boilerplate graph`
 - **Profile** — pre-fill any template's questions (e.g. your org's feed and registry) from a `profile.toml`, without forking
+- **Lock file** — `boilerplate new` writes `boilerplate.lock`, recording each layer's template provenance; nothing reads it yet
 
 Planned (designed, not yet implemented):
 
-- **Lock files** — track template provenance for reproducible scaffolding
+- **Lock verification** — check a project against its lock for reproducible scaffolding
 - **Three-way-merge updates** — update projects non-destructively when templates evolve
 - **Trust model** — control task execution by template source
 
