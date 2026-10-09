@@ -465,3 +465,48 @@ class TestWalkAgreesWithCopier:
                 copier.answers.hidden,
                 copier.answers.last,
             )
+
+
+# Core declares `db_url`; in this layer's view it is asked only for Postgres.
+POSTGRES_ONLY: dict[str, Any] = {
+    "use_pg": {"type": "bool", "default": False},
+    "db_url": {"type": "str", "default": "", "when": "{{ use_pg }}"},
+}
+CORES_DB_URL = {"db_url": "postgres://core"}
+
+
+def _old_copy_data(tmp_path: Path, own: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the old copy's data for a layer whose own file records `own`."""
+    view = LayerView(POSTGRES_ONLY, ())
+    worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+        src_path=str(tmp_path),
+        dst_path=tmp_path / f"{OLD_COPY_DIR_PREFIX}ab12",
+        data=dict(own),
+        old_view=view,
+        target_view=view,
+        old_copy_fill=CORES_DB_URL,
+    )
+    return worker.old_copy_data()
+
+
+class TestTheOldCopyFill:
+    """Design 04: the fill supplies a key the layer's own file lacks.
+
+    Copier records no answer for a hidden question, and data it is given for
+    one still reaches the render, so a question this view hides keeps
+    Copier's default instead of the ancestor's record.
+    """
+
+    def test_a_question_this_view_shows_is_filled(self, tmp_path: Path) -> None:
+        assert _old_copy_data(tmp_path, {"use_pg": True}) == {
+            "db_url": "postgres://core",
+            "use_pg": True,
+        }
+
+    def test_a_question_this_view_hides_is_not(self, tmp_path: Path) -> None:
+        assert _old_copy_data(tmp_path, {"use_pg": False}) == {"use_pg": False}
+
+    def test_a_key_the_own_file_records_keeps_its_value(self, tmp_path: Path) -> None:
+        own = {"use_pg": True, "db_url": "postgres://own"}
+
+        assert _old_copy_data(tmp_path, own) == own
