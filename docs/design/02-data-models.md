@@ -372,7 +372,7 @@ The `boilerplate.lock` file written into a project root after a successful creat
 | `updated_at` | ISO 8601 datetime | UTC timestamp of last update |
 | `root_template` | string | Specifier of the template used to create the project |
 | `copier_answers_file_hashes` | map[string, string] or null | Per-layer SHA-256 hex digests, one entry per template layer that has an answers file. Key = template name (matches `LockLayer.name`); value = SHA-256 hex digest of that layer's `.copier-answers.<layer>.yml`. This is the sole answers-integrity mechanism `lock verify` consults for tamper detection on update. Optional; omitted when no answers files exist. |
-| `layers` | list[LockLayer] | One entry per template layer, in execution order |
+| `layers` | list[LockLayer] | One entry per template layer, in execution order; at least one |
 
 > **Hash format convention**: Hash fields that are fixed to SHA-256 by definition (`copier_answers_file_hashes` values, `proto_lock_hash`) use bare hex strings. Checksum fields that may support alternative algorithms in the future (`LockLayer.checksum`) use the `algorithm:hex` prefix format (e.g., `"sha256:{hex_digest}"`). This allows future algorithm migration for content checksums without a schema change.
 
@@ -392,6 +392,7 @@ The `boilerplate.lock` file written into a project root after a successful creat
 | `bundle_checksum` | string or null | Optional; reserved. Expected checksum of the bundle referenced by `bundle_uri`, used to verify a restored bundle (populated by external/enterprise catalog infrastructure for air-gap restoration). `null` until that infrastructure populates it; never consulted. |
 
 **Invariants**:
+- A lock file MUST hold at least one `layers` entry. A lock with an empty `layers` list does not match the schema, so reading it fails with `BP_LOCK_READ_FAILED`.
 - The lock file MUST be written atomically: write to a temp file in the same directory as the target, then rename.
 - The lock file MUST NOT exist in a partial state.
 - The lock file MUST be written only after Copier has successfully committed the render.
