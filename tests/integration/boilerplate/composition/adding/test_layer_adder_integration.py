@@ -2,10 +2,12 @@
 
 The expected behavior is design 05 §add and design 06 §Adding a layer: the
 preconditions, their errors and remedies, the result as uncommitted changes, the
-lock with the layer last, the migration record, the layer's own tasks and the
-keep-or-undo handling of a failed task.
+lock with the layer last, the migration record, the layer's own tasks, the
+keep-or-undo handling of a failed task and the ignored files a layer wrote, which
+the copy back leaves behind.
 """
 
+import logging
 import tempfile
 from collections.abc import Iterator
 from pathlib import Path
@@ -72,6 +74,7 @@ _tasks:
       - -c
       - "print('{{ deploy_token }}', file=open('.token-marker', 'a', encoding='utf-8'))"
 """
+IGNORED = "dist/generated.txt"
 
 
 def ask(
@@ -488,3 +491,45 @@ class TestAFailedTask(CoreOnly):
             git(project, "status", "--porcelain"),
             (project / MIGRATIONS_FILE).exists(),
         ) == (AddStatus.UNDONE, before[0], before[1], "", False)
+
+
+class TestIgnoredFileTheLayerWrote(CoreOnly):
+    """An ignored file the layer wrote is named, and left behind."""
+
+    def test_outcome_and_log_name_the_path(
+        self, project: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        build_layer(
+            project.parent,
+            "generated",
+            files={IGNORED: "generated\n", "kept.txt": "kept\n"},
+        )
+
+        with caplog.at_level(logging.WARNING):
+            outcome = LayerAdder().add(project, ask_built(project, "generated"))
+
+        assert outcome.status is AddStatus.ADDED
+        assert [w for w in outcome.warnings if "dist/" in w] == [
+            "Layer 'generated' wrote 'dist/', which .gitignore ignores; "
+            "it is not carried into your checkout."
+        ]
+        assert any("dist/" in record.getMessage() for record in caplog.records)
+
+    def test_the_ignored_file_is_not_carried(self, project: Path) -> None:
+        build_layer(
+            project.parent,
+            "generated",
+            files={IGNORED: "generated\n", "kept.txt": "kept\n"},
+        )
+
+        LayerAdder().add(project, ask_built(project, "generated"))
+
+        assert (project / "kept.txt").is_file()
+        assert not (project / IGNORED).exists()
+
+    def test_a_layer_with_no_ignored_file_warns_of_nothing(self, project: Path) -> None:
+        build_layer(project.parent, "plain", files={"kept.txt": "kept\n"})
+
+        outcome = LayerAdder().add(project, ask_built(project, "plain"))
+
+        assert outcome.warnings == ()
