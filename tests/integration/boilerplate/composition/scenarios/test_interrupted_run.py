@@ -332,6 +332,26 @@ class TestInterruptedPause:
         assert marker is not None
         assert (marker.finished, marker.paused_layer) == (("core",), "service")
 
+    def test_the_rerun_names_the_finished_layers_from_the_marker(
+        self, pause_cut_off_at_its_record: Path
+    ) -> None:
+        """Build the conflict record from the marker, not the answers files (rule 6).
+
+        The paused layer's own answers file can hold conflict markers, which no
+        reader of the file gets a release from; the record still names core and
+        then service, the marker's finished layers followed by its paused one.
+        """
+        project = pause_cut_off_at_its_record
+        (project / ".copier-answers.service.yml").write_text(
+            "<<<<<<< before\n_commit: 1.0.0\n=======\n_commit: 1.2.0\n>>>>>>> after\n",
+            encoding="utf-8",
+        )
+
+        Updater().run(project, UpdateRequest(targets=AFTER))
+
+        (record,) = read_migrations(project)
+        assert record.finished == ("core", "service")
+
 
 class PausedRun(NamedTuple):
     """A paused update whose conflict record a crash took, and that record."""

@@ -22,7 +22,6 @@ from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.walk.layer_sources import read_layer_sources
-from boilerplate.composition.updating.walk.paused_layers import paused_layers
 from boilerplate.composition.updating.walk.target_releases import recorded_releases
 from boilerplate.composition.updating.walk.update_lock_writer import write_update_lock
 from boilerplate.composition.updating.walk.update_recorder import UpdateRecorder
@@ -120,9 +119,18 @@ class InterruptedUpdate:
         return self._outcome(UpdateStatus.UPDATED)
 
     def _record_pause(self) -> UpdateOutcome:
-        """Append the conflict record a paused run was cut off before."""
-        finished = paused_layers(self._project, self._marker.targets)
-        paused_at = finished[-1] if finished else self._root
+        """Append the conflict record a paused run was cut off before.
+
+        The record names the marker's finished layers, then its paused layer.
+
+        Raises:
+            RuntimeError: If the marker names no paused layer, which a paused
+                run's marker always does.
+        """
+        paused_at = self._marker.paused_layer
+        if paused_at is None:
+            raise RuntimeError("A paused run's marker names the paused layer.")
+        finished = (*self._marker.finished, paused_at)
         conflicts = list_unmerged_paths(self._project)
         Finisher(
             self._project,
