@@ -99,7 +99,7 @@ version: "2.1.0"
 description: A suitable base for any Python project.
 post_create_message:
   - "Run 'cd {{ project_slug }}' to enter your project."
-  - "Run 'uv sync' to install dependencies."
+  - "Run 'uv run pytest' to run the tests."
 ```
 
 **A derived template (extends project):**
