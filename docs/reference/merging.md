@@ -42,7 +42,7 @@ Composing the app template produces a single questionnaire: `python_version` def
 
 ## File overlay
 
-Each layer renders into the same destination through its own Copier `Worker` invocation, in composition order. Only the first layer's write respects `--force`; every later layer always overwrites, so a file that two layers both ship at the same path ends up with the last layer's content — there is no three-way diff or per-line merge. A layer that adds files at new paths never touches an earlier layer's files. `boilerplate new` ignores every template's `_skip_if_exists` list, so `new --force` overwrites every file; the lists protect project-owned files only during `copier update`.
+Each layer renders into the same destination through its own Copier `Worker` invocation, in composition order. Only the first layer's write respects `--force`; every later layer always overwrites, so a file that two layers both ship at the same path ends up with the last layer's content — there is no three-way diff or per-line merge. A layer that adds files at new paths never touches an earlier layer's files. `boilerplate new` ignores every template's `_skip_if_exists` list, so `--force` overwrites every file; where the lists apply is specified in the [Per-Layer Render Loop](../design/04-composition-engine.md#per-layer-render-loop).
 
 ## Allowlisted directive keys and strategies
 
