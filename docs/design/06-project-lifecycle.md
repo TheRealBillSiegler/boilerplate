@@ -149,9 +149,15 @@ Project update takes an existing Boilerplate project (with `boilerplate.lock`), 
 
 ### Pre-Flight Check
 
-Before starting the update pipeline, Boilerplate MUST check that the project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty. If the tree is dirty, or the project is not a git repository root with at least one commit, Boilerplate MUST fail immediately with `BP_UPDATE_PROJECT_NOT_READY`, exit code `3` and the error `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` `update` has no override; the tree is clean, or the update does not start.
+Before starting the update pipeline, Boilerplate MUST run these checks in order:
 
-A project with submodules (a `.gitmodules` file) MUST stop with `BP_UPDATE_SUBMODULES_UNSUPPORTED` and exit code `3`, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended ([git-worktree](https://git-scm.com/docs/git-worktree)).
+1. The project is a git repository root with at least one commit.
+2. Take the operation lock ([07 §Concurrency Control](07-operational-quality.md#concurrency-control)). Every check below runs inside the lock, so no second operation changes the checkout or the restore marker between a check and the run.
+3. Run the [restore-marker rules](#interrupted-copy-back). A cut-off run's marker is finished, discarded or reported before anything reads the working tree, which that run may have left dirty.
+4. The project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty.
+5. The project has no submodules (a `.gitmodules` file). Otherwise Boilerplate MUST stop with `BP_UPDATE_SUBMODULES_UNSUPPORTED` and exit code `3`, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended ([git-worktree](https://git-scm.com/docs/git-worktree)).
+
+When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE_PROJECT_NOT_READY`, exit code `3` and the error `"Working tree has uncommitted changes. Commit or stash them before running boilerplate update."` `update` has no override; the tree is clean, or the update does not start.
 
 ### Update Pipeline
 
@@ -313,6 +319,74 @@ The user resolves and commits as with plain Copier, then reruns `boilerplate upd
 
 The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
 
+
+### Interrupted copy back
+
+A run cut off while it copies its result back, or while it finishes afterwards, is completed by running the same command again, or set aside with `git stash --include-untracked`. No flag is involved.
+
+The restore marker keeps the state of such a run in git. It is a JSON file at `git rev-parse --git-path boilerplate-restore.json`, paired with the ref `refs/worktree/boilerplate/restore`, which pins the copy back's source commit (`git update-ref`). The fields are in [02 §RestoreMarker](02-data-models.md#restoremarker). Boilerplate MUST write both after the checkout-unchanged and obstruction checks and before the copy back changes a file, for `update` and for `add`; advance the marker's `phase` as the run proceeds; and remove both, file and ref (`git update-ref -d`), after the run appends its record.
+
+- `kind` is `complete` for a walk that finished every layer, and `paused` for one a conflict paused, which runs no tasks and writes no lock.
+- `phase` is `copy_back` from the moment the marker is written until the copy back ends, `tasks` while a `complete` update's tasks run, and `recording` until the record is appended. `add` runs its tasks after the record ([Part 2.4](#adding-a-layer)), so its marker passes from `copy_back` to `recording` and never carries `tasks`.
+- `result_commit` is the staging worktree's last per-layer commit, the starting commit when no layer finished.
+
+A copy back that fails is undone to the starting commit, the staging worktree is kept and named in the error, the marker and the ref are removed and no record is appended, because the checkout is back at its pre-update state ([Staging worktree](#staging-worktree)).
+
+When `update` or `add` starts and the marker exists, Boilerplate MUST apply these rules in order, inside the operation lock and before any layer runs. The first rule that matches decides.
+
+1. **The run finished.** The log's last record was appended after the marker's `started_at` and names the marker's targets (a `conflict` record by its `targets`, any other record by its `to_version`). Remove the marker and the ref and continue as a fresh run.
+2. **The marker no longer binds.** The working tree is clean, so the partial update was set aside or committed. Remove the marker and the ref, warn naming the marker's targets, and plan afresh. A committed partial update then meets the drift rules of [design 04 §Safe Update](04-composition-engine.md#safe-update).
+3. **The marker belongs to another run.** The marker's `operation` differs from the command, or HEAD is not `start_commit`. Stop with `BP_UPDATE_INTERRUPTED`; for a different operation, the error names the command to rerun.
+4. **The copy back was cut off** (`phase` is `copy_back`). When `kind` is `complete` and every path that differs from `start_commit` matches `result_commit`, modified, added and deleted alike, repeat the copy back from `result_commit`, which writes the same files on every run. Then run the tasks, write the lock, append `success` and remove the marker and the ref. Otherwise stop with `BP_UPDATE_INTERRUPTED`: a `paused` copy back also applies the paused layer's changes and its unmerged index entries, which no commit holds, and a path that differs from `result_commit` is an edit since the interruption or a file the cut-off run left half written.
+5. **The tasks were cut off** (`phase` is `tasks`). Run the tasks again, as Copier runs a template's tasks on every update (`copier/_main.py` lines 1294-1296, reached from the update's in-place render at line 1472), then write the lock, append `success` and remove the marker and the ref. A secret a task uses is asked again, because secrets are never recorded.
+6. **The record was cut off** (`phase` is `recording`). Write the lock if `kind` is `complete` and it is not already current, append the record (`success`, or `conflict` with exit code `4` for a `paused` run) and remove the marker and the ref.
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    state "Rule 1: run finished?" as R1
+    state "Rule 2: tree clean?" as R2
+    state "Rule 3: same run?" as R3
+    state "Rule 4, 5 or 6: phase?" as P
+    state "Remove marker, continue as a fresh run" as Fresh
+    state "Remove marker, warn, plan afresh" as Afresh
+    state "Stop with BP_UPDATE_INTERRUPTED" as Stop
+    state "Repeat the copy back from result_commit" as Repeat
+    state "Run the tasks again" as Tasks
+    state "Write the lock if needed" as Lock
+    state "Append the record" as Rec
+    state "Remove marker and ref" as Done
+    [*] --> R1
+    R1 --> Fresh: last record after started_at names the targets
+    R1 --> R2: no
+    R2 --> Afresh: clean
+    R2 --> R3: dirty
+    R3 --> Stop: other operation or HEAD moved
+    R3 --> P: same operation, HEAD at start_commit
+    P --> Repeat: copy_back, complete, paths match
+    P --> Stop: copy_back, otherwise
+    P --> Tasks: tasks
+    P --> Lock: recording
+    Repeat --> Tasks
+    Tasks --> Lock
+    Lock --> Rec
+    Rec --> Done
+    Fresh --> [*]
+    Afresh --> [*]
+    Stop --> [*]
+    Done --> [*]
+```
+
+Every stop names the interrupted run's targets and the remediation: `git stash --include-untracked` sets the partial update aside, then run the command again, which meets rule 2. The cut-off run's staging worktree is not reused; the stale-staging cleanup removes it.
+
+**Why the marker lives in git.**
+
+- git keeps the state of its own multi-step operations under the git directory, never in the working tree: `git cherry-pick --continue` reads `.git/sequencer` ([git-cherry-pick](https://git-scm.com/docs/git-cherry-pick)).
+- `git rev-parse --git-path` resolves under the current worktree's git directory, so each worktree of the project has its own marker.
+- A ref under `refs/worktree/` is not shared between worktrees ([git-worktree](https://git-scm.com/docs/git-worktree)), keeps `result_commit` reachable after the stale-staging cleanup removes the staging folder, and is not pushed with the branches.
+- A marker in the tracked tree could be committed and pushed.
+
+As for a paused update, rerunning finishes the run and `git stash --include-untracked` sets it aside.
 
 ### Step 6: Post-Update State
 
