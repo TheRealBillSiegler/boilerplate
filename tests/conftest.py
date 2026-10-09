@@ -31,17 +31,18 @@ from boilerplate.repository.directory_repository import DirectoryTemplateReposit
 from boilerplate.settings import Settings
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def subprocess_cli_runner() -> Callable[..., subprocess.CompletedProcess[str]]:
     """Canonical subprocess-based CLI runner for end-to-end CLI integration tests.
 
     Executes the CLI via a real subprocess with robust UTF-8 handling; this avoids
     UnicodeDecodeError warnings and ensures deterministic output capture across
-    platforms.
+    platforms. The runner holds no per-test state and reads the environment when
+    called, so module-scoped fixtures may request it too.
     """
 
     def run_cli_command(
-        *args: str, timeout: int = 90
+        *args: str, timeout: int = 90, cwd: Path | None = None
     ) -> subprocess.CompletedProcess[str]:
         # Ensure UTF-8 for child process I/O
         env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
@@ -54,6 +55,7 @@ def subprocess_cli_runner() -> Callable[..., subprocess.CompletedProcess[str]]:
             timeout=timeout,
             check=False,
             env=env,
+            cwd=cwd,
         )
 
     return run_cli_command
