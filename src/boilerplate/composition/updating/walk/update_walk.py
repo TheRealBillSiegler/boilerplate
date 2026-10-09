@@ -56,6 +56,10 @@ class UpdateWalk:
     composition's tasks run there once, and the lock and the migration record are
     written. A task that fails after the copy back is handed to the caller's
     handler, which keeps the update or undoes it.
+
+    The finisher keeps the restore marker from the copy back to the record, so
+    a run cut off in between leaves it for the next run, and the log only ever
+    holds the records of finished runs.
     """
 
     def __init__(

@@ -82,6 +82,30 @@ class TestMutatingOperationsTakeIt:
         ):
             Updater(lock_timeout=0.1).update(managed)
 
+    def test_update_checks_a_dirty_tree_only_inside_the_lock(
+        self, managed: Path
+    ) -> None:
+        """Wait for the lock before the clean-tree check, as design 06 orders."""
+        (managed / "notes.txt").write_text("uncommitted\n", encoding="utf-8")
+
+        with (
+            operation_lock(managed, timeout=0),
+            pytest.raises(ConcurrencyContentionError),
+        ):
+            Updater(lock_timeout=0.1).update(managed)
+
+    def test_add_checks_a_dirty_tree_only_inside_the_lock(self, managed: Path) -> None:
+        """Wait for the lock before the clean-tree check, as design 06 orders."""
+        (managed / "notes.txt").write_text("uncommitted\n", encoding="utf-8")
+
+        with (
+            operation_lock(managed, timeout=0),
+            pytest.raises(ConcurrencyContentionError),
+        ):
+            LayerAdder(lock_timeout=0.1).add(
+                managed, AddRequest(name="extra", source="unused")
+            )
+
     def test_add_fails_while_another_operation_holds_the_project(
         self, managed: Path
     ) -> None:
