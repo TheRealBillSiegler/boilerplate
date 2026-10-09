@@ -309,14 +309,16 @@ Update an existing project to a newer template version. See [06-project-lifecycl
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--allow-downgrade` | — | flag | `false` | Permit updating to an older template version (normally rejected). Default: `false`. |
-| `--non-interactive` | — | flag | `false` | Use defaults for new questions without prompting. Default: `false`. |
+| `--non-interactive` | — | flag | `false` | Take every question's default without prompting, a recorded answer being its question's default. Default: `false`. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--template-source` | — | path or URL | null | Override the template source location used by Copier when its built-in resolution cannot reach the template. Default: null. |
 | `--force` | `-f` | flag | `false` | Skip the clean working tree pre-flight check. Default: `false`. Does NOT skip confirmation (use `--yes` for that). |
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
 
-**`--non-interactive`**: When the target template version introduces new questions, use their declared defaults without prompting. Existing answers from each layer's `.copier-answers.<layer>.yml` are always reused.
+**`--non-interactive`**: Take every question's default without prompting, as Copier's `--defaults` does. A recorded answer is the default of its question, so existing answers from each layer's `.copier-answers.<layer>.yml` are reused and a new question takes its declared default.
+
+**`--answers` and `--set`**: Both are laid over the data each layer's step receives, as Copier's own `--data` is laid over the answers it reads.
 
 **Default behavior**: Compute the update plan, display it, then prompt the user for confirmation before applying. This is one command, one flow — not a two-step dry-run-then-apply cycle.
 
