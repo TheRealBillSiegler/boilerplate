@@ -285,6 +285,35 @@ Template source repositories SHOULD be treated as critical infrastructure. The l
 
 `update` runs the walk in a detached git worktree of the project, so the user's checkout changes only when the update has finished or paused on a conflict. `add` uses the same staging ([Part 2.4](#adding-a-layer)).
 
+The **copy back** is the step that reproduces the walk's result in the user's checkout. It is `git restore --source=<commit> --worktree -- :/` run in the checkout, where `<commit>` is the staging worktree's last per-layer commit. git(1) says `git restore` "is about restoring files in the working tree from either the index or another commit. This command does not update your branch", so the copy back moves neither HEAD nor the branch and leaves the uncommitted changes plain Copier leaves. git-restore adds: "If a path is tracked but does not exist in the restore source, it will be removed to match the source", so files the walk deleted are removed along with the ones it added or modified ([git-restore](https://git-scm.com/docs/git-restore)).
+
+The diagram follows one `update` from the pre-flight check to the removal of the worktree. The [restore marker](#interrupted-copy-back) and its ref bracket the copy back, so a run cut off inside it leaves state in git. On a conflict, the run skips the tasks and the lock and appends a `conflict` record.
+
+```mermaid
+sequenceDiagram
+    participant B as Boilerplate
+    participant U as Your checkout
+    participant S as Staging worktree
+    participant R as Repository and git dir
+    participant C as Copier
+    B->>U: Pre-flight, lock, marker rules
+    B->>R: worktree add --detach, hooks off
+    R-->>S: Detached at the starting commit
+    loop Each layer, ancestors first
+        B->>C: copier update in the worktree
+        C->>S: Merge the layer
+        B->>R: Plumbing commit of the layer
+    end
+    B->>U: Checkout unchanged, no obstruction
+    B->>R: Write restore marker, pin the ref
+    B->>U: Copy back
+    B->>U: Run tasks
+    B->>U: Write lock
+    B->>U: Append record
+    B->>R: Remove marker and ref
+    B->>R: Remove the worktree
+```
+
 1. **Create.** After the [pre-flight check](#pre-flight-check) and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (`git -c core.hooksPath=<null device> worktree add --detach`) in the system temp directory, inside a uniquely named folder whose own name is the project folder's name. Copier exposes the destination folder's name as `_folder_name`, and templates use it as a default, so the staged render matches a render in the user's folder.
     - The worktree shares the repository's config, so line-ending, filter and LFS settings match the user's checkout.
     - A detached HEAD adds no branch to the repository.
@@ -292,8 +321,8 @@ Template source repositories SHOULD be treated as critical infrastructure. The l
     - Boilerplate MUST commit in the worktree with git's plumbing (`git write-tree`, `git commit-tree`, `git update-ref`), so the user's hooks do not run.
 2. **Walk.** Boilerplate MUST run the walk ([design 04 §Safe Update](04-composition-engine.md#safe-update)) in the worktree, ancestors first, and commit after each layer. Copier refuses to update a project with uncommitted changes, so the commit is what lets Copier update the next layer.
 3. **Fail.** Any error, a cancelled prompt or a rejected answer MUST remove the worktree. The user's checkout never changed, and no lock is written.
-4. **Succeed.** Before copying back, Boilerplate MUST verify that the user's checkout is still at the starting commit with no changes; if not, it MUST discard the worktree and stop with `BP_UPDATE_CHECKOUT_CHANGED` and exit code `3`. It MUST likewise stop with `BP_UPDATE_PATH_OBSTRUCTED`, before any file changes, when a path the walk added already exists in the checkout as a file or directory git ignores, naming each path, because the restore would overwrite that file or delete that directory without warning. If the copy back fails partway, Boilerplate MUST restore the checkout to the starting commit, keep the staging worktree and stop with `BP_UPDATE_COPY_BACK_FAILED`, naming the worktree's path, so the walk's result is not lost. Otherwise it reproduces the worktree's final state in the user's checkout through git, which leaves the uncommitted changes plain Copier leaves, writes the lock, and removes the worktree. The copy back restores the user's working tree from the worktree's last per-layer commit (`git restore --source=<commit> --worktree -- :/`), so files the walk added and files it deleted both apply; a copy of the worktree's files cannot carry a deletion, such as one Copier's `_remove_old_files` makes (`copier/_main.py` line 1693).
-5. **Conflict.** When a layer's update returns conflicts (Copier inserts standard `<<<<<<<` / `=======` / `>>>>>>>` markers in affected text files), Boilerplate MUST stop the walk, copy back the layers finished so far together with the paused layer's changes and Copier's conflict markers, and write no lock. The paused layer is not committed in the worktree, so after the restore the copy back also applies the worktree's remaining working-tree changes (files the paused layer added or modified are written and files it deleted are removed, as `git status --porcelain=v1 -z` lists them) and replays its unmerged index entries: Copier records each conflicted file as index stages 1, 2 and 3 (`copier/_main.py` lines 1661-1691), which the copy back reads with `git ls-files --stage` in the worktree and writes with `git update-index --index-info` in the checkout, after a line that drops the path's stage 0 as Copier does. The worktree shares the checkout's object store, so the staged blobs resolve in both. The conflicted files then show as unmerged and `git commit` refuses them, as with plain Copier. See [Step 5](#step-5-failure-and-conflict).
+4. **Succeed.** Before copying back, Boilerplate MUST verify that the user's checkout is still at the starting commit with no changes; if not, it MUST discard the worktree and stop with `BP_UPDATE_CHECKOUT_CHANGED` and exit code `3`. It MUST likewise stop with `BP_UPDATE_PATH_OBSTRUCTED`, before any file changes, when a path the walk added already exists in the checkout as a file or directory git ignores, naming each path, because the restore would overwrite that file or delete that directory without warning. Before the copy back changes a file, it MUST write the restore marker and pin the copy back's source commit with the ref `refs/worktree/boilerplate/restore` ([Interrupted copy back](#interrupted-copy-back)). If the copy back fails partway, Boilerplate MUST restore the checkout to the starting commit, keep the staging worktree, remove the marker and the ref, and stop with `BP_UPDATE_COPY_BACK_FAILED`, naming the worktree's path, so the walk's result is not lost; it appends no record, because the checkout is back at its pre-update state. Otherwise the copy back leaves the uncommitted changes plain Copier leaves, and Boilerplate runs the tasks, writes the lock, appends the record, removes the marker and the ref, and removes the worktree. Because the copy back restores from a commit, files the walk added and files it deleted both apply; a copy of the worktree's files cannot carry a deletion, such as one Copier's `_remove_old_files` makes (`copier/_main.py` line 1693).
+5. **Conflict.** When a layer's update returns conflicts (Copier inserts standard `<<<<<<<` / `=======` / `>>>>>>>` markers in affected text files), Boilerplate MUST stop the walk, copy back the layers finished so far together with the paused layer's changes and Copier's conflict markers, and write no lock. The paused layer is not committed in the worktree, so after the restore the copy back also applies the worktree's remaining working-tree changes (files the paused layer added or modified are written and files it deleted are removed, as `git status --porcelain=v1 -z` lists them) and replays its unmerged index entries: Copier records each conflicted file as index stages 1, 2 and 3 (`copier/_main.py` lines 1661-1691), which the copy back reads with `git ls-files --stage` in the worktree and writes with `git update-index --index-info` in the checkout, after a line that drops the path's stage 0 as Copier does. The worktree shares the checkout's object store, so the staged blobs resolve in both. The conflicted files then show as unmerged and `git commit` refuses them, as with plain Copier. The restore marker of this copy back has `kind` `paused`; the run appends the `conflict` record and then removes the marker and the ref. See [Step 5](#step-5-failure-and-conflict).
 
 Stale worktrees left by an interrupted run are removed by the stale-staging cleanup of [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern).
 
