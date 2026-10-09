@@ -1,8 +1,8 @@
 """The data an update step of one layer passes to Copier, and its old copy's fill.
 
-The rules are pure: it takes the answers the project records, the layer that
-declares each question and the values the user and earlier steps supply, and does
-no I/O of its own.
+The rules are pure: they take the answers the project records, the layer that
+declares each question and the values the user and earlier steps supply, and do no
+I/O of their own.
 """
 
 from collections.abc import Mapping
