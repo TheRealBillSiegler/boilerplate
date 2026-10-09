@@ -63,7 +63,7 @@ class TestTimeout:
 
         assert lock_timeout() == 2.5
 
-    @pytest.mark.parametrize("raw", ["soon", "-1"])
+    @pytest.mark.parametrize("raw", ["soon", "-1", "nan"])
     def test_unusable_value_falls_back_to_the_default(
         self, monkeypatch: pytest.MonkeyPatch, raw: str
     ) -> None:

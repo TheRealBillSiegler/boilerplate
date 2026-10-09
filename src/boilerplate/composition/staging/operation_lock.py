@@ -32,7 +32,7 @@ def lock_timeout() -> float:
         seconds = float(raw)
     except ValueError:
         seconds = -1.0
-    if seconds < 0:
+    if not seconds >= 0:
         _logger.warning(
             "Ignoring %s=%r: it must be a number of seconds, zero or more.",
             LOCK_TIMEOUT_ENV,
