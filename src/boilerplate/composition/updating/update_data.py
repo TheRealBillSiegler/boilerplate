@@ -1,12 +1,47 @@
-"""The data an update step of one layer passes to Copier.
+"""The data an update step of one layer passes to Copier, and its old copy's fill.
 
-The rule is pure: it takes the answers the project records, the layer that
+The rules are pure: it takes the answers the project records, the layer that
 declares each question and the values the user and earlier steps supply, and does
 no I/O of its own.
 """
 
 from collections.abc import Mapping
 from typing import Any
+
+
+def declaring_ancestors_answers(
+    *,
+    layer: str,
+    declared_by: Mapping[str, str],
+    recorded_by_layer: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Return the answers the declaring ancestors record for `layer`'s questions.
+
+    Args:
+        layer: The layer being updated; the questions it declares itself are
+            left out.
+        declared_by: The layer that declares each question in the layer's
+            scope, keyed by question name.
+        recorded_by_layer: Each layer's recorded answers, keyed by layer name.
+
+    Returns:
+        Each question an ancestor declares and its answers file records, with
+        that answer.
+
+    Examples:
+        >>> declaring_ancestors_answers(
+        ...     layer="service",
+        ...     declared_by={"author": "core", "port": "service"},
+        ...     recorded_by_layer={"core": {"author": "Ada"}, "service": {"port": 80}},
+        ... )
+        {'author': 'Ada'}
+    """
+    answers: dict[str, Any] = {}
+    for question, declarer in declared_by.items():
+        recorded = recorded_by_layer.get(declarer, {})
+        if declarer != layer and question in recorded:
+            answers[question] = recorded[question]
+    return answers
 
 
 def build_step_data(
@@ -54,11 +89,9 @@ def build_step_data(
         ... )
         {'author': 'Ada'}
     """
-    data: dict[str, Any] = {}
-    for question, declarer in declared_by.items():
-        recorded = recorded_by_layer.get(declarer, {})
-        if declarer != layer and question in recorded:
-            data[question] = recorded[question]
+    data = declaring_ancestors_answers(
+        layer=layer, declared_by=declared_by, recorded_by_layer=recorded_by_layer
+    )
     for given in (secrets, supplied):
         data.update({k: v for k, v in given.items() if k in declared_by})
     return data

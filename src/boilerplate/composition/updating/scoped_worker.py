@@ -1,9 +1,11 @@
 """A Copier ``Worker`` that renders every copy of an update under its own view."""
 
 import logging
+from collections.abc import Mapping
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
+from typing import Any
 
 from copier.errors import InvalidTypeError, UserMessageError
 from jinja2.exceptions import TemplateError
@@ -58,15 +60,25 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     would have, so a ``when`` that reads a question the target adds sees its
     default.
 
+    Copier builds the old copy from the layer's own answers file alone. The old
+    copy fills each key that file lacks, as a hand-run vanilla update leaves
+    it, from the answers the declaring layers recorded when the walk began, so
+    it renders as the layer was last rendered and not at the questions'
+    defaults. A key the file records keeps its own value.
+
     Attributes:
         old_view: The view the old copy renders under.
         target_view: The view the in-place render and the new copy render under.
         layer: The layer being updated; names it in a rejected-answer error.
+        old_copy_fill: The answers the declaring ancestors recorded when the
+            walk began, for the questions of the old view they declare; the
+            old copy takes those its own answers file lacks.
     """
 
     old_view: LayerView = field(kw_only=True)
     target_view: LayerView = field(kw_only=True)
     layer: str = field(default="", kw_only=True)
+    old_copy_fill: Mapping[str, Any] = field(default_factory=dict, kw_only=True)
 
     def view_for_render(self) -> LayerView:
         """Return the view for the render this worker makes.
@@ -109,9 +121,14 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         Copier calls this once per render, in the in-place render after the
         before-migrations have run and the answers file has been re-read. The
         old copy and the new copy render recorded releases and forced data, so
-        only the in-place render checks.
+        only the in-place render checks. The old copy, whose data Copier sets
+        to the layer's own recorded answers, first takes the keys they lack
+        from ``old_copy_fill``.
         """
-        if render_role(Path(self.dst_path)) is RenderRole.IN_PLACE:
+        role = render_role(Path(self.dst_path))
+        if role is RenderRole.OLD_COPY:
+            self.data = {**self.old_copy_fill, **self.data}
+        elif role is RenderRole.IN_PLACE:
             self.check_recorded_answers()
         super()._ask()
 
