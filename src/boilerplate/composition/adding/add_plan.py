@@ -33,7 +33,7 @@ class AddPlan:
     needs_unsafe: bool
 
     def unsafe_for(self, *, skip_tasks: bool) -> bool:
-        """Return whether a copy that skips tasks, or not, is granted ``unsafe``.
+        """Return whether the copy is granted ``unsafe``, given whether it skips tasks.
 
         Copier's own check counts a copy's tasks only when it runs them, so the
         grant follows the extensions alone for the copy that skips them.
