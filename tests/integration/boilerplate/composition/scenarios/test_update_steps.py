@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
+from copier.errors import UserMessageError
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
 from tests.boilerplate.templates.conftest import commit_all, recorded_answers
@@ -366,6 +367,65 @@ class TestRejectedRecordedAnswer:
             SITE_NAME_REASON in caplog.text,
             recorded_answers(project, "docs")["docs_site_name"],
         ) == (True, None, True, "Typed docs")
+
+
+class TestRejectedAnswerBehindAWhen:
+    """ci 1.2.0 adds `ci_hosted` (default true) and gates `ci_provider` on it."""
+
+    BEFORE: ClassVar[dict[str, Any]] = {"core": "1.0.0", "ci": "1.1.0"}
+
+    def _update_ci(
+        self, family: Family, project: Path, work: Path, ci_tag: str
+    ) -> None:
+        update_family_layer(
+            family,
+            project,
+            root="ci",
+            layer="ci",
+            before=self.BEFORE,
+            after={**self.BEFORE, "ci": ci_tag},
+            work=work,
+            data={},
+            step_views=True,
+        )
+
+    def test_a_when_reading_a_new_question_sees_its_default(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Reject the recorded gitlab, which ci 1.2.0 narrows `ci_provider` away from.
+
+        The question is asked once `ci_hosted` takes its default, so Copier
+        would otherwise drop the recorded answer without a word. The expected
+        values are the family's: ci 1.2.0 lists only github.
+        """
+        project = compose_family(
+            family, tmp_path, "ci", self.BEFORE, {"ci_provider": "gitlab"}
+        )
+
+        with pytest.raises(RecordedAnswerRejectedError) as raised:
+            self._update_ci(family, project, tmp_path, "1.2.0")
+
+        error = raised.value
+        assert (error.layer, error.question, error.value) == (
+            "ci",
+            "ci_provider",
+            "gitlab",
+        )
+
+    def test_a_when_that_cannot_render_is_left_to_copier(
+        self, family: Family, tmp_path: Path
+    ) -> None:
+        """Let Copier report ci 1.3.0's `when` error, not reject the recorded gitlab.
+
+        The expected error type is Copier's for an undefined name: ci 1.3.0
+        gates `ci_provider` on `ci_hosted`, which no question defines.
+        """
+        project = compose_family(
+            family, tmp_path, "ci", self.BEFORE, {"ci_provider": "gitlab"}
+        )
+
+        with pytest.raises(UserMessageError):
+            self._update_ci(family, project, tmp_path, "1.3.0")
 
 
 class TestSecretAskedOnce:
