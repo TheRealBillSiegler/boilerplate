@@ -108,6 +108,27 @@ def _merge_base(ref: str, head: str, *, repo_root: Path) -> str | None:
     return _run_or_none(["git", "merge-base", ref, head], repo_root=repo_root)
 
 
+def _integration_refs(repo_root: Path) -> list[str]:
+    """List the remote-tracking integration branches in the repository.
+
+    Args:
+        repo_root: The repository to search.
+
+    Returns:
+        The short names of every ``refs/remotes/*/develop`` ref (e.g.
+        ``origin/develop``), in sort order; empty when there are none.
+    """
+    return _run(
+        [
+            "git",
+            "for-each-ref",
+            "--format=%(refname:short)",
+            f"refs/remotes/*/{_INTEGRATION_BRANCH}",
+        ],
+        repo_root=repo_root,
+    ).splitlines()
+
+
 def _find_integration_ref(repo_root: Path, *, head: str) -> str:
     """Find the remote-tracking integration branch nearest to ``head``.
 
@@ -130,15 +151,7 @@ def _find_integration_ref(repo_root: Path, *, head: str) -> str:
         NoUpstreamError: No such ref exists, or none shares history with
             ``head``. Pass ``--base <ref>`` instead.
     """
-    refs = _run(
-        [
-            "git",
-            "for-each-ref",
-            "--format=%(refname:short)",
-            f"refs/remotes/*/{_INTEGRATION_BRANCH}",
-        ],
-        repo_root=repo_root,
-    ).splitlines()
+    refs = _integration_refs(repo_root)
     if not refs:
         raise NoUpstreamError(
             f"No --base given, the current branch's upstream does not point "
@@ -192,7 +205,7 @@ def resolve_base(
         base_ref = explicit_base
     else:
         upstream = _upstream_ref(repo_root)
-        if upstream is not None and upstream.rsplit("/", 1)[-1] == _INTEGRATION_BRANCH:
+        if upstream is not None and upstream in _integration_refs(repo_root):
             # The branch tracks the integration branch directly: no need to
             # scan remotes, and this also covers repos with more than one
             # remote carrying a `develop` branch.
