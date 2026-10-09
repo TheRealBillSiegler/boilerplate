@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.common.exceptions import ActionRequiredError
+from boilerplate.common.exceptions import UpdateConflictPausedError
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.updater import Updater
@@ -43,11 +43,11 @@ class TestRunReportsAPause:
         )
 
     def test_update_raises_the_same_pause(self, family: Family, tmp_path: Path) -> None:
-        """Raise ``ActionRequiredError``, the exit-4 pause, from ``update``."""
+        """Raise ``UpdateConflictPausedError``, the exit-4 pause, from ``update``."""
         project = compose_locked_family(family, tmp_path, "service", BEFORE)
         add_user_line(project / "SERVICE.md")
 
-        with pytest.raises(ActionRequiredError):
+        with pytest.raises(UpdateConflictPausedError):
             Updater().update(project, LATEST)
 
 
