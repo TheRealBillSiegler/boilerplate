@@ -161,6 +161,49 @@ class TestOrder:
         assert (kept, seen.calls) == (False, ["tasks"])
 
 
+class TestIncompleteSteps:
+    @pytest.mark.parametrize(
+        ("steps", "missing"),
+        [
+            pytest.param(
+                FinishSteps(write_record=lambda: None, write_lock=lambda: None),
+                "tasks",
+                id="no-tasks",
+            ),
+            pytest.param(
+                FinishSteps(write_record=lambda: None, run_tasks=lambda: True),
+                "lock",
+                id="no-lock",
+            ),
+        ],
+    )
+    def test_a_complete_run_without_its_lock_or_tasks_is_refused(
+        self,
+        project: Path,
+        staging_root: Path,
+        steps: FinishSteps,
+        missing: str,
+    ) -> None:
+        """Refuse a complete run that lacks a step design 06 gives it.
+
+        Design 06 §Staging worktree: a complete run runs its tasks, then writes
+        the lock and the record; only a paused run omits the first two.
+        """
+        with (
+            staging(project, staging_root, IntentOperation.UPDATE) as stage,
+            pytest.raises(RuntimeError, match=missing),
+        ):
+            stage.commit_layer("layer one")
+            finisher = Finisher.for_staging(
+                stage,
+                operation=RestoreOperation.UPDATE,
+                targets=TARGETS,
+                steps=steps,
+            )
+            finisher.copy_back(stage)
+            finisher.finish()
+
+
 class TestJournal:
     def test_records_the_locking_phase_before_the_lock(
         self, project: Path, staging_root: Path
@@ -178,7 +221,11 @@ class TestJournal:
                 stage,
                 operation=RestoreOperation.UPDATE,
                 targets=TARGETS,
-                steps=FinishSteps(write_record=lambda: None, write_lock=write_lock),
+                steps=FinishSteps(
+                    write_record=lambda: None,
+                    write_lock=write_lock,
+                    run_tasks=lambda: True,
+                ),
             )
             finisher.copy_back(stage)
             finisher.finish()
@@ -362,7 +409,11 @@ class TestMarker:
                 stage,
                 operation=RestoreOperation.UPDATE,
                 targets=TARGETS,
-                steps=FinishSteps(write_record=lambda: None, run_tasks=cut_off),
+                steps=FinishSteps(
+                    write_record=lambda: None,
+                    write_lock=lambda: None,
+                    run_tasks=cut_off,
+                ),
             )
             finisher.copy_back(stage)
             finisher.finish()

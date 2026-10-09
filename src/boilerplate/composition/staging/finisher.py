@@ -149,7 +149,7 @@ class Finisher:
             self._record()
             return True
         self._advance(RestorePhase.TASKS)
-        if not self._steps.run_tasks():
+        if not _required(self._steps.run_tasks, "tasks")():
             remove_marker(self._project)
             return False
         self._record()
@@ -181,7 +181,7 @@ class Finisher:
         if self._marker.kind is RestoreKind.COMPLETE:
             if self._journal is not None:
                 self._journal("locking")
-            self._steps.write_lock()
+            _required(self._steps.write_lock, "lock")()
         self._steps.write_record()
         remove_marker(self._project)
 
@@ -189,3 +189,10 @@ class Finisher:
         """Rewrite the marker at `phase`."""
         self._marker = self._marker.at_phase(phase)
         write_marker(self._project, self._marker)
+
+
+def _required[Step](step: Step | None, name: str) -> Step:
+    """Return the complete run's `step`, which only a paused run lacks."""
+    if step is None:
+        raise RuntimeError(f"A complete run needs its {name} step.")
+    return step
