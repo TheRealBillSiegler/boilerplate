@@ -606,7 +606,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `DependencyNotFoundError` | `1` | (extends `DependencyError`) A template referenced in `extends` cannot be found in the catalog |
 | `DependencyCycleError` | `1` | (extends `DependencyError`) The dependency graph contains a cycle |
 | `RecordedAnswerRejectedError` | `3` | A recorded answer fails the target view's question type, choices or validator inside a layer's update step, after the layer's migrations; translated from Copier's `ValueError` |
-| `AnswersFileIncompleteError` | `3` | Before any layer runs, a layer's answers file lacks the key of a question of its scoped view at the recorded versions that is neither secret nor hidden (hidden meaning its `when` evaluates false under the recorded answers); the error lists the layer and the missing keys |
+| `AnswersFileIncompleteError` | `3` | Before any layer runs, a layer's answers file lacks the key of a question of its scoped view at the recorded versions that is neither secret nor hidden ([04 §Safe Update](04-composition-engine.md#safe-update)); the error lists the layer and the missing keys |
 | `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateTaskFailedError` | `1` | A task failed after the update's files were copied back; the update keeps the files and writes the lock under `--non-interactive` |
