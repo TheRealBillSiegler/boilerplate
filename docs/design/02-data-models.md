@@ -639,6 +639,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateUnknownLayerError` | `3` | `update` was given a target for a layer the project's lock does not list; nothing is staged (`BP_UPDATE_LAYER_UNKNOWN`) |
 | `ActionRequiredError` | — | Base for a recoverable pause that needs user action; never raised directly, exits `4` through its subclasses |
+| `UpdateTargetExcludedError` | `3` | An explicit `--target-version <layer>@<version>` names a version that the `extends` constraint of another lock layer excludes; nothing is staged (`BP_UPDATE_TARGET_EXCLUDED`) |
 | `UpdateConflictPausedError` | `4` | (extends `ActionRequiredError`) A layer's update left merge conflicts and the walk stopped (`BP_UPDATE_CONFLICT_PAUSED`) |
 | `UpdateDowngradeError` | `3` | Before any layer runs, a target is older than the version a layer's answers file records in `_commit`, or a recorded `_commit` yields no version (`BP_UPDATE_DOWNGRADE_REJECTED`) |
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
