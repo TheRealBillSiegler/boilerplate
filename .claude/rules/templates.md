@@ -9,7 +9,11 @@ Policy: `docs/templates-hub/versioning.md` §Authoring rules. How-to, with the w
 
 Neither the policy nor the how-to auto-loads when you edit a template. These two carry the most cost if missed:
 
-- **Rehearse the update before you change any rendered path.** Build the layer as a tagged git repository, compose a project from the old tag, edit a rendered file, then update the layer through the composition's merged view (`update_layer` in `tests/boilerplate/templates/conftest.py`). A child layer declares only its own questions, so a vanilla `copier update` of it alone, without the composition's answers passed as data, exits 0 while skipping every path that uses `package_name`, rendering other files with the inherited answers empty, and keeping only the layer's own keys in its answers file; with the answers passed as data, the files that render derived answers conflict instead. A rename with no staged-move migration deletes that edit at exit 0, silently.
+- **Rehearse the update before you change any rendered path.** A rename with no staged-move migration deletes the project's edit at exit 0, silently, so walk the update in a test first, with the helpers in `tests/boilerplate/templates/conftest.py`:
+  - Build the layer as a tagged git repository, and compose a project from a plain copy of the old release; composing directly from the old tag fails because `boilerplate new` cannot compose from git-backed template directories (`docs/design/adr-015-idiomatic-artifacts.md` §Verification (2026-09-04)); drop this workaround when that limit lifts.
+  - Rehome the layer to its tag (`rehome_layer`).
+  - Edit a rendered file.
+  - Update the layer through the composition's merged view (`update_layer`). A child layer declares only its own questions, so a vanilla `copier update` of it alone, without the composition's answers passed as data, exits 0 while skipping every path that uses `package_name`, rendering other files with the inherited answers empty, and keeping only the layer's own keys in its answers file; with the answers passed as data, the files that render derived answers conflict instead.
 - **A renamed or relocated path ships its `before`-stage migration in the same change**, with a test driving a real update from the previous tag. `tests/boilerplate/templates/test_streamlit_update_migration.py` is the worked example.
 
 ## Voice
