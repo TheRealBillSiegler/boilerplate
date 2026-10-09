@@ -16,11 +16,11 @@ Or press F5 in VS Code; `.vscode/launch.json` starts the same command under the 
 ## Test and check
 
 ```bash
-uv run pytest          # unit tests per layer, plus a Streamlit AppTest run of the page
-uv run pytest --cov    # the same with coverage
-uv run ruff check .    # lint
-uv run ruff format .   # format
-uv run pyright         # type-check src/ in strict mode
+uv run pytest              # unit tests per layer, plus a Streamlit AppTest run of the page
+uv run pytest --cov        # the same with coverage
+uv run ruff check --fix .  # lint, and fix what it can
+uv run ruff format .       # format
+uv run pyright             # type-check src/ in strict mode
 ```
 
 ## Layout
