@@ -28,7 +28,10 @@ _REPO_ROOT: Final = Path(__file__).resolve().parent.parent
 # The paths whose change turns the scenarios on. Keep in step with the
 # ``composition`` output of the ``changes`` job in ``.github/workflows/ci.yml``.
 _COMPOSITION_DIRS: Final = (
+    "src/boilerplate/cli/",
     "src/boilerplate/composition/",
+    "src/boilerplate/integrations/",
+    "src/boilerplate/models/",
     "src/boilerplate/templates/",
     "tests/integration/boilerplate/composition/",
     "tests/boilerplate/templates/",
