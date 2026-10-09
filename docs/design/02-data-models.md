@@ -444,7 +444,7 @@ An entry in `.boilerplate/migrations.yml` recording one finished operation.
 | `targets` | map[string, string] or null | On a `conflict` record, each layer of the paused walk keyed by `LockLayer.name` with the version the walk was updating it to. `null` on every other record. |
 | `finished` | list[string] or null | On a `conflict` record, the names of the layers whose steps the paused walk completed, in walk order; the layer whose merge left conflict markers is among them. `null` on every other record. |
 
-**Invariants**: Entries MUST be append-only, and an existing entry MUST NOT be modified. Failed and conflict entries MUST be recorded.
+**Invariants**: Entries MUST be append-only, and an existing entry MUST NOT be modified. A `conflict` record MUST be appended when a conflict pauses an update, and a `failed` record when a task fails after the copy back.
 
 #### MigrationRecord status state machine
 
@@ -454,7 +454,7 @@ An entry in `.boilerplate/migrations.yml` recording one finished operation.
 | --- | --- | --- |
 | `success` | 0 | Normal completion of an update. |
 | `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. The record names each layer's target version and the layers the paused walk finished, which is what `update` resumes from ([04 §Safe Update](04-composition-engine.md#safe-update)). |
-| `failed` | 1 | Unrecoverable error. |
+| `failed` | 1 | A task failed after the copy back. A failure before the copy back leaves the checkout unchanged and appends no record. |
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
 
