@@ -68,7 +68,9 @@ jobs:
             # in step with _COMPOSITION_DIRS and _COMPOSITION_FILES in scripts/check.py,
             # the local gate.
             case "$f" in
-              src/boilerplate/composition/*|src/boilerplate/templates/*) composition=true ;;
+              src/boilerplate/cli/*|src/boilerplate/composition/*) composition=true ;;
+              src/boilerplate/integrations/*|src/boilerplate/models/*) composition=true ;;
+              src/boilerplate/templates/*) composition=true ;;
               tests/integration/boilerplate/composition/*|tests/boilerplate/templates/*) composition=true ;;
               tests/fixtures/family/*|uv.lock|.github/workflows/ci.yml) composition=true ;;
             esac
