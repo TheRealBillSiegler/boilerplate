@@ -79,6 +79,9 @@ def read_marker(project: Path) -> RestoreMarker | None:
 def write_marker(project: Path, marker: RestoreMarker) -> None:
     """Write `marker` for `project`, replacing any marker there in one rename.
 
+    A field with no value, such as a complete run's ``paused_layer``, is left
+    out of the file.
+
     Args:
         project: The project, a git repository root.
         marker: The marker to write.
@@ -86,7 +89,9 @@ def write_marker(project: Path, marker: RestoreMarker) -> None:
     Raises:
         OSError: If the file cannot be written; the old marker is untouched.
     """
-    write_text_atomically(marker_path(project), marker.model_dump_json(indent=2))
+    write_text_atomically(
+        marker_path(project), marker.model_dump_json(indent=2, exclude_none=True)
+    )
     _logger.debug("Restore marker of %s at phase %s", project, marker.phase)
 
 

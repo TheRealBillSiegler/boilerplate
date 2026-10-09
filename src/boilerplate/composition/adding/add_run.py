@@ -26,7 +26,7 @@ from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.integrations.copier_types import TaskError
-from boilerplate.models import RestoreKind, RestoreOperation
+from boilerplate.models import RestoreOperation
 
 _logger = logging.getLogger(__name__)
 
@@ -146,7 +146,6 @@ class AddRun:
         finisher = Finisher.for_staging(
             staging,
             operation=RestoreOperation.ADD,
-            kind=RestoreKind.COMPLETE,
             targets={plan.layer: plan.version},
             steps=FinishSteps(
                 write_record=self._record,

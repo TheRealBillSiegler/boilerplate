@@ -304,6 +304,35 @@ class TestFinishingACutOffUpdate:
         ) == ([MigrationStatus.SUCCESS], False)
 
 
+@pytest.fixture
+def pause_cut_off_at_its_record(project: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Pause an update on service's conflict; cut the run off as it records."""
+    add_user_line(project / "SERVICE.md")
+    monkeypatch.setattr(
+        "boilerplate.composition.updating.walk.update_walk.UpdateRecorder",
+        interrupted,
+    )
+    with pytest.raises(KeyboardInterrupt):
+        Updater().run(project, UpdateRequest(targets=AFTER))
+    monkeypatch.undo()
+    return project
+
+
+class TestInterruptedPause:
+    def test_the_marker_names_the_finished_and_the_paused_layers(
+        self, pause_cut_off_at_its_record: Path
+    ) -> None:
+        """Keep core, which the walk finished, and service, whose merge conflicted.
+
+        Design 02 §RestoreMarker: a paused run's marker holds the finished
+        layers, in walk order, and the paused layer apart from them.
+        """
+        marker = read_marker(pause_cut_off_at_its_record)
+
+        assert marker is not None
+        assert (marker.finished, marker.paused_layer) == (("core",), "service")
+
+
 class PausedRun(NamedTuple):
     """A paused update whose conflict record a crash took, and that record."""
 
@@ -333,6 +362,8 @@ def paused_before_its_record(project: Path) -> PausedRun:
             start_commit=commit,
             result_commit=commit,
             targets=AFTER,
+            finished=("core",),
+            paused_layer="service",
             started_at=record.timestamp - timedelta(seconds=1),
         ),
     )

@@ -81,6 +81,26 @@ class TestRestoreMarkerHappyPath:
             RestorePhase.RECORDING,
         )
 
+    def test_a_paused_run_keeps_its_finished_layers_and_the_paused_one(self) -> None:
+        """Read ``finished`` and ``paused_layer`` as design 02 §RestoreMarker types."""
+        marker = RestoreMarker.model_validate(
+            _fields(
+                kind="paused",
+                phase="recording",
+                targets={"core": "1.1.0", "service": "1.2.0", "app": "1.1.0"},
+                finished=["core"],
+                paused_layer="service",
+            )
+        )
+
+        assert (marker.finished, marker.paused_layer) == (("core",), "service")
+
+    def test_a_complete_run_has_no_finished_layers_and_no_paused_one(self) -> None:
+        """Leave ``finished`` empty and ``paused_layer`` absent, as design 02 says."""
+        marker = RestoreMarker.model_validate(_fields())
+
+        assert (marker.finished, marker.paused_layer) == ((), None)
+
     def test_accepts_a_sha256_repository_commit(self) -> None:
         """Accept the 64-digit object id of a SHA-256 repository as well as SHA-1's."""
         marker = RestoreMarker.model_validate(
@@ -127,6 +147,21 @@ class TestRestoreMarkerSadPath:
             pytest.param(
                 {"operation": "add", "phase": "recording"}, id="add-with-two-targets"
             ),
+            pytest.param({"kind": "paused"}, id="paused-without-its-layer"),
+            pytest.param({"finished": ["core"]}, id="complete-with-finished"),
+            pytest.param({"paused_layer": "core"}, id="complete-with-paused-layer"),
+            pytest.param(
+                {"kind": "paused", "paused_layer": "docs"},
+                id="paused-layer-not-a-target",
+            ),
+            pytest.param(
+                {"kind": "paused", "finished": ["docs"], "paused_layer": "service"},
+                id="finished-layer-not-a-target",
+            ),
+            pytest.param(
+                {"kind": "paused", "finished": ["service"], "paused_layer": "service"},
+                id="paused-layer-among-finished",
+            ),
         ],
     )
     def test_rejects_a_marker_no_run_writes(self, overrides: dict[str, object]) -> None:
@@ -135,6 +170,8 @@ class TestRestoreMarkerSadPath:
         A run records full object ids from ``git rev-parse``, at least the one
         layer it walked, and for an add exactly the one layer it adds; the
         commits go into git's argv, so anything else is refused at the boundary.
+        A paused run names the layer that paused and the layers it finished
+        before it, all of them layers of the walk; a complete run names neither.
         """
         with pytest.raises(ValidationError):
             RestoreMarker.model_validate(_fields(**overrides))
