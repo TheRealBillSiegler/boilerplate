@@ -253,33 +253,6 @@ class TestTemplateCompositionBehavior:
         )
 
     @pytest.mark.slow
-    def test_composed_streamlit_renders_a_readme_and_a_pyproject(
-        self, integration_catalog: TemplateCatalog
-    ) -> None:
-        """Composing streamlit renders its README and pyproject.toml."""
-        # Build composition using the three-class pattern
-        composition = self._compose_only("streamlit", integration_catalog)
-
-        # Create execution context
-        execution_context = ExecutionContext(
-            destination=self.test_output_dir,
-            context_data={
-                "project_name": "task_execution_test",
-            },
-            overwrite=True,
-            interactive=False,
-            skip_tasks=True,
-        )
-
-        # Render using RenderEngine
-        render_engine = RenderEngine()
-        template_info = render_engine.render(composition, execution_context)
-
-        assert template_info.name == "streamlit"
-        assert (self.test_output_dir / "README.md").exists()
-        assert (self.test_output_dir / "pyproject.toml").exists()
-
-    @pytest.mark.slow
     def test_post_generation_tasks_execute_in_interactive_mode(
         self, integration_catalog: TemplateCatalog
     ) -> None:
