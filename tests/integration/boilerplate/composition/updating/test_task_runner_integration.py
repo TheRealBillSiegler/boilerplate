@@ -1,8 +1,8 @@
-"""The post-walk task run, on a composed project of the made-up family."""
+"""The task run after an update's walk or an add, on a project of the made-up family."""
 
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -10,7 +10,7 @@ from boilerplate.composition.updating import LayerRelease, UpdateOptions
 from boilerplate.composition.updating.release_ref import ReleaseRef
 from boilerplate.composition.updating.release_views import ReleaseViews
 from boilerplate.composition.updating.task_run import TaskRun
-from boilerplate.composition.updating.task_runner import run_update_tasks
+from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.integrations.copier_types import TaskError
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from tests.integration.boilerplate.composition.family import Family
@@ -23,12 +23,21 @@ pytestmark = [pytest.mark.scenario]
 
 TAGS = {"core": "1.0.0", "service": "1.0.0"}
 PYTHON = "{{ _copier_python }}"
+OPERATIONS: tuple[Literal["copy", "update"], ...] = ("copy", "update")
 
 
 def write_line(file: str, text: str) -> dict[str, Any]:
     """Return a task that appends `text` to `file`, rendered by Copier first."""
     code = f"print('{text}', file=open('{file}', 'a', encoding='utf-8'))"
     return {"command": [PYTHON, "-c", code]}
+
+
+def only_under(operation: str, file: str) -> dict[str, Any]:
+    """Return a task that writes `file` only under Copier's `operation`."""
+    return {
+        **write_line(file, "ran"),
+        "when": f"{{{{ _copier_operation == '{operation}' }}}}",
+    }
 
 
 class Run:
@@ -50,15 +59,20 @@ class Run:
         return list(self.views.tasks(self.releases))
 
     def run(
-        self, tasks: list[Any] | None = None, secrets: dict[str, Any] | None = None
+        self,
+        tasks: list[Any] | None = None,
+        secrets: dict[str, Any] | None = None,
+        operation: Literal["copy", "update"] = "update",
     ) -> None:
         """Run `tasks` (the composition's by default) in the project."""
-        run_update_tasks(
+        run_tasks(
             self.project,
             self.release,
             self.views.step_view("service", self.releases),
             TaskRun(
-                tasks=self.tasks() if tasks is None else tasks, secrets=secrets or {}
+                operation=operation,
+                tasks=self.tasks() if tasks is None else tasks,
+                secrets=secrets or {},
             ),
             options=UpdateOptions(),
         )
@@ -73,50 +87,55 @@ def run(family: Family, tmp_path: Path) -> Iterator[Run]:
         yield Run(family, project, views)
 
 
-class TestRunUpdateTasks:
+class TestRunTasks:
     def test_runs_the_composition_tasks_in_the_project(self, run: Run) -> None:
         """Execute core's task once, against the project folder."""
         run.run()
 
         assert lines(run.project / ".core-task-marker") == ["core task ran"]
 
-    def test_tasks_run_under_the_update_operation(self, run: Run) -> None:
-        """Give each task ``_copier_operation == "update"``."""
-        run.run()
+    @pytest.mark.parametrize("operation", OPERATIONS)
+    def test_tasks_run_under_the_given_operation(
+        self, run: Run, operation: Literal["copy", "update"]
+    ) -> None:
+        """Give each task ``_copier_operation`` as the operation the caller names.
 
-        assert lines(run.project / ".core-operation-marker") == ["update"]
+        An update's tasks run as ``update`` (ADR-014); an add's run as ``copy``,
+        as at compose (design 06 §Adding a layer).
+        """
+        run.run(
+            [write_line("operation.txt", "{{ _copier_operation }}")], None, operation
+        )
 
-    def test_a_creation_only_task_is_skipped(self, run: Run) -> None:
+        assert lines(run.project / "operation.txt") == [operation]
+
+    @pytest.mark.parametrize("operation", OPERATIONS)
+    def test_a_task_guarded_by_the_other_operation_is_skipped(
+        self, run: Run, operation: Literal["copy", "update"]
+    ) -> None:
         """Let a template guard a task with the operation, as Copier does."""
-        creation_only = {
-            **write_line("creation.txt", "created"),
-            "when": "{{ _copier_operation == 'copy' }}",
-        }
-        update_only = {
-            **write_line("update.txt", "updated"),
-            "when": "{{ _copier_operation == 'update' }}",
-        }
+        other = "update" if operation == "copy" else "copy"
 
-        run.run([creation_only, update_only])
+        run.run([only_under(other, "other.txt")], None, operation)
 
-        assert (
-            (run.project / "creation.txt").exists(),
-            lines(run.project / "update.txt"),
-        ) == (False, ["updated"])
+        assert not (run.project / "other.txt").exists()
 
-    def test_tasks_run_in_copiers_tasks_phase(self, run: Run) -> None:
+    @pytest.mark.parametrize("operation", OPERATIONS)
+    def test_tasks_run_in_copiers_tasks_phase(
+        self, run: Run, operation: Literal["copy", "update"]
+    ) -> None:
         """Let a template guard a task with the phase, as under Copier's own run."""
         tasks_only = {
             **write_line("phase.txt", "{{ _copier_phase }}"),
             "when": "{{ _copier_phase == 'tasks' }}",
         }
 
-        run.run([tasks_only])
+        run.run([tasks_only], None, operation)
 
         assert lines(run.project / "phase.txt") == ["tasks"]
 
     def test_a_task_sees_a_secret_given_to_the_run(self, run: Run) -> None:
-        """Pass the secrets the walk asked, which no answers file records."""
+        """Pass the secrets the run asked, which no answers file records."""
         run.run(
             [write_line("token.txt", "{{ api_token }}")], secrets={"api_token": "s3"}
         )
