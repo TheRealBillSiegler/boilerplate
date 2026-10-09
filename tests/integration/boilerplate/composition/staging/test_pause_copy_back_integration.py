@@ -134,27 +134,50 @@ class TestPausedCopyBack:
         assert sorted(set(staged)) == ["edit.txt"]
 
 
+def link_in_worktree(stage: StagingWorktree, link_target: str) -> None:
+    """Add a link `shared` to `link_target` in the staging worktree, or skip."""
+    try:
+        (stage.path / "shared").symlink_to(link_target)
+    except OSError:
+        pytest.skip("creating a symlink needs a privilege this machine lacks")
+
+
 class TestSymlinksInAPausedCopyBack:
-    """A link the update leaves is carried as a link, wherever it points."""
+    """A link the update leaves is carried as a link; one leaving staging is refused.
+
+    The seam is ``StagingWorktree.copy_back(paused=True)``. The refusal is the
+    rule in ``docs/design/03-template-system.md``: a symlink in rendered output
+    that points outside the staging directory is rejected with a clear error.
+    """
 
     @pytest.mark.parametrize(
         "link_target",
-        ["../outside.txt", "keep.txt", "missing.txt"],
-        ids=["outside-the-project", "inside-the-project", "dangling"],
+        ["keep.txt", "missing.txt"],
+        ids=["inside-the-project", "dangling"],
     )
     def test_link_is_copied_as_a_link(
         self, project: Path, staging_root: Path, link_target: str
     ) -> None:
         with staging(project, staging_root) as stage:
-            try:
-                (stage.path / "shared").symlink_to(link_target)
-            except OSError:
-                pytest.skip("creating a symlink needs a privilege this machine lacks")
+            link_in_worktree(stage, link_target)
 
             stage.copy_back(paused=True)
 
-        assert (project / "shared").is_symlink()
         assert (project / "shared").readlink() == Path(link_target)
+
+    @pytest.mark.parametrize(
+        "link_target",
+        ["../outside.txt", "/outside/elsewhere.txt"],
+        ids=["relative", "absolute"],
+    )
+    def test_link_leaving_the_staging_directory_is_refused(
+        self, project: Path, staging_root: Path, link_target: str
+    ) -> None:
+        with staging(project, staging_root) as stage:
+            link_in_worktree(stage, link_target)
+
+            with pytest.raises(ValueError, match="outside the staging directory"):
+                stage.copy_back(paused=True)
 
 
 @pytest.fixture

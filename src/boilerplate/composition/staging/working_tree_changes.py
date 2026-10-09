@@ -32,15 +32,16 @@ def apply_working_tree_changes(worktree: Path, project: Path) -> None:
 
     A file the worktree has, with Copier's conflict markers in it where the
     update conflicted, is written to the checkout; a path the worktree lacks is
-    removed from the checkout. A symlink is copied as a symlink, wherever it
-    points. The changes stay unstaged.
+    removed from the checkout. A symlink is copied as a symlink, unless it
+    points outside the worktree. The changes stay unstaged.
 
     Args:
         worktree: The staging worktree, whose uncommitted state is read.
         project: The user's checkout, written to.
 
     Raises:
-        ValueError: If git reports a path whose directory escapes the project.
+        ValueError: If git reports a path whose directory escapes the project,
+            or a symlink that points outside the worktree.
     """
     status = run_git(
         worktree,
@@ -51,15 +52,20 @@ def apply_working_tree_changes(worktree: Path, project: Path) -> None:
         "--untracked-files=all",
     )
     root = project.resolve()
+    staging_root = worktree.resolve()
     for relative in parse_changed_paths(status):
-        # Resolve the parent only: the final name may be a link that points
-        # outside the project, and the link itself is what gets written.
+        # Resolve the parent only: the final name may be a link, and the link
+        # itself is what gets written, not whatever it points at.
         joined = root / relative
         parent = joined.parent.resolve()
         if not parent.is_relative_to(root):
             raise ValueError(f"'{relative}' escapes the project.")
         target = parent / joined.name
         source = worktree / relative
+        if source.is_symlink() and not source.resolve().is_relative_to(staging_root):
+            raise ValueError(
+                f"'{relative}' is a symlink that points outside the staging directory."
+            )
         if source.is_symlink() or source.is_file():
             parent.mkdir(parents=True, exist_ok=True)
             if target.is_symlink():
