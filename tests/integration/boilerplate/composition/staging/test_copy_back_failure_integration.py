@@ -1,6 +1,5 @@
 """A copy back that fails partway restores the checkout and keeps the worktree."""
 
-from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -13,12 +12,14 @@ from boilerplate.composition.staging import (
     StagingWorktree,
     remove_stale_staging,
 )
-from boilerplate.composition.staging.git_commands import (
-    run_git,
-)
-from boilerplate.integrations.copier_types import ProcessExecutionError
 from tests.boilerplate.templates.conftest import git
-from tests.integration.boilerplate.composition.staging.conftest import head
+from tests.integration.boilerplate.composition.staging.conftest import (
+    disk_full,
+    file_in_use,
+    head,
+    restore_and_undo_dying,
+    restore_dying_after_one_file,
+)
 
 SEAM = "boilerplate.composition.staging.copy_back.run_git"
 
@@ -33,49 +34,6 @@ def commit_layer_changes(stage: StagingWorktree) -> None:
     (stage.path / "edit.txt").write_text("edited\n", encoding="utf-8")
     (stage.path / "drop.txt").unlink()
     stage.commit_layer("layer one")
-
-
-def restore_dying_after_one_file(failure: BaseException) -> Callable[..., str]:
-    """Return a git runner whose copy-back restore writes one file, then fails.
-
-    Every other git call, the recovery's own restore included, runs for real.
-    """
-
-    def run(cwd: Path, *args: str, stdin: str | None = None) -> str:
-        is_copy_back_restore = args[0] == "restore" and "--staged" not in args
-        if is_copy_back_restore:
-            run_git(cwd, "restore", args[1], "--worktree", "--", "added.txt")
-            raise failure
-        return run_git(cwd, *args, stdin=stdin)
-
-    return run
-
-
-def restore_and_undo_dying(undo_failure: BaseException) -> Callable[..., str]:
-    """Return a git runner whose copy back fails after one file, then its undo too.
-
-    The copy back's restore writes one file and fails as a full disk does; the
-    undo's restore of the starting commit then raises `undo_failure`, so the
-    checkout keeps the one file. Every other git call runs for real.
-    """
-    copy_back = restore_dying_after_one_file(disk_full())
-
-    def run(cwd: Path, *args: str, stdin: str | None = None) -> str:
-        if args[0] == "restore" and "--staged" in args:
-            raise undo_failure
-        return copy_back(cwd, *args, stdin=stdin)
-
-    return run
-
-
-def disk_full() -> ProcessExecutionError:
-    return ProcessExecutionError(["git", "restore"], 128, "", "No space left on device")
-
-
-def file_in_use() -> ProcessExecutionError:
-    return ProcessExecutionError(
-        ["git", "restore"], 255, "", "unable to unlink added.txt: Permission denied"
-    )
 
 
 class TestPartialCopyBack:
