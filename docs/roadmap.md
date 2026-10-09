@@ -96,7 +96,7 @@ Gated on the pinned topology-ordering contract from Phase 0: the profile `extend
 The genuinely cross-cutting work (medium): a single JSON-to-stderr structured log stream (no file rotation or aggregation), redaction plus a non-serializing secret type, subprocess-output capture at DEBUG, correlation IDs, the retry policy, and performance budgets per [design 07](design/07-operational-quality.md).
 
 !!! warning "What is *not* in this phase"
-    Advisory locks and intent journals are **not** here — locks ship inside Phases 1–5 attached to each mutating operation, and the journal ships with Phase 3's in-place update commit, per design 07 and the sequencing principle above. Placing them in a trailing hardening phase would mean retrofitting every command shipped before it.
+    Advisory locks and intent journals are **not** here — locks ship inside Phases 1–5 attached to each mutating operation, and the journal, which identifies a staging folder for stale cleanup, ships with Phase 3's staged update, whose interrupted copy back the restore marker covers, per design 07 and the sequencing principle above. Placing them in a trailing hardening phase would mean retrofitting every command shipped before it.
 
 ## Backlog
 
