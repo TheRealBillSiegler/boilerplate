@@ -185,6 +185,8 @@ def resolve_base(
         NoUpstreamError: No ``--base`` was given and the integration
             branch's remote-tracking ref does not exist or shares no history
             with ``head``. See ``_find_integration_ref``.
+        subprocess.CalledProcessError: A ref (``--base`` or ``head``) does
+            not resolve.
     """
     if explicit_base is not None:
         base_ref = explicit_base
@@ -237,14 +239,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         cannot be resolved.
     """
     args = _parse_args(argv)
+    requested_range = f"{args.base or _INTEGRATION_BRANCH}..{args.head}"
     try:
         base = resolve_base(args.base, head=args.head)
+        rev_range = f"{base}..{args.head}"
+        commit_count = _run(
+            ["git", "rev-list", "--count", rev_range], repo_root=_REPO_ROOT
+        )
     except NoUpstreamError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    except subprocess.CalledProcessError:
+        print(f"error: cannot resolve {requested_range}", file=sys.stderr)
+        return 2
 
-    rev_range = f"{base}..{args.head}"
-    commit_count = _run(["git", "rev-list", "--count", rev_range], repo_root=_REPO_ROOT)
     if commit_count == "0":
         print(f"No commits in {rev_range}; nothing to lint.")
         return 0
