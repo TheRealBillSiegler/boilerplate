@@ -73,6 +73,10 @@ ALLOWED_SEAMS: dict[str, str] = {
         "Fault injection: Ctrl-C or a crash landing right after the copy back, "
         "while the tasks run, cannot be timed deterministically."
     ),
+    "boilerplate.composition.updating.walk.update_walk.UpdateRecorder": (
+        "Fault injection: Ctrl-C or a crash landing between a paused walk's copy "
+        "back and its conflict record cannot be timed deterministically."
+    ),
     "boilerplate.composition.adding.add_run.run_tasks": (
         "Fault injection: Ctrl-C or a crash landing right after the copy back, "
         "while the tasks run, cannot be timed deterministically."

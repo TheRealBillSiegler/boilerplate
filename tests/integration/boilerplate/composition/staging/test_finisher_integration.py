@@ -26,6 +26,7 @@ from boilerplate.composition.staging.restore_marker_file import (
     read_marker,
     write_marker,
 )
+from boilerplate.composition.staging.walk_pause import WalkPause
 from boilerplate.models import (
     RestoreKind,
     RestoreMarker,
@@ -43,6 +44,8 @@ from tests.integration.boilerplate.composition.staging.test_copy_back_failure_in
 
 TARGETS = {"core": "1.1.0", "service": "1.2.0"}
 ADDED = {"docs": "1.0.0"}
+FINISHED = ("core",)
+PAUSED_AT = "service"
 
 
 def targets_of(operation: RestoreOperation) -> dict[str, str]:
@@ -98,9 +101,13 @@ def finish(
         finisher = Finisher.for_staging(
             stage,
             operation=operation,
-            kind=kind,
             targets=targets_of(operation),
             steps=seen.steps(keep=keep),
+            paused=(
+                WalkPause(finished=FINISHED, layer=PAUSED_AT)
+                if kind is RestoreKind.PAUSED
+                else None
+            ),
         )
         finisher.copy_back(stage)
         return result, finisher.finish()
@@ -170,7 +177,6 @@ class TestJournal:
             finisher = Finisher.for_staging(
                 stage,
                 operation=RestoreOperation.UPDATE,
-                kind=RestoreKind.COMPLETE,
                 targets=TARGETS,
                 steps=FinishSteps(write_record=lambda: None, write_lock=write_lock),
             )
@@ -208,6 +214,18 @@ class TestMarker:
             result,
             targets_of(operation),
         )
+
+    def test_a_paused_run_marks_its_finished_layers_and_the_paused_one(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Keep a paused walk's layers in the marker, as design 02 §RestoreMarker."""
+        seen = Seen(project)
+
+        finish(project, staging_root, seen, kind=RestoreKind.PAUSED)
+
+        marker = seen.markers["record"]
+        assert marker is not None
+        assert (marker.finished, marker.paused_layer) == (FINISHED, PAUSED_AT)
 
     def test_the_ref_pins_the_result_while_the_run_finishes(
         self, project: Path, staging_root: Path
@@ -343,7 +361,6 @@ class TestMarker:
             finisher = Finisher.for_staging(
                 stage,
                 operation=RestoreOperation.UPDATE,
-                kind=RestoreKind.COMPLETE,
                 targets=TARGETS,
                 steps=FinishSteps(write_record=lambda: None, run_tasks=cut_off),
             )

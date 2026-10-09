@@ -5,6 +5,7 @@ Design 06 §Interrupted copy back: the marker is a JSON file at
 ``refs/worktree/boilerplate/restore`` that pins the copy back's source commit.
 """
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -53,6 +54,15 @@ class TestWriteAndRead:
         write_marker(project, marker)
 
         assert read_marker(project) == marker
+
+    def test_a_complete_runs_file_has_no_paused_layer(self, project: Path) -> None:
+        """Leave ``paused_layer`` out of the file: design 02 says it is absent."""
+        write_marker(project, marker_for(head(project)))
+        path = git(project, "rev-parse", "--git-path", "boilerplate-restore.json")
+
+        assert "paused_layer" not in json.loads(
+            (project / path.strip()).read_text(encoding="utf-8")
+        )
 
     def test_writes_the_file_git_names_for_it(self, project: Path) -> None:
         """Put the file where ``git rev-parse --git-path`` says, in the git dir."""
