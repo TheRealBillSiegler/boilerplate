@@ -8,7 +8,7 @@
 
 ## Decision
 
-**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, `update` stops the walk, copies the layers finished so far into the working tree as uncommitted changes with Copier's conflict markers, records a `conflict` MigrationRecord, writes no lock, and exits **4 (`ACTION_REQUIRED`)**. The user resolves the markers, commits as with plain Copier, and reruns `boilerplate update`; the rerun resumes from the `conflict` record, which names each layer's target and the layers the walk finished, and writes the new lock and a `success` record. `git stash --include-untracked` sets the partial update aside. **Every other error removes the staging worktree** ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), which leaves the working tree unchanged with no lock and no migration record, and exits by the error's class (1 for an unexpected failure). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional.
+**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, `update` stops the walk, copies the layers finished so far into the working tree as uncommitted changes with Copier's conflict markers, records a `conflict` MigrationRecord, writes no lock, and exits **4 (`ACTION_REQUIRED`)**. The user resolves the markers, commits as with plain Copier, and reruns `boilerplate update`; the rerun resumes from the `conflict` record, which names each layer's target and the layers the walk finished, and writes the new lock and a `success` record. `git reset` and then `git stash --include-untracked` set the partial update aside. **Every other error removes the staging worktree** ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), which leaves the working tree unchanged with no lock and no migration record, and exits by the error's class (1 for an unexpected failure). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional.
 
 **A changed `extends` chain is handled by author migrations, not provenance inference.**
 
@@ -48,7 +48,7 @@
 ## Options considered
 
 - **Rollback-on-conflict** — simpler (drops the conflict-pause path), but it throws away the merge attempt and hands the user nothing to resolve; it fights Copier's native model. Rejected.
-- **A Boilerplate-owned backup directory with `update --continue` and `update --abort`** — rejected: the staging worktree leaves the checkout untouched until the walk ends, `git stash --include-untracked` sets a paused update aside and a rerun of `update` finishes it, so a second state machine adds nothing Copier and git lack ([ADR-001](adr-001-build-vs-adopt.md)).
+- **A Boilerplate-owned backup directory with `update --continue` and `update --abort`** — rejected: the staging worktree leaves the checkout untouched until the walk ends, `git reset` and then `git stash --include-untracked` set a paused update aside and a rerun of `update` finishes it, so a second state machine adds nothing Copier and git lack ([ADR-001](adr-001-build-vs-adopt.md)).
 - **Pause-with-markers (chosen)** — Copier-native, preserves work, costs the continuation slice.
 - Removed layers: **auto-delete uniquely-owned files** (needs a per-layer file manifest in the lock; carries deletion risk) vs **migrations + safe-orphan (chosen)** — author-declared, no data-loss risk.
 

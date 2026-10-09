@@ -342,16 +342,16 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 - brings back the layers finished so far into the user's checkout as uncommitted changes, with Copier's conflict markers in the conflicted files;
 - reports each conflicted file path and the originating layer;
 - appends a `conflict` record, exits with code `4` (`ACTION_REQUIRED`) and writes no lock;
-- prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git stash --include-untracked' sets the partial update aside."`
+- prints the remediation `"Resolve conflicts and commit, then run 'boilerplate update' again. 'git reset' and then 'git stash --include-untracked' set the partial update aside."`
 
-The user resolves and commits as with plain Copier, then reruns `boilerplate update`. The rerun resumes from the `conflict` record ([design 04 §Safe Update](04-composition-engine.md#safe-update)), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records `success`. An explicit `--target-version` that differs from the record stops with `BP_UPDATE_TARGET_MISMATCH` until the user sets the partial update aside, after which the record no longer binds and `update` plans afresh. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, so `git stash --include-untracked` sets the whole partial update aside, modified and added files alike, and keeps it recoverable; `git clean` would also delete any file the user has created since. A run cut off before it appends its record is finished or set aside as [Interrupted copy back](#interrupted-copy-back) describes.
+The user resolves and commits as with plain Copier, then reruns `boilerplate update`. The rerun resumes from the `conflict` record ([design 04 §Safe Update](04-composition-engine.md#safe-update)), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records `success`. An explicit `--target-version` that differs from the record stops with `BP_UPDATE_TARGET_MISMATCH` until the user sets the partial update aside, after which the record no longer binds and `update` plans afresh. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check). Files the partial update added are untracked, and its conflicted files are unmerged index entries, which `git stash` refuses (`error: could not write index`). `git reset` returns the index to `HEAD` and keeps the working tree, and `git stash --include-untracked` then sets the whole partial update aside, modified and added files alike, and keeps it recoverable; `git clean` would also delete any file the user has created since. A run cut off before it appends its record is finished or set aside as [Interrupted copy back](#interrupted-copy-back) describes.
 
 The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
 
 
 ### Interrupted copy back
 
-A run cut off while it copies its result back, or while it finishes afterwards, is completed by running the same command again, or set aside with `git stash --include-untracked`. No flag is involved.
+A run cut off while it copies its result back, or while it finishes afterwards, is completed by running the same command again, or set aside with `git reset` and then `git stash --include-untracked`. No flag is involved.
 
 The restore marker keeps the state of such a run in git. It is a JSON file at `git rev-parse --git-path boilerplate-restore.json`, paired with the ref `refs/worktree/boilerplate/restore`, which pins the copy back's source commit (`git update-ref`). The fields are in [02 §RestoreMarker](02-data-models.md#restoremarker). Boilerplate MUST write both after the checkout-unchanged and obstruction checks and before the copy back changes a file, for `update` and for `add`; advance the marker's `phase` as the run proceeds; and remove both, file and ref (`git update-ref -d`), after the run appends its record.
 
@@ -406,7 +406,7 @@ stateDiagram-v2
     Done --> [*]
 ```
 
-Every stop names the interrupted run's targets and the remediation: `git stash --include-untracked` sets the partial update aside, then run the command again, which meets rule 2. The cut-off run's staging worktree is not reused; the stale-staging cleanup removes it.
+Every stop names the interrupted run's targets and the remediation: `git reset` and then `git stash --include-untracked` set the partial update aside, then run the command again, which meets rule 2. The reset comes first because a `paused` run leaves its conflicted files as unmerged index entries, which `git stash` refuses; `git reset` returns the index to `HEAD` and keeps the working tree. The cut-off run's staging worktree is not reused; the stale-staging cleanup removes it.
 
 **Why the marker lives in git.**
 
@@ -415,7 +415,7 @@ Every stop names the interrupted run's targets and the remediation: `git stash -
 - A ref under `refs/worktree/` is not shared between worktrees ([git-worktree](https://git-scm.com/docs/git-worktree)), keeps `result_commit` reachable after the stale-staging cleanup removes the staging folder, and is not pushed with the branches.
 - A marker in the tracked tree could be committed and pushed.
 
-As for a paused update, rerunning finishes the run and `git stash --include-untracked` sets it aside.
+As for a paused update, rerunning finishes the run, and `git reset` and then `git stash --include-untracked` set it aside.
 
 ### Step 6: Post-Update State
 
