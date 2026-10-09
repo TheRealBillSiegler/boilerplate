@@ -403,6 +403,28 @@ class TestCiModeAndNoTasks:
         )
         assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
+    def test_ci_env_var_alone_sets_non_interactive_and_leaves_tasks_running(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        renderer: Renderer,
+        seams: Seams,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """BOILERPLATE_CI=1 matches --ci: --non-interactive only, tasks still run."""
+        monkeypatch.setenv("BOILERPLATE_CI", "1")
+        ctx = _invoke_and_capture_execution_ctx(
+            typer_cli_runner,
+            fake_template_dir,
+            temp_project_dir,
+            renderer,
+            seams,
+            ["new", "project"],
+        )
+        assert ctx.interactive is False  # type: ignore[attr-defined]
+        assert ctx.skip_tasks is False  # type: ignore[attr-defined]
+
 
 @pytest.mark.usefixtures("interactive_tty")
 class TestNextStepsListsOnlyWhatIsLeft:
@@ -461,28 +483,6 @@ class TestNextStepsListsOnlyWhatIsLeft:
             typer_cli_runner, fake_template_dir, temp_project_dir, seams, ["--no-tasks"]
         )
         assert "uv sync" in steps
-
-    def test_ci_env_var_alone_sets_non_interactive_and_leaves_tasks_running(
-        self,
-        typer_cli_runner: CliRunner,
-        fake_template_dir: Path,
-        temp_project_dir: Path,
-        renderer: Renderer,
-        seams: Seams,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """BOILERPLATE_CI=1 matches --ci: --non-interactive only, tasks still run."""
-        monkeypatch.setenv("BOILERPLATE_CI", "1")
-        ctx = _invoke_and_capture_execution_ctx(
-            typer_cli_runner,
-            fake_template_dir,
-            temp_project_dir,
-            renderer,
-            seams,
-            ["new", "project"],
-        )
-        assert ctx.interactive is False  # type: ignore[attr-defined]
-        assert ctx.skip_tasks is False  # type: ignore[attr-defined]
 
 
 class TestNonInteractiveEnvVar:
