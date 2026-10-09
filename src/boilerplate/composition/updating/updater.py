@@ -86,6 +86,12 @@ class Updater:
             UpdateProjectNotReadyError: If the project is dirty or not a
                 repository root.
             UpdateSubmodulesUnsupportedError: If the project has submodules.
+            LockReadFailedError: If the lock is missing, corrupted or does not
+                match the lock schema.
+            LockSchemaUnsupportedError: If the lock's schema major is newer than
+                this tool supports.
+            UpdateUnknownLayerError: If the request targets a layer the project
+                does not have.
             UpdateTargetMismatchError: If an explicit target differs from a
                 paused update's recorded one.
             UpdateLayerDriftError: If a layer and an ancestor both disagree with
@@ -96,6 +102,10 @@ class Updater:
                 its view asks for.
             RecordedAnswerRejectedError: If a layer's target rejects a recorded
                 answer and the step does not prompt.
+            TemplateNotFoundError: If a target reads as no version, or a source
+                has no tag for a paused update's recorded target.
+            plumbum.commands.processes.ProcessExecutionError: If a source cannot
+                check its target out.
             UpdateCheckoutChangedError: If the checkout changed during the walk.
         """
         outcome = self.run(project, request)
@@ -123,6 +133,12 @@ class Updater:
             UpdateProjectNotReadyError: If the project is dirty or not a
                 repository root.
             UpdateSubmodulesUnsupportedError: If the project has submodules.
+            LockReadFailedError: If the lock is missing, corrupted or does not
+                match the lock schema.
+            LockSchemaUnsupportedError: If the lock's schema major is newer than
+                this tool supports.
+            UpdateUnknownLayerError: If the request targets a layer the project
+                does not have.
             UpdateTargetMismatchError: If an explicit target differs from a
                 paused update's recorded one.
             UpdateLayerDriftError: If a layer and an ancestor both disagree with
@@ -133,6 +149,10 @@ class Updater:
                 its view asks for.
             RecordedAnswerRejectedError: If a layer's target rejects a recorded
                 answer and the step does not prompt.
+            TemplateNotFoundError: If a target reads as no version, or a source
+                has no tag for a paused update's recorded target.
+            plumbum.commands.processes.ProcessExecutionError: If a source cannot
+                check its target out.
             UpdateCheckoutChangedError: If the checkout changed during the walk.
         """
         request = request or UpdateRequest()
