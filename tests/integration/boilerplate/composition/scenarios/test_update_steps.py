@@ -222,12 +222,12 @@ class TestInteractivePrompting:
         )
 
         assert (
-            session.finished,
+            session.error,
             session.shown,
             session.default_of("maintainer_name"),
             session.default_of("python_version"),
         ) == (
-            True,
+            None,
             [
                 "project_name",
                 "maintainer_name",
@@ -253,7 +253,7 @@ class TestInteractivePrompting:
             skip_answered=True,
         )
 
-        assert (session.finished, session.shown) == (True, ["api_token", "license"])
+        assert (session.error, session.shown) == (None, ["api_token", "license"])
 
 
 REJECTION_BEFORE = BASE
@@ -362,11 +362,10 @@ class TestRejectedRecordedAnswer:
             )
 
         assert (
-            session.finished,
             session.error,
             SITE_NAME_REASON in caplog.text,
             recorded_answers(project, "docs")["docs_site_name"],
-        ) == (True, None, True, "Typed docs")
+        ) == (None, True, "Typed docs")
 
 
 class TestRejectedAnswerBehindAWhen:
@@ -480,7 +479,7 @@ class TestSecretAskedOnce:
             family, project, tmp_path, "service", {"api_token": self.TOKEN}
         )
 
-        assert (session.finished, session.shown) == (True, ["port"])
+        assert (session.error, session.shown) == (None, ["port"])
 
     def test_without_the_carried_secret_service_step_asks_it_again(
         self, family: Family, tmp_path: Path
