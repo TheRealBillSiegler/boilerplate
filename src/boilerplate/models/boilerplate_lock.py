@@ -38,7 +38,8 @@ class BoilerplateLock(BaseModel):
         root_template: The specifier of the template that created the project.
         copier_answers_file_hashes: The SHA-256 hex digest of each layer's
             answers file, keyed by layer name; ``None`` when no layer has one.
-        layers: One entry per template layer, in execution order.
+        layers: One entry per template layer, in execution order; at least one,
+            the root.
     """
 
     model_config = ConfigDict(frozen=True, extra="ignore")
@@ -50,7 +51,7 @@ class BoilerplateLock(BaseModel):
     updated_at: AwareDatetime
     root_template: str
     copier_answers_file_hashes: Mapping[str, str] | None = None
-    layers: tuple[LockLayer, ...] = Field(default=())
+    layers: tuple[LockLayer, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
