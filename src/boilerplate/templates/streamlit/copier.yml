@@ -19,14 +19,17 @@ _jinja_extensions:
 # Project-owned: the project is expected to rewrite and keep these, so a
 # release never merges into them again once they exist. Deleting one brings
 # it back on the next update (Copier still recreates a deleted
-# `_skip_if_exists` file). The demo's models, services, and adapters (and
-# their tests) stay template-owned instead: the README's "Make it yours"
-# has the project swap their contents in place, but they remain scaffolding
-# the template may keep restructuring, so edits there accept the normal
-# template-owned risk of a conflict on the next release.
+# `_skip_if_exists` file). The smoke test is listed with the app it tests,
+# since a project that rewrites its app owns the test of that app. The demo's
+# models, services, and adapters (and their unit tests) stay template-owned
+# instead: the README's "Make it yours" has the project swap their contents in
+# place, but they remain scaffolding the template may keep restructuring, so
+# edits there accept the normal template-owned risk of a conflict on the next
+# release.
 _skip_if_exists:
   - "README.md"
   - "src/{{ package_name }}/app.py"
+  - "tests/integration/{{ package_name }}/test_app.py"
 
 # This layer's own questions and its overrides of `project`'s defaults. Every
 # other answer its files use comes from `project` through composition

@@ -82,6 +82,10 @@ LAYER_CASES = [
         (
             README,
             ProjectOwnedFile(f"src/{PACKAGE}/app.py", "src/{{ package_name }}/app.py"),
+            ProjectOwnedFile(
+                f"tests/integration/{PACKAGE}/test_app.py",
+                "tests/integration/{{ package_name }}/test_app.py",
+            ),
         ),
         id="streamlit",
     ),
