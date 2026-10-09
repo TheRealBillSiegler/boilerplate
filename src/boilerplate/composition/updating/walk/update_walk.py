@@ -202,7 +202,7 @@ class UpdateWalk:
             steps=FinishSteps(write_record=record_conflict),
             paused=WalkPause(finished=finished, layer=paused_at),
         )
-        finisher.copy_back(staging)
+        finisher.copy_back()
         finisher.finish()
         return self._outcome(UpdateStatus.PAUSED, paused_at, conflicts)
 
@@ -223,7 +223,7 @@ class UpdateWalk:
                 run_tasks=lambda: self._run_tasks(staging),
             ),
         )
-        finisher.copy_back(staging)
+        finisher.copy_back()
         if not finisher.finish():
             return self._outcome(UpdateStatus.UNDONE)
         if self._failed is not None:
