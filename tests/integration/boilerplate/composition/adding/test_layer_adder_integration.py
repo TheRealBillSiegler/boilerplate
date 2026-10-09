@@ -137,11 +137,13 @@ class TestAddedLayer:
 
         assert recorded == added.core_answers
 
-    def test_renders_only_the_chosen_alternative(self, added: Added) -> None:
-        assert (
-            (added.project / "mkdocs.yml").is_file(),
-            (added.project / "docs" / "conf.py").exists(),
-        ) == (True, False)
+    @pytest.mark.parametrize(
+        ("path", "rendered"), [("mkdocs.yml", True), ("docs/conf.py", False)]
+    )
+    def test_renders_only_the_chosen_alternative(
+        self, added: Added, path: str, rendered: bool
+    ) -> None:
+        assert (added.project / path).exists() is rendered
 
     def test_the_lock_lists_the_new_layer_last(self, added: Added) -> None:
         lock = read_lock(added.project)

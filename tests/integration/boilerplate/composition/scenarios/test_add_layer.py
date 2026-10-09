@@ -164,19 +164,19 @@ class TestAddingLater:
             (MigrationStatus.SUCCESS, None, "ci@1.0.0"),
         ]
 
-    def test_the_docs_alternative_chosen_is_the_only_one_rendered(
-        self, grown: Grown
+    @pytest.mark.parametrize(
+        ("path", "rendered"),
+        [
+            ("mkdocs.yml", True),
+            ("docs/conf.py", False),
+            (WORKFLOW, True),
+            (GITLAB_FILE, False),
+        ],
+    )
+    def test_only_the_alternatives_chosen_are_rendered(
+        self, grown: Grown, path: str, rendered: bool
     ) -> None:
-        files = tree(grown.project)
-
-        assert ("mkdocs.yml" in files, "docs/conf.py" in files) == (True, False)
-
-    def test_the_ci_alternative_chosen_is_the_only_one_rendered(
-        self, grown: Grown
-    ) -> None:
-        files = tree(grown.project)
-
-        assert (WORKFLOW in files, GITLAB_FILE in files) == (True, False)
+        assert (path in tree(grown.project)) is rendered
 
 
 class TestUpdateAfterAdds:
