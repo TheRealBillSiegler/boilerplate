@@ -11,6 +11,7 @@ from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers,
     read_recorded_answers_by_layer,
 )
+from boilerplate.composition.updating.removed_layers import removed_layers
 from boilerplate.composition.updating.render_role import RenderRole, render_role
 from boilerplate.composition.updating.scoped_worker import ScopedWorker
 from boilerplate.composition.updating.step_inputs import StepInputs
@@ -46,6 +47,7 @@ __all__ = [
     "keep_files",
     "read_recorded_answers",
     "read_recorded_answers_by_layer",
+    "removed_layers",
     "render_role",
     "required_answer_keys",
     "update_layer",
