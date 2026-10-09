@@ -145,7 +145,6 @@ class TestSymlinksInAPausedCopyBack:
     def test_link_is_copied_as_a_link(
         self, project: Path, staging_root: Path, link_target: str
     ) -> None:
-        (project.parent / "outside.txt").write_text("outside\n", encoding="utf-8")
         with staging(project, staging_root) as stage:
             try:
                 (stage.path / "shared").symlink_to(link_target)
