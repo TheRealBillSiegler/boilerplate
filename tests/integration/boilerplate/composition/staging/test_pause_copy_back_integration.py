@@ -134,6 +134,30 @@ class TestPausedCopyBack:
         assert sorted(set(staged)) == ["edit.txt"]
 
 
+class TestSymlinksInAPausedCopyBack:
+    """A link the update leaves is carried as a link, wherever it points."""
+
+    @pytest.mark.parametrize(
+        "link_target",
+        ["../outside.txt", "keep.txt", "missing.txt"],
+        ids=["outside-the-project", "inside-the-project", "dangling"],
+    )
+    def test_link_is_copied_as_a_link(
+        self, project: Path, staging_root: Path, link_target: str
+    ) -> None:
+        (project.parent / "outside.txt").write_text("outside\n", encoding="utf-8")
+        with staging(project, staging_root) as stage:
+            try:
+                (stage.path / "shared").symlink_to(link_target)
+            except OSError:
+                pytest.skip("creating a symlink needs a privilege this machine lacks")
+
+            stage.copy_back(paused=True)
+
+        assert (project / "shared").is_symlink()
+        assert (project / "shared").readlink() == Path(link_target)
+
+
 def test_changed_checkout_stops_a_paused_copy_back(
     project: Path, staging_root: Path
 ) -> None:
