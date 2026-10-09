@@ -136,7 +136,7 @@ The standard project structure — `src/`, `tests/`, and their conventions. A pa
 The proper-noun class that orchestrates Copier across composition layers.
 
 **Restore marker**:  
-The file under the project's git directory, paired with the ref `refs/worktree/boilerplate/restore`, that keeps the state of a copy back cut off midway so a rerun can finish it or `git reset` and then `git stash --include-untracked` can set it aside. See design 06 §Interrupted copy back.
+The file under the project's git directory, paired with the ref `refs/worktree/boilerplate/restore`, that keeps the state of a copy back cut off midway so a rerun can finish it or the user can set it aside. See design 06 §Interrupted copy back and §Setting a partial update aside.
 
 **safe update**:  
 The conflict-detected update workflow Boilerplate provides over Copier's per-layer merge: it runs in a staging worktree and pauses on conflict. See design 04 §Safe update for the implementation.
