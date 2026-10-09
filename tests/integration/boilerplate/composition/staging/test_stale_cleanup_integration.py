@@ -18,6 +18,14 @@ from boilerplate.composition.staging.intent_journal import JOURNAL_LOCK_NAME
 from tests.boilerplate.templates.conftest import git
 
 
+class DeadHolderStaging(StagingWorktree):
+    """A staging that can drop its lock the way a dying process does."""
+
+    def die(self) -> None:
+        """Release the lock, as the operating system does when the holder dies."""
+        self._release_lock()
+
+
 def staging(project: Path, root: Path) -> StagingWorktree:
     return StagingWorktree(project, operation=IntentOperation.UPDATE, temp_root=root)
 
@@ -28,8 +36,10 @@ def leave_behind(project: Path, root: Path) -> StagingWorktree:
     The operating system drops a dead process's lock, so the helper drops the
     staging's own to match; ``stay_alive`` is the case where it is still held.
     """
-    stage = stay_alive(project, root)
-    stage._lock.release()  # pyright: ignore[reportPrivateUsage]
+    stage = DeadHolderStaging(
+        project, operation=IntentOperation.UPDATE, temp_root=root
+    ).__enter__()
+    stage.die()
     return stage
 
 
