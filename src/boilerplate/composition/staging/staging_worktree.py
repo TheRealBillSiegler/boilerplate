@@ -8,7 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Self
 
-from boilerplate.common.exceptions import UpdateCopyBackFailedError
+from boilerplate.common.exceptions import RESET_THEN_STASH, UpdateCopyBackFailedError
 from boilerplate.common.file_lock import FileLock
 from boilerplate.composition.staging.copy_back import (
     list_untracked_paths,
@@ -301,9 +301,8 @@ class StagingWorktree:
             f"could not be restored and holds part of the update; {kept}",
             staging_path=str(self.path),
             remediation="Fix the cause, then run the command again to finish the "
-            "update, or run 'git reset' and then 'git stash --include-untracked' "
-            "to set the partial update aside; remove the staging folder when you "
-            "no longer need it.",
+            f"update, or run {RESET_THEN_STASH} to set the partial update aside; "
+            "remove the staging folder when you no longer need it.",
         )
 
     def __enter__(self) -> Self:

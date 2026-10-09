@@ -7,7 +7,7 @@ from typing import Final
 
 from pydantic import ValidationError
 
-from boilerplate.common.exceptions import UpdateInterruptedError
+from boilerplate.common.exceptions import RESET_THEN_STASH, UpdateInterruptedError
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.models import RestoreMarker
 from boilerplate.project_state.atomic_write import write_text_atomically
@@ -70,9 +70,9 @@ def read_marker(project: Path) -> RestoreMarker | None:
         raise UpdateInterruptedError(
             f"An earlier run was cut off while restoring its result into the "
             f"working tree, and its restore marker {path} cannot be read: {error}",
-            remediation="Run 'git reset' and then 'git stash --include-untracked' "
-            "to set the partial run aside. To discard the marker, delete the file "
-            f"and run 'git update-ref -d {RESTORE_REF}'.",
+            remediation=f"Run {RESET_THEN_STASH} to set the partial run aside. To "
+            f"discard the marker, delete the file and run 'git update-ref -d "
+            f"{RESTORE_REF}'.",
         ) from error
 
 
