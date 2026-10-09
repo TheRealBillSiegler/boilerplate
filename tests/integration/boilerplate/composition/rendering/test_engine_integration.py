@@ -489,22 +489,8 @@ class TestComposedRenderIgnoresSkipIfExists:
         destination = tmp_path / "out"
         destination.mkdir()
         (destination / "shared.txt").write_text("existing content", encoding="utf-8")
-        layer = final_layer_protecting_shared
-        spec = "final@0.1.0"
-        composition = Composition(
-            graph=CompositionGraph(
-                nodes={spec: GraphNode(name="final", version="0.1.0", path=layer)},
-                edges={spec: []},
-                sequence=[spec],
-            ),
-            sequence=[spec],
-            layers=[
-                CompositionLayer(name="final", version="0.1.0", path=layer, values={})
-            ],
-            final={"project_name": {"type": "str", "default": "demo"}},
-        )
 
-        _render_composition(composition, destination)
+        _render(final_layer_protecting_shared, destination)
 
         assert (destination / "shared.txt").read_text(encoding="utf-8") == (
             "final content"
