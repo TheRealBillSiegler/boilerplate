@@ -372,7 +372,7 @@ The `boilerplate.lock` file written into a project root after a successful creat
 | `updated_at` | ISO 8601 datetime | UTC timestamp of last update |
 | `root_template` | string | Specifier of the template used to create the project |
 | `copier_answers_file_hashes` | map[string, string] or null | Per-layer SHA-256 hex digests, one entry per template layer that has an answers file. Key = template name (matches `LockLayer.name`); value = SHA-256 hex digest of that layer's `.copier-answers.<layer>.yml`. This is the sole answers-integrity mechanism `lock verify` consults for tamper detection on update. Optional; omitted when no answers files exist. |
-| `layers` | list[LockLayer] | One entry per template layer, in execution order; at least one |
+| `layers` | list[LockLayer] | One entry per template layer, in execution order; at least one layer joined through `extends`, the root |
 
 > **Hash format convention**: Hash fields that are fixed to SHA-256 by definition (`copier_answers_file_hashes` values, `proto_lock_hash`) use bare hex strings. Checksum fields that may support alternative algorithms in the future (`LockLayer.checksum`) use the `algorithm:hex` prefix format (e.g., `"sha256:{hex_digest}"`). This allows future algorithm migration for content checksums without a schema change.
 
