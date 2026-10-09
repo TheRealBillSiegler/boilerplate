@@ -10,17 +10,13 @@ from pathlib import Path
 
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock, JoinedVia, LockLayer
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.folder_layer import FolderLayer
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.repository.template_checksum import template_checksum
 from boilerplate.types.serializable_version import SerializableVersion
 
 __all__ = ["build_lock", "mark_added"]
-
-
-def _answers_file_name(layer: str) -> str:
-    """Return the name of `layer`'s answers file."""
-    return f".copier-answers.{layer}.yml"
 
 
 def _layer_name(layer: str | FolderLayer) -> str:
@@ -46,7 +42,7 @@ def _lock_layer(
     """
     folder = layer if isinstance(layer, FolderLayer) else None
     name = _layer_name(layer)
-    recorded = load_answersfile_data(project, _answers_file_name(name)) or {}
+    recorded = load_answersfile_data(project, answers_file_name(name)) or {}
     source, commit = recorded.get("_src_path"), recorded.get("_commit")
     if not commit and folder is not None:
         return LockLayer(
@@ -58,7 +54,7 @@ def _lock_layer(
         )
     if not source or not commit:
         raise ValueError(
-            f"layer {name!r}: {_answers_file_name(name)} records no _src_path "
+            f"layer {name!r}: {answers_file_name(name)} records no _src_path "
             "and _commit, so there is no release to lock"
         )
     release = checkouts.get(str(source), str(commit))
@@ -159,10 +155,10 @@ def build_lock(
         )
     hashes = {
         entry.name: hashlib.sha256(
-            (project / _answers_file_name(entry.name)).read_bytes()
+            (project / answers_file_name(entry.name)).read_bytes()
         ).hexdigest()
         for entry in entries
-        if (project / _answers_file_name(entry.name)).is_file()
+        if (project / answers_file_name(entry.name)).is_file()
     }
     root = _root(entries)
     return BoilerplateLock(
