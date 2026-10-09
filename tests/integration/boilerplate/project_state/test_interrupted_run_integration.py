@@ -20,6 +20,8 @@ from boilerplate.composition.staging.restore_marker_file import (
     write_marker,
 )
 from boilerplate.models import (
+    BoilerplateLock,
+    LockLayer,
     MigrationRecord,
     MigrationStatus,
     RestoreKind,
@@ -28,11 +30,13 @@ from boilerplate.models import (
     RestorePhase,
 )
 from boilerplate.project_state.interrupted_run import resolve_interrupted_run
+from boilerplate.project_state.lock_file import write_lock
 from boilerplate.project_state.migrations_file import (
     append_migration,
     next_migration_id,
     read_migrations,
 )
+from boilerplate.types import SerializableVersion
 from tests.boilerplate.templates.conftest import commit_all, git, init_repo
 
 STARTED = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
@@ -40,13 +44,34 @@ TARGETS = {"core": "1.1.0", "service": "1.2.0"}
 ADDED = {"docs": "1.0.0"}
 
 
+def _lock_layer(name: str) -> LockLayer:
+    return LockLayer(
+        name=name,
+        version=SerializableVersion("1.0.0"),
+        source=f"https://example.com/{name}.git",
+        checksum="sha256:" + "a" * 64,
+    )
+
+
+LOCK = BoilerplateLock(
+    boilerplate_version="0.3.0",
+    copier_version="9.18.1",
+    created_at=STARTED - timedelta(days=1),
+    updated_at=STARTED - timedelta(days=1),
+    root_template="service@1.0.0",
+    layers=(_lock_layer("core"), _lock_layer("service")),
+)
+"""The lock the runs start from: core, then the root service, in walk order."""
+
+
 @pytest.fixture
 def project(tmp_path: Path) -> Path:
-    """Return a clean git project with one committed file."""
+    """Return a clean git project with a committed lock and one other file."""
     root = tmp_path / "project"
     root.mkdir()
     init_repo(root)
     (root / "README.md").write_text("readme\n", encoding="utf-8")
+    write_lock(root, LOCK)
     commit_all(root, "initial")
     return root
 
@@ -60,6 +85,7 @@ def mark(
     *,
     operation: RestoreOperation = RestoreOperation.UPDATE,
     start_commit: str | None = None,
+    targets: dict[str, str] | None = None,
 ) -> RestoreMarker:
     """Write the marker a run to TARGETS leaves when cut off, and dirty the tree.
 
@@ -72,7 +98,7 @@ def mark(
         phase=RestorePhase.RECORDING,
         start_commit=start_commit or commit,
         result_commit=commit,
-        targets=ADDED if operation is RestoreOperation.ADD else TARGETS,
+        targets=targets or (ADDED if operation is RestoreOperation.ADD else TARGETS),
         started_at=STARTED,
     )
     pin_result(project, commit)
@@ -128,6 +154,21 @@ class TestRunFinished:
         resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert (read_marker(project), ref_exists(project)) == (None, False)
+
+    def test_the_last_layer_is_the_locks_root_not_the_last_key(
+        self, project: Path
+    ) -> None:
+        """Find the walk's last layer in the starting lock, not by key order (rule 1).
+
+        The marker names the root first here, as a record read back with sorted
+        keys would for a root that sorts before its ancestor.
+        """
+        mark(project, targets={"service": "1.2.0", "core": "1.1.0"})
+        append(project, MigrationStatus.SUCCESS, STARTED + timedelta(seconds=1))
+
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
+
+        assert read_marker(project) is None
 
     def test_a_later_conflict_record_with_the_same_targets_removes_it(
         self, project: Path
