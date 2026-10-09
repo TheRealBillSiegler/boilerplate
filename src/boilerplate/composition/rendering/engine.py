@@ -189,11 +189,12 @@ class RenderEngine:
             skip_tasks_flag = (not is_final_layer) or bool(ctx.skip_tasks)
 
             # `unsafe` bypasses Copier's own consent gate for jinja_extensions
-            # and task execution (Worker._check_unsafe); scope it to what
-            # *this* layer's Worker invocation actually needs: the extensions
-            # of its scoped view, or the tasks it runs. A layer whose scoped
-            # view declares no extension keeps unsafe=False when it runs no
-            # tasks, the permissive posture of
+            # and task execution (Worker._check_unsafe), and also switches off
+            # its check that a render stays inside the project; scope it to
+            # exactly what Copier's check would flag for *this* layer's Worker
+            # invocation: the extensions of its scoped view, or the tasks it
+            # runs. A layer whose scoped view declares no extension keeps
+            # unsafe=False when it runs no tasks, the permissive posture of
             # docs/design/adr-003-permissive-execution.md.
             layer_needs_unsafe = grants_unsafe(layer, view) or (
                 bool(layer_tasks_value) and not skip_tasks_flag

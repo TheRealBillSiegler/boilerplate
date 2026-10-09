@@ -76,14 +76,17 @@ def plan_add(
         ),
     )
     views = ReleaseViews(checkouts, workdir=workdir)
+    after = {**at_lock, request.name: release}
+    view = views.step_view(request.name, after)
     return AddPlan(
         lock=lock,
         release=LayerRelease(
             layer=request.name, source=release.source, ref=release.ref
         ),
         version=str(versions[request.name]),
-        view=views.step_view(request.name, {**at_lock, request.name: release}),
+        view=view,
         tasks=tuple(own_tasks(template)),
+        needs_unsafe=views.needs_unsafe(request.name, after),
     )
 
 
