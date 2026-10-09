@@ -7,8 +7,8 @@ import pytest
 
 from boilerplate.common.exceptions import UpdateCheckoutChangedError
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
-from tests.boilerplate.templates.conftest import git
-from tests.integration.boilerplate.composition.staging.conftest import head
+from tests.boilerplate.templates.conftest import commit_all, git
+from tests.integration.boilerplate.composition.staging.conftest import FILES, head
 
 BASE = "one\ntwo\nthree\n"
 OURS = "one\nTWO (user)\nthree\n"
@@ -155,6 +155,60 @@ class TestSymlinksInAPausedCopyBack:
 
         assert (project / "shared").is_symlink()
         assert (project / "shared").readlink() == Path(link_target)
+
+
+@pytest.fixture
+def linked_project(project: Path) -> Path:
+    """Commit a link `shared` to `keep.txt` in the project; return the checkout."""
+    try:
+        (project / "shared").symlink_to("keep.txt")
+    except OSError:
+        pytest.skip("creating a symlink needs a privilege this machine lacks")
+    commit_all(project, "add a link")
+    return project
+
+
+class TestReplacingACommittedSymlinkInAPausedCopyBack:
+    """What the update leaves where the checkout holds a link replaces the link.
+
+    The seam is ``StagingWorktree.copy_back(paused=True)``; the expected state is
+    the worktree's own. The tests fail if the copy writes through the checkout's
+    link instead of replacing it.
+    """
+
+    @pytest.fixture
+    def file_replaces_link(self, linked_project: Path, staging_root: Path) -> Path:
+        with staging(linked_project, staging_root) as stage:
+            (stage.path / "shared").unlink()
+            (stage.path / "shared").write_text("replacement\n", encoding="utf-8")
+            stage.copy_back(paused=True)
+        return linked_project
+
+    @pytest.fixture
+    def link_replaces_link(self, linked_project: Path, staging_root: Path) -> Path:
+        with staging(linked_project, staging_root) as stage:
+            (stage.path / "shared").unlink()
+            (stage.path / "shared").symlink_to("edit.txt")
+            stage.copy_back(paused=True)
+        return linked_project
+
+    def test_file_takes_the_links_place(self, file_replaces_link: Path) -> None:
+        shared = file_replaces_link / "shared"
+
+        assert (shared.is_symlink(), shared.read_text(encoding="utf-8")) == (
+            False,
+            "replacement\n",
+        )
+
+    def test_file_is_not_written_through_the_link(
+        self, file_replaces_link: Path
+    ) -> None:
+        keep = (file_replaces_link / "keep.txt").read_text(encoding="utf-8")
+
+        assert keep == FILES["keep.txt"]
+
+    def test_link_takes_the_links_place(self, link_replaces_link: Path) -> None:
+        assert (link_replaces_link / "shared").readlink() == Path("edit.txt")
 
 
 def test_changed_checkout_stops_a_paused_copy_back(
