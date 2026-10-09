@@ -626,7 +626,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `DependencyNotFoundError` | `1` | (extends `DependencyError`) A template referenced in `extends` cannot be found in the catalog |
 | `DependencyCycleError` | `1` | (extends `DependencyError`) The dependency graph contains a cycle |
 | `RecordedAnswerRejectedError` | `3` | A recorded answer fails the target view's question type, choices or validator inside a layer's update step, after the layer's migrations; translated from Copier's `ValueError` |
-| `AnswersFileIncompleteError` | `3` | Before any layer runs, a question of a layer's scoped view at the recorded versions that is neither secret nor hidden is recorded in neither the layer's own answers file nor its declaring layer's file; the error lists the layer and the keys |
+| `AnswersFileIncompleteError` | `3` | Before any layer runs, a question of a layer's scoped view at the recorded versions that is neither secret nor hidden ([04 §Safe Update](04-composition-engine.md#safe-update) defines hidden) is recorded in neither the layer's own answers file nor its declaring layer's file; the error lists the layer and the keys |
 | `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
 | `UpdateUnknownLayerError` | `3` | `update` was given a target for a layer the project's lock does not list; nothing is staged (`BP_UPDATE_LAYER_UNKNOWN`) |
