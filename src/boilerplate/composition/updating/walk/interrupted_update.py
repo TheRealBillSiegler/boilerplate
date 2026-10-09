@@ -145,8 +145,8 @@ class InterruptedUpdate:
 
     @property
     def _root(self) -> str:
-        """The walk's last layer, the composition's root."""
-        return list(self._marker.targets)[-1]
+        """The walk's last layer, the composition's root, as the starting lock ends."""
+        return self._start.layers[-1].name
 
     @property
     def _root_specifier(self) -> str:
