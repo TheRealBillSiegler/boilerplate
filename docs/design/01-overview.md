@@ -31,7 +31,7 @@ The environment installs and verifies what the profile declares. Slots no first-
 
 Principle enforcement spans two substrates: Boilerplate's runtime *enforces* its own invariants, and the artifacts it ships *preconfigure* principles as machine-checkable defaults. Per-layer assignments are specified in PROD-001 `enforcement_layers`; shipped vs planned gating content lives in PROD-001 `shipped_gating_scaffolding`.
 
-**Python-native with an extensible template system.** The reference implementation is written in Python and first-party templates target Python projects, but the template system, composition engine, and CLI impose no language requirements on template content. Teams may author templates for any language or framework. PEP 440 is the default versioning standard; SemVer-compatible versions (e.g., `1.2.3`) are valid PEP 440 and work without modification.
+**Python first, with an extensible template system.** The reference implementation is written in Python; most of the first-party catalog is Python, and first-party templates for other ecosystems (a React web app) follow their own ecosystem's standards the way the Python ones follow PEPs. The template system, composition engine, and CLI impose no language requirements on template content. Teams may author templates for any language or framework. PEP 440 is the default versioning standard; SemVer-compatible versions (e.g., `1.2.3`) are valid PEP 440 and work without modification.
 
 ### When to use Copier directly
 
@@ -97,9 +97,9 @@ The Boilerplate tool itself follows Semantic Versioning 2.0.0. Breaking changes 
 
 > *In practice:* PEP 440 is the wire format (see §02 Version). Plain `X.Y.Z` versions are valid in both grammars and order identically; PEP 440 adds Python-ecosystem-specific syntax for pre-release (`1.0a1`), post-release (`1.0.post1`), dev (`1.0.dev1`), and epoch (`1!2.0`) identifiers — those identifiers MUST be expressed in PEP 440 form (not SemVer's `1.0.0-alpha.1` / `1.0.0+abc` forms) because the two grammars order incompatibly outside the X.Y.Z subset. Lock files record exact resolved versions so updates are explicit, never silent.
 
-### PEP compliance in first-party templates
+### Standards compliance in first-party templates
 
-First-party (official) templates MUST conform to the relevant Python Enhancement Proposals for every pattern they implement. This includes but is not limited to: PEP 440 (versioning), PEP 508 (dependency specifiers), PEP 517/518 (build system), PEP 621 (project metadata in `pyproject.toml`), PEP 660 (editable installs), and PEP 723 (inline script metadata). When a PEP defines the canonical way to do something, the template MUST use it — no custom conventions that duplicate or contradict a PEP. Third-party templates are not bound by this requirement, though they are encouraged to follow it.
+First-party (official) Python templates MUST conform to the relevant Python Enhancement Proposals for every pattern they implement. This includes but is not limited to: PEP 440 (versioning), PEP 508 (dependency specifiers), PEP 517/518 (build system), PEP 621 (project metadata in `pyproject.toml`), PEP 660 (editable installs), and PEP 723 (inline script metadata). When a PEP defines the canonical way to do something, the template MUST use it — no custom conventions that duplicate or contradict a PEP. A first-party template for another ecosystem MUST conform to that ecosystem's published standards and MUST name them in its template guide. Third-party templates are not bound by this requirement, though they are encouraged to follow it.
 
 ### Trust-gated catalog federation
 
