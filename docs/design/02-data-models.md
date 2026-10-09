@@ -597,7 +597,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `MetadataValidationError` | `3` | `boilerplate.yml` is malformed or missing required fields |
 | `DestinationNotEmptyError` | `3` | The render destination exists and is non-empty, and `--force` was not provided |
 | `NonInteractiveRequiresForceError` | `3` | A multi-layer render in non-interactive mode requires `--force` |
-| `MissingRequiredAnswersError` | `3` | Non-interactive render cannot proceed because required answers are missing (no default, no `when: false`) |
+| `MissingRequiredAnswersError` | `3` | Non-interactive render cannot proceed because required answers are missing (no default, and not hidden by its `when`) |
 | `InteractiveModeRequiresTtyError` | `3` | Interactive render requested but stdin is not a TTY, so prompts can never be answered |
 | `InvalidDataError` | `3` | `--data`/`--data-file` input cannot be parsed: a `--data` entry has no `=`, the file cannot be read, or its YAML is not a mapping |
 | `InteractiveRenderFailedError` | `1` | Copier's prompt machinery failed because the environment cannot host interactive prompts |
