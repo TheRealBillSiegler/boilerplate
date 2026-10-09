@@ -71,6 +71,7 @@ from boilerplate.composition.views import (
     build_step_view,
 )
 from boilerplate.integrations.copier_types import load_answersfile_data
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.settings import Settings
 
 TEMPLATES = Path(boilerplate.__file__).parent / "templates"
@@ -355,7 +356,7 @@ def force_recorded_answers(
 
 def _recorded_ref(project: Path, layer: str) -> str:
     """Return the ref `project`'s answers file records for `layer`."""
-    recorded = load_answersfile_data(project, Path(f".copier-answers.{layer}.yml"))
+    recorded = load_answersfile_data(project, Path(answers_file_name(layer)))
     return str(recorded["_commit"])
 
 
@@ -485,7 +486,7 @@ def rehome_layer(project: Path, *, layer: str, source: Path, commit: str) -> Non
         source: The layer's git-backed template source.
         commit: The tag or commit in `source` whose content the render matches.
     """
-    answers_path = project / f".copier-answers.{layer}.yml"
+    answers_path = project / answers_file_name(layer)
     rehomed: list[str] = []
     for line in answers_path.read_text(encoding="utf-8").splitlines():
         if line.startswith("_src_path:"):

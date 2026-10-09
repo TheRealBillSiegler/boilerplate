@@ -19,6 +19,7 @@ from boilerplate.common.exceptions import (
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.walk.walk_plan import WalkPlan
 from boilerplate.composition.updating.walk.walk_planner import plan_walk
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.lock_file import read_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from tests.boilerplate.templates.conftest import commit_all
@@ -173,7 +174,7 @@ class TestStopsBeforeStaging:
         """Stop when a hand-run update left a layer and its ancestor off the lock."""
         project = planned.project(BASE)
         for layer in ("core", "service"):
-            answers = project / f".copier-answers.{layer}.yml"
+            answers = project / answers_file_name(layer)
             text = answers.read_text(encoding="utf-8")
             write(answers, text.replace("_commit: 1.0.0", "_commit: 1.1.0"))
         commit_all(project, "hand-run updates")

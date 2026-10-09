@@ -8,6 +8,7 @@ import pytest
 
 from boilerplate.composition.updating.versions import read_layer_versions
 from boilerplate.models import BoilerplateLock, LockLayer
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.types import SerializableVersion
 
@@ -35,7 +36,7 @@ def _lock(*layers: tuple[str, str]) -> BoilerplateLock:
 
 
 def _answers(project: Path, layer: str, text: str) -> None:
-    (project / f".copier-answers.{layer}.yml").write_text(text, encoding="utf-8")
+    (project / answers_file_name(layer)).write_text(text, encoding="utf-8")
 
 
 @pytest.fixture

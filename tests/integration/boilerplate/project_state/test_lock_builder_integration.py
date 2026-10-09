@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from boilerplate.models import BoilerplateLock, JoinedVia
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.folder_layer import FolderLayer
 from boilerplate.project_state.lock_builder import build_lock, mark_added
 from boilerplate.project_state.lock_file import read_lock, write_lock
@@ -42,7 +43,7 @@ class Layers:
 
     def record(self, layer: str, commit: str, **extra: str) -> Path:
         """Write the layer's answers file as Copier would, pointing at its repo."""
-        path = self.project / f".copier-answers.{layer}.yml"
+        path = self.project / answers_file_name(layer)
         lines = [f"_commit: {commit}", f"_src_path: {self.repos[layer].as_posix()}"]
         lines += [f"{key}: {value}" for key, value in extra.items()]
         path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
@@ -85,7 +86,7 @@ class TestBuildLock:
 
         assert lock.copier_answers_file_hashes == {
             layer: hashlib.sha256(
-                (layers.project / f".copier-answers.{layer}.yml").read_bytes()
+                (layers.project / answers_file_name(layer)).read_bytes()
             ).hexdigest()
             for layer in ("core", "app")
         }
