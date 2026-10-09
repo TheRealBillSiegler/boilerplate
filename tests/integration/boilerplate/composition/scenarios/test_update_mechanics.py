@@ -116,7 +116,7 @@ def test_forced_data_never_reaches_the_old_copy(family: Family, tmp_path: Path) 
 
     Forcing project_name 'FORCED' over the recorded one, the old copy's
     pyproject.toml still renders the recorded name. This checks the S12
-    control's reading directly; no probe log covers it.
+    control's reading directly.
     """
     project = compose_family(family, tmp_path, "service", REMOVAL_BEFORE)
     worker, recording = recording_worker(["pyproject.toml"])
@@ -156,7 +156,7 @@ def test_layers_own_recorded_answer_beats_its_ancestors(
 
     With core recording author_name 'Ada Probe' and service 'Own Name',
     updating service keeps 'Own Name'. This checks the harness's layering
-    rule through Copier's recording; no probe log covers it.
+    rule through Copier's recording.
     """
     before = {"core": "1.0.0", "service": "1.0.0"}
     project = compose_family(
