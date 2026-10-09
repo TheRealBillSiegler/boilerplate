@@ -42,7 +42,7 @@ sample_module:
 
 container_registry:
   type: str
-  help: "Container registry hostname for image pushes (e.g. ghcr.io or registry.example.com)."
+  help: "Container registry hostname for image pushes (e.g. ghcr.io or registry.example.com)"
   default: "ghcr.io"
 
 # The previous release rendered the smoke test as tests_app.py. Copier's update
