@@ -461,7 +461,12 @@ class UpdateTargetMismatchError(BoilerplateError):
         super().__init__(
             message,
             error_code="BP_UPDATE_TARGET_MISMATCH",
-            remediation=kwargs.pop("remediation", _SET_ASIDE_REMEDIATION),
+            remediation=kwargs.pop(
+                "remediation",
+                "Run 'git reset' and then 'git stash --include-untracked' to "
+                "set the partial update aside, then run 'boilerplate update' "
+                "again.",
+            ),
             **kwargs,
         )
         self.layers = tuple(layers)
