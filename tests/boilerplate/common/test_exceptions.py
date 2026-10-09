@@ -31,6 +31,7 @@ from boilerplate.common.exceptions import (
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UpdateCheckoutChangedError,
+    UpdateConflictPausedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
@@ -91,6 +92,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     UpdateCheckoutChangedError: "BP_UPDATE_CHECKOUT_CHANGED",
     UpdateProjectNotReadyError: "BP_UPDATE_PROJECT_NOT_READY",
     UpdateTaskFailedError: "BP_UPDATE_TASK_FAILED",
+    UpdateConflictPausedError: "BP_UPDATE_CONFLICT_PAUSED",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -315,6 +317,10 @@ class TestActionRequiredError:
         """ActionRequiredError participates in the shared hierarchy."""
         err = ActionRequiredError("resolve conflicts first")
         assert isinstance(err, BoilerplateError)
+
+    def test_a_conflict_pause_is_an_action_required_error(self) -> None:
+        """The pause routes to the recoverable-pause path, exit 4."""
+        assert isinstance(UpdateConflictPausedError("paused"), ActionRequiredError)
 
     def test_hard_failures_are_not_action_required(self) -> None:
         """Hard-failure errors do not route to the recoverable-pause path."""

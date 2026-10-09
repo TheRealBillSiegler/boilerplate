@@ -16,8 +16,8 @@ from typing import Any, NamedTuple
 import pytest
 
 from boilerplate.common.exceptions import (
-    ActionRequiredError,
     RecordedAnswerRejectedError,
+    UpdateConflictPausedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
@@ -476,7 +476,7 @@ class PausedWalk(NamedTuple):
 
     family: Family
     project: Path
-    error: ActionRequiredError
+    error: UpdateConflictPausedError
     lock: BoilerplateLock
 
 
@@ -491,7 +491,7 @@ def paused(tmp_path_factory: pytest.TempPathFactory) -> Iterator[PausedWalk]:
         lock = read_lock(project)
         try:
             Updater().update(project, request(AFTER))
-        except ActionRequiredError as error:
+        except UpdateConflictPausedError as error:
             yield PausedWalk(private, project, error, lock)
         else:
             pytest.fail("the walk was expected to pause")
@@ -507,6 +507,12 @@ class TestConflictPause:
             "Resolve conflicts and commit, then run 'boilerplate update' again. "
             "'git reset' and then 'git stash --include-untracked' set the partial update aside."
         )
+
+    def test_raises_the_pause_under_its_registered_code(
+        self, paused: PausedWalk
+    ) -> None:
+        """Carry the code design 07 registers for a conflict pause."""
+        assert paused.error.error_code == "BP_UPDATE_CONFLICT_PAUSED"
 
     def test_the_message_names_the_layer_and_the_conflicted_file(
         self, paused: PausedWalk
