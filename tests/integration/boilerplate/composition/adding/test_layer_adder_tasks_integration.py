@@ -98,22 +98,25 @@ class TestOwnTasks:
 
         assert not (project / ".tasked-marker").exists()
 
-    def test_a_secret_answer_reaches_the_task_but_not_the_answers_file(
-        self, project: Path
-    ) -> None:
+    @pytest.fixture
+    def secretive(self, project: Path) -> Path:
+        """Add a layer whose task reads a secret answer; return the project."""
         build_layer(project.parent, "secretive", copier=SECRET_TASK)
         asked = AddRequest(
             name="secretive",
             source=(project.parent / "repos" / "secretive").as_posix(),
             supplied={"deploy_token": "s3cret"},
         )
-
         LayerAdder().add(project, asked)
+        return project
 
-        assert (
-            lines(project / ".token-marker"),
-            "deploy_token" in answers_file(project, "secretive"),
-        ) == (["s3cret"], False)
+    def test_a_secret_answer_reaches_the_task(self, secretive: Path) -> None:
+        assert lines(secretive / ".token-marker") == ["s3cret"]
+
+    def test_a_secret_answer_is_not_recorded_in_the_answers_file(
+        self, secretive: Path
+    ) -> None:
+        assert "deploy_token" not in answers_file(secretive, "secretive")
 
 
 class TestAFailedTask:
