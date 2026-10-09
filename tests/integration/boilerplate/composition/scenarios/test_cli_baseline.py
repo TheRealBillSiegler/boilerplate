@@ -12,13 +12,13 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-import yaml
 
 from tests.integration.boilerplate.composition.scenarios.builders import (
     PROJECT_RECORDED,
     TEMPLATES,
     answers_file,
     check_bundled_questionnaire,
+    read_yaml,
     temp_dir_inside,
 )
 
@@ -28,10 +28,7 @@ LAYERS = ("project", "streamlit")
 
 def bundled_version(layer: str) -> str:
     """Return the version a bundled layer's boilerplate.yml declares."""
-    manifest = yaml.safe_load(
-        (TEMPLATES / layer / "boilerplate.yml").read_text(encoding="utf-8")
-    )
-    return str(manifest["version"])
+    return str(read_yaml(TEMPLATES / layer / "boilerplate.yml")["version"])
 
 
 class NewRun(NamedTuple):
@@ -93,7 +90,13 @@ class TestShippedNew:
         }
 
     def test_bundled_layers_render_at_their_own_versions(self, new_run: NewRun) -> None:
-        """S21: each bundled layer renders at its own boilerplate.yml version."""
+        """S21: each bundled layer renders at its own boilerplate.yml version.
+
+        The expected versions are the ones each layer's ``boilerplate.yml``
+        declares in its ``version`` field (design 03, the metadata schema);
+        the two layers declare different versions, so a swap or a shared
+        version would show.
+        """
         stderr = ANSI.sub("", new_run.result.stderr)
         rendered = re.findall(
             r"^Copying from template version (\S+)$", stderr, re.MULTILINE

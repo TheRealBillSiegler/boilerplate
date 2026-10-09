@@ -161,9 +161,14 @@ def substitute(path: Path, old: str, new: str) -> None:
     write(path, text.replace(old, new, 1))
 
 
+def read_yaml(path: Path) -> dict[str, Any]:
+    """Return the mapping a YAML file holds; an empty file yields ``{}``."""
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
 def declared_questions(config_path: Path) -> frozenset[str]:
     """Return the question names a ``copier.yml`` declares (directives excluded)."""
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    config = read_yaml(config_path)
     return frozenset(str(k) for k in config if not str(k).startswith("_"))
 
 
@@ -447,8 +452,7 @@ def _project_root(path: Path) -> Path:
 
 def answers_file(project: Path, layer: str) -> dict[str, Any]:
     """Return everything `layer`'s answers file records, Copier's keys included."""
-    path = project / f".copier-answers.{layer}.yml"
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return read_yaml(project / f".copier-answers.{layer}.yml")
 
 
 def lines(path: Path) -> list[str]:
