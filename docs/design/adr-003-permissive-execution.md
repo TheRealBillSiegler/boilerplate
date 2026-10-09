@@ -25,9 +25,9 @@ Public exposure is sanctioned under this posture: strangers installing the CLI a
 - **This MUST be tightened before** remote/Git sources, a catalog with third-party entries, or community templates ship. That work is the trust model in [10-security](10-security.md) and will get its own ADR when built.
 - The design docs describe the *target* (default-deny); this ADR is the honest record of the *current* posture and the divergence.
 
-## Supersession
+## Expiry
 
-This ADR records a **temporary** posture, not the target. It expires when the trust / consent / sandbox model ([10-security](10-security.md)) is implemented — which MUST happen before any remote, catalog, or community template source ships. A new ADR will then record default-deny as the current posture and supersede this one. Earlier forms of this record — the grant was hardcoded `unsafe=True` for every layer before the per-layer scoping landed — live in git history.
+This ADR records a **temporary** posture, not the target. It expires when the trust / consent / sandbox model ([10-security](10-security.md)) is implemented — which MUST happen before any remote, catalog, or community template source ships. A new ADR will then record default-deny as the current posture and supersede this one.
 
 ## Verification (2026-08-15)
 
