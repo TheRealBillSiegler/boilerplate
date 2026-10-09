@@ -93,7 +93,7 @@ class UpdateWalk:
         with StagingWorktree(
             self._inputs.project,
             operation=IntentOperation.UPDATE,
-            template_ref=plan.root_release.ref,
+            template_ref=plan.final_release.ref,
         ) as staging:
             conflicts = self._update_layers(staging)
             if conflicts:
@@ -182,7 +182,7 @@ class UpdateWalk:
         try:
             run_update_tasks(
                 inputs.project,
-                inputs.plan.root_release,
+                inputs.plan.final_release,
                 inputs.plan.task_view,
                 TaskRun(tasks=inputs.plan.tasks, secrets=self._secrets),
                 UpdateOptions(quiet=inputs.request.quiet),

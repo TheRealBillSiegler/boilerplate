@@ -91,7 +91,7 @@ def plan_walk(
             layers=unknown,
             remediation=f"Name one of the project's layers: {', '.join(layers)}.",
         )
-    root = layers[-1]
+    final = layers[-1]
     sources = read_layer_sources(project, lock)
     at_lock = lock_releases(lock, sources)
     views = ReleaseViews(checkouts, workdir=workdir)
@@ -133,8 +133,8 @@ def plan_walk(
         steps=steps,
         skipped=resume.finished if resume is not None else (),
         targets=dict(resolution.targets),
-        root_release=LayerRelease.from_release(root, target_releases[root]),
-        task_view=views.step_view(root, target_releases),
+        final_release=LayerRelease.from_release(final, target_releases[final]),
+        task_view=views.step_view(final, target_releases),
         tasks=tuple(views.tasks(target_releases)),
         warnings=(
             *answers_warnings(project, lock),
