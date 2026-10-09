@@ -350,9 +350,9 @@ MAJOR updates MUST include a prominent warning about breaking changes in the pla
 
 **Task execution**: Follows the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
 
-**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`, which resumes from the `conflict` record in `.boilerplate/migrations.yml`: the record names each layer's target version and the layers already finished, so the rerun skips those layers and walks the rest to the recorded targets. An explicit `--target-version` that differs from the record is refused until the user sets the partial update aside. `git stash --include-untracked` sets the partial update aside, added files included. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
+**Conflicts**: When a layer's update produces conflicts, the CLI brings back the layers finished so far with Copier's conflict markers in the affected files, writes no lock file and exits with code `4` (`ACTION_REQUIRED`). The user resolves the conflicts and commits as with plain Copier, then reruns `boilerplate update`, which resumes from the `conflict` record in `.boilerplate/migrations.yml`: the record names each layer's target version and the layers already finished, so the rerun skips those layers and walks the rest to the recorded targets. An explicit `--target-version` that differs from the record is refused until the user sets the partial update aside. `git reset` and then `git stash --include-untracked` set the partial update aside, added files included; the reset comes first because `git stash` refuses the conflicted files' unmerged index entries. A rerun before the user commits stops at the clean working tree check with exit code `3` ([06-project-lifecycle.md §Step 5](06-project-lifecycle.md#step-5-failure-and-conflict)).
 
-**Interrupted runs**: A run cut off while it copies its result back or finishes is completed by running the same command again, when the working tree holds only what the run wrote. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git stash --include-untracked` sets the partial update aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
+**Interrupted runs**: A run cut off while it copies its result back or finishes is completed by running the same command again, when the working tree holds only what the run wrote. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial update aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
 
 **File status indicators**:
 
@@ -414,7 +414,7 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 `add` and `update` stay separate operations: `add` never changes a layer already in the project.
 
-**Interrupted runs**: A run cut off while it copies the layer back or finishes is completed by running the same command again, when the working tree holds only what the run wrote. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git stash --include-untracked` sets the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
+**Interrupted runs**: A run cut off while it copies the layer back or finishes is completed by running the same command again, when the working tree holds only what the run wrote. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
 
 **Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
 
@@ -1071,7 +1071,7 @@ Tip: Save your answers for CI reproducibility:
 
 **After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted.
 
-**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`; `git stash --include-untracked` sets the partial update aside).
+**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`; `git reset` and then `git stash --include-untracked` set the partial update aside).
 
 ### Answer Presets
 
