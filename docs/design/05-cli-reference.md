@@ -414,13 +414,13 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 `add` and `update` stay separate operations: `add` never changes a layer already in the project.
 
-**Interrupted runs**: A run cut off while it copies the layer back, writes the lock or appends the record is completed by running the same command again, when the working tree holds only what the run wrote; the rerun ends with that run's exit code and adds nothing new. A run cut off while the layer's tasks run leaves no marker, because `add` runs its tasks after the record, so the rerun stops with `BP_UPDATE_LAYER_ALREADY_ADDED` and the layer's tasks are run by hand. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
+**Interrupted runs**: A run cut off while it copies the layer back, runs its tasks, writes the lock or appends the record is completed by running the same command again, when the working tree holds only what the run wrote; the rerun ends with that run's exit code and adds nothing new. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and `git reset` and then `git stash --include-untracked` set the partial add aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). No flag is involved.
 
 **Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
 
 **`--answers` and `--set`**: Both are laid over the new layer's questionnaire data, as Copier's own `--data` is.
 
-**Task execution**: The new layer's tasks run once, under the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)).
+**Task execution**: The new layer's tasks run once, before the lock and the record, under the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)). A task that fails is handled as for `update` ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
 
 **JSON output**: `--format json` with `--dry-run` outputs the plan; with `--yes` outputs the result. `--format json` without either exits with code `3`, as for `update`.
 
