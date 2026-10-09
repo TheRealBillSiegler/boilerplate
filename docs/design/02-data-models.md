@@ -645,7 +645,7 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
 | `UpdatePathObstructedError` | `3` | Before the copy back, a path the walk added already exists in the checkout as an ignored file or directory (`BP_UPDATE_PATH_OBSTRUCTED`) |
 | `UpdateInterruptedError` | `3` | The restore marker shows an earlier run cut off while restoring its result into the working tree, and the rerun cannot finish it: another command, a moved HEAD, a working tree that differs from the run's result, a run a conflict had paused, or a marker file that does not parse (`BP_UPDATE_INTERRUPTED`) |
-| `UpdateCopyBackFailedError` | `1` | Copying the staging worktree back failed partway; the checkout was undone to the starting commit, the staging worktree is kept, the restore marker and its ref are removed and no record is appended (`BP_UPDATE_COPY_BACK_FAILED`) |
+| `UpdateCopyBackFailedError` | `1` | Copying the staging worktree back failed partway; the copy back was undone ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), the staging worktree is kept, the restore marker and its ref are removed and no record is appended (`BP_UPDATE_COPY_BACK_FAILED`) |
 | `ProjectNotManagedError` | `3` | `add` found no `boilerplate.lock` in the project (`BP_UPDATE_PROJECT_NOT_MANAGED`) |
 | `LayerAlreadyAddedError` | `3` | `add` named a template the lock already lists (`BP_UPDATE_LAYER_ALREADY_ADDED`) |
 | `AddAncestorsMissingError` | `3` | A template the new layer extends is not in the lock (`BP_UPDATE_ANCESTORS_MISSING`) |
