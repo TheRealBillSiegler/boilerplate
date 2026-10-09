@@ -84,34 +84,24 @@ def test_templates_empty_directory_still_lists_bundled(
 
 
 @pytest.fixture
-def empty_catalog_list(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, typer_cli_runner: CliRunner
-) -> Result:
-    """Run `list` with the bundled and the extra templates directory both empty."""
-    empty_dir = tmp_path / "empty"
-    empty_dir.mkdir()
-    monkeypatch.setenv("BOILERPLATE_DEFAULT_TEMPLATES_DIR", str(empty_dir))
-    return typer_cli_runner.invoke(app, ["list", "--templates-dir", str(empty_dir)])
+def empty_catalog_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    """Return an empty templates directory that is also the bundled default.
 
-
-def test_templates_list_empty_catalog_is_silent_under_quiet(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, typer_cli_runner: CliRunner
-) -> None:
-    """`--quiet` leaves stdout empty when `list` finds no templates.
-
-    Source of truth: docs/design/05-cli-reference.md §Quiet Mode ("no output
-    to stdout under any normal condition"). Fails if the empty-catalog note
-    bypasses the quiet gate.
+    Returns:
+        The empty directory, set as `BOILERPLATE_DEFAULT_TEMPLATES_DIR`.
     """
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
     monkeypatch.setenv("BOILERPLATE_DEFAULT_TEMPLATES_DIR", str(empty_dir))
+    return empty_dir
 
-    result = typer_cli_runner.invoke(
-        app, ["--quiet", "list", "--templates-dir", str(empty_dir)]
+
+@pytest.fixture
+def empty_catalog_list(empty_catalog_dir: Path, typer_cli_runner: CliRunner) -> Result:
+    """Run `list` with the bundled and the extra templates directory both empty."""
+    return typer_cli_runner.invoke(
+        app, ["list", "--templates-dir", str(empty_catalog_dir)]
     )
-
-    assert result.stdout == ""
 
 
 def test_templates_list_empty_catalog_exits_success(empty_catalog_list: Result) -> None:
@@ -151,6 +141,22 @@ def test_templates_list_empty_catalog_prints_no_error_line(
     """An empty catalog prints no `Error:` line and no BP code."""
     assert "Error:" not in empty_catalog_list.output
     assert "BP_" not in empty_catalog_list.output
+
+
+def test_templates_list_empty_catalog_is_silent_under_quiet(
+    empty_catalog_dir: Path, typer_cli_runner: CliRunner
+) -> None:
+    """`--quiet` leaves stdout empty when `list` finds no templates.
+
+    Source of truth: docs/design/05-cli-reference.md §Quiet Mode ("no output
+    to stdout under any normal condition"). Fails if the empty-catalog note
+    bypasses the quiet gate.
+    """
+    result = typer_cli_runner.invoke(
+        app, ["--quiet", "list", "--templates-dir", str(empty_catalog_dir)]
+    )
+
+    assert result.stdout == ""
 
 
 def test_templates_permission_error_behavior(
