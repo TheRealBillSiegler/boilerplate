@@ -416,11 +416,13 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 **Interrupted runs**: A run cut off while it copies the layer back, runs its tasks, writes the lock or appends the record is completed by running the same command again, when the working tree holds only what the run wrote; the rerun ends with that run's exit code and adds nothing new. Otherwise the rerun stops with `BP_UPDATE_INTERRUPTED`, and the user sets the partial add aside ([06 §Setting a partial update aside](06-project-lifecycle.md#setting-a-partial-update-aside)). No flag is involved.
 
-**Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
+**Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. The plan, which `--dry-run` also prints, lists the layer and its version, the files, the layer's own tasks (each command), the Jinja extensions its scoped view loads, and one line on what undo can and cannot reverse ([06 §Undo](06-project-lifecycle.md#undo)). `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
 
 **`--answers` and `--set`**: Both are laid over the new layer's questionnaire data, as Copier's own `--data` is.
 
 **Task execution**: The new layer's tasks run once, before the lock and the record, under the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)). A task that fails is handled as for `update` ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
+
+**Trust**: `new` and `add` follow one trust rule under [ADR-003](adr-003-permissive-execution.md). The posture keys on the template's source, not the destination, and Copier's own trust check never reads the destination. Under the target trust model, `add`'s plan prompt is its consent prompt for the layer's tasks and extensions: one prompt, shown before any extension loads ([03 §Jinja2 Extension Safety](03-template-system.md#jinja2-extension-safety)).
 
 **JSON output**: `--format json` with `--dry-run` outputs the plan; with `--yes` outputs the result. `--format json` without either exits with code `3`, as for `update`.
 
@@ -1034,13 +1036,15 @@ Destructive or high-impact operations MUST require confirmation.
 | Trigger | Command | Summary content |
 | --- | --- | --- |
 | Any update (default behavior) | `update` | Update plan with version deltas and file impact |
-| Adding a layer (default behavior) | `add` | Add plan with the layer, its version and file impact |
+| Adding a layer (default behavior) | `add` | Add plan with the layer, its version, file impact, the layer's own tasks, the Jinja extensions its scoped view loads and what undo can and cannot reverse |
 | Environment provisioning | `env apply` | Tools to install/upgrade |
 | Stop management (state removal) | `eject` | Artifacts to remove (`boilerplate.lock`, `.boilerplate/`) |
 
 Note: `--force` on `new` does NOT trigger confirmation — force implies consent. The `--yes` flag bypasses confirmation on `update`, `add`, `env apply`, and `eject`.
 
 All `update`, `add`, `env apply`, and `eject` invocations show a plan and prompt for confirmation by default. `--dry-run` suppresses the prompt (plan only). `--yes` suppresses the prompt (plan + apply).
+
+Under the target trust model, `add`'s plan prompt is also its consent prompt for the layer's tasks and extensions: one prompt, shown before any extension loads ([`add`](#add)).
 
 ### Post-Action Guidance
 
