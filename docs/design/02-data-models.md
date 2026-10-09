@@ -493,6 +493,28 @@ An intent journal records the in-progress state of a mutating operation for cras
 
 ---
 
+### RestoreMarker
+
+A restore marker keeps the state of an `update` or `add` run that is copying its result back, so a run cut off there can be finished or set aside ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)). Written before the copy back changes a file and removed after the run appends its record.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `operation` | enum | `update` or `add` |
+| `kind` | enum | `complete` when the walk finished every layer, `paused` when a conflict paused it |
+| `phase` | enum | `copy_back` until the copy back ends, then `tasks` (a `complete` update's tasks run), then `recording` (the lock and the record remain). An `add` goes from `copy_back` to `recording`. |
+| `start_commit` | string | The commit HEAD pointed at when the run began |
+| `result_commit` | string | The staging worktree's last per-layer commit, `start_commit` when no layer finished |
+| `targets` | map[string, string] | Each layer of the walk keyed by `LockLayer.name` with the version the walk was updating it to, as in a `conflict` record |
+| `started_at` | ISO 8601 | When the run began |
+
+**File location**: `git rev-parse --git-path boilerplate-restore.json`, which resolves under the git directory of the worktree the command runs in.
+
+**Ref**: `refs/worktree/boilerplate/restore`, set with `git update-ref` to `result_commit` and removed with `git update-ref -d`. A `refs/worktree/` ref is per worktree, keeps the commit reachable after the stale-staging cleanup removes the staging folder, and is not shared with other worktrees.
+
+The marker differs from the `IntentJournal`: the journal sits in the staging folder, which the stale cleanup removes, and the marker sits in the git directory so it outlives that folder.
+
+---
+
 ## Environment Domain Models
 
 ### EnvironmentProfile
