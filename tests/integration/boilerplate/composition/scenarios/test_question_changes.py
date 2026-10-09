@@ -5,13 +5,13 @@ three update mechanisms; S12 removes one; S13 retypes one; S14 renames one
 behind a before-stage migration; S15 adds a validator the recorded answer
 fails. The step's own rule (design 04 §Safe Update) is the default: the layer's
 own answers stay in its answers file and its ancestors' arrive as data. S13 and
-S15 also force the recorded answers of the layer's chain as data, the rule the
-step replaced, or run a vanilla update, ``data={}`` on a worker that skips the
-step's check, which leaves Copier to read the layer's answers file alone; S10b
-adds a questionnaire pass the step no longer runs. S10a, S10b and S12-S15 run
-on the made-up template family; S10c stays on the bundled layers because it
-needs a project composed under the full view, which the family's app cannot
-render.
+S15 also force the recorded answers of the layer's chain as data, or run a
+vanilla update, ``data={}`` on a worker that skips the step's check, which
+leaves Copier to read the layer's answers file alone; S10b supplies the
+answers of a questionnaire pass as data, a pass the step does not run. S10a,
+S10b and S12-S15 run on the made-up template family; S10c stays on the bundled
+layers because it needs a project composed under the full view, which the
+family's app cannot render.
 """
 
 import re
@@ -102,7 +102,7 @@ def _questionnaire_pass(
     """Return the answers one pass over the full view gives `layer`'s new questions.
 
     The pass asks the full view at the target with every answers file's answers
-    given, as the update questionnaire pass did before the step ran no pass.
+    given.
 
     Args:
         project: The composed project.

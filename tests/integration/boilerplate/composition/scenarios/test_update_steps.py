@@ -123,7 +123,7 @@ class TestValueChangingMigrationWithAStaleDescendant:
     def test_forcing_the_layers_own_stale_answer_is_rejected(
         self, family: Family, tmp_path: Path
     ) -> None:
-        """Pin the defect: the old rule forced service's stale 3.11 over core's 3.12."""
+        """Reject service's own stale 3.11 when it is forced on top of core's 3.12."""
         project = self._core_updated(family, tmp_path)
 
         with pytest.raises(ValueError, match="Invalid choice for 'python_version'"):
