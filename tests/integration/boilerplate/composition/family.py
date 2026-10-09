@@ -1,11 +1,12 @@
 """Build the made-up template family into tagged git repositories.
 
-The family is five small Python-project templates (`core`, `service`, `docs`,
-`ci`, `app`) stored as data under ``tests/fixtures/family/<layer>/<version>/``.
-A layer's first version is a full template folder; each later version holds only
-the files it adds or changes, plus a ``_deleted.txt`` naming the paths it
-removes. ``build_family`` overlays each version on the previous one and turns
-the result into a git repository with one commit and one tag per release.
+The family is six small Python-project templates (`core`, `service`, `docs`,
+`ci`, `app`, `handbook`) stored as data under
+``tests/fixtures/family/<layer>/<version>/``. A layer's first version is a full
+template folder; each later version holds only the files it adds or changes,
+plus a ``_deleted.txt`` naming the paths it removes. ``build_family`` overlays
+each version on the previous one and turns the result into a git repository with
+one commit and one tag per release.
 """
 
 import shutil

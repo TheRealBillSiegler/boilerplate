@@ -23,9 +23,10 @@ Two views of a composition drive a layer's render:
   (``update_layer``).
 
 The view builder, ``ScopedWorker``, the update answer rule and the single-layer
-update are Boilerplate's own code in ``boilerplate.composition.views`` and
-``boilerplate.composition.updating``; the helpers here resolve and compose, read
-answers files and call them. The composition scenarios reuse this harness.
+update are Boilerplate's own code in ``boilerplate.composition.views``,
+``boilerplate.composition.rendering`` and ``boilerplate.composition.updating``;
+the helpers here resolve and compose, read answers files and call them. The
+composition scenarios reuse this harness.
 """
 
 import shutil
@@ -396,7 +397,7 @@ def update_layer(
             templates); the project's recorded ref and `ref` must both be
             keys, unless `old_templates` stands in for the recorded one.
         full_view: Whether to render under the root's full view, as
-            ``RenderEngine`` would, instead of `layer`'s scoped view.
+            ``render_full_view`` does, instead of `layer`'s scoped view.
         step_views: Whether to build the views as an update step does, the
             layer's scope under the full schema's definitions, instead of
             `layer`'s scoped view or, with `full_view`, the root's full view.
