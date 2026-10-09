@@ -41,7 +41,7 @@ def check_project_ready(
         UpdateSubmodulesUnsupportedError: If `project` has a ``.gitmodules``
             file; the error names the submodule paths.
     """
-    _require_repository_root(project)
+    require_repository_root(project)
     if run_git(project, "status", "--porcelain").strip():
         raise UpdateProjectNotReadyError(_DIRTY_MESSAGE.format(command=operation.value))
     if (project / ".gitmodules").is_file():
@@ -53,8 +53,15 @@ def check_project_ready(
         )
 
 
-def _require_repository_root(project: Path) -> None:
-    """Raise unless `project` is the top level of a repository with a commit."""
+def require_repository_root(project: Path) -> None:
+    """Check that `project` is the top level of a git repository with a commit.
+
+    Args:
+        project: The project folder.
+
+    Raises:
+        UpdateProjectNotReadyError: If it is not.
+    """
     try:
         top = Path(run_git(project, "rev-parse", "--show-toplevel").strip())
         run_git(project, "rev-parse", "--verify", "HEAD")

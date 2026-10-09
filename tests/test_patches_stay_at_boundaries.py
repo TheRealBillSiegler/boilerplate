@@ -69,6 +69,14 @@ ALLOWED_SEAMS: dict[str, str] = {
         "deterministically on every platform; the wrapper runs every other git "
         "call for real."
     ),
+    "boilerplate.composition.updating.walk.update_walk.run_update_tasks": (
+        "Fault injection: Ctrl-C or a crash landing right after the copy back, "
+        "while the tasks run, cannot be timed deterministically."
+    ),
+    "boilerplate.composition.adding.add_run.run_add_tasks": (
+        "Fault injection: Ctrl-C or a crash landing right after the copy back, "
+        "while the tasks run, cannot be timed deterministically."
+    ),
     "boilerplate.composition.serialization.yaml_utils.template_public_attr_names": (
         "Counterfactual: drops one attribute from the extraction to show it is the "
         "only blocker to composing from git-repository layers; no input removes it."

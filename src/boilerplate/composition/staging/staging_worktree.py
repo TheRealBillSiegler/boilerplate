@@ -227,8 +227,9 @@ class StagingWorktree:
         Args:
             paused: Whether the last layer paused on a conflict.
             on_start: Called once the checks have passed and the journal says
-                ``committing``, before the first file of the checkout changes.
-                If it raises, nothing was written.
+                ``committing``, and before the first file of the checkout
+                changes; the finisher writes the restore marker here. If it
+                raises, nothing was written.
 
         Raises:
             UpdateCheckoutChangedError: If the checkout changed during staging;
