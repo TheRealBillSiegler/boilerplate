@@ -334,7 +334,7 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 
 ### Step 5: Failure and conflict
 
-**Failure.** Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (`1` for an unexpected failure, `3` for a rejected answer, `130` for a cancelled prompt). A copy back that fails partway is undone and appends no record ([Staging worktree](#staging-worktree)). A task failure after the copy back follows [design 04 §Safe Update](04-composition-engine.md#safe-update): a terminal offers to keep the files or undo the update, and `--non-interactive` keeps the files, writes the lock, names the failed task and how to rerun it, and exits `1`.
+**Failure.** Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (`1` for an unexpected failure, `3` for a rejected answer, `130` for a cancelled prompt). A copy back that fails partway is undone and appends no record ([Staging worktree](#staging-worktree)). A task failure after the copy back follows [design 04 §Safe Update](04-composition-engine.md#safe-update), for `update` and `add` alike: a terminal offers to keep the files or undo the run, and keeping the files, which `--non-interactive` does, writes the lock, appends a `failed` record, names the failed task and how to rerun it, and exits `1`.
 
 **Conflict.** When a layer's update returns conflicts, Boilerplate:
 
@@ -356,7 +356,7 @@ A run cut off while it copies its result back, or while it finishes afterwards, 
 The restore marker keeps the state of such a run in git. It is a JSON file at `git rev-parse --git-path boilerplate-restore.json`, paired with the ref `refs/worktree/boilerplate/restore`, which pins the copy back's source commit (`git update-ref`). The fields are in [02 §RestoreMarker](02-data-models.md#restoremarker). Boilerplate MUST write both after the checkout-unchanged and obstruction checks and before the copy back changes a file, for `update` and for `add`; advance the marker's `phase` as the run proceeds; and remove both, file and ref (`git update-ref -d`), after the run appends its record. It MUST pin the ref first and then write the marker, and remove the marker first and then the ref, so a crash between the two steps leaves at worst a ref without a marker, which the next run's pre-flight removes. It MUST write the marker, and rewrite it for each `phase`, with the single-file recipe of [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern) (a sibling temporary file, then an atomic rename), so a crash never leaves a truncated file. A marker that still does not parse as the [RestoreMarker](02-data-models.md#restoremarker) stops the command with `BP_UPDATE_INTERRUPTED` naming the file; the remediation sets the partial update aside as below, and deleting the file and running `git update-ref -d refs/worktree/boilerplate/restore` discards the marker.
 
 - `kind` is `complete` for a walk that finished every layer, and `paused` for one a conflict paused, which runs no tasks and writes no lock.
-- `phase` is `copy_back` from the moment the marker is written until the copy back ends, `tasks` while a `complete` update's tasks run, and `recording` until the record is appended. `add` runs its tasks after the record ([Part 2.4](#adding-a-layer)), so its marker passes from `copy_back` to `recording` and never carries `tasks`: an `add` cut off while its tasks run leaves no marker, the rerun stops with `BP_UPDATE_LAYER_ALREADY_ADDED` because the lock already lists the layer, and the layer's tasks are run by hand.
+- `phase` is `copy_back` from the moment the marker is written until the copy back ends, `tasks` while a `complete` run's tasks run, and `recording` until the record is appended. `add` runs its tasks before the lock and the record ([Part 2.4](#adding-a-layer)), so its marker passes the same phases and rules 4, 5 and 6 below apply to `add` unchanged.
 - `result_commit` is the staging worktree's last per-layer commit, the starting commit when no layer finished.
 
 A copy back that fails is undone to the starting commit, the staging worktree is kept and named in the error, the marker and the ref are removed and no record is appended, because the checkout is back at its pre-update state ([Staging worktree](#staging-worktree)).
@@ -437,13 +437,13 @@ Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, 
 
 - Entries MUST be append-only. An existing entry MUST NOT be modified.
 - A finished operation appends exactly one record: `success`, `conflict`, `failed`, `created` or `adopted`. There is no `in_progress` status. A run that leaves the checkout unchanged appends none: a failure before the copy back, or a copy back that fails and is undone. The state of a run cut off while it copies back is kept in the restore marker, not in the log ([Interrupted copy back](#interrupted-copy-back)).
-- A `conflict` record MUST be appended when a conflict pauses an update, and a `failed` record when a task fails after the copy back. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, a `conflict` record is appended that names each layer's target version and the layers the walk finished ([02 §MigrationRecord](02-data-models.md#migrationrecord)). When a task fails after the copy back and the update exits with code `1`, a `failed` record is appended. The `status: success` value is written only when a run completes every layer.
+- A `conflict` record MUST be appended when a conflict pauses an update, and a `failed` record when a task fails after the copy back and the files are kept. When the update exits with code `4` (`ACTION_REQUIRED`) due to merge conflicts, a `conflict` record is appended that names each layer's target version and the layers the walk finished ([02 §MigrationRecord](02-data-models.md#migrationrecord)). When a task fails after the copy back and the update exits with code `1`, a `failed` record is appended. The `status: success` value is written only when a run completes every layer.
 - The file MUST be created with the initial `created` MigrationRecord on project creation (per Step 5 above), not as an empty file. The audit log is complete from inception.
 - Writes to `migrations.yml` MUST follow the single-file tmp-then-rename recipe in [07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern); the temporary file is `migrations.tmp.{random_suffix}`.
 - The record is appended once, when the operation ends, and the restore marker and its ref are removed only after that. Per-status timing:
   - `success` MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the rerun after a conflict, `success` is appended as a new record (per [Step 5](#step-5-failure-and-conflict)) and the `conflict` record stays unmodified.
   - `conflict` is written at exit 4 (ACTION_REQUIRED) when merge conflicts are detected. No lock file is written on this path per [Step 5](#step-5-failure-and-conflict) — conflict is a deliberate pause state, not a completed update, so the AFTER-lock-write rule does not apply to it.
-  - `failed` is written when a task fails after the copy back. Under `--non-interactive` the files are kept and the lock file is written on that path; a terminal user who undoes the update leaves the checkout as it was and no record, and the marker and the ref are removed.
+  - `failed` is written when a task fails after the copy back of an `update` or an `add` and the files are kept: under `--non-interactive`, and when a terminal user chooses to keep them. The lock file is written on that path. A terminal user who undoes the run leaves the checkout as it was and no record, and the marker and the ref are removed.
 
 **Known limitation**: The lock file write and migration record append are two separate atomic operations with no transactional guarantee across both. The restore marker is removed only after the record, so a crash between the lock and the record leaves the marker at `phase` `recording`, and the rerun appends the record ([Interrupted copy back](#interrupted-copy-back)); a crash between the record and the marker's removal leaves a marker that rule 1 removes. The migration log is advisory, not authoritative.
 
@@ -510,9 +510,9 @@ The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.m
 3. Answers  →  Take answers to ancestors' questions as update takes them
 4. Render   →  Render the layer's scoped view with Copier's copy
 5. Return   →  Bring the result back as uncommitted changes
-6. Lock     →  Write boilerplate.lock with the layer appended
-7. Record   →  Append a migration record
-8. Tasks    →  Run the new layer's tasks once
+6. Tasks    →  Run the new layer's tasks once
+7. Lock     →  Write boilerplate.lock with the layer appended
+8. Record   →  Append a migration record
 ```
 
 1. **Resolve** the template and its `extends`.
@@ -520,11 +520,11 @@ The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.m
 3. **Take answers** to ancestors' questions the same way update takes them ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
 4. **Render** the layer's scoped view with Copier's `copy`, using the same staging as update ([Staging worktree](#staging-worktree), [Step 5: Failure and conflict](#step-5-failure-and-conflict)).
 5. **Bring the result back** as uncommitted changes.
-6. **Write `boilerplate.lock`** with the new layer appended at the end of the topological order. A new layer has no descendants, so last is always valid.
-7. **Append a migration record** to `.boilerplate/migrations.yml`. The record carries no classification, as for `created` and `adopted` records: no prior version of the layer exists to compare.
-8. **Run the new layer's tasks once**, as at compose, against the finished project.
+6. **Run the new layer's tasks once**, as at compose, against the finished project, before the lock and the record as `new` and `update` run theirs. A task that fails is handled as for `update` ([design 04 §Safe Update](04-composition-engine.md#safe-update)): keeping the files writes the lock and appends a `failed` record, and undoing leaves the checkout as it was and appends no record.
+7. **Write `boilerplate.lock`** with the new layer appended at the end of the lock's layer order and its `joined_via` set to `add`. A new layer has no descendants, so last is always valid.
+8. **Append a migration record** to `.boilerplate/migrations.yml`. The record carries no classification, as for `created` and `adopted` records: no prior version of the layer exists to compare.
 
-The copy back, its failure handling and the restore marker are those of `update` ([Staging worktree](#staging-worktree), [Interrupted copy back](#interrupted-copy-back)), with the marker's `operation` set to `add`.
+The copy back, its failure handling and the restore marker are those of `update` ([Staging worktree](#staging-worktree), [Interrupted copy back](#interrupted-copy-back)), with the marker's `operation` set to `add`. The marker passes `copy_back`, `tasks` and `recording` as an update's does, so recovery rules 4, 5 and 6 apply to `add` unchanged.
 
 ### Files
 
@@ -538,15 +538,17 @@ A layer that offers alternatives (CI providers, docs site generators) SHOULD ask
 
 | Scenario | Expected Outcome |
 |----------|-----------------|
-| Layer added to a managed project with a clean tree | Layer rendered as uncommitted changes, lock written with the layer last in topological order, migration recorded, exit `0` |
+| Layer added to a managed project with a clean tree | Layer rendered as uncommitted changes, its tasks run, lock written with the layer last and `joined_via: add`, migration recorded, exit `0` |
 | Project not managed (`boilerplate.lock` missing) | Error pointing to `boilerplate adopt`; no files modified, exit `3` |
 | Dirty working tree | Error naming the uncommitted changes; no files modified, exit `3` |
 | Template already in the project | Error pointing to `boilerplate update`; no files modified, exit `3` |
 | An ancestor the layer `extends` is not in the lock | Error naming each missing layer with the remediation `boilerplate add <ancestor>` first; no files modified, exit `3` |
 | An ancestor's recorded version fails the layer's `extends` constraint | Error naming the ancestor, its recorded version and the constraint, with the remediation `boilerplate update` first; no files modified, exit `3` |
 | Failure mid-add | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
-| Run cut off while copying back, writing the lock or recording, working tree holds only what it wrote | The same `add` again finishes the run: lock written, `success` record appended; exit `0` |
-| Run cut off while the new layer's tasks run | No marker remains; the rerun stops with `BP_UPDATE_LAYER_ALREADY_ADDED`, and the layer's tasks are run by hand; exit `3` |
+| Task fails after the copy back (`--non-interactive`) | Files kept, lock written with the layer, failed task named with how to rerun it, `failed` migration record, exit `1` |
+| Task fails after the copy back (terminal), user chooses to keep the files | As under `--non-interactive`: lock written, `failed` record appended, exit `1` |
+| Task fails after the copy back (terminal), user chooses to undo | Checkout left as it was, no record; marker and ref removed |
+| Run cut off while copying back, running the tasks, writing the lock or recording, working tree holds only what it wrote | The same `add` again finishes the run: the tasks run if they had not finished, lock written, `success` record appended; exit `0` |
 | Run cut off, working tree edited since | `BP_UPDATE_INTERRUPTED` naming the layer; nothing changed, exit `3` |
 
 ---
