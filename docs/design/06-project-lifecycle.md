@@ -376,42 +376,6 @@ When `update` or `add` starts and the marker exists, Boilerplate MUST apply thes
 
 Rules 1 and 2 hand the command back to the pre-flight, which continues with the clean-tree check and plans a fresh run. Rules 4, 5 and 6 finish the cut-off run and the command then ends with that run's exit code, `0`, or `4` when rule 6 appends the `conflict` record of a `paused` run; they plan no fresh run, because the tree they leave holds the finished result and the clean-tree check would stop it. Rule 3 and every other stop exit with code `3`.
 
-```mermaid
-stateDiagram-v2
-    direction TB
-    state "Rule 1: run finished?" as R1
-    state "Rule 2: tree clean?" as R2
-    state "Rule 3: same run?" as R3
-    state "Rule 4, 5 or 6: phase?" as P
-    state "Remove marker, continue as a fresh run" as Fresh
-    state "Remove marker, warn, plan afresh" as Afresh
-    state "Stop with BP_UPDATE_INTERRUPTED" as Stop
-    state "Repeat the copy back from result_commit" as Repeat
-    state "Run the tasks again" as Tasks
-    state "Write the lock if needed" as Lock
-    state "Append the record" as Rec
-    state "Remove marker and ref, then exit 0 or 4" as Done
-    [*] --> R1
-    R1 --> Fresh: last record after started_at names the targets
-    R1 --> R2: no
-    R2 --> Afresh: clean
-    R2 --> R3: dirty
-    R3 --> Stop: other operation or HEAD moved
-    R3 --> P: same operation, HEAD at start_commit
-    P --> Repeat: copy_back, complete, paths match
-    P --> Stop: copy_back, otherwise
-    P --> Tasks: tasks
-    P --> Lock: recording
-    Repeat --> Tasks
-    Tasks --> Lock
-    Lock --> Rec
-    Rec --> Done
-    Fresh --> [*]
-    Afresh --> [*]
-    Stop --> [*]
-    Done --> [*]
-```
-
 Every stop names the interrupted run's targets and the remediation: `git reset` and then `git stash --include-untracked` set the partial update aside, then run the command again, which meets rule 2. The reset comes first because a `paused` run leaves its conflicted files as unmerged index entries, which `git stash` refuses; `git reset` returns the index to `HEAD` and keeps the working tree. The cut-off run's staging worktree is not reused; the stale-staging cleanup removes it.
 
 **Why the marker lives in git.**
