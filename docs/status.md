@@ -9,7 +9,7 @@ This page tracks how much of Boilerplate's [design specification](design/01-over
 
 ## At a glance
 
-The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. Everything tied to *reproducibility and lifecycle* (lock files, project updates, three-way merge), *catalog federation* (remote/Git sources, trust tiers, search), and the *environment-provisioning subsystem* is currently design-only.
+The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. *Reproducibility and lifecycle* (lock files, project updates, three-way merge) exists only as library code that no command calls yet, while *catalog federation* (remote/Git sources, trust tiers, search) and the *environment-provisioning subsystem* are design-only.
 
 | Design area | Status |
 | --- | --- |
@@ -35,7 +35,7 @@ The implemented core is **local template composition**: discover templates from 
 ### 02 — Data models :material-progress-clock:{ .status-partial }
 
 - :material-check-circle:{ .status-shipped } `TemplateMeta`, `TemplateInfo`, `TemplateSpecifier`, `SerializableVersion`, `TemplateCatalog`
-- :material-circle-outline:{ .status-design } Lock / Project / MigrationRecord models — no code exists for any of these
+- :material-progress-clock:{ .status-partial } Lock / Project / MigrationRecord models — `BoilerplateLock`, `LockLayer`, and `MigrationRecord` exist (`models/`); no `Project` model exists
 
 ### 03 — Template system :material-progress-clock:{ .status-partial }
 
@@ -69,8 +69,8 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
 
 - :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). **It does not write a lock file.**
-- :material-circle-outline:{ .status-design } Lock-file generation (`boilerplate.lock`) — no code reads or writes a lock file
-- :material-circle-outline:{ .status-design } Project update (`update` command), three-way merge, migration records, and rollback — none implemented
+- :material-progress-clock:{ .status-partial } Lock-file generation (`boilerplate.lock`) — `read_lock` and `write_lock` read and write it atomically (`project_state/lock_file.py`); no command calls `write_lock`, so `new` still writes none
+- :material-progress-clock:{ .status-partial } Project update (`update` command), three-way merge, migration records, and rollback — the per-layer update step, update-version resolution, and the migrations log (`read_migrations`, `append_migration`) exist as library code that no command calls; the `update` command and rollback are not implemented
 
 ### 07 — Operational quality :material-progress-clock:{ .status-partial }
 
@@ -121,18 +121,18 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 | `init-template` | :material-circle-outline:{ .status-design } | Not implemented |
 | `search` | :material-circle-outline:{ .status-design } | Discovery is `list` only — no search/filter/trust |
 | `env` (apply/status/diff/rollback/…) | :material-circle-outline:{ .status-design } | No `env` command group |
-| `lock` (migrate/verify) | :material-circle-outline:{ .status-design } | No lock subsystem |
+| `lock` (migrate/verify) | :material-circle-outline:{ .status-design } | No `lock` command; the lock file model and I/O exist (`project_state/lock_file.py`) |
 | `cache warm` | :material-circle-outline:{ .status-design } | No cache layer |
 | shell completions | :material-progress-clock:{ .status-partial } Partial | Typer's built-in completion only |
 
 ## Known gaps (design-only)
 
-These are specified in the design docs but have **zero implementation** today — listed here so expectations are clear:
+These are specified in the design docs but have **no user-facing implementation** today — listed here so expectations are clear:
 
-1. **Lock files (`boilerplate.lock`)** — nothing writes or reads a lock file yet.
+1. **Lock files (`boilerplate.lock`)** — the model and file I/O exist, but no command writes or reads the lock yet.
 2. **Project update lifecycle** — no `update` command, version diffing, or apply.
 3. **Three-way merge / conflict resolution** — only configuration-schema merging exists. The target semantics (conflict-pause, safe-orphan, never-auto-delete) are specified in [ADR-007](design/adr-007-update-model.md).
-4. **Migration records & rollback.**
+4. **Migration records & rollback** — the record model and log file I/O exist; nothing appends a record, and there is no rollback.
 5. **Environment provisioning** — the entire proto toolchain subsystem and `env *` commands.
 6. **Catalog federation & discovery** — remote/Git sources, `search`, trust tiers, classification.
 7. **Security verification pipeline** — checksums, signatures, trust verification, Jinja sandbox.
