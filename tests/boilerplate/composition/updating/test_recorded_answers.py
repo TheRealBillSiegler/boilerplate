@@ -45,6 +45,11 @@ class TestReadRecordedAnswersByLayer:
             ("service", {"port": 81}),
         ]
 
+    def test_a_layer_name_with_dots_is_kept_whole(self, tmp_path: Path) -> None:
+        _record(tmp_path, "my.layer", "port: 80\n")
+
+        assert list(read_recorded_answers_by_layer(tmp_path)) == ["my.layer"]
+
     def test_project_without_answers_files_gives_no_layers(
         self, tmp_path: Path
     ) -> None:
