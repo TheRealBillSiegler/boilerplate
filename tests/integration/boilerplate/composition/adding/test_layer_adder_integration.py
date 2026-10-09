@@ -313,6 +313,21 @@ class TestRefusals:
             "Project is not managed by Boilerplate. Use 'boilerplate adopt' first."
         )
 
+    def test_the_repository_root_is_checked_before_the_lock(
+        self, family: Family, project: Path, staging_folders: list[str]
+    ) -> None:
+        """Run design 06's pre-flight check 1 before anything reads the tree.
+
+        A subfolder of the project is not a repository root and has no lock;
+        check 1 comes first, so the add stops as not ready, not as unmanaged.
+        """
+        subfolder = project / "nested"
+        subfolder.mkdir()
+
+        self.refuse(
+            subfolder, ask(family, "docs"), UpdateProjectNotReadyError, staging_folders
+        )
+
     def test_a_dirty_tree(
         self, family: Family, project: Path, staging_folders: list[str]
     ) -> None:
