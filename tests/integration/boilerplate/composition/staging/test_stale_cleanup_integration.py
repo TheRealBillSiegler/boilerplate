@@ -4,13 +4,17 @@ import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 from boilerplate.composition.staging import (
     JOURNAL_NAME,
     IntentJournal,
     IntentOperation,
     StagingWorktree,
     remove_stale_staging,
+    stale_cleanup,
 )
+from boilerplate.composition.staging.intent_journal import JOURNAL_LOCK_NAME
 from tests.boilerplate.templates.conftest import git
 
 
@@ -234,3 +238,48 @@ class TestCleanupBeforeCreate:
             assert not stale_folder.exists()
             assert current.path.is_dir()
             assert registered_worktrees(project) == 2
+
+
+class TestBestEffortCleanup:
+    """A folder the cleanup cannot inspect is left alone; it never aborts the run."""
+
+    def test_folder_that_vanishes_before_its_owner_is_checked_is_skipped(
+        self,
+        project: Path,
+        staging_root: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        vanishing = leave_behind(project, staging_root)
+        folder = vanishing.folder
+        later = started_at(vanishing) + timedelta(hours=2)
+        read_journal = IntentJournal.read
+
+        def read_then_delete(path: Path) -> IntentJournal:
+            journal = read_journal(path)
+            shutil.rmtree(path)
+            return journal
+
+        monkeypatch.setattr(stale_cleanup.os, "getuid", lambda: 1000, raising=False)
+        monkeypatch.setattr(IntentJournal, "read", read_then_delete)
+
+        removed = remove_stale_staging(staging_root, now=later)
+
+        assert removed == ()
+        assert str(folder) in caplog.text
+
+    def test_folder_whose_lock_cannot_be_opened_is_skipped(
+        self, project: Path, staging_root: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        stuck = leave_behind(project, staging_root)
+        folder = stuck.folder
+        later = started_at(stuck) + timedelta(hours=2)
+        lock = folder / JOURNAL_LOCK_NAME
+        lock.unlink()
+        lock.mkdir()
+
+        removed = remove_stale_staging(staging_root, now=later)
+
+        assert removed == ()
+        assert (folder / JOURNAL_NAME).is_file()
+        assert str(folder) in caplog.text

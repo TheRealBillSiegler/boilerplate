@@ -37,7 +37,9 @@ def remove_stale_staging(
     A folder is Boilerplate's own when its name carries the staging prefix and
     it holds a parseable intent journal; the journal's start time sets its age.
     A folder with no journal or an unparseable one is left for the user to
-    inspect, as is one owned by another user. An old folder is stale only when
+    inspect, as is one owned by another user and one whose owner or lock file
+    cannot be read: the cleanup is best-effort and never aborts the run that
+    started it. An old folder is stale only when
     the cleanup can also take the exclusive lock its operation holds for its
     whole lifetime: age alone would remove an update that is waiting at a
     prompt, so a folder whose lock is held is live and left alone. For each
@@ -80,14 +82,20 @@ def _claimed(folder: Path) -> Generator[bool]:
     """Try to take the lock of the operation that owns `folder`.
 
     The lock is released on the way out, before the folder is removed: Windows
-    will not delete an open file.
+    will not delete an open file. A lock file that cannot be opened is logged
+    and treated as held, so the folder is left alone.
 
     Yields:
         Whether no running operation holds the folder's lock.
     """
     lock = FileLock(folder / JOURNAL_LOCK_NAME)
     try:
-        yield lock.try_acquire()
+        acquired = lock.try_acquire()
+    except OSError as error:
+        _logger.warning("Leaving %s: its lock cannot be opened: %s", folder, error)
+        acquired = False
+    try:
+        yield acquired
     finally:
         lock.release()
 
@@ -115,9 +123,14 @@ def _owned_by_current_user(folder: Path) -> bool:
     """Check the owner of `folder` is the current user (POSIX user id match).
 
     Windows has no user id to compare; the per-user temp directory is what
-    keeps another user's folders out of reach there.
+    keeps another user's folders out of reach there. A folder that cannot be
+    inspected, because it vanished or is unreadable, counts as not ours.
     """
     getuid = getattr(os, "getuid", None)
     if getuid is None:
         return True
-    return folder.stat().st_uid == getuid()
+    try:
+        return folder.stat().st_uid == getuid()
+    except OSError as error:
+        _logger.warning("Leaving %s: its owner cannot be read: %s", folder, error)
+        return False

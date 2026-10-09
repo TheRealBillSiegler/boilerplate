@@ -53,6 +53,10 @@ ALLOWED_SEAMS: dict[str, str] = {
         "Filesystem fault injection: a file removed between listing and "
         "reading cannot be timed deterministically."
     ),
+    "boilerplate.composition.staging.IntentJournal.read": (
+        "Filesystem fault injection: a staging folder removed between its "
+        "journal read and its owner check cannot be timed deterministically."
+    ),
     "boilerplate.composition.rendering.engine.Worker": (
         "Copier's worker; a real one renders to disk."
     ),
