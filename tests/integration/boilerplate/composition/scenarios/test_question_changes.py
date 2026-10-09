@@ -478,7 +478,7 @@ REJECTED = [c for c, case in RETYPE_CASES.items() if case.rejection]
 # untouched; the narrowed-choice claim stays on the bundled layers below.
 UNTOUCHED = ["retype_bad"]
 # Copier prints this hint only when Git rejects the negative --inter-hunk-context
-# it tries first, as Git 2.55 and later do; a Git that accepts it prints nothing.
+# it tries first, as Git 2.55 does; a Git that accepts it prints nothing.
 # The silent-replacement tests drop this line and assert nothing else is on stderr.
 GIT_HINT = "Make sure Git >= 2.24 is installed to improve updates."
 
@@ -599,7 +599,7 @@ class TestRetypedQuestion:
         """S13: with data={} Copier drops the last answer and takes the new default.
 
         No exception, and stderr carries nothing but Copier's Git hint, which
-        Git 2.55 and later trigger: eighty becomes 8000.
+        Git 2.55 triggers: eighty becomes 8000.
         """
         case, scenario = retyped
         project = copy_project(scenario.project, tmp_path / "family-app")
@@ -710,7 +710,7 @@ class TestNarrowedChoiceOnTheBundledLayers:
         """S13: with data={} Copier drops the last answer and takes the default.
 
         No exception, and stderr carries nothing but Copier's Git hint, which
-        Git 2.55 and later trigger: GPL-3.0 becomes MIT.
+        Git 2.55 triggers: GPL-3.0 becomes MIT.
         """
         project = copy_project(narrowed.project, tmp_path / "probe-app")
         capsys.readouterr()
