@@ -2,9 +2,9 @@
 
 The local gate mirrors CI, whose ``changes`` job turns the scenarios job on when
 the diff touches a composition path. The paths below are the ones
-``.github/workflows/ci.yml`` lists, so a path that runs the scenarios in CI must
-run them here. ``tests/`` has no ``__init__.py`` files anywhere, so this module
-loads the script by path.
+``.github/workflows/ci.yml`` lists, copied here by hand, so a path that runs the
+scenarios in CI must run them here. ``tests/`` has no ``__init__.py`` files
+anywhere, so this module loads the script by path.
 """
 
 import sys
@@ -17,7 +17,10 @@ from check import scenario_choice, touches_composition
 
 # One path under each entry of the CI workflow's composition list.
 COMPOSITION_PATHS = [
+    "src/boilerplate/cli/commands/new.py",
     "src/boilerplate/composition/composer.py",
+    "src/boilerplate/integrations/copier/runner.py",
+    "src/boilerplate/models/layer.py",
     "src/boilerplate/templates/project/copier.yml",
     "tests/integration/boilerplate/composition/scenarios/test_views.py",
     "tests/boilerplate/templates/conftest.py",
@@ -38,7 +41,7 @@ class TestTouchesComposition:
     @pytest.mark.parametrize(
         "path",
         [
-            "src/boilerplate/cli/commands/new.py",
+            "src/boilerplate/catalog/index.py",
             "tests/integration/boilerplate/cli/test_new.py",
             "docs/governance/ci.md",
             "uv.lock.bak",
