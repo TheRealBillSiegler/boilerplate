@@ -69,6 +69,9 @@ The external tool ([Copier](https://copier.readthedocs.io/)) responsible for fil
 **copier.yml**:  
 Copier questionnaire file. Declares questions (variables) and tasks. Owned by Copier; Boilerplate reads but MUST NOT write to it.
 
+**Copy back**:  
+The step of `update` and `add` that reproduces the staging worktree's result in the user's checkout as uncommitted changes: `git restore --source=<commit> --worktree -- :/` from the worktree's last per-layer commit. See design 06 §Staging worktree.
+
 **DAG / Dependency Graph**:  
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
 
@@ -131,6 +134,9 @@ The standard project structure — `src/`, `tests/`, and their conventions. A pa
 
 **RenderEngine**:  
 The proper-noun class that orchestrates Copier across composition layers.
+
+**Restore marker**:  
+The file under the project's git directory, paired with the ref `refs/worktree/boilerplate/restore`, that keeps the state of a copy back cut off midway so a rerun can finish it or `git stash --include-untracked` can set it aside. See design 06 §Interrupted copy back.
 
 **safe update**:  
 The conflict-detected, atomically-rolled-back update workflow Boilerplate provides over Copier's per-layer merge. See design 04 §Safe update for the implementation.
