@@ -76,9 +76,11 @@ class TestMigrationRecordSadPath:
         with pytest.raises(ValidationError):
             MigrationRecord.model_validate(_fields(id=record_id))
 
-    def test_rejects_an_unknown_status(self) -> None:
+    # Design 06 §Migration Records: "There is no `in_progress` status."
+    @pytest.mark.parametrize("status", ["paused", "in_progress"])
+    def test_rejects_an_unknown_status(self, status: str) -> None:
         with pytest.raises(ValidationError):
-            MigrationRecord.model_validate(_fields(status="paused"))
+            MigrationRecord.model_validate(_fields(status=status))
 
     def test_rejects_a_naive_timestamp(self) -> None:
         with pytest.raises(ValidationError):
