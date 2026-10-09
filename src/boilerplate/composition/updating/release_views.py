@@ -109,6 +109,29 @@ class ReleaseViews:
             tasks_need_unsafe=bool(target_config.get("tasks")),
         )
 
+    def needs_unsafe(self, layer: str, releases: Mapping[str, ReleaseRef]) -> bool:
+        """Return whether an add copy of `layer` at `releases` needs ``unsafe``.
+
+        The grant follows Copier's own check for a copy
+        (``Worker._check_unsafe``), so a layer that loads nothing keeps Copier's
+        consent gate (docs/design/adr-003-permissive-execution.md). The copy
+        skips the layer's tasks, which the add runs apart, and Copier counts no
+        migration of a copy, so only a Jinja extension calls for the grant; the
+        layer's own tasks count only for a copy that runs them
+        (`AddPlan.unsafe_for`).
+
+        Args:
+            layer: The layer the copy renders.
+            releases: The release of every layer of the project.
+
+        Returns:
+            True when the layer's view at `releases` loads an extension, or the
+            layer declares one there.
+        """
+        return self._loads_extension(
+            self.step_view(layer, releases), self._layer_config(layer, releases)
+        )
+
     def ancestors(
         self, releases: Mapping[str, ReleaseRef]
     ) -> dict[str, tuple[str, ...]]:

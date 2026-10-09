@@ -622,3 +622,38 @@ class TestIgnoredFileTheLayerWrote(CoreOnly):
         outcome = LayerAdder().add(project, ask_built(project, "plain"))
 
         assert outcome.warnings == ()
+
+
+GRANT_PROBE = {"grant.txt.jinja": "{{ _copier_conf.unsafe }}\n"}
+
+
+class TestUnsafeGrant(CoreOnly):
+    """The add copy grants Copier's ``unsafe`` only for an extension the layer loads.
+
+    The rule is Copier's own check for a copy: the add copy skips its tasks and
+    Copier counts no migration of a copy, so a layer that declares only a task
+    or a migration is rendered without the grant, which keeps Copier's
+    path-escape check on. The tasks run apart from the copy and take their own
+    grant. A template file renders the grant through ``_copier_conf.unsafe``.
+    """
+
+    @pytest.mark.parametrize(
+        ("copier", "granted"),
+        [
+            ("", False),
+            ("_jinja_extensions:\n  - jinja2.ext.do\n", True),
+            (OPERATION_TASK, False),
+            ("_migrations:\n  - version: 1.0.0\n    command: echo hi\n", False),
+        ],
+        ids=["nothing", "extension", "task", "migration"],
+    )
+    def test_follows_the_extensions_the_layer_loads(
+        self, project: Path, copier: str, granted: bool
+    ) -> None:
+        build_layer(
+            project.parent, "probed", extends="", copier=copier, files=GRANT_PROBE
+        )
+
+        LayerAdder().add(project, ask_built(project, "probed"))
+
+        assert lines(project / "grant.txt") == [str(granted)]
