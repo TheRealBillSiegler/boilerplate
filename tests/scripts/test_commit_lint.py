@@ -262,16 +262,34 @@ class TestMain:
         """The `main` docstring reserves exit code 2 for an unresolvable range."""
         assert commit_lint.main(["--base", "no-such-ref-anywhere"]) == 2
 
-    def test_an_unresolvable_base_names_the_range_on_stderr(
+    def test_an_unresolvable_base_names_the_failing_ref_on_stderr(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """The message names the range, per `main`'s documented exit-2 contract."""
+        """The message carries git's own complaint, which names the bad ref."""
         commit_lint.main(["--base", "no-such-ref-anywhere"])
 
-        assert (
-            "error: cannot resolve no-such-ref-anywhere..HEAD"
-            in capsys.readouterr().err
-        )
+        err = capsys.readouterr().err
+        assert err.startswith("error: cannot resolve the commit range")
+        assert "no-such-ref-anywhere" in err
+
+    def test_an_auto_resolved_base_failure_does_not_invent_a_range(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without `--base`, the message reports git's error, not a guessed range."""
+
+        def fail(*_args: object, **_kwargs: object) -> str:
+            raise subprocess.CalledProcessError(
+                128, ["git", "merge-base"], stderr="fatal: bad ref the-real-culprit\n"
+            )
+
+        monkeypatch.setattr(commit_lint, "resolve_base", fail)
+
+        assert commit_lint.main([]) == 2
+        err = capsys.readouterr().err
+        assert "the-real-culprit" in err
+        assert "develop.." not in err
 
 
 class TestAllowedPrefixes:
