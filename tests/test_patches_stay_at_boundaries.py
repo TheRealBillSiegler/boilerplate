@@ -58,9 +58,14 @@ ALLOWED_SEAMS: dict[str, str] = {
         "journal read and its owner check cannot be timed deterministically."
     ),
     "boilerplate.composition.rendering.worker_session.ScopedWorker": (
-        "Fault injection: a real Worker cannot be pushed into a prompt failure or "
-        "a cancellation on every platform, and a stand-in that raises them is the "
-        "only reliable way to show the translation to Boilerplate's own errors."
+        "Two uses. Fault injection: a real Worker cannot be pushed into a prompt "
+        "failure or a cancellation on every platform, and a stand-in that raises "
+        "them is the only reliable way to show the translation to Boilerplate's "
+        "own errors. Constructor spy: the engine's orchestration (which Worker "
+        "asks the questionnaire, which renders each layer, and with what flags) "
+        "is observable only in the arguments it builds each Worker with; the "
+        "coupling to those arguments is accepted, and what Copier then does "
+        "with them is covered by the real-Copier integration tests."
     ),
     "boilerplate.composition.staging.copy_back.run_git": (
         "Fault injection: git's restore failing partway through a copy back (a "

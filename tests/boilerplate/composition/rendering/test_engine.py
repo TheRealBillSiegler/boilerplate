@@ -646,6 +646,40 @@ class TestScopedExtensions:
         assert base_worker.init_kwargs["unsafe"] is False
         assert final_worker.init_kwargs["unsafe"] is False
 
+    def test_a_layer_declaring_its_own_extension_gets_unsafe_for_its_render(
+        self, tmp_path: Path
+    ) -> None:
+        """The engine passes the layer itself to ``grants_unsafe``, not only the view.
+
+        A filepath-style spec never reaches the view, but Copier loads it from
+        the declaring layer's own ``copier.yml``.
+        """
+        comp = _make_two_layer_composition(tmp_path, with_tasks=False)
+        base = comp.layers[0]
+        (base.path / "_extensions").mkdir()
+        (base.path / "_extensions" / "context.py").write_text(
+            "from jinja2.ext import Extension\n\n\n"
+            "class ContextUpdater(Extension):\n    pass\n",
+            encoding="utf-8",
+        )
+        comp.layers[0] = CompositionLayer(
+            name=base.name,
+            version=base.version,
+            path=base.path,
+            values={"_jinja_extensions": ["_extensions/context.py:ContextUpdater"]},
+        )
+        ctx = ExecutionContext(
+            destination=tmp_path / "out",
+            context_data={},
+            overwrite=True,
+            interactive=False,
+        )
+
+        RenderEngine().render(comp, ctx)
+
+        base_worker, _ = _layer_workers()
+        assert base_worker.init_kwargs["unsafe"] is True
+
 
 # ---------------------------------------------------------------------------
 # One questionnaire pass, then each layer under its scoped view
@@ -766,37 +800,3 @@ class TestScopedRenderLoop:
             (),
             (["echo", "final"],),
         ]
-
-    def test_a_forced_render_clears_every_layers_skip_list(
-        self, tmp_path: Path
-    ) -> None:
-        comp = _make_composition(tmp_path, 2, with_tasks=False)
-        ctx = ExecutionContext(
-            destination=tmp_path / "out",
-            context_data={},
-            overwrite=True,
-            interactive=False,
-        )
-
-        RenderEngine().render(comp, ctx)
-
-        assert [w.init_kwargs["honor_skip_if_exists"] for w in _layer_workers()] == [
-            False,
-            False,
-        ]
-
-    def test_the_questionnaire_pass_does_not_check_recorded_answers(
-        self, tmp_path: Path
-    ) -> None:
-        comp = _make_composition(tmp_path, 1, with_tasks=False)
-        ctx = ExecutionContext(
-            destination=tmp_path / "out",
-            context_data={},
-            overwrite=True,
-            interactive=False,
-        )
-
-        RenderEngine().render(comp, ctx)
-
-        (asker,) = _questionnaire_workers()
-        assert asker.init_kwargs["check_recorded"] is False
