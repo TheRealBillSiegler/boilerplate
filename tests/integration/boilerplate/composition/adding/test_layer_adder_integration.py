@@ -2,8 +2,8 @@
 
 The expected behavior is design 05 §add and design 06 §Adding a layer: the
 preconditions, their errors and remedies, the result as uncommitted changes, the
-lock with the layer last, the migration record and the keep-or-undo handling of a
-failed task.
+lock with the layer last, the migration record, the layer's own tasks and the
+keep-or-undo handling of a failed task.
 """
 
 import tempfile
@@ -20,6 +20,7 @@ from boilerplate.common.exceptions import (
     LayerAlreadyAddedError,
     ProjectNotManagedError,
     UpdateProjectNotReadyError,
+    UpdateTaskFailedError,
 )
 from boilerplate.composition.adding import (
     AddOutcome,
@@ -28,6 +29,8 @@ from boilerplate.composition.adding import (
     LayerAdder,
 )
 from boilerplate.composition.staging.stale_cleanup import STAGING_PREFIX
+from boilerplate.composition.updating.failed_task import FailedTask
+from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
 from boilerplate.models import MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
@@ -37,10 +40,38 @@ from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
     compose_locked_family,
+    lines,
+    tree,
 )
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 BASE = {"core": "1.0.0", "service": "1.0.0"}
+OPERATION_TASK = """\
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "print('{{ _copier_operation }}', file=open('.tasked-marker', 'a', encoding='utf-8'))"
+"""
+FAILING_TASK = """\
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "raise SystemExit(3)"
+"""
+SECRET_TASK = """\
+deploy_token:
+  type: str
+  secret: true
+  default: ""
+
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - "print('{{ deploy_token }}', file=open('.token-marker', 'a', encoding='utf-8'))"
+"""
 
 
 def ask(
@@ -68,6 +99,18 @@ def head(project: Path) -> str:
 def status(project: Path) -> str:
     """Return git's porcelain status of the checkout."""
     return git(project, "status", "--porcelain")
+
+
+def ask_built(project: Path, name: str, **options: bool) -> AddRequest:
+    """Build the request that adds the one-off layer `name` built beside `project`."""
+    return AddRequest(
+        name=name, source=(project.parent / "repos" / name).as_posix(), **options
+    )
+
+
+def undo(_failed: FailedTask) -> TaskFailureChoice:
+    """Choose to undo the add, as a user at a prompt may."""
+    return TaskFailureChoice.UNDO
 
 
 class Added(NamedTuple):
@@ -336,3 +379,112 @@ class TestMidAddError:
 
         assert snapshot(project) == before
         assert worktree_count(project) == 1
+
+
+class CoreOnly:
+    """Tests that start from core on its own, locked and committed."""
+
+    @pytest.fixture
+    def project(self, family: Family, tmp_path: Path) -> Path:
+        """Compose core on its own, lock it and commit."""
+        return compose_locked_family(family, tmp_path, "core", {"core": "1.0.0"})
+
+
+class TestOwnTasks(CoreOnly):
+    """The added layer's own tasks run once, after the copy back."""
+
+    def test_the_layers_task_runs_once_under_the_copy_operation(
+        self, project: Path
+    ) -> None:
+        build_layer(project.parent, "tasked", copier=OPERATION_TASK)
+
+        LayerAdder().add(project, ask_built(project, "tasked"))
+
+        assert lines(project / ".tasked-marker") == ["copy"]
+
+    def test_the_ancestors_tasks_do_not_run_again(self, project: Path) -> None:
+        build_layer(project.parent, "tasked", copier=OPERATION_TASK)
+
+        LayerAdder().add(project, ask_built(project, "tasked"))
+
+        assert not (project / ".core-task-marker").exists()
+
+    def test_no_tasks_skips_the_layers_tasks(self, project: Path) -> None:
+        build_layer(project.parent, "tasked", copier=OPERATION_TASK)
+
+        LayerAdder().add(project, ask_built(project, "tasked", no_tasks=True))
+
+        assert not (project / ".tasked-marker").exists()
+
+    @pytest.fixture
+    def secretive(self, project: Path) -> Path:
+        """Add a layer whose task reads a secret answer; return the project."""
+        build_layer(project.parent, "secretive", copier=SECRET_TASK)
+        asked = AddRequest(
+            name="secretive",
+            source=(project.parent / "repos" / "secretive").as_posix(),
+            supplied={"deploy_token": "s3cret"},
+        )
+        LayerAdder().add(project, asked)
+        return project
+
+    def test_a_secret_answer_reaches_the_task(self, secretive: Path) -> None:
+        assert lines(secretive / ".token-marker") == ["s3cret"]
+
+    def test_a_secret_answer_is_not_recorded_in_the_answers_file(
+        self, secretive: Path
+    ) -> None:
+        assert "deploy_token" not in answers_file(secretive, "secretive")
+
+
+class TestAFailedTask(CoreOnly):
+    """A failed task is kept or undone as an update's is."""
+
+    def test_a_caller_that_cannot_ask_keeps_the_files_and_raises(
+        self, project: Path
+    ) -> None:
+        build_layer(project.parent, "failing", copier=FAILING_TASK)
+
+        with pytest.raises(UpdateTaskFailedError) as stop:
+            LayerAdder().add(project, ask_built(project, "failing"))
+
+        assert stop.value.remediation is not None
+        assert "Run it by hand" in stop.value.remediation
+
+    def test_the_kept_add_still_writes_the_lock(self, project: Path) -> None:
+        build_layer(project.parent, "failing", copier=FAILING_TASK)
+        with pytest.raises(UpdateTaskFailedError):
+            LayerAdder().add(project, ask_built(project, "failing"))
+
+        assert [entry.name for entry in read_lock(project).layers] == [
+            "core",
+            "failing",
+        ]
+
+    def test_the_kept_add_is_recorded_as_failed(self, project: Path) -> None:
+        build_layer(project.parent, "failing", copier=FAILING_TASK)
+        with pytest.raises(UpdateTaskFailedError):
+            LayerAdder().add(project, ask_built(project, "failing"))
+
+        (record,) = read_migrations(project)
+
+        assert (record.status, record.to_version) == (
+            MigrationStatus.FAILED,
+            "failing@1.0.0",
+        )
+
+    def test_undoing_returns_the_checkout_to_its_start(self, project: Path) -> None:
+        build_layer(project.parent, "failing", copier=FAILING_TASK)
+        before = (tree(project), (project / LOCK_FILE_NAME).read_bytes())
+
+        outcome = LayerAdder(on_task_failure=undo).add(
+            project, ask_built(project, "failing")
+        )
+
+        assert (
+            outcome.status,
+            tree(project),
+            (project / LOCK_FILE_NAME).read_bytes(),
+            git(project, "status", "--porcelain"),
+            (project / MIGRATIONS_FILE).exists(),
+        ) == (AddStatus.UNDONE, before[0], before[1], "", False)
