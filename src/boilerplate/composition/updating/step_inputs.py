@@ -17,12 +17,12 @@ class StepInputs(BaseModel):
         walk_answers: Each layer's recorded answers when the walk began, before
             any layer's step ran, keyed by layer name. The old copy fills a
             key the layer's own answers file lacks from the declaring layer's
-            entry. ``None`` when the walk begins with this step, so the step
-            reads them when it starts.
+            entry. Required: read when a later step starts, they would carry
+            an ancestor's change from the same walk into the merge base.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     supplied: Mapping[str, Any] = Field(default_factory=dict)
     secrets: Mapping[str, Any] = Field(default_factory=dict)
-    walk_answers: Mapping[str, Mapping[str, Any]] | None = None
+    walk_answers: Mapping[str, Mapping[str, Any]]
