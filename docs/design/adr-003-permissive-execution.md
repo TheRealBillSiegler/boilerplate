@@ -10,7 +10,9 @@ The security design ([10-security](10-security.md), [03-template-system](03-temp
 
 Every operation that runs a layer through Copier's `Worker` grants `unsafe` per layer, exactly where that layer needs it: when the `_jinja_extensions` union of the layer's scoped view is non-empty ([04 §Copier Worker Interface](04-composition-engine.md#copier-worker-interface)) or when the operation will run the layer's tasks or migrations. Compose, `update` and `add` follow this one rule. A layer's `update` step reads two views, the recorded release's and the target's, and needs the grant when either does. A layer that needs nothing keeps Copier's own consent gate. There is no prompt, sandbox, trust level, or blocklist anywhere — whatever a template declares, executes.
 
-Public exposure is sanctioned under this posture: strangers installing the CLI and rendering templates is in scope and does not wait for the trust model.
+Public exposure is sanctioned under this posture while template sources are local and deliberately chosen: strangers installing the CLI and rendering templates is in scope and does not wait for the trust model.
+
+The posture keys on the template's source, not the destination, so `new` and `add` are equal under it.
 
 ## Rationale
 
