@@ -110,8 +110,7 @@ class AddRun:
         ) as staging:
             secrets = copy_layer(
                 staging.path,
-                plan.release,
-                plan.view,
+                plan,
                 StepInputs(
                     supplied=self._inputs.request.supplied,
                     walk_answers=read_recorded_answers_by_layer(staging.path),

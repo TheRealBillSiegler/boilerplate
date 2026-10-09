@@ -189,6 +189,38 @@ class TestUpdateViewsNeedUnsafe:
         ) == (False, True)
 
 
+class TestNeedsUnsafe:
+    """An add copy is granted ``unsafe`` for the extensions it loads.
+
+    The copy skips its tasks and Copier counts no migration of a copy, so only
+    a Jinja extension, the view's or the layer's own, calls for the grant.
+    """
+
+    @staticmethod
+    def _solo(root: Path, copier: str) -> dict[str, ReleaseRef]:
+        """Release a layer named ``solo`` that extends nothing."""
+        repo = build_layer(root, "solo", extends="", copier=copier)
+        return {"solo": ReleaseRef(source=repo.as_posix(), ref="1.0.0")}
+
+    @pytest.mark.parametrize(
+        ("copier", "expected"),
+        [
+            ("", False),
+            ("_jinja_extensions:\n  - probe_ext.ProbeExtension\n", True),
+            ("_jinja_extensions:\n  - _extensions/local.py:Local\n", True),
+            ("_tasks:\n  - echo hi\n", False),
+            ("_migrations:\n  - version: 1.0.0\n    command: echo hi\n", False),
+        ],
+        ids=["nothing", "importable", "own_file", "task", "migration"],
+    )
+    def test_follows_the_extensions_the_copy_loads(
+        self, views: ReleaseViews, tmp_path: Path, copier: str, expected: bool
+    ) -> None:
+        releases = self._solo(tmp_path, copier)
+
+        assert views.needs_unsafe("solo", releases) is expected
+
+
 class TestAncestors:
     def test_lists_every_ancestor_of_each_layer(
         self, family: Family, views: ReleaseViews
