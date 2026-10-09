@@ -34,6 +34,26 @@ def _fields(**overrides: object) -> dict[str, object]:
     }
 
 
+class TestRootName:
+    """The root template is the one the lock's root_template names."""
+
+    def test_names_the_layer_the_root_template_specifier_names(self) -> None:
+        lock = BoilerplateLock.model_validate(_fields(root_template="service@1.2.0"))
+
+        assert lock.root_name == "service"
+
+    def test_does_not_name_the_last_layer_when_a_layer_joined_through_add(
+        self,
+    ) -> None:
+        """Keep the root at the layer the project was created from."""
+        added = {**_layer("docs"), "joined_via": "add"}
+        lock = BoilerplateLock.model_validate(
+            _fields(root_template="service@1.0.0", layers=[_layer("service"), added])
+        )
+
+        assert lock.root_name != lock.layers[-1].name
+
+
 class TestBoilerplateLockHappyPath:
     """A lock records the layers of the last complete operation, in order."""
 
