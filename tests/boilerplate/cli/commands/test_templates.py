@@ -94,6 +94,26 @@ def empty_catalog_list(
     return typer_cli_runner.invoke(app, ["list", "--templates-dir", str(empty_dir)])
 
 
+def test_templates_list_empty_catalog_is_silent_under_quiet(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, typer_cli_runner: CliRunner
+) -> None:
+    """`--quiet` leaves stdout empty when `list` finds no templates.
+
+    Source of truth: docs/design/05-cli-reference.md §Quiet Mode ("no output
+    to stdout under any normal condition"). Fails if the empty-catalog note
+    bypasses the quiet gate.
+    """
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    monkeypatch.setenv("BOILERPLATE_DEFAULT_TEMPLATES_DIR", str(empty_dir))
+
+    result = typer_cli_runner.invoke(
+        app, ["--quiet", "list", "--templates-dir", str(empty_dir)]
+    )
+
+    assert result.stdout == ""
+
+
 def test_templates_list_empty_catalog_exits_success(empty_catalog_list: Result) -> None:
     """An empty catalog is not a failure.
 
