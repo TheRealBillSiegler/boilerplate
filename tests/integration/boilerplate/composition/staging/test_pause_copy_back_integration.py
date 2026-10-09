@@ -136,10 +136,18 @@ class TestPausedCopyBack:
         assert sorted(set(staged)) == ["edit.txt"]
 
 
-def link_in_worktree(stage: StagingWorktree, link_target: str) -> None:
-    """Add a link `shared` to `link_target` in the staging worktree, or skip."""
+def link_in_worktree(
+    stage: StagingWorktree,
+    link_target: str,
+    *,
+    name: str = "shared",
+    target_is_directory: bool = False,
+) -> None:
+    """Add a link `name` to `link_target` in the staging worktree, or skip."""
     try:
-        (stage.path / "shared").symlink_to(link_target)
+        (stage.path / name).symlink_to(
+            link_target, target_is_directory=target_is_directory
+        )
     except OSError:
         pytest.skip("creating a symlink needs a privilege this machine lacks")
 
@@ -170,7 +178,7 @@ class TestSymlinksInAPausedCopyBack:
     def test_directory_link_is_copied_as_a_directory_link(
         self, project: Path, staging_root: Path
     ) -> None:
-        """Copy a link to a directory back still a directory link.
+        """Keep a directory link a directory link when copying back.
 
         The seam is ``StagingWorktree.copy_back``; the source of truth is the
         link kind the worktree holds. It fails if the copy recreates the link
@@ -181,10 +189,7 @@ class TestSymlinksInAPausedCopyBack:
         with staging(project, staging_root) as stage:
             (stage.path / "libdir").mkdir()
             (stage.path / "libdir" / "inner.txt").write_text("x\n", encoding="utf-8")
-            try:
-                (stage.path / "aaa").symlink_to("libdir", target_is_directory=True)
-            except OSError:
-                pytest.skip("creating a symlink needs a privilege this machine lacks")
+            link_in_worktree(stage, "libdir", name="aaa", target_is_directory=True)
 
             stage.copy_back(paused=True)
 
