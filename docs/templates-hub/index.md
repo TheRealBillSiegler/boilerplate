@@ -19,4 +19,4 @@ Authoring a custom template? See the [Authoring guide](authoring.md) and [Compos
 
 ## Where next
 
-Most users start with `project`; need an interactive UI? pick `streamlit`. Exploring custom scaffolds later—read the authoring guide. Continue to [Quickstart](../quickstart.md) or return [Home](../index.md).
+Most users start with `project`; need an interactive UI? pick `streamlit`. Exploring custom scaffolds later—read the authoring guide. Composing or updating a project without the CLI? See [compose and update with plain Copier](plain-copier.md). Continue to [Quickstart](../quickstart.md) or return [Home](../index.md).
