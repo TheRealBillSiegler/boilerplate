@@ -27,17 +27,21 @@ def extends_of(layer: str) -> Sequence[str]:
 
 class TestAccepted:
     def test_ancestors_in_the_lock_pass(self) -> None:
+        """Pass when every ancestor is in the lock (05 §add, ancestors precondition)."""
         check_ancestors("docs", ["core"], RECORDED, extends_of)
 
     def test_a_pinned_reference_at_the_recorded_version_passes(self) -> None:
+        """Pass a pin equal to the recorded version (05 §add, version precondition)."""
         check_ancestors("docs", ["core@1.0.0"], RECORDED, extends_of)
 
     def test_a_layer_without_ancestors_passes(self) -> None:
+        """Pass a layer that extends nothing (05 §add checks only ancestors)."""
         check_ancestors("standalone", [], RECORDED, extends_of)
 
 
 class TestMissingAncestors:
     def test_names_each_missing_layer_and_the_remedy(self) -> None:
+        """Name each missing layer and the remedy (05 §add, ancestors error)."""
         with pytest.raises(AddAncestorsMissingError) as stop:
             check_ancestors("app", ["docs", "ci"], RECORDED, extends_of)
 
@@ -47,6 +51,7 @@ class TestMissingAncestors:
         )
 
     def test_a_missing_layer_is_named_once(self) -> None:
+        """Name a missing layer once, however often it is referenced (05 §add)."""
         with pytest.raises(AddAncestorsMissingError) as stop:
             check_ancestors("app", ["docs", "docs@1.0.0"], RECORDED, extends_of)
 
@@ -65,12 +70,14 @@ class TestMissingAncestors:
         assert stop.value.layers == ("core",)
 
     def test_missing_layers_are_reported_before_a_version_mismatch(self) -> None:
+        """Report missing ancestors first (05 §add lists that check first)."""
         with pytest.raises(AddAncestorsMissingError):
             check_ancestors("app", ["core@9.9.9", "docs"], RECORDED, extends_of)
 
 
 class TestAncestorVersion:
     def test_names_the_ancestor_its_version_and_the_constraint(self) -> None:
+        """Name ancestor, version, constraint and remedy (05 §add, version error)."""
         with pytest.raises(AddAncestorVersionError) as stop:
             check_ancestors("docs", ["core@2.0.0"], RECORDED, extends_of)
 
@@ -82,6 +89,7 @@ class TestAncestorVersion:
         ) == ("core", "1.0.0", "core@2.0.0", "Run 'boilerplate update' first.")
 
     def test_the_message_carries_all_three(self) -> None:
+        """Put ancestor, version and constraint in the message (05 §add)."""
         with pytest.raises(AddAncestorVersionError) as stop:
             check_ancestors("docs", ["core@2.0.0"], RECORDED, extends_of)
 
@@ -93,5 +101,6 @@ class TestAncestorVersion:
 
 class TestMalformedPin:
     def test_a_pin_that_is_not_a_version_is_an_invalid_specifier(self) -> None:
+        """Reject a pin that is no version as an invalid specifier (05 exit code 3)."""
         with pytest.raises(InvalidTemplateSpecifierError):
             check_ancestors("docs", ["core@latest"], RECORDED, extends_of)
