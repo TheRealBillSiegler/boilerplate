@@ -72,6 +72,6 @@ class IntentJournal(BaseModel):
             pydantic.ValidationError: If the file is not a valid journal.
             OSError: If the file cannot be read.
         """
-        return cls.model_validate_json(
-            (folder / JOURNAL_NAME).read_text(encoding="utf-8")
-        )
+        # Bytes, not text: pydantic decodes them itself, so a file that is not
+        # UTF-8 fails validation instead of raising UnicodeDecodeError here.
+        return cls.model_validate_json((folder / JOURNAL_NAME).read_bytes())

@@ -59,6 +59,12 @@ class TestWriteAndRead:
         with pytest.raises(ValidationError):
             IntentJournal.read(tmp_path)
 
+    def test_file_that_is_not_utf8_raises_as_unparseable(self, tmp_path: Path) -> None:
+        (tmp_path / JOURNAL_NAME).write_bytes(bytes([0xFF, 0xFE]))
+
+        with pytest.raises(ValidationError):
+            IntentJournal.read(tmp_path)
+
 
 class TestOperation:
     @pytest.mark.parametrize("name", ["create", "update", "add", "adopt", "env_apply"])
