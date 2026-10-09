@@ -32,6 +32,10 @@ pins it against ``get_default``.
 ``get_git`` is the git command Copier runs its own git calls through (with a
 fixed commit identity); the staging worktree runs its git calls through it too.
 
+``ProcessExecutionError`` is the error plumbum raises when the git command that
+Copier runs exits non-zero. Plumbum arrives only through Copier, so the source
+imports it from here rather than from plumbum directly.
+
 ``OLD_COPY_DIR_PREFIX`` and ``NEW_COPY_DIR_PREFIX`` are the name prefixes of the
 temporary directories Copier's update renders its old copy and its new copy
 into (``Worker._apply_update``); a destination below one of them identifies
@@ -55,6 +59,7 @@ from copier._types import MISSING
 from copier._user_data import AnswersMap, Question, load_answersfile_data
 from copier._vcs import get_git
 from packaging.version import Version
+from plumbum.commands.processes import ProcessExecutionError
 
 OLD_COPY_DIR_PREFIX = f"{Worker.__module__}.old_copy."
 NEW_COPY_DIR_PREFIX = f"{Worker.__module__}.new_copy."
@@ -129,6 +134,7 @@ __all__ = [
     "NEW_COPY_DIR_PREFIX",
     "OLD_COPY_DIR_PREFIX",
     "AnswersMap",
+    "ProcessExecutionError",
     "Question",
     "SandboxedEnvironment",
     "Template",
