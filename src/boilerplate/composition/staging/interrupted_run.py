@@ -134,7 +134,8 @@ def require_added_paths_match(project: Path, marker: RestoreMarker) -> None:
         raise _stop(
             marker,
             " These paths already exist in your checkout with other content than "
-            "its result, and repeating the copy back would overwrite them: "
+            "the earlier run's result, and repeating the copy back would "
+            "overwrite them: "
             f"{', '.join(differing)}.",
             remediation="Move or delete them, then run the command again.",
         )
