@@ -70,15 +70,15 @@ def check_answers_complete(
         AnswersFileIncompleteError: If any layer's file lacks a required key.
             The message names each such layer and its missing keys.
     """
-    missing = {
-        layer: tuple(
+    missing: dict[str, tuple[str, ...]] = {}
+    for layer, view in views.items():
+        keys = tuple(
             key
             for key in required_answer_keys(view)
             if key not in recorded.get(layer, ())
         )
-        for layer, view in views.items()
-    }
-    missing = {layer: keys for layer, keys in missing.items() if keys}
+        if keys:
+            missing[layer] = keys
     if missing:
         lines = "\n".join(
             f"  {layer}: {', '.join(keys)}" for layer, keys in missing.items()
