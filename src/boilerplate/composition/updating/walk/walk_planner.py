@@ -4,6 +4,7 @@
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from boilerplate.common.exceptions import UpdateUnknownLayerError
 from boilerplate.composition.updating.answers_completeness import (
     check_answers_complete,
 )
@@ -71,7 +72,8 @@ def plan_walk(
         The plan.
 
     Raises:
-        ValueError: If the request names a layer the project does not have.
+        UpdateUnknownLayerError: If the request names a layer the project does
+            not have.
         UpdateTargetMismatchError: If an explicit target differs from a paused
             update's recorded one.
         UpdateLayerDriftError: If a layer and an ancestor both disagree with the
@@ -84,7 +86,11 @@ def plan_walk(
     layers = tuple(entry.name for entry in lock.layers)
     unknown = sorted(set(request.targets) - set(layers))
     if unknown:
-        raise ValueError(f"unknown layer(s) in the targets: {', '.join(unknown)}")
+        raise UpdateUnknownLayerError(
+            f"The update targets layers the project does not have: {', '.join(unknown)}.",
+            layers=unknown,
+            remediation=f"Name one of the project's layers: {', '.join(layers)}.",
+        )
     root = layers[-1]
     sources = read_layer_sources(project, lock)
     at_lock = lock_releases(lock, sources)

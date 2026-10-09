@@ -589,3 +589,22 @@ class UpdateConflictPausedError(ActionRequiredError):
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
         """Initialize with default error code BP_UPDATE_CONFLICT_PAUSED."""
         super().__init__(message, error_code="BP_UPDATE_CONFLICT_PAUSED", **kwargs)
+
+
+class UpdateUnknownLayerError(BoilerplateError):
+    """Raised when an update names a layer the project does not have.
+
+    Attributes:
+        layers: The named layers the project's lock does not list.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        layers: Sequence[str] = (),
+        **kwargs: str | None,
+    ) -> None:
+        """Initialize with default error code BP_UPDATE_LAYER_UNKNOWN."""
+        super().__init__(message, error_code="BP_UPDATE_LAYER_UNKNOWN", **kwargs)
+        self.layers = tuple(layers)

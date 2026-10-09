@@ -34,6 +34,7 @@ from boilerplate.common.exceptions import (
     UpdateProjectNotReadyError,
     UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
+    UpdateUnknownLayerError,
     UserCancelledError,
 )
 from boilerplate.composition import Composer
@@ -154,6 +155,7 @@ def cli_error_handler[**P, T](func: Callable[P, T]) -> Callable[P, T]:
             UpdateSubmodulesUnsupportedError,
             UpdateCheckoutChangedError,
             UpdateProjectNotReadyError,
+            UpdateUnknownLayerError,
         ) as e:
             _display_error_and_exit(
                 str(e),
