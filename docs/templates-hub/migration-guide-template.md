@@ -99,7 +99,7 @@ Verify the automated migration succeeded:
 
 ```powershell
 # Run quality gates
-uv run ruff check
+uv run ruff check --no-fix
 uv run pyright
 uv run pytest
 ```

@@ -134,7 +134,7 @@ flowchart TD
 | --- | --- | --- |
 | Project creation | `boilerplate new project my-project` | `src/`, `tests/`, `notebooks/`, `.vscode/`, `pyproject.toml`, README, `.gitignore` |
 | Environment setup | `scripts/install.ps1`, then `uv sync` | Git, uv, VS Code, and extensions on Windows (macOS/Linux install the same tools manually), then the project venv |
-| Code quality | `uv run ruff check` · `uv run ruff format --check` · `uv run pyright` | Lint, formatting, and strict type checks |
+| Code quality | `uv run ruff check --no-fix` · `uv run ruff format --check` · `uv run pyright` | Lint, formatting, and strict type checks |
 | Testing | `uv run pytest` | Auto-discovery under `tests/`; coverage available via `pytest --cov` |
 
 Running the three quality checks plus tests on every push is the recommended CI setup.
