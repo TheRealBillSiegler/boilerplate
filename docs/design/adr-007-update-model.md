@@ -25,7 +25,7 @@
 
 ### Version jumps stay single-pass; migrations are jump-safe by authoring contract
 
-`update` crosses a layer's version range in a single pass and does not walk one version at a time, even when the crossed versions carry migrations. The evidence is in [§Verification](#verification-2026-07-28); [ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28) records the companion per-layer run. The evidence in [§Verification](#verification-2026-07-28) established:
+`update` crosses a layer's version range in a single pass and does not walk one version at a time, even when the crossed versions carry migrations. The evidence is in [§Verification](#verification-2026-07-28), which established:
 
 - **Copier's migration model is fix-up, not replay.** A migration's `version:` key is a *gate* (`target ≥ version > source`), not a checkpoint. In a v1→v3 jump every crossed migration runs exactly once, in list order, all against the same tree — the pre-update tree for `before`-stage entries, the fully rendered target tree for `after`-stage ones (the default stage). **No intermediate tree is ever materialized.** A migration that assumes it sees the tree as of the version it names is therefore wrong under any jump.
 - **The migration list comes only from the target version's `copier.yml`.** Nothing is read from intermediate tags. Two consequences bind template authors: every historical migration entry MUST be carried forward in every later release, or jumpers silently skip it; and a stepped walk executes each intermediate tag's *own copy* of a migration, so stepping and jumping can run **different code** for the same nominal migration — stepping is not a safer subset of jumping, it is a different execution.
