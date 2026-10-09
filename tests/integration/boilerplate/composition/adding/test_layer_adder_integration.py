@@ -263,7 +263,9 @@ class TestRefusals:
             project, ask(family, "docs"), ProjectNotManagedError, staging_folders
         )
 
-        assert "boilerplate adopt" in str(error.remediation)
+        assert str(error) == (
+            "Project is not managed by Boilerplate. Use 'boilerplate adopt' first."
+        )
 
     def test_a_dirty_tree(
         self, family: Family, project: Path, staging_folders: list[str]
@@ -286,7 +288,10 @@ class TestRefusals:
             project, ask(family, "service"), LayerAlreadyAddedError, staging_folders
         )
 
-        assert "boilerplate update" in str(error.remediation)
+        assert str(error) == (
+            "Template 'service' is already in this project. "
+            "Use 'boilerplate update' instead."
+        )
 
     def test_a_missing_ancestor(
         self, family: Family, tmp_path: Path, staging_folders: list[str]

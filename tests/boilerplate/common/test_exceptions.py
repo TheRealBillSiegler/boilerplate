@@ -463,6 +463,19 @@ class TestUpdateDowngradeError:
         assert (err.layer, err.recorded, err.target) == ("core", "2.0.0", "1.1.0")
 
 
+class TestAddPreconditionMessages:
+    """The advice of an add precondition sits in its message, once."""
+
+    @pytest.mark.parametrize(
+        "error_type", [ProjectNotManagedError, LayerAlreadyAddedError]
+    )
+    def test_no_default_remediation_repeats_the_message(
+        self, error_type: type[BoilerplateError]
+    ) -> None:
+        """Design 05 states these two messages with their advice inline."""
+        assert error_type("Use 'boilerplate adopt' first.").remediation is None
+
+
 class TestAddAncestorsMissingError:
     """A missing-ancestor stop names each missing layer."""
 
