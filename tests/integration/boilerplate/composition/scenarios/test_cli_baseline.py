@@ -7,7 +7,7 @@ whole merged questionnaire; and there is no `update` command yet.
 
 import re
 import subprocess
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import NamedTuple
 
@@ -19,7 +19,6 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     TEMPLATES,
     answers_file,
     check_bundled_questionnaire,
-    run_boilerplate,
     temp_dir_inside,
 )
 
@@ -43,13 +42,16 @@ class NewRun(NamedTuple):
 
 
 @pytest.fixture(scope="module")
-def new_run(tmp_path_factory: pytest.TempPathFactory) -> Iterator[NewRun]:
+def new_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    subprocess_cli_runner: Callable[..., subprocess.CompletedProcess[str]],
+) -> Iterator[NewRun]:
     """Run `boilerplate new streamlit` non-interactively with one answer."""
     check_bundled_questionnaire()
     root = tmp_path_factory.mktemp("cli")
     project = root / "probe-app"
     with temp_dir_inside(root):
-        result = run_boilerplate(
+        result = subprocess_cli_runner(
             "new",
             "streamlit",
             str(project),
@@ -121,8 +123,11 @@ class TestShippedNew:
         "specifies `boilerplate update`."
     ),
 )
-def test_update_help_exits_zero(tmp_path: Path) -> None:
+def test_update_help_exits_zero(
+    tmp_path: Path,
+    subprocess_cli_runner: Callable[..., subprocess.CompletedProcess[str]],
+) -> None:
     """S21: `boilerplate update --help` exits 0."""
-    result = run_boilerplate("update", "--help", cwd=tmp_path)
+    result = subprocess_cli_runner("update", "--help", cwd=tmp_path)
 
     assert result.returncode == 0
