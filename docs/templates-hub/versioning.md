@@ -39,7 +39,7 @@ Breaking changes in templates are acceptable **IF** automated migration is provi
 - **Visibility**: Users see what changed and can make informed decisions
 - **Scalability**: Enables evolution of templates without cascading manual work
 
-For a worked rename migration, see [Template authoring § Rename through a staged move](authoring.md#rename-through-a-staged-move). A project built from one layer updates with Copier's own `copier update`. A project built from more than one layer has no shipped update command yet: each layer must render from the composition's merged schema, which only `boilerplate update` will provide ([ADR-007](../design/adr-007-update-model.md) records that design). Run `copier update` on a child layer alone, such as `streamlit`, and it exits 0 while skipping every path under the package directory and dropping the inherited answers from that layer's answers file.
+For a worked rename migration, see [Template authoring § Rename through a staged move](authoring.md#rename-through-a-staged-move). A layer rendered from a git repository updates with Copier's own `copier update`; the layers bundled in the package are [copy-only](plain-copier.md#bundled-layers-are-copy-only). A project built from more than one layer has no shipped update command yet: each layer must render from the composition's merged schema, which only `boilerplate update` will provide ([ADR-007](../design/adr-007-update-model.md) records that design). Run `copier update` on a child layer alone, such as `streamlit`, and it exits 0 while skipping every path under the package directory and dropping the inherited answers from that layer's answers file.
 
 ## What constitutes a breaking change
 
@@ -143,7 +143,7 @@ extends:
 
 ## Migration requirements for breaking changes
 
-*`boilerplate update` is design-only ([ADR-007](../design/adr-007-update-model.md)): no shipped command of this tool runs migrations. Vanilla `copier update` runs them now for a project built from one layer; a child layer of a composed project needs the merged schema that command does not have, so its migrations wait for `boilerplate update`. The bundled layers ship theirs under the rules below; the rules bind template authors either way.*
+*`boilerplate update` is design-only ([ADR-007](../design/adr-007-update-model.md)): no shipped command of this tool runs migrations. Vanilla `copier update` runs them now for a layer rendered from a git repository, and never for a bundled layer ([copy-only](plain-copier.md#bundled-layers-are-copy-only)); a child layer of a composed project needs the merged schema that command does not have, so its migrations wait for `boilerplate update`. The bundled layers ship theirs under the rules below; the rules bind template authors either way.*
 
 ### Copier migration scripts
 
