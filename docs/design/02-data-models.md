@@ -628,6 +628,8 @@ All errors inherit from `BoilerplateError` (the base class). Each exception type
 | `AnswersFileIncompleteError` | `3` | Before any layer runs, a question of a layer's scoped view at the recorded versions that is neither secret nor hidden is recorded in neither the layer's own answers file nor its declaring layer's file; the error lists the layer and the keys |
 | `UpdateLayerDriftError` | `3` | Before any layer runs, a layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record to resume |
 | `UpdateTargetMismatchError` | `3` | An explicit `--target-version` differs from the targets a pending `conflict` record names |
+| `ActionRequiredError` | — | Base for a recoverable pause that needs user action; never raised directly, exits `4` through its subclasses |
+| `UpdateConflictPausedError` | `4` | (extends `ActionRequiredError`) A layer's update left merge conflicts and the walk stopped (`BP_UPDATE_CONFLICT_PAUSED`) |
 | `UpdateDowngradeError` | `3` | Before any layer runs, a target is older than the version a layer's answers file records in `_commit`, or a recorded `_commit` yields no version (`BP_UPDATE_DOWNGRADE_REJECTED`) |
 | `UpdateProjectNotReadyError` | `3` | The project is not a git repository root with at least one commit, or its working tree has uncommitted changes, untracked files included (`BP_UPDATE_PROJECT_NOT_READY`) |
 | `UpdatePathObstructedError` | `3` | Before the copy back, a path the walk added already exists in the checkout as an ignored file or directory (`BP_UPDATE_PATH_OBSTRUCTED`) |
