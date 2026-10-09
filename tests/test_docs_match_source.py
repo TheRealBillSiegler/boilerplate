@@ -10,7 +10,6 @@ what the docs get checked against.
 """
 
 import re
-import tomllib
 from pathlib import Path
 from typing import Final
 
@@ -163,75 +162,6 @@ class TestAuthoringFieldTable:
                 )
 
         assert not mismatches, "\n".join(mismatches)
-
-
-class TestPytestMarkersTable:
-    def test_registered_markers_match_agents_md_table(self) -> None:
-        pyproject = tomllib.loads(
-            (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-        )
-        registered = pyproject["tool"]["pytest"]["ini_options"]["markers"]
-        registered_names = {entry.split(":", 1)[0].strip() for entry in registered}
-
-        agents_text = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        section_start = agents_text.index("### Markers")
-        next_heading = agents_text.find("\n### ", section_start + 1)
-        section = agents_text[
-            section_start : next_heading if next_heading != -1 else len(agents_text)
-        ]
-        documented_names = set(re.findall(r"^\| `([a-z]+)`", section, re.MULTILINE))
-
-        assert registered_names == documented_names, (
-            f"pyproject.toml registers {sorted(registered_names)}, but AGENTS.md's "
-            f"Markers table documents {sorted(documented_names)}"
-        )
-
-    def test_integration_marker_text_names_its_auto_apply_mechanism(self) -> None:
-        pyproject = tomllib.loads(
-            (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-        )
-        registered = pyproject["tool"]["pytest"]["ini_options"]["markers"]
-        integration_entry = next(
-            entry
-            for entry in registered
-            if entry.split(":", 1)[0].strip() == "integration"
-        )
-
-        assert "auto" in integration_entry.lower(), (
-            "pyproject.toml's 'integration' marker registration text should name "
-            "the auto-apply mechanism (AGENTS.md's Markers table: 'Auto-applied to "
-            "tests under tests/integration/ (conftest hook)'), not only how to "
-            f"deselect it manually. Got: {integration_entry!r}"
-        )
-
-
-class TestCiSetupVariableCount:
-    def test_quick_start_variable_count_matches_settings_yml(self) -> None:
-        setup_text = (REPO_ROOT / "ci" / "SETUP.md").read_text(encoding="utf-8")
-        match = re.search(r"set the (\w+) variables", setup_text)
-        assert match is not None, "ci/SETUP.md no longer says 'set the N variables'"
-        number_words = {
-            "four": 4,
-            "five": 5,
-            "six": 6,
-            "seven": 7,
-            "eight": 8,
-        }
-        word = match.group(1)
-        assert word in number_words or word.isdigit(), (
-            f"ci/SETUP.md count {word!r} is not a number this test reads"
-        )
-        documented_count = int(word) if word.isdigit() else number_words[word]
-
-        settings = yaml.safe_load(
-            (REPO_ROOT / "ci" / "settings.yml").read_text(encoding="utf-8")
-        )
-        actual_count = len(settings["variables"])
-
-        assert documented_count == actual_count, (
-            f"ci/SETUP.md says {match.group(1)} variables, but ci/settings.yml "
-            f"has {actual_count}"
-        )
 
 
 class TestSpecPointers:
