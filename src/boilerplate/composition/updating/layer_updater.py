@@ -20,7 +20,7 @@ def update_layer(
     project: Path,
     release: LayerRelease,
     views: UpdateViews,
-    inputs: StepInputs | None = None,
+    inputs: StepInputs,
     options: UpdateOptions | None = None,
 ) -> dict[str, Any]:
     """Update one layer of a composed project to `release` under two views.
@@ -49,7 +49,8 @@ def update_layer(
         views: The view of the layer and its ancestors at the recorded
             releases and at the target releases.
         inputs: The values the user supplies and the secrets given earlier in
-            the same update, as data for the questions in the layer's scope.
+            the same update, as data for the questions in the layer's scope,
+            and every layer's recorded answers as the walk began.
         options: How the update runs; the defaults skip the layer's tasks,
             silence Copier and take every question's default without
             prompting.
@@ -63,7 +64,6 @@ def update_layer(
             answer of the layer that the target view rejects.
     """
     options = options or UpdateOptions()
-    inputs = inputs or StepInputs()
     recorded_by_layer = read_recorded_answers_by_layer(project)
     data = build_step_data(
         layer=release.layer,
@@ -75,9 +75,7 @@ def update_layer(
     old_copy_fill = declaring_ancestors_answers(
         layer=release.layer,
         declared_by=views.old.declared_by,
-        recorded_by_layer=(
-            recorded_by_layer if inputs.walk_answers is None else inputs.walk_answers
-        ),
+        recorded_by_layer=inputs.walk_answers,
     )
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=str(release.source),
