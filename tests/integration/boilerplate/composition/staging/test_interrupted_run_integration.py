@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from boilerplate.common.exceptions import UpdateInterruptedError
+from boilerplate.composition.staging.interrupted_run import resolve_interrupted_run
 from boilerplate.composition.staging.restore_marker_file import (
     RESTORE_REF,
     pin_result,
@@ -29,7 +30,6 @@ from boilerplate.models import (
     RestoreOperation,
     RestorePhase,
 )
-from boilerplate.project_state.interrupted_run import resolve_interrupted_run
 from boilerplate.project_state.lock_file import write_lock
 from boilerplate.project_state.migrations_file import (
     append_migration,
