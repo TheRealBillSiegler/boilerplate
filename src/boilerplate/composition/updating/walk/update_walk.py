@@ -47,6 +47,22 @@ def conflict_message(layer: str, conflicts: tuple[str, ...]) -> str:
     return f"Layer '{layer}' left merge conflicts in: {', '.join(conflicts)}."
 
 
+def update_failure_message(failed: FailedTask) -> str:
+    """Say which task failed after an update's copy back and what was kept.
+
+    Args:
+        failed: The task that failed.
+
+    Returns:
+        The message the failed record and the error both carry.
+    """
+    return (
+        f"Task '{failed.command}' exited with status {failed.returncode} after "
+        "the update's files were copied back. The files are kept and "
+        "boilerplate.lock is written."
+    )
+
+
 class UpdateWalk:
     """One run of an update plan in a staging worktree.
 
@@ -210,7 +226,7 @@ class UpdateWalk:
             return self._outcome(UpdateStatus.UNDONE)
         if self._failed is not None:
             raise UpdateTaskFailedError(
-                self._failure_message(self._failed),
+                update_failure_message(self._failed),
                 task=self._failed.command,
                 remediation=self._failed.rerun,
             )
@@ -274,17 +290,8 @@ class UpdateWalk:
             recorder.success(self._lock.root_template)
         else:
             recorder.failed(
-                self._lock.root_template, self._failure_message(self._failed)
+                self._lock.root_template, update_failure_message(self._failed)
             )
-
-    @staticmethod
-    def _failure_message(failed: FailedTask) -> str:
-        """Say which task failed and what the update kept."""
-        return (
-            f"Task '{failed.command}' exited with status {failed.returncode} after "
-            "the update's files were copied back. The files are kept and "
-            "boilerplate.lock is written."
-        )
 
     def _outcome(
         self,

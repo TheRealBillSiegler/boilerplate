@@ -77,6 +77,10 @@ ALLOWED_SEAMS: dict[str, str] = {
         "Fault injection: Ctrl-C or a crash landing right after the copy back, "
         "while the tasks run, cannot be timed deterministically."
     ),
+    "boilerplate.composition.adding.add_run.write_add_lock": (
+        "Fault injection: Ctrl-C or a crash landing between an add's copy back and "
+        "its record, while the lock is written, cannot be timed deterministically."
+    ),
     "boilerplate.composition.serialization.yaml_utils.template_public_attr_names": (
         "Counterfactual: drops one attribute from the extraction to show it is the "
         "only blocker to composing from git-repository layers; no input removes it."

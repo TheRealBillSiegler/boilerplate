@@ -22,7 +22,9 @@ from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.staging.restore_marker_file import (
     RESTORE_REF,
+    pin_result,
     read_marker,
+    write_marker,
 )
 from boilerplate.models import (
     RestoreKind,
@@ -316,3 +318,120 @@ class TestMarker:
         marker = read_marker(project)
         assert marker is not None
         assert marker.phase is RestorePhase.TASKS
+
+
+def cut_off_marker(
+    project: Path, root: Path, *, operation: RestoreOperation, phase: RestorePhase
+) -> RestoreMarker:
+    """Stage a one-layer walk whose result adds a file; return its marker at `phase`.
+
+    The staging is gone afterwards and the checkout is clean, as after a run
+    whose copy back a crash cut off before it wrote a file.
+    """
+    with staging(project, root, IntentOperation(operation.value)) as stage:
+        (stage.path / "added.txt").write_text("added\n", encoding="utf-8")
+        marker = RestoreMarker(
+            operation=operation,
+            kind=RestoreKind.COMPLETE,
+            phase=phase,
+            start_commit=stage.start_commit,
+            result_commit=stage.commit_layer("layer one"),
+            targets=TARGETS,
+            started_at=stage.started_at,
+        )
+    pin_result(project, marker.result_commit)
+    write_marker(project, marker)
+    return marker
+
+
+class TestResume:
+    @pytest.mark.parametrize(
+        ("operation", "phase", "order"),
+        [
+            pytest.param(
+                RestoreOperation.UPDATE,
+                RestorePhase.COPY_BACK,
+                ["tasks", "lock", "record"],
+                id="update-copy-back",
+            ),
+            pytest.param(
+                RestoreOperation.UPDATE,
+                RestorePhase.TASKS,
+                ["tasks", "lock", "record"],
+                id="update-tasks",
+            ),
+            pytest.param(
+                RestoreOperation.UPDATE,
+                RestorePhase.RECORDING,
+                ["lock", "record"],
+                id="update-recording",
+            ),
+            pytest.param(
+                RestoreOperation.ADD,
+                RestorePhase.COPY_BACK,
+                ["tasks", "lock", "record"],
+                id="add-copy-back",
+            ),
+            pytest.param(
+                RestoreOperation.ADD,
+                RestorePhase.TASKS,
+                ["tasks", "lock", "record"],
+                id="add-tasks",
+            ),
+            pytest.param(
+                RestoreOperation.ADD,
+                RestorePhase.RECORDING,
+                ["lock", "record"],
+                id="add-recording",
+            ),
+        ],
+    )
+    def test_runs_what_is_left_of_the_run(
+        self,
+        project: Path,
+        staging_root: Path,
+        operation: RestoreOperation,
+        phase: RestorePhase,
+        order: list[str],
+    ) -> None:
+        """Run the steps after the marker's phase, as design 06 rules 4 to 6 say."""
+        marker = cut_off_marker(project, staging_root, operation=operation, phase=phase)
+        seen = Seen(project)
+
+        Finisher(project, marker, seen.steps()).resume()
+
+        assert seen.calls == order
+
+    def test_a_cut_off_copy_back_is_repeated_from_the_result(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Write the result commit's files again before the tasks (rule 4)."""
+        marker = cut_off_marker(
+            project,
+            staging_root,
+            operation=RestoreOperation.UPDATE,
+            phase=RestorePhase.COPY_BACK,
+        )
+        seen = Seen(project)
+
+        Finisher(project, marker, seen.steps()).resume()
+
+        assert (project / "added.txt").read_text(encoding="utf-8") == "added\n"
+
+    def test_no_marker_remains_after_the_resumed_run(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Remove the marker and then the ref once the resumed run recorded."""
+        marker = cut_off_marker(
+            project,
+            staging_root,
+            operation=RestoreOperation.UPDATE,
+            phase=RestorePhase.TASKS,
+        )
+
+        Finisher(project, marker, Seen(project).steps()).resume()
+
+        assert (read_marker(project), git(project, "for-each-ref", RESTORE_REF)) == (
+            None,
+            "",
+        )

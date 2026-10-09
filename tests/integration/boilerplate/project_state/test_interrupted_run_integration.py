@@ -3,7 +3,8 @@
 Design 06 §Interrupted copy back lists the rules in order; the first that
 matches decides. Rule 1: the log's last record is the marked run's own. Rule 2:
 the working tree is clean. Rule 3: the marker belongs to another command, or
-HEAD moved.
+HEAD moved. Rules 4 to 6 hand a run cut off in its copy back, its tasks or its
+record back to be finished; a copy back only when it can be repeated.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -26,7 +27,7 @@ from boilerplate.models import (
     RestoreOperation,
     RestorePhase,
 )
-from boilerplate.project_state.interrupted_run import require_no_interrupted_run
+from boilerplate.project_state.interrupted_run import resolve_interrupted_run
 from boilerplate.project_state.migrations_file import (
     append_migration,
     next_migration_id,
@@ -101,13 +102,13 @@ def ref_exists(project: Path) -> bool:
 class TestNoMarker:
     def test_passes(self, project: Path) -> None:
         """Let a project no run was cut off in go on."""
-        require_no_interrupted_run(project, RestoreOperation.UPDATE)
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
     def test_removes_a_ref_left_without_a_marker(self, project: Path) -> None:
         """Clear what a crash between pinning the ref and writing the marker left."""
         pin_result(project, head(project))
 
-        require_no_interrupted_run(project, RestoreOperation.UPDATE)
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert not ref_exists(project)
 
@@ -120,7 +121,7 @@ class TestRunFinished:
         mark(project)
         append(project, MigrationStatus.SUCCESS, STARTED + timedelta(seconds=1))
 
-        require_no_interrupted_run(project, RestoreOperation.UPDATE)
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert (read_marker(project), ref_exists(project)) == (None, False)
 
@@ -137,7 +138,7 @@ class TestRunFinished:
             finished=["core"],
         )
 
-        require_no_interrupted_run(project, RestoreOperation.UPDATE)
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert read_marker(project) is None
 
@@ -147,7 +148,7 @@ class TestRunFinished:
         append(project, MigrationStatus.SUCCESS, STARTED - timedelta(seconds=1))
 
         with pytest.raises(UpdateInterruptedError):
-            require_no_interrupted_run(project, RestoreOperation.ADD)
+            resolve_interrupted_run(project, RestoreOperation.ADD)
 
     def test_a_record_for_another_target_does_not_count(self, project: Path) -> None:
         """Ignore a record naming another version, so rule 3 stops the add."""
@@ -160,7 +161,7 @@ class TestRunFinished:
         )
 
         with pytest.raises(UpdateInterruptedError):
-            require_no_interrupted_run(project, RestoreOperation.ADD)
+            resolve_interrupted_run(project, RestoreOperation.ADD)
 
 
 class TestMarkerNoLongerBinds:
@@ -169,7 +170,7 @@ class TestMarkerNoLongerBinds:
         mark(project)
         git(project, "checkout", "--", "README.md")
 
-        require_no_interrupted_run(project, RestoreOperation.UPDATE)
+        resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert (read_marker(project), ref_exists(project)) == (None, False)
 
@@ -180,7 +181,7 @@ class TestAnotherRun:
         mark(project, operation=RestoreOperation.ADD)
 
         with pytest.raises(UpdateInterruptedError) as stop:
-            require_no_interrupted_run(project, RestoreOperation.UPDATE)
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert "'boilerplate add'" in (stop.value.remediation or "")
 
@@ -189,14 +190,14 @@ class TestAnotherRun:
         mark(project, start_commit="0" * 40)
 
         with pytest.raises(UpdateInterruptedError, match="HEAD"):
-            require_no_interrupted_run(project, RestoreOperation.UPDATE)
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
     def test_the_stop_names_the_targets(self, project: Path) -> None:
         """Name every layer the cut-off run was moving, as design 07 asks."""
         mark(project, start_commit="0" * 40)
 
         with pytest.raises(UpdateInterruptedError) as stop:
-            require_no_interrupted_run(project, RestoreOperation.UPDATE)
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert stop.value.targets == TARGETS
 
@@ -205,6 +206,88 @@ class TestAnotherRun:
         marker = mark(project, start_commit="0" * 40)
 
         with pytest.raises(UpdateInterruptedError):
-            require_no_interrupted_run(project, RestoreOperation.UPDATE)
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
 
         assert read_marker(project) == marker
+
+
+def result_commit(project: Path) -> str:
+    """Commit an edit and an added file on a side branch; return the commit.
+
+    The checkout goes back to where it was, clean, as the staging worktree
+    leaves the user's checkout while it walks.
+    """
+    git(project, "switch", "-q", "-c", "result")
+    (project / "README.md").write_text("result\n", encoding="utf-8")
+    (project / "added.txt").write_text("added\n", encoding="utf-8")
+    commit_all(project, "result")
+    commit = head(project)
+    git(project, "switch", "-q", "-")
+    return commit
+
+
+def mark_copy_back(
+    project: Path, result: str, kind: RestoreKind = RestoreKind.COMPLETE
+) -> RestoreMarker:
+    """Write the marker of a run cut off in its copy back from `result`."""
+    marker = RestoreMarker(
+        operation=RestoreOperation.UPDATE,
+        kind=kind,
+        phase=RestorePhase.COPY_BACK,
+        start_commit=head(project),
+        result_commit=result,
+        targets=TARGETS,
+        started_at=STARTED,
+    )
+    pin_result(project, result)
+    write_marker(project, marker)
+    return marker
+
+
+class TestRunToFinish:
+    @pytest.mark.parametrize("phase", [RestorePhase.TASKS, RestorePhase.RECORDING])
+    def test_a_run_cut_off_after_its_copy_back_is_handed_back(
+        self, project: Path, phase: RestorePhase
+    ) -> None:
+        """Return the marker of a run cut off in its tasks or its record (5, 6)."""
+        marker = mark(project).at_phase(phase)
+        write_marker(project, marker)
+
+        assert resolve_interrupted_run(project, RestoreOperation.UPDATE) == marker
+
+    def test_a_copy_back_that_wrote_its_result_is_handed_back(
+        self, project: Path
+    ) -> None:
+        """Return the marker when every changed path matches the result (rule 4)."""
+        result = result_commit(project)
+        marker = mark_copy_back(project, result)
+        git(project, "restore", f"--source={result}", "--worktree", "--", ":/")
+
+        assert resolve_interrupted_run(project, RestoreOperation.UPDATE) == marker
+
+    def test_a_copy_back_cut_off_partway_is_handed_back(self, project: Path) -> None:
+        """Accept a path the copy back had not written yet: it still matches HEAD."""
+        result = result_commit(project)
+        marker = mark_copy_back(project, result)
+        git(project, "restore", f"--source={result}", "--worktree", "--", "added.txt")
+
+        assert resolve_interrupted_run(project, RestoreOperation.UPDATE) == marker
+
+    def test_an_edit_since_the_copy_back_stops(self, project: Path) -> None:
+        """Stop when a changed path differs from the result commit (rule 4)."""
+        result = result_commit(project)
+        mark_copy_back(project, result)
+        git(project, "restore", f"--source={result}", "--worktree", "--", ":/")
+        (project / "added.txt").write_text("edited since\n", encoding="utf-8")
+
+        with pytest.raises(UpdateInterruptedError, match="differs from its result"):
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
+
+    def test_a_paused_copy_back_stops(self, project: Path) -> None:
+        """Stop a paused copy back, whose conflicted files no commit holds (rule 4)."""
+        result = result_commit(project)
+        mark_copy_back(project, result, RestoreKind.PAUSED)
+        git(project, "restore", f"--source={result}", "--worktree", "--", ":/")
+
+        with pytest.raises(UpdateInterruptedError, match="conflict had paused it"):
+            resolve_interrupted_run(project, RestoreOperation.UPDATE)
