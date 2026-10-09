@@ -86,5 +86,10 @@ package_index_url:
   help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)"
   default: ""
 
+# Creation-only: the script deletes its own `_scripts` folder once it has run,
+# Copier treats that deletion as intentional and never restores the file, and
+# an update runs every layer's tasks again, so an unguarded task would fail on
+# every update.
 _tasks:
-  -  ["{{ _copier_python }}", _scripts/post_generation.py]
+  - command: ["{{ _copier_python }}", _scripts/post_generation.py]
+    when: "{{ _copier_operation == 'copy' }}"
