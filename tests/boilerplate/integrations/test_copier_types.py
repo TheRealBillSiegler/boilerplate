@@ -10,16 +10,13 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from copier._jinja_ext import (
-    SandboxedEnvironment,  # pyright: ignore[reportPrivateUsage]
-)
-
 from boilerplate.integrations.copier_types import (
     MISSING,
     NEW_COPY_DIR_PREFIX,
     OLD_COPY_DIR_PREFIX,
     AnswersMap,
     Question,
+    SandboxedEnvironment,
     Template,
     Worker,
     load_answersfile_data,
@@ -48,6 +45,12 @@ class TestCopierTypesShim:
             "copier._user_data",
             "copier._user_data",
         )
+
+    def test_sandboxed_environment_is_the_class_a_question_renders_with(
+        self,
+    ) -> None:
+        """Re-export Copier's sandbox; ``Question`` refuses Jinja's own class."""
+        assert SandboxedEnvironment.__module__ == "copier._jinja_ext"
 
     def test_template_public_attr_names_reflects_public_fields(self) -> None:
         names = template_public_attr_names(Template)
