@@ -3,30 +3,13 @@
 
 from collections.abc import Mapping, Sequence
 
-from packaging.version import InvalidVersion
-
 from boilerplate.common.exceptions import UpdateTargetMismatchError
 from boilerplate.composition.updating.versions.layer_versions import LayerVersions
 from boilerplate.composition.updating.versions.resume_plan import ResumePlan
-from boilerplate.models import MigrationRecord, MigrationStatus
+from boilerplate.models import MigrationRecord
 from boilerplate.types.serializable_version import SerializableVersion
 
 __all__ = ["plan_resume"]
-
-
-def _recorded_targets(
-    record: MigrationRecord,
-) -> Mapping[str, SerializableVersion] | None:
-    """Return the targets a conflict record names, or None when it names none."""
-    if record.status is not MigrationStatus.CONFLICT or record.targets is None:
-        return None
-    try:
-        return {
-            layer: SerializableVersion(version)
-            for layer, version in record.targets.items()
-        }
-    except InvalidVersion:
-        return None
 
 
 def plan_resume(
@@ -56,11 +39,19 @@ def plan_resume(
         UpdateTargetMismatchError: If the record binds and an explicit target
             differs from the one it records.
     """
-    if last_record is None or last_record.finished is None:
+    if (
+        last_record is None
+        or last_record.finished is None
+        # Every conflict record has targets; this clause only narrows the type.
+        or last_record.targets is None
+    ):
         return None
-    targets = _recorded_targets(last_record)
+    targets = {
+        layer: SerializableVersion(version)
+        for layer, version in last_record.targets.items()
+    }
     by_name = {layer.name: layer for layer in layers}
-    if targets is None or set(targets) != set(by_name):
+    if set(targets) != set(by_name):
         return None
     for name in last_record.finished:
         if name not in by_name or by_name[name].commit_version != targets[name]:
