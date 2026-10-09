@@ -11,7 +11,12 @@ import pytest
 from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
-from tests.boilerplate.templates.conftest import commit_all, git, init_repo
+from tests.boilerplate.templates.conftest import (
+    commit_all,
+    git,
+    ignore_locally,
+    init_repo,
+)
 
 FAILED = FailedTask(command="make", returncode=1, rerun="Run it by hand: make")
 
@@ -57,6 +62,24 @@ class TestKeepOrUndo:
         )
 
         assert (kept, git(project, "status", "--porcelain")) == (False, "")
+
+    def test_an_ignored_file_and_an_ignored_folder_survive_an_undo(
+        self, project: Path
+    ) -> None:
+        """Remove only the untracked files; what git ignores is left in place."""
+        ignore_locally(project, "task.log")
+        ignore_locally(project, "build/")
+        start = head(project)
+        (project / "task.log").write_bytes(b"log\n")
+        (project / "build").mkdir()
+        (project / "build" / "out.bin").write_bytes(b"out\n")
+
+        keep_or_undo(project, start, FAILED, lambda _failed: TaskFailureChoice.UNDO)
+
+        assert [
+            (project / "task.log").read_bytes(),
+            (project / "build" / "out.bin").read_bytes(),
+        ] == [b"log\n", b"out\n"]
 
     def test_a_file_made_while_the_caller_decides_survives_an_undo(
         self, project: Path
