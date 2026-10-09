@@ -401,12 +401,18 @@ class TestUpdateLayerDriftError:
 class TestUpdateTargetMismatchError:
     """A mismatched resume names the remediation that sets the pause aside."""
 
-    def test_default_remediation_sets_the_partial_update_aside(self) -> None:
+    def test_default_remediation_resets_before_it_stashes(self) -> None:
+        """Name 'git reset' before the stash, as design 07's mismatch row says.
+
+        A paused update leaves unmerged index entries that 'git stash'
+        refuses (design 06 §Step 5), so a stash-only remediation fails.
+        """
         err = UpdateTargetMismatchError("mismatch", layers=("core",))
 
-        assert err.layers == ("core",)
-        assert err.remediation is not None
-        assert "git stash --include-untracked" in err.remediation
+        assert err.remediation == (
+            "Run 'git reset' and then 'git stash --include-untracked' to set "
+            "the partial update aside, then run 'boilerplate update' again."
+        )
 
 
 class TestUpdateDowngradeError:
