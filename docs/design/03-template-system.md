@@ -352,8 +352,6 @@ The typical lifecycle is: scaffold a skeleton (`boilerplate init-template`), add
 
 `boilerplate validate` verifies template invariants before publication. The authoritative check registry — stable check IDs, severities, and output format — lives in [05 §validate](05-cli-reference.md); IDs are stable once assigned and may be cited in error messages and CI output.
 
-A layer MUST NOT redeclare an ancestor's question unchanged, because the scoped view already hands it to every render of the layer; `validate` reports an unchanged redeclaration as a warning rather than an error, because `merge_questions` merges it harmlessly.
-
 Validation is idempotent and read-only: it MUST NOT modify the template directory or perform any installation work.
 
 #### Template Testing
