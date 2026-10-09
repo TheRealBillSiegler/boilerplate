@@ -74,7 +74,7 @@ When `requires_profile` is non-null, it MUST be an object with the following fie
 | `name` | string | Yes | Profile identifier (e.g., `"python-dev"`, `"node"`) |
 | `version` | string | No | PEP 440 version constraint against the **profile's own version** (e.g., `">=1.2"`, `"~=2.0"`). Validates against published profile versions in the catalog. |
 
-**Tool-version requirements come from the profile's lineage, not from the template.** Profiles declare tool version constraints in their own `tools` map; profile authors bump the profile version when those constraints change (the profile version is the contract). A template that needs Python ≥ 3.12 requires a profile *version* whose tool map satisfies that — not a per-template tool override. This keeps the profile as the single source of truth for tool versions and prevents the same profile from producing different effective constraints depending on which template invokes it.
+**Tool-version requirements come from the profile's lineage, not from the template.** Profiles declare tool version constraints in their own `tools` map; profile authors bump the profile version when those constraints change (the profile version is the contract). A template that needs Python ≥ 3.12 requires a profile *version* whose tool map satisfies that — not a per-template tool override. This keeps the profile as the single source of truth for tool versions and prevents the same profile from producing different effective constraints depending on which template invokes it. A template that needs more than one toolchain requires a profile that composes them via `extends` — illustratively, a `python-containers` profile extending `python-dev` — not a list of profiles.
 
 When the required profile is not present in the project's environment state (no `.boilerplate/environment.yml`, or its `profile_name` does not match) or its `profile_version` does not satisfy the `version` constraint, the outcome depends on whether the command mutates the project:
 
@@ -111,8 +111,8 @@ description: Streamlit data application, extending the base project template.
 extends:
   - project@2.1.0
 requires_profile:
-  name: python-dev
-  version: ">=1.2"          # profile-version constraint (profile lineage is the tool-version contract)
+  name: python-containers   # illustrative profile name, extending python-dev
+  version: ">=1.0"          # profile-version constraint (profile lineage is the tool-version contract)
 ```
 
 **A deeply layered template (extends multiple parents):**
