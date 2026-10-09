@@ -455,7 +455,7 @@ An entry in `.boilerplate/migrations.yml` recording one finished operation.
 | --- | --- | --- |
 | `success` | 0 | Normal completion of an update. |
 | `conflict` | 4 (ACTION_REQUIRED) | Merge conflicts requiring user resolution. The record names each layer's target version and the layers the paused walk finished, which is what `update` resumes from ([04 §Safe Update](04-composition-engine.md#safe-update)). |
-| `failed` | 1 | A task failed after the copy back. A failure before the copy back leaves the checkout unchanged and appends no record. |
+| `failed` | 1 | A task failed after the copy back of an `update` or an `add` and the files were kept, under `--non-interactive` or by a terminal user's choice. A failure before the copy back leaves the checkout unchanged and appends no record. |
 | `adopted` | 0 | Written by the adoption pipeline to distinguish adopted projects from created or updated projects in the audit trail. See §06 Part 2.5. |
 | `created` | 0 | Written by `boilerplate new` as the first record on successful project creation. See §06 Part 1 Step 5. |
 
@@ -500,7 +500,7 @@ A restore marker keeps the state of an `update` or `add` run that is copying its
 |-------|------|-------------|
 | `operation` | enum | `update` or `add` |
 | `kind` | enum | `complete` when the walk finished every layer, `paused` when a conflict paused it |
-| `phase` | enum | `copy_back` until the copy back ends, then `tasks` (a `complete` update's tasks run), then `recording` (the lock and the record remain). An `add` goes from `copy_back` to `recording`. |
+| `phase` | enum | `copy_back` until the copy back ends, then `tasks` (a `complete` run's tasks run), then `recording` (the lock and the record remain). `update` and `add` pass the same phases. |
 | `start_commit` | string | The commit HEAD pointed at when the run began |
 | `result_commit` | string | The staging worktree's last per-layer commit, `start_commit` when no layer finished |
 | `targets` | map[string, string] | Each layer of the walk keyed by `LockLayer.name` with the version the walk was updating it to, as in a `conflict` record |
