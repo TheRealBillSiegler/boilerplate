@@ -71,7 +71,7 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 
 - :material-progress-clock:{ .status-partial } Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). It ends by writing `boilerplate.lock` (`composition/rendering/creation_lock.py`).
 - :material-progress-clock:{ .status-partial } Lock-file generation (`boilerplate.lock`) — `new` writes it after a successful render: each layer's name, version, source, commit (null for a bundled folder), checksum, and a hash of each answers file. No command reads it yet
-- :material-circle-outline:{ .status-design } Project update (`update` command), three-way merge, migration records, and rollback — none implemented
+- :material-progress-clock:{ .status-partial } Project update and layer add — the per-layer update and add engines are implemented (`composition/updating/`, `composition/adding/`) and driven only by tests; the `update` and `add` commands are planned
 
 ### 07 — Operational quality :material-progress-clock:{ .status-partial }
 
@@ -112,8 +112,8 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 | `validate` | :material-check-circle:{ .status-shipped } | Template-dir well-formedness (`cli/commands/validate.py`) |
 | `version` | :material-check-circle:{ .status-shipped } | `cli/commands/version.py` — beyond design 05's specified areas, which define `--version` as a global flag only |
 | `config` | :material-circle-outline:{ .status-design } | Retired with the Profile system; a repurposed `config` for the profile is designed, deferred |
-| `update` | :material-circle-outline:{ .status-design } | No update lifecycle |
-| `add` | :material-circle-outline:{ .status-design } | Not implemented |
+| `update` | :material-circle-outline:{ .status-design } | Planned; the per-layer update engine is implemented and driven only by tests |
+| `add` | :material-circle-outline:{ .status-design } | Planned; the add engine is implemented and driven only by tests |
 | `status` | :material-circle-outline:{ .status-design } | Not implemented |
 | `adopt` | :material-circle-outline:{ .status-design } | Not implemented |
 | `eject` | :material-circle-outline:{ .status-design } | Not implemented |
