@@ -153,7 +153,7 @@ The fixtures a scenario gets: the family once per worker, a private temp directo
 
 ## Scenarios
 
-Rows marked *added* are checks written with this suite, not taken from a probe log. Rows marked *expected failure* list a strict `xfail` that asserts the target behavior; the Claim column states what the code does today. Rows marked *bundled* run on the bundled `project` and `streamlit` layers (plus synthetic layers beside them) because the family cannot express the claim.
+Rows marked *added* are checks written with this suite. Rows marked *expected failure* list a strict `xfail` that asserts the target behavior; the Claim column states what the code does today. Rows marked *bundled* run on the bundled `project` and `streamlit` layers (plus synthetic layers beside them) because the family cannot express the claim.
 
 | ID | Question | Claim | Tests |
 | --- | --- | --- | --- |
