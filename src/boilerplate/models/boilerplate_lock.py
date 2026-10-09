@@ -9,12 +9,15 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validato
 
 from boilerplate.models.lock_layer import LockLayer
 
-__all__ = ["LOCK_SCHEMA_VERSION", "BoilerplateLock"]
+__all__ = ["LOCK_SCHEMA_MAJOR", "LOCK_SCHEMA_VERSION", "BoilerplateLock"]
 
-LOCK_SCHEMA_VERSION: Final = "boilerplate/lock@1"
+LOCK_SCHEMA_MAJOR: Final = 1
+"""The lock schema major this tool reads and writes."""
+
+LOCK_SCHEMA_VERSION: Final = f"boilerplate/lock@{LOCK_SCHEMA_MAJOR}"
 """The schema identifier this tool writes: ``namespace/schema@major``."""
 
-_SUPPORTED_SCHEMA = re.compile(r"^boilerplate/lock@1(\.\d+)*$")
+_SUPPORTED_SCHEMA = re.compile(rf"^boilerplate/lock@{LOCK_SCHEMA_MAJOR}(\.\d+)*$")
 _ANSWERS_HASH = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -26,7 +29,8 @@ class BoilerplateLock(BaseModel):
     schema adds are ignored on read.
 
     Attributes:
-        schema_version: The namespaced schema identifier; any minor of major 1.
+        schema_version: The namespaced schema identifier; any minor of the
+            supported major.
         boilerplate_version: The version of the tool that wrote the file.
         copier_version: The version of Copier used for rendering.
         created_at: When the project was created (UTC).
