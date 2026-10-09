@@ -32,7 +32,7 @@ flowchart TD
 
 ## The dispatcher: `changes`
 
-The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed. It also flags **composition** when a changed file is under `src/boilerplate/composition/`, `src/boilerplate/templates/`, `tests/integration/boilerplate/composition/`, `tests/boilerplate/templates/` or `tests/fixtures/family/`, or is `uv.lock` or the workflow file itself; the scenarios job runs only then.
+The first job diffs the run's commit range and classifies every changed file as **docs** (`docs/`, `*.md`, `mkdocs.yml`) or **code** (anything else). The six code jobs run only when something outside docs changed. It also flags **composition** when a changed file is under `src/boilerplate/cli/`, `src/boilerplate/composition/`, `src/boilerplate/integrations/`, `src/boilerplate/models/`, `src/boilerplate/templates/`, `tests/integration/boilerplate/composition/`, `tests/boilerplate/templates/` or `tests/fixtures/family/`, or is `uv.lock` or the workflow file itself; the scenarios job runs only then.
 
 | Event | BASE | HEAD |
 | --- | --- | --- |
@@ -56,7 +56,7 @@ PRs run one leg because development and the local gate already exercise Windows;
 
 ## Composition scenarios
 
-The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only or CLI-only change never pays for them. The gate waits on the job like any other.
+The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only change never pays for them. The gate waits on the job like any other.
 
 ## New tests go red
 
