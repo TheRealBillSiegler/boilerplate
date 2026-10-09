@@ -240,7 +240,7 @@ _tasks:
   - ["python", "_scripts/post_generation.py"]
 ```
 
-**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the layer's scoped view already hands every ancestor's question to every render of the layer ([ADR-015](adr-015-idiomatic-artifacts.md#decision)). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
+**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the layer's scoped view already hands every ancestor's question to every render of the layer ([ADR-015](adr-015-idiomatic-artifacts.md#decision)); `boilerplate validate` warns on an unchanged redeclaration ([05 §`validate`](05-cli-reference.md#validate), check `V17`). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
 
 ```yaml
 # streamlit/copier.yml — overrides the default for 'dependencies'
@@ -351,6 +351,8 @@ The typical lifecycle is: scaffold a skeleton (`boilerplate init-template`), add
 #### Validation Surface
 
 `boilerplate validate` verifies template invariants before publication. The authoritative check registry — stable check IDs, severities, and output format — lives in [05 §validate](05-cli-reference.md); IDs are stable once assigned and may be cited in error messages and CI output.
+
+A layer MUST NOT redeclare an ancestor's question unchanged, because the scoped view already hands it to every render of the layer; `validate` reports an unchanged redeclaration as a warning rather than an error, because `merge_questions` merges it harmlessly.
 
 Validation is idempotent and read-only: it MUST NOT modify the template directory or perform any installation work.
 
