@@ -329,7 +329,7 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 
 #### Undo
 
-Undo restores every tracked file, in the working tree and the index, from the starting commit, and removes the untracked files that git does not ignore (`git clean -d -f`, without `-x`); files git ignores are not touched. `update` and `add` refuse to start while untracked files are present ([Pre-Flight Check](#pre-flight-check), check 4), so every untracked file the undo removes came from the run. Boilerplate lists the untracked files before it asks the user to keep or undo, and passes only the listed paths to `git clean`, so a file the user makes while that prompt waits is not removed. A copy back that fails is undone the same way, without a prompt.
+Undo restores every tracked file, in the working tree and the index, from the starting commit, and removes the untracked files that git does not ignore (`git clean -d -f`, without `-x`). It does not reverse files git ignores, anything inside `.git` (a commit a task made, a moved `HEAD`) or anything outside the project, so an effect a task has there stays. Task authors SHOULD keep tasks idempotent, so that running one again after an undo is safe ([ADR-014](adr-014-deferred-task-execution.md#consequences)). `update` and `add` refuse to start while untracked files are present ([Pre-Flight Check](#pre-flight-check), check 4), so every untracked file the undo removes came from the run. Boilerplate lists the untracked files before it asks the user to keep or undo, and passes only the listed paths to `git clean`, so a file the user makes while that prompt waits is not removed. A copy back that fails is undone the same way, without a prompt.
 
 ### Merge behavior and ordering
 
