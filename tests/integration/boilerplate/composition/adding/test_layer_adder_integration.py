@@ -41,7 +41,10 @@ from boilerplate.models import MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import MIGRATIONS_FILE, read_migrations
 from tests.boilerplate.templates.conftest import commit_all, git
-from tests.integration.boilerplate.composition.adding.layers import build_layer
+from tests.integration.boilerplate.composition.adding.layers import (
+    IGNORED_THEN_FAILING_TASK,
+    build_layer,
+)
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
@@ -559,6 +562,24 @@ class TestAFailedTask(CoreOnly):
             git(project, "status", "--porcelain"),
             (project / MIGRATIONS_FILE).exists(),
         ) == (AddStatus.UNDONE, before[0], before[1], "", False)
+
+    def test_undoing_names_the_ignored_entries_a_task_left(
+        self, project: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Name the ignored folder the task made, and leave it where it is."""
+        build_layer(project.parent, "failing", copier=IGNORED_THEN_FAILING_TASK)
+
+        with caplog.at_level(logging.WARNING):
+            outcome = LayerAdder(on_task_failure=undo).add(
+                project, ask_built(project, "failing")
+            )
+
+        assert (
+            outcome.status,
+            outcome.ignored_left,
+            (project / "dist" / "out.txt").is_file(),
+            any("dist/" in record.getMessage() for record in caplog.records),
+        ) == (AddStatus.UNDONE, ("dist/",), True, True)
 
 
 class TestIgnoredFileTheLayerWrote(CoreOnly):

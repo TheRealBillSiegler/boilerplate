@@ -220,4 +220,5 @@ class AddRun:
             layer=self._inputs.plan.layer,
             version=self._inputs.plan.version,
             warnings=self._warnings,
+            ignored_left=self._failure.ignored_left,
         )

@@ -12,7 +12,8 @@ class AddStatus(StrEnum):
             the add; the tracked files and the index are back at the starting
             commit, the untracked, non-ignored files the undo listed are
             removed, and no lock was written. Ignored files, ``.git`` and
-            anything outside the project are left as they were.
+            anything outside the project are left as they were; the outcome's
+            ``ignored_left`` names the ignored entries the tasks made.
     """
 
     ADDED = "added"

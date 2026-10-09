@@ -4,9 +4,10 @@ from pathlib import Path
 
 from boilerplate.composition.staging.ignored_files import (
     list_ignored_paths,
+    list_new_ignored_paths,
     uncarried_warning,
 )
-from tests.boilerplate.templates.conftest import commit_all
+from tests.boilerplate.templates.conftest import commit_all, ignore_locally
 
 
 class TestListIgnoredPaths:
@@ -28,6 +29,22 @@ class TestListIgnoredPaths:
     ) -> None:
         """Warn about nothing for a worktree whose files are all carried."""
         assert list_ignored_paths(project) == ()
+
+
+class TestListNewIgnoredPaths:
+    def test_lists_only_the_entries_the_earlier_listing_lacked(
+        self, project: Path
+    ) -> None:
+        """Compare by entry name, so an ignored folder counts once."""
+        ignore_locally(project, "*.log")
+        ignore_locally(project, "dist/")
+        (project / "old.log").write_text("old\n", encoding="utf-8")
+        before = list_ignored_paths(project)
+        (project / "new.log").write_text("new\n", encoding="utf-8")
+        (project / "dist").mkdir()
+        (project / "dist" / "a.txt").write_text("a\n", encoding="utf-8")
+
+        assert list_new_ignored_paths(project, before) == ("dist/", "new.log")
 
 
 class TestUncarriedWarning:
