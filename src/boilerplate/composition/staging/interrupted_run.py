@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator, Sequence
 from pathlib import Path
 
-from boilerplate.common.exceptions import UpdateInterruptedError
+from boilerplate.common.exceptions import RESET_THEN_STASH, UpdateInterruptedError
 from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.restore_marker_file import (
@@ -28,8 +28,7 @@ __all__ = ["resolve_interrupted_run"]
 _logger = logging.getLogger(__name__)
 
 _SET_ASIDE = (
-    "Run 'git reset' and then 'git stash --include-untracked' to set the "
-    "partial run aside, then run the command again."
+    f"Run {RESET_THEN_STASH} to set the partial run aside, then run the command again."
 )
 
 
@@ -84,8 +83,7 @@ def resolve_interrupted_run(
             marker,
             "",
             remediation=f"Run 'boilerplate {marker.operation}' to finish it, or run "
-            "'git reset' and then 'git stash --include-untracked' to set it aside "
-            "and run the command again.",
+            f"{RESET_THEN_STASH} to set it aside and run the command again.",
         )
     if run_git(project, "rev-parse", "HEAD").strip() != marker.start_commit:
         raise _stop(marker, " HEAD has moved since it began.")
