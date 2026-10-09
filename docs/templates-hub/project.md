@@ -37,6 +37,8 @@ my-app/
 └── boilerplate.lock        # Each layer's version, source and checksum
 ```
 
+`README.md` and `src/<package>/__init__.py` are project-owned: the template lists them in `_skip_if_exists`, which [governs what an update does to them](../design/04-composition-engine.md#per-layer-render-loop).
+
 Post-generation tasks create the virtual environment and `uv.lock` and initialize a git repository (skipped with `--no-tasks`).
 With `--no-tasks`, the cleanup step also never runs, so `_scripts/post_generation.py` is left behind in the generated project — it isn't gitignored.
 
