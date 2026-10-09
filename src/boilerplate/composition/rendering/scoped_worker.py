@@ -386,10 +386,16 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     # incompatible variable override.
     @cached_property
     def template(self) -> Template:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Build the template from the view of the render this worker makes."""
+        """Build the template from the view of the render this worker makes.
+
+        Raises:
+            TypeError: If the worker has no source and the project records no
+                template to take one from.
+        """
         url = self.src_path
         if not url:
-            assert self.subproject.template is not None
+            if self.subproject.template is None:
+                raise TypeError("Template not found")
             url = str(self.subproject.template.url)
         ref = self.resolved_vcs_ref
         view = self.render_view
