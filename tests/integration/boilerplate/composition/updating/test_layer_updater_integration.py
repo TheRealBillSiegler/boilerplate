@@ -33,7 +33,9 @@ AFTER = {"core": "3.0.0", "service": "1.0.0"}
 def _update_core(family: Family, project: Path, work: Path, **data: str) -> None:
     update_layer(
         project,
-        LayerRelease(layer="core", source=family.repos["core"], ref=AFTER["core"]),
+        LayerRelease(
+            layer="core", source=family.repos["core"].as_posix(), ref=AFTER["core"]
+        ),
         UpdateViews(
             layer_view("core", templates_at(family, work, BEFORE)),
             layer_view("core", templates_at(family, work, AFTER)),
