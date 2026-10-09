@@ -600,3 +600,17 @@ class TestFallbackVersion:
 
     def test_no_fallback_leaves_the_version_unset(self, tmp_path: Path) -> None:
         assert self._version(tmp_path) is None
+
+
+class TestTemplateWithoutASource:
+    """A worker with no source and no recorded template has nothing to render."""
+
+    def test_raises_a_type_error_as_copiers_own_worker_does(
+        self, tmp_path: Path
+    ) -> None:
+        worker = ScopedWorker(  # pyright: ignore[reportCallIssue]
+            dst_path=tmp_path / "project", target_view=TARGET
+        )
+
+        with pytest.raises(TypeError, match="Template not found"):
+            _ = worker.template
