@@ -94,16 +94,20 @@ def empty_catalog_list(
     return typer_cli_runner.invoke(app, ["list", "--templates-dir", str(empty_dir)])
 
 
-def test_templates_list_empty_catalog_exits_failure(empty_catalog_list: Result) -> None:
-    """An empty catalog exits with the general failure code."""
-    assert empty_catalog_list.exit_code == ExitCode.FAILURE
+def test_templates_list_empty_catalog_exits_success(empty_catalog_list: Result) -> None:
+    """An empty catalog is not a failure.
+
+    Source of truth: docs/design/05-cli-reference.md §list, exit code `0`
+    ("results may be empty"). Fails if `list` raises on an empty catalog.
+    """
+    assert empty_catalog_list.exit_code == ExitCode.SUCCESS
 
 
 def test_templates_list_empty_catalog_says_none_found(
     empty_catalog_list: Result,
 ) -> None:
-    """An empty catalog is reported as "No templates found."."""
-    assert "No templates found." in empty_catalog_list.output
+    """An empty catalog is reported as "No templates found." on stdout."""
+    assert "No templates found." in empty_catalog_list.stdout
 
 
 @pytest.mark.parametrize(
@@ -117,8 +121,16 @@ def test_templates_list_empty_catalog_says_none_found(
 def test_templates_list_empty_catalog_hints_at_each_source(
     empty_catalog_list: Result, source: str
 ) -> None:
-    """The empty-catalog hint names each place templates are found."""
-    assert source in empty_catalog_list.output
+    """The empty-catalog message names each place templates are found."""
+    assert source in empty_catalog_list.stdout
+
+
+def test_templates_list_empty_catalog_prints_no_error_line(
+    empty_catalog_list: Result,
+) -> None:
+    """An empty catalog prints no `Error:` line and no BP code."""
+    assert "Error:" not in empty_catalog_list.output
+    assert "BP_" not in empty_catalog_list.output
 
 
 def test_templates_permission_error_behavior(
@@ -164,10 +176,10 @@ extends: []
     assert set(entries["alpha"]) == {"name", "version", "description", "path"}
 
 
-def test_templates_list_format_json_empty_catalog_reports_error(
+def test_templates_list_format_json_empty_catalog_lists_no_templates(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, typer_cli_runner: CliRunner
 ):
-    """An empty catalog under `--format json` fails closed with a JSON error body."""
+    """An empty catalog under `--format json` exits 0 with an empty list."""
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
     monkeypatch.setenv("BOILERPLATE_DEFAULT_TEMPLATES_DIR", str(empty_dir))
@@ -176,7 +188,5 @@ def test_templates_list_format_json_empty_catalog_reports_error(
         app, ["list", "--templates-dir", str(empty_dir), "--format", "json"]
     )
 
-    assert result.exit_code == ExitCode.FAILURE
-    payload = json.loads(result.output)
-    assert payload["templates"] == []
-    assert "error" in payload
+    assert result.exit_code == ExitCode.SUCCESS
+    assert json.loads(result.output) == {"templates": []}
