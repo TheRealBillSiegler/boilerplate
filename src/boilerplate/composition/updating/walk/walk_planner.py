@@ -136,9 +136,7 @@ def plan_walk(
         steps=steps,
         skipped=resume.finished if resume is not None else (),
         targets=dict(resolution.targets),
-        root_release=LayerRelease(
-            layer=root, source=sources[root], ref=target_releases[root].ref
-        ),
+        root_release=LayerRelease.from_release(root, target_releases[root]),
         task_view=views.step_view(root, target_releases),
         tasks=tuple(views.tasks(target_releases)),
         warnings=(
@@ -158,10 +156,6 @@ def _step(
     """Build the step that updates `layer` from the `old` releases to the targets."""
     return WalkStep(
         layer=layer,
-        release=LayerRelease(
-            layer=layer,
-            source=target_releases[layer].source,
-            ref=target_releases[layer].ref,
-        ),
+        release=LayerRelease.from_release(layer, target_releases[layer]),
         views=views.update_views(layer, old=old, target=target_releases),
     )

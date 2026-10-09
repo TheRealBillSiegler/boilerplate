@@ -1,22 +1,39 @@
 """The layer release an update moves a project to."""
 
-from pathlib import Path
+from typing import Self
 
-from pydantic import BaseModel, ConfigDict
+from boilerplate.composition.updating.release_ref import ReleaseRef
 
 
-class LayerRelease(BaseModel):
+class LayerRelease(ReleaseRef):
     """One layer of a composed project and the release to update it to.
+
+    The release is a `ReleaseRef`: the source stays the string the layer's
+    answers file records, where a path would rewrite a URL's slashes. The class
+    subclasses `ReleaseRef` rather than holding one, so a `LayerRelease` is
+    accepted wherever a `ReleaseRef` is, such as the mapping passed to
+    `ReleaseViews`.
 
     Attributes:
         layer: The layer to update; names its ``.copier-answers.<layer>.yml``.
-        source: The layer's git-backed template source, a local path or a URL; a
-            string stays as written, where a path would rewrite a URL's slashes.
-        ref: The git ref of the target template version.
     """
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
     layer: str
-    source: Path | str
-    ref: str
+
+    @classmethod
+    def from_release(cls, layer: str, release: ReleaseRef) -> Self:
+        """Build the release of `layer` from the release its template moves to.
+
+        Args:
+            layer: The layer to update.
+            release: The layer's template source and the ref of its target.
+
+        Returns:
+            The layer's release.
+
+        Examples:
+            >>> release = ReleaseRef(source="https://example.com/core.git", ref="v2")
+            >>> LayerRelease.from_release("core", release).layer
+            'core'
+        """
+        return cls(layer=layer, source=release.source, ref=release.ref)

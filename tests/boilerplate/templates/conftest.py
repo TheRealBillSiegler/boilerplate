@@ -472,7 +472,7 @@ def update_layer(
         }
     return update_layer_in_src(
         project,
-        LayerRelease(layer=layer, source=source, ref=ref),
+        LayerRelease(layer=layer, source=source.as_posix(), ref=ref),
         UpdateViews(old_view, target_view),
         inputs=StepInputs(
             supplied=supplied,

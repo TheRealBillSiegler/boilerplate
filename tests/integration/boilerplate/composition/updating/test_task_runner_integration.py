@@ -37,7 +37,7 @@ class Run:
     def __init__(self, family: Family, project: Path, views: ReleaseViews) -> None:
         self.project = project
         self.release = LayerRelease(
-            layer="service", source=family.repos["service"], ref="1.0.0"
+            layer="service", source=family.repos["service"].as_posix(), ref="1.0.0"
         )
         self.releases = {
             layer: ReleaseRef(source=family.repos[layer].as_posix(), ref=tag)
