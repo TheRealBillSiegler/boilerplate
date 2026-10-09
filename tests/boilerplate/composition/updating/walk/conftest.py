@@ -44,7 +44,7 @@ def core_release() -> LayerRelease:
 def empty_views() -> UpdateViews:
     """Return the old and target views of a layer that asks nothing."""
     view = LayerView(questions={}, extensions=())
-    return UpdateViews(old=view, target=view)
+    return UpdateViews(old=view, target=view, needs_unsafe=False)
 
 
 @pytest.fixture
