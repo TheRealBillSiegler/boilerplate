@@ -27,7 +27,8 @@ def run_tasks(
     the added layer's own tasks under ``copy``, as at compose, over that
     layer's view, with its answers file. Either way it goes through the same
     worker as the renders, and the secrets the run asked, which no answers file
-    records, are passed here.
+    records, are passed here. The run exists to execute tasks, so it grants
+    Copier's ``unsafe``, as compose does for the final layer's tasks.
 
     Args:
         project: The finished project, in the user's checkout.

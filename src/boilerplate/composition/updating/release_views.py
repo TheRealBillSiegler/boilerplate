@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from boilerplate.catalog.catalog import TemplateCatalog
 from boilerplate.composition.composer import Composer
@@ -81,9 +82,32 @@ class ReleaseViews:
             target: The release of every layer at the targets.
 
         Returns:
-            The old view and the target view.
+            The old view, the target view and the grant the step needs. The
+            grant follows Copier's own check for an update
+            (``Worker._check_unsafe``), so a layer that loads and runs nothing
+            keeps Copier's consent gate
+            (docs/design/adr-003-permissive-execution.md): a Jinja extension at
+            either release, a task of the old release, or a migration of the
+            target release always counts; a task of the target release counts
+            only when the step runs it, so `UpdateViews.unsafe_for` decides that
+            one.
         """
-        return UpdateViews(self.step_view(layer, old), self.step_view(layer, target))
+        old_view = self.step_view(layer, old)
+        target_view = self.step_view(layer, target)
+        old_config = self._layer_config(layer, old)
+        target_config = self._layer_config(layer, target)
+        needs_unsafe = (
+            self._loads_extension(old_view, old_config)
+            or self._loads_extension(target_view, target_config)
+            or bool(old_config.get("tasks"))
+            or bool(target_config.get("migrations"))
+        )
+        return UpdateViews(
+            old_view,
+            target_view,
+            needs_unsafe=needs_unsafe,
+            tasks_need_unsafe=bool(target_config.get("tasks")),
+        )
 
     def ancestors(
         self, releases: Mapping[str, ReleaseRef]
@@ -115,6 +139,29 @@ class ReleaseViews:
             Copier's shapes.
         """
         return normalize_tasks(self._compose_project(releases).final)
+
+    @staticmethod
+    def _loads_extension(view: LayerView, config: Mapping[str, Any]) -> bool:
+        """Return whether a render loads a Jinja extension.
+
+        Args:
+            view: The view the render is under; it holds the importable
+                extensions and the ancestors' extension files.
+            config: The layer's own Copier configuration, which holds the
+                extensions the view leaves out.
+
+        Returns:
+            True when the view holds an extension or the layer declares one.
+        """
+        return view.loads_extensions or bool(config.get("jinja_extensions"))
+
+    def _layer_config(
+        self, layer: str, releases: Mapping[str, ReleaseRef]
+    ) -> Mapping[str, Any]:
+        """Return the Copier configuration `layer` declares at `releases`."""
+        resolution = Resolver().resolve(layer, self._catalog(releases))
+        template = resolution.templates[resolution.execution_sequence[-1]]
+        return template.copier_template.config_data
 
     def _sequence(
         self, layer: str, releases: Mapping[str, ReleaseRef]

@@ -9,6 +9,7 @@ from boilerplate.composition.updating.release_ref import ReleaseRef
 from boilerplate.composition.updating.release_views import ReleaseViews
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from tests.boilerplate.templates.conftest import step_view
+from tests.integration.boilerplate.composition.adding.layers import build_layer
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import templates_at
 
@@ -108,6 +109,84 @@ class TestUpdateViews:
             False,
             True,
         )
+
+
+class TestUpdateViewsNeedUnsafe:
+    """A step is granted Copier's ``unsafe`` for what Copier's own check counts.
+
+    Copier's ``Worker._check_unsafe`` flags the Jinja extensions of the target
+    release and of the recorded one, the tasks of the recorded release, the
+    tasks of the target release only when the step runs them, and the
+    migrations the target release declares
+    (docs/design/adr-003-permissive-execution.md). The grant follows that check
+    and no more, because ``unsafe`` also switches off Copier's path-escape
+    check.
+    """
+
+    @staticmethod
+    def _solo(root: Path, copier: str = "") -> dict[str, ReleaseRef]:
+        """Release a layer named ``solo`` that extends nothing."""
+        repo = build_layer(root, "solo", extends="", copier=copier)
+        return {"solo": ReleaseRef(source=repo.as_posix(), ref="1.0.0")}
+
+    @pytest.mark.parametrize(
+        ("copier", "expected"),
+        [
+            ("", False),
+            ("_jinja_extensions:\n  - probe_ext.ProbeExtension\n", True),
+            ("_jinja_extensions:\n  - _extensions/local.py:Local\n", True),
+            ("_tasks:\n  - echo hi\n", True),
+            ("_migrations:\n  - version: 1.0.0\n    command: echo hi\n", True),
+        ],
+        ids=["nothing", "importable", "own_file", "task", "migration"],
+    )
+    def test_follows_what_the_layer_declares(
+        self, views: ReleaseViews, tmp_path: Path, copier: str, expected: bool
+    ) -> None:
+        releases = self._solo(tmp_path, copier)
+
+        pair = views.update_views("solo", old=releases, target=releases)
+
+        assert pair.needs_unsafe is expected
+
+    def test_is_set_by_the_old_release_alone(
+        self, views: ReleaseViews, tmp_path: Path
+    ) -> None:
+        """Copier checks the recorded release's tasks even when the target has none."""
+        old = self._solo(tmp_path / "old", "_tasks:\n  - echo hi\n")
+        target = self._solo(tmp_path / "target")
+
+        pair = views.update_views("solo", old=old, target=target)
+
+        assert pair.needs_unsafe is True
+
+    def test_is_not_set_by_the_old_releases_migrations(
+        self, views: ReleaseViews, tmp_path: Path
+    ) -> None:
+        """Copier reads migrations from the target release only."""
+        old = self._solo(
+            tmp_path / "old",
+            "_migrations:\n  - version: 1.0.0\n    command: echo hi\n",
+        )
+        target = self._solo(tmp_path / "target")
+
+        pair = views.update_views("solo", old=old, target=target)
+
+        assert pair.needs_unsafe is False
+
+    def test_a_target_task_is_a_grant_only_when_the_step_runs_it(
+        self, views: ReleaseViews, tmp_path: Path
+    ) -> None:
+        """Copier counts the target's tasks only when the step does not skip them."""
+        old = self._solo(tmp_path / "old")
+        target = self._solo(tmp_path / "target", "_tasks:\n  - echo hi\n")
+
+        pair = views.update_views("solo", old=old, target=target)
+
+        assert (
+            pair.unsafe_for(skip_tasks=True),
+            pair.unsafe_for(skip_tasks=False),
+        ) == (False, True)
 
 
 class TestAncestors:

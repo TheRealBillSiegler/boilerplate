@@ -33,3 +33,14 @@ class LayerView(NamedTuple):
     ancestor_extensions: tuple[AncestorExtension, ...] = ()
     declared_by: Mapping[str, str] = MappingProxyType({})
     secret_questions: frozenset[str] = frozenset()
+
+    @property
+    def loads_extensions(self) -> bool:
+        """Whether a render under this view loads a Jinja extension of an ancestor.
+
+        Returns:
+            True when the view holds an importable extension or an ancestor's
+            extension file. A layer's own filepath-style declaration is not in
+            the view, so it does not count here.
+        """
+        return bool(self.extensions or self.ancestor_extensions)
