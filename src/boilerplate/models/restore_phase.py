@@ -12,7 +12,7 @@ class RestorePhase(StrEnum):
     Attributes:
         COPY_BACK: From the moment the marker is written until the copy back
             ends.
-        TASKS: While a complete update's tasks run.
+        TASKS: While a complete update's or add's tasks run.
         RECORDING: Until the record is appended; the lock and the record
             remain.
     """

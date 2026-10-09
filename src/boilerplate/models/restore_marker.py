@@ -45,21 +45,19 @@ class RestoreMarker(BaseModel):
 
     @model_validator(mode="after")
     def _check_tasks_phase(self) -> Self:
-        """Allow the ``tasks`` phase only on a complete update.
+        """Allow the ``tasks`` phase only on a complete run.
 
-        An add runs its tasks after its record, and a paused update runs none.
+        An update and an add run their tasks before their lock and their
+        record, and a paused update runs none.
 
         Returns:
             The validated marker.
 
         Raises:
-            ValueError: If an add or a paused run is in the ``tasks`` phase.
+            ValueError: If a paused run is in the ``tasks`` phase.
         """
-        if self.phase is RestorePhase.TASKS and (
-            self.operation is not RestoreOperation.UPDATE
-            or self.kind is not RestoreKind.COMPLETE
-        ):
-            raise ValueError("only a complete update runs its tasks under the marker")
+        if self.phase is RestorePhase.TASKS and self.kind is not RestoreKind.COMPLETE:
+            raise ValueError("only a complete run runs its tasks under the marker")
         return self
 
     def at_phase(self, phase: RestorePhase) -> Self:
@@ -72,7 +70,6 @@ class RestoreMarker(BaseModel):
             A copy with `phase`, checked as a new marker is.
 
         Raises:
-            pydantic.ValidationError: If `phase` is ``tasks`` for an add or a
-                paused run.
+            pydantic.ValidationError: If `phase` is ``tasks`` for a paused run.
         """
         return self.model_validate({**self.model_dump(), "phase": phase})

@@ -109,10 +109,13 @@ class AddRun:
             UpdateTaskFailedError: If a task failed and the handler kept the
                 files.
         """
-        finisher = Finisher(
-            RestoreOperation.ADD,
-            RestoreKind.COMPLETE,
-            FinishSteps(
+        plan = self._inputs.plan
+        finisher = Finisher.for_staging(
+            staging,
+            operation=RestoreOperation.ADD,
+            kind=RestoreKind.COMPLETE,
+            targets={plan.layer: plan.version},
+            steps=FinishSteps(
                 write_record=self._record,
                 write_lock=lambda: self._write_lock(staging),
                 run_tasks=lambda: self._run_tasks(staging, secrets),
