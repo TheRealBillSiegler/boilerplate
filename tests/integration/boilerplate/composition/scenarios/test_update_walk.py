@@ -498,7 +498,7 @@ class TestConflictPause:
     """A release that clashes with a user edit pauses the walk at its layer."""
 
     def test_raises_the_pause_with_the_remediation(self, paused: PausedWalk) -> None:
-        """Tell the user to resolve, commit and rerun, or to stash the update."""
+        """Give design 06 §Step 5's remediation: resolve and rerun, or set aside."""
         assert paused.error.remediation == (
             "Resolve conflicts and commit, then run 'boilerplate update' again. "
             "'git reset' and then 'git stash --include-untracked' set the partial update aside."
