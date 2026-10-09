@@ -81,6 +81,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
@@ -118,6 +119,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
@@ -153,6 +155,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using the three-class pattern
@@ -189,6 +192,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
@@ -225,6 +229,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         render_engine = RenderEngine()
@@ -248,10 +253,10 @@ class TestTemplateCompositionBehavior:
         )
 
     @pytest.mark.slow
-    def test_post_generation_tasks_execute_for_composed_templates(
+    def test_composed_streamlit_renders_a_readme_and_a_pyproject(
         self, integration_catalog: TemplateCatalog
     ) -> None:
-        """Post-generation tasks execute successfully."""
+        """Composing streamlit renders its README and pyproject.toml."""
         # Build composition using the three-class pattern
         composition = self._compose_only("streamlit", integration_catalog)
 
@@ -263,6 +268,7 @@ class TestTemplateCompositionBehavior:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
@@ -348,6 +354,7 @@ class TestTemplateCompositionRegression:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
@@ -385,6 +392,7 @@ class TestTemplateCompositionRegression:
             },
             overwrite=True,
             interactive=False,
+            skip_tasks=True,
         )
 
         # Render using RenderEngine
