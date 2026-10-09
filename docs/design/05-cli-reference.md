@@ -1048,7 +1048,7 @@ After completing an operation, the CLI MUST print contextual next steps. Guidanc
 
 1. **Default**: Always `cd {destination}`. `uv sync` follows it only when the template's setup tasks were skipped (`--no-tasks`); otherwise the tasks already installed dependencies and Next steps lists only what is left to do.
 2. **Profile-derived**: If the template declares `requires_profile`, include `boilerplate env apply`.
-3. **Template-declared**: `post_create_message` from `boilerplate.yml`, accumulated from all layers in topological order, labeled "From the template author:".
+3. **Template-declared** (printed after `new` only, per [03 §post_create_message](03-template-system.md#post_create_message)): `post_create_message` from `boilerplate.yml`, accumulated from all layers in topological order, labeled "From the template author:".
 4. **`Tip:` block**: Save-answers hint for CI reproducibility (suppressed when `--answers` or `--ci` was used).
 
 Template-declared guidance is informational only — MUST NOT execute automatically.
