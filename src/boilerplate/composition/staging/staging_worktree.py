@@ -362,6 +362,7 @@ class StagingWorktree:
         if self._folder is None:
             return
         folder, self._folder = self._folder, None
+        self._start_commit = None
         self._last_commit = None
         self._release_lock()
         remove_staging_folder(self.project, folder, folder / self.project.name)
