@@ -39,12 +39,11 @@ def remove_stale_staging(
     A folder with no journal or an unparseable one is left for the user to
     inspect, as is one owned by another user and one whose owner or lock file
     cannot be read: the cleanup is best-effort and never aborts the run that
-    started it. An old folder is stale only when
-    the cleanup can also take the exclusive lock its operation holds for its
-    whole lifetime: age alone would remove an update that is waiting at a
-    prompt, so a folder whose lock is held is live and left alone. For each
-    folder removed, the
-    worktree registration is dropped with ``git worktree remove`` and
+    started it. An old folder is stale only when the cleanup can also take the
+    exclusive lock its operation holds for its whole lifetime: age alone would
+    remove an update that is waiting at a prompt, so a folder whose lock is
+    held is live and left alone. For each folder removed, the worktree
+    registration is dropped with ``git worktree remove`` and
     ``git worktree prune`` run in the project the journal's ``destination``
     names, which drops the registration of a worktree whose folder is gone.
 
