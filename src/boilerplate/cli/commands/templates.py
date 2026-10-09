@@ -14,7 +14,6 @@ from boilerplate.cli.utils import (
     cli_error_handler,
     render_template_table,
 )
-from boilerplate.constants import ExitCode
 
 _logger = getLogger(__name__)
 
@@ -46,11 +45,10 @@ def list_templates(
 
     if not template_infos:
         if format is ListFormat.JSON:
-            display.write(json.dumps({"templates": [], "error": "No templates found."}))
-            raise typer.Exit(code=ExitCode.FAILURE)
-        display.error("No templates found.")
-        display.info(f"  Hint: {TEMPLATE_DIRS_HINT}")
-        raise typer.Exit(code=ExitCode.FAILURE)
+            display.write(json.dumps({"templates": []}))
+        else:
+            display.info(f"No templates found. {TEMPLATE_DIRS_HINT}")
+        return
 
     if format is ListFormat.JSON:
         data = [
