@@ -29,7 +29,7 @@ Environment-domain state files (`.boilerplate/environment.yml`) are documented i
 
 The universal advisory-lock rule and timeout default are defined in [07-operational-quality.md §Concurrency Control](07-operational-quality.md#concurrency-control). It applies to every mutating Boilerplate operation: `new`, `update`, `add`, `adopt`, `eject`, `env apply`. Project-domain specifics:
 
-- **Lock target (existing project)**: the `boilerplate.lock` file itself.
+- **Lock target (existing project)**: a `boilerplate-operation.lock` file in the project's git directory, at the path `git rev-parse --git-path boilerplate-operation.lock` prints, so each worktree of the project has its own lock. The target is not `boilerplate.lock` for two reasons: Boilerplate writes that file by replacing it with a renamed file, which Windows refuses on a file the operation holds open, and a lock file inside the working tree would dirty the tree and fail the clean-tree check. A project that is not a git repository uses the `new` target below.
 - **Lock target (`new`)**: a `.boilerplate-lock-{destination_name}` file created in the destination's parent directory. The file is created if absent and removed after the `new` operation completes.
 
 **Network filesystem detection**: `boilerplate doctor` MUST detect and warn when the project directory or staging root resides on a network filesystem (advisory file locking is unreliable there; see [§07 Network Filesystems](07-operational-quality.md#network-filesystems)).
@@ -641,7 +641,7 @@ Ejection is a no-op only when NEITHER `boilerplate.lock` NOR `.boilerplate/` is 
 
 ### Concurrency and Locking
 
-Ejection is a mutating operation and MUST acquire the standard advisory mutex on the project before removing state, under the universal rule in [§Concurrency](#concurrency) (same as `new`, `update`, `add`, `adopt`, and `env apply`). The lock target is the project's `boilerplate.lock` file when present; for an environment-only project (no lock, only `.boilerplate/`), the mutex falls back to the `new`-style sentinel (`.boilerplate-lock-{destination_name}` in the project's parent directory).
+Ejection is a mutating operation and MUST acquire the standard advisory mutex on the project before removing state, under the universal rule in [§Concurrency](#concurrency) (same as `new`, `update`, `add`, `adopt`, and `env apply`). The lock target is the existing-project target under [§Concurrency](#concurrency); for an environment-only project (no lock, only `.boilerplate/`) that is not a git repository, the mutex falls back to the `new`-style sentinel (`.boilerplate-lock-{destination_name}` in the project's parent directory).
 
 ### No Recovery Needed
 
