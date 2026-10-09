@@ -128,12 +128,12 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 
 ## Known gaps (design-only)
 
-These are specified in the design docs but have **no user-facing implementation** today — listed here so expectations are clear:
+These are specified in the design docs but no shipped command exercises them — listed here so expectations are clear. Items 2 to 4 have engines implemented and driven only by tests; their commands are not yet wired:
 
 1. **Using the lock (`boilerplate.lock`)** — `new` writes it, but no command reads it: there is no `lock verify`, `status` or `update`.
-2. **Project update lifecycle** — no `update` command, version diffing, or apply.
-3. **Three-way merge / conflict resolution** — only configuration-schema merging exists. The target semantics (conflict-pause, safe-orphan, never-auto-delete) are specified in [ADR-007](design/adr-007-update-model.md).
-4. **Migration records & rollback** — the record model and log file I/O exist; nothing appends a record, and there is no rollback.
+2. **Project update lifecycle** — the per-layer update engine is implemented and driven only by tests; the `update` command is not yet wired, so no shipped command diffs versions or applies an update.
+3. **Three-way merge / conflict resolution** — the update engine merges through Copier and pauses on a conflict, driven only by tests; the only merge a shipped command performs is configuration-schema merging. The target semantics (conflict-pause, safe-orphan, never-auto-delete) are specified in [ADR-007](design/adr-007-update-model.md).
+4. **Migration records & rollback** — the update and add engines append migration records, driven only by tests; no shipped command writes them or exposes a rollback.
 5. **Environment provisioning** — the entire proto toolchain subsystem and `env *` commands.
 6. **Catalog federation & discovery** — remote/Git sources, `search`, trust tiers, classification.
 7. **Security verification pipeline** — checksums, signatures, trust verification, Jinja sandbox.
