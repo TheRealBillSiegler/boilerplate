@@ -1,0 +1,29 @@
+_answers_file: .copier-answers.ci.yml
+
+# Copier's default exclusions, restated because a declared `_exclude` replaces
+# them, plus the authoring metadata.
+_exclude:
+  - "/copier.yaml"
+  - "/copier.yml"
+  - "/boilerplate.yml"
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+
+# Asked before `ci_provider`, whose `when` reads it: a recorded answers file has
+# no value for it, so only its default can let `ci_provider` be asked.
+ci_hosted:
+  type: bool
+  help: "Does a hosted provider run the checks?"
+  default: true
+
+ci_provider:
+  type: str
+  help: "Which CI provider runs the checks?"
+  when: "{{ ci_hosted }}"
+  choices:
+    - github
+  default: github
