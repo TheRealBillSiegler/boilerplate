@@ -6,7 +6,7 @@ from pathlib import Path
 from boilerplate.composition.adding.add_plan import AddPlan
 from boilerplate.composition.staging import StagingWorktree
 from boilerplate.models import BoilerplateLock
-from boilerplate.project_state.lock_builder import build_lock
+from boilerplate.project_state.lock_builder import build_lock, mark_added
 from boilerplate.project_state.lock_file import write_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 
@@ -20,8 +20,9 @@ def write_add_lock(
 ) -> BoilerplateLock:
     """Record the ``locking`` phase, then write the lock the answers files describe.
 
-    Call it only once the add's files are in the checkout: the lock records the
-    last complete operation.
+    The new layer is written with the ``add`` origin and the layers already in the
+    lock keep theirs. Call it only once the add's files are in the checkout: the
+    lock records the last complete operation.
 
     Args:
         project: The user's checkout, holding the new layer's answers file.
@@ -39,12 +40,15 @@ def write_add_lock(
         OSError: If the lock cannot be written; the previous lock is untouched.
     """
     staging.record_phase("locking")
-    lock = build_lock(
-        project,
-        plan.layers,
-        boilerplate_version=boilerplate_version,
-        previous=plan.lock,
-        checkouts=checkouts,
+    lock = mark_added(
+        build_lock(
+            project,
+            plan.layers,
+            boilerplate_version=boilerplate_version,
+            previous=plan.lock,
+            checkouts=checkouts,
+        ),
+        plan.layer,
     )
     write_lock(project, lock)
     return lock

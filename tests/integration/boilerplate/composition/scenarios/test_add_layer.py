@@ -23,7 +23,7 @@ from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.update_status import UpdateStatus
 from boilerplate.composition.updating.updater import Updater
-from boilerplate.models import MigrationStatus
+from boilerplate.models import JoinedVia, MigrationStatus
 from boilerplate.project_state.lock_file import LOCK_FILE_NAME, read_lock
 from boilerplate.project_state.migrations_file import read_migrations
 from tests.boilerplate.templates.conftest import commit_all, git
@@ -156,6 +156,23 @@ class TestAddingLater:
 
         assert [entry.name for entry in lock.layers] == list(LAYERS)
 
+    def test_the_lock_records_how_each_layer_joined(self, grown: Grown) -> None:
+        """Mark the two added layers `add` and the composed ones `extends` (02)."""
+        lock = read_lock(grown.project)
+
+        assert {entry.name: entry.joined_via for entry in lock.layers} == {
+            "core": JoinedVia.EXTENDS,
+            "service": JoinedVia.EXTENDS,
+            "docs": JoinedVia.ADD,
+            "ci": JoinedVia.ADD,
+        }
+
+    def test_the_lock_still_names_the_template_the_project_was_created_from(
+        self, grown: Grown
+    ) -> None:
+        """Keep the root template at service, though ci is the last layer (02)."""
+        assert read_lock(grown.project).root_template == "service@1.0.0"
+
     def test_the_log_holds_one_record_for_each_add(self, grown: Grown) -> None:
         records = read_migrations(grown.project)
 
@@ -211,6 +228,35 @@ class TestUpdateAfterAdds:
         lock = read_lock(updated.project)
 
         assert {entry.name: str(entry.version) for entry in lock.layers} == AFTER
+
+    def test_the_lock_keeps_the_added_layers_marked_as_added(
+        self, updated: Updated
+    ) -> None:
+        """Keep docs and ci in the lock as `add` layers after they update (04)."""
+        lock = read_lock(updated.project)
+
+        assert {entry.name: entry.joined_via for entry in lock.layers} == {
+            "core": JoinedVia.EXTENDS,
+            "service": JoinedVia.EXTENDS,
+            "docs": JoinedVia.ADD,
+            "ci": JoinedVia.ADD,
+        }
+
+    def test_the_lock_names_the_root_template_at_its_new_version(
+        self, updated: Updated
+    ) -> None:
+        assert read_lock(updated.project).root_template == "service@1.2.0"
+
+    def test_the_record_moves_the_root_template_not_the_last_layer(
+        self, updated: Updated
+    ) -> None:
+        """An update record's versions are root template specifiers (02)."""
+        record = read_migrations(updated.project)[-1]
+
+        assert (record.from_version, record.to_version) == (
+            "service@1.0.0",
+            "service@1.2.0",
+        )
 
     def test_the_question_core_adds_reaches_the_layers_added_later(
         self, updated: Updated
