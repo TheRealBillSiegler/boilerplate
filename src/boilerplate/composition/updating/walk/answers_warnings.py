@@ -5,6 +5,7 @@ from importlib.metadata import version as installed_version
 from pathlib import Path
 
 from boilerplate.models import BoilerplateLock
+from boilerplate.project_state.answers_file import answers_file_name
 
 
 def answers_warnings(project: Path, lock: BoilerplateLock) -> list[str]:
@@ -24,7 +25,7 @@ def answers_warnings(project: Path, lock: BoilerplateLock) -> list[str]:
     recorded = lock.copier_answers_file_hashes or {}
     warnings: list[str] = []
     for entry in lock.layers:
-        name = f".copier-answers.{entry.name}.yml"
+        name = answers_file_name(entry.name)
         path = project / name
         if entry.name not in recorded or not path.is_file():
             continue

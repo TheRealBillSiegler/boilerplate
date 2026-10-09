@@ -7,6 +7,7 @@ from boilerplate.composition.updating.layer_release import LayerRelease
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.views import LayerView
+from boilerplate.project_state.answers_file import answers_file_name
 
 
 def run_tasks(
@@ -48,7 +49,7 @@ def run_tasks(
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=release.source,
         dst_path=project,
-        answers_file=Path(f".copier-answers.{release.layer}.yml"),
+        answers_file=Path(answers_file_name(release.layer)),
         data=dict(work.secrets),
         vcs_ref=release.ref,
         defaults=not options.interactive,

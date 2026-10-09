@@ -4,6 +4,7 @@ from pathlib import Path
 
 from boilerplate.integrations.copier_types import load_answersfile_data
 from boilerplate.models import BoilerplateLock
+from boilerplate.project_state.answers_file import answers_file_name
 
 
 def read_layer_sources(project: Path, lock: BoilerplateLock) -> dict[str, str]:
@@ -22,7 +23,7 @@ def read_layer_sources(project: Path, lock: BoilerplateLock) -> dict[str, str]:
     """
     sources: dict[str, str] = {}
     for entry in lock.layers:
-        recorded = load_answersfile_data(project, f".copier-answers.{entry.name}.yml")
+        recorded = load_answersfile_data(project, answers_file_name(entry.name))
         source = (recorded or {}).get("_src_path")
         sources[entry.name] = str(source) if source else entry.source
     return sources

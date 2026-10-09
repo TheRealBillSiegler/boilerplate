@@ -14,6 +14,7 @@ from boilerplate.composition.updating.update_data import (
 )
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_views import UpdateViews
+from boilerplate.project_state.answers_file import answers_file_name
 
 
 def update_layer(
@@ -80,7 +81,7 @@ def update_layer(
     with options.worker_type(  # pyright: ignore[reportCallIssue, reportGeneralTypeIssues]
         src_path=release.source,
         dst_path=project,
-        answers_file=Path(f".copier-answers.{release.layer}.yml"),
+        answers_file=Path(answers_file_name(release.layer)),
         data=data,
         vcs_ref=release.ref,
         defaults=not options.interactive,
