@@ -33,7 +33,7 @@ _Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream 
 A Layer's merged questions, secret-question list and Jinja extensions over itself and its ancestors; every render of that Layer, at compose and at update, uses it. See design 04 §Scoped view.
 
 **Full Merged Schema**:  
-Every Layer's questions joined; the questionnaire at compose and before an update walk uses it. See design 04 §Scoped view.
+Every Layer's questions joined; the questionnaire at compose uses it, and an update step takes each question's definition and default from it. See design 04 §Scoped view and §Safe Update.
 
 **Task**:  
 A command declared in a Template's `_tasks` that runs after rendering — the escape hatch for arbitrary edits.  
