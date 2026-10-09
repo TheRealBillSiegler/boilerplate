@@ -44,6 +44,7 @@ class Finisher:
         steps: FinishSteps,
         *,
         journal: Callable[[str], None] | None = None,
+        staging: StagingWorktree | None = None,
     ) -> None:
         """Prepare to finish the run `marker` describes.
 
@@ -54,11 +55,15 @@ class Finisher:
             journal: Records a phase in the staging's intent journal; it is
                 told ``locking`` before the lock is written. ``None`` for a
                 run that has no staging any more.
+            staging: The staging whose walk ``copy_back`` brings into the
+                checkout; ``None`` for a run that has no staging any more.
         """
         self._project = project
         self._marker = marker
         self._steps = steps
         self._journal = journal
+        self._staging = staging
+        self._begun = False
 
     @classmethod
     def for_staging(
@@ -99,9 +104,10 @@ class Finisher:
             ),
             steps,
             journal=staging.record_phase,
+            staging=staging,
         )
 
-    def copy_back(self, staging: StagingWorktree) -> None:
+    def copy_back(self) -> None:
         """Mark the run, then copy the staging worktree back into the checkout.
 
         The ref is pinned and then the marker written once the checks have
@@ -110,10 +116,9 @@ class Finisher:
         when that restore fails or is cut off, both stay at ``copy_back``, so
         the rerun can repeat the copy back or stop on the partial checkout.
 
-        Args:
-            staging: The active staging of the run.
-
         Raises:
+            RuntimeError: If the finisher was built without a staging, as one
+                is to resume a run whose staging is gone.
             UpdateCheckoutChangedError: If the checkout changed during staging.
             UpdatePathObstructedError: If a path the walk added already exists
                 in the checkout as a file or directory git ignores.
@@ -121,22 +126,23 @@ class Finisher:
                 to write; the checkout is restored to the starting commit, or
                 the error says it could not be.
         """
-        begun = False
-
-        def begin() -> None:
-            nonlocal begun
-            begun = True
-            pin_result(self._project, self._marker.result_commit)
-            write_marker(self._project, self._marker)
-
+        staging = self._staging
+        if staging is None:
+            raise RuntimeError("This finisher has no staging to copy back.")
         try:
             staging.copy_back(
-                paused=self._marker.kind is RestoreKind.PAUSED, on_start=begin
+                paused=self._marker.kind is RestoreKind.PAUSED, on_start=self._begin
             )
         except BaseException:
-            if begun and not staging.checkout_partly_written:
+            if self._begun and not staging.checkout_partly_written:
                 remove_marker(self._project)
             raise
+
+    def _begin(self) -> None:
+        """Pin the walk's result, then write the marker, before the first file."""
+        self._begun = True
+        pin_result(self._project, self._marker.result_commit)
+        write_marker(self._project, self._marker)
 
     def finish(self) -> bool:
         """Run the operation's steps that follow the copy back.

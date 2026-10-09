@@ -153,7 +153,7 @@ class AddRun:
                 run_tasks=lambda: self._run_tasks(staging, secrets),
             ),
         )
-        finisher.copy_back(staging)
+        finisher.copy_back()
         if not finisher.finish():
             return self._outcome(AddStatus.UNDONE)
         if self._failed is not None:
