@@ -105,13 +105,13 @@ class LayerAdder:
                     "Project is not managed by Boilerplate. "
                     "Use 'boilerplate adopt' first."
                 )
+            check_project_ready(project, IntentOperation.ADD)
             lock = read_lock(project)
             if any(entry.name == request.name for entry in lock.layers):
                 raise LayerAlreadyAddedError(
                     f"Template '{request.name}' is already in this project. "
                     "Use 'boilerplate update' instead."
                 )
-            check_project_ready(project, IntentOperation.ADD)
             with (
                 ReleaseCheckouts() as checkouts,
                 tempfile.TemporaryDirectory(
