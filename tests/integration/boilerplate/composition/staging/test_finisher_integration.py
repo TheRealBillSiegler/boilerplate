@@ -12,7 +12,10 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.common.exceptions import UpdateCopyBackFailedError
+from boilerplate.common.exceptions import (
+    UpdateCopyBackFailedError,
+    UpdateInterruptedError,
+)
 from boilerplate.composition.staging import (
     IntentJournal,
     IntentOperation,
@@ -463,6 +466,14 @@ def cut_off_marker(
     return marker
 
 
+def ignore(project: Path, pattern: str) -> None:
+    """Make git ignore `pattern` in `project` through its own exclude file."""
+    exclude = project / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    with exclude.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(f"{pattern}\n")
+
+
 class TestResume:
     @pytest.mark.parametrize(
         ("operation", "phase", "order"),
@@ -536,6 +547,47 @@ class TestResume:
         Finisher(project, marker, seen.steps()).resume()
 
         assert (project / "added.txt").read_text(encoding="utf-8") == "added\n"
+
+    def test_an_ignored_file_made_at_an_added_path_stops_the_repeat(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Stop before a repeated copy back overwrites an ignored file (rule 4).
+
+        The status check cannot see the file, since git ignores it, so the
+        repeat compares each path the run adds with the result commit's blob.
+        """
+        marker = cut_off_marker(
+            project,
+            staging_root,
+            operation=RestoreOperation.UPDATE,
+            phase=RestorePhase.COPY_BACK,
+        )
+        ignore(project, "added.txt")
+        (project / "added.txt").write_bytes(b"mine\n")
+        seen = Seen(project)
+
+        with pytest.raises(UpdateInterruptedError, match=r"added\.txt"):
+            Finisher(project, marker, seen.steps()).resume()
+
+        assert ((project / "added.txt").read_bytes(), seen.calls) == (b"mine\n", [])
+
+    def test_an_ignored_file_the_cut_off_run_wrote_is_repeated(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Repeat the copy back over an ignored file that already holds its result."""
+        marker = cut_off_marker(
+            project,
+            staging_root,
+            operation=RestoreOperation.UPDATE,
+            phase=RestorePhase.COPY_BACK,
+        )
+        ignore(project, "added.txt")
+        (project / "added.txt").write_bytes(b"added\n")
+        seen = Seen(project)
+
+        Finisher(project, marker, seen.steps()).resume()
+
+        assert seen.calls == ["tasks", "lock", "record"]
 
     def test_no_marker_remains_after_the_resumed_run(
         self, project: Path, staging_root: Path

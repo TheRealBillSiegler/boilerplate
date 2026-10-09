@@ -8,6 +8,7 @@ from pathlib import Path
 from boilerplate.common.exceptions import RESET_THEN_STASH, UpdateInterruptedError
 from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.git_commands import run_git
+from boilerplate.composition.staging.path_obstruction import list_added_paths
 from boilerplate.composition.staging.restore_marker_file import (
     read_marker,
     remove_marker,
@@ -23,7 +24,7 @@ from boilerplate.models import (
 )
 from boilerplate.project_state.migrations_file import read_migrations
 
-__all__ = ["resolve_interrupted_run"]
+__all__ = ["require_added_paths_match", "resolve_interrupted_run"]
 
 _logger = logging.getLogger(__name__)
 
@@ -102,6 +103,41 @@ def resolve_interrupted_run(
             "half written.",
         )
     return marker
+
+
+def require_added_paths_match(project: Path, marker: RestoreMarker) -> None:
+    """Check that no path the cut-off run adds holds other content than its result.
+
+    Call it before a cut-off copy back is repeated. The status check of
+    ``resolve_interrupted_run`` cannot see an ignored file, so a file the user
+    made at an added path since the cut-off, which the repeated restore would
+    overwrite, is found here: every path the run adds that exists in the
+    checkout, ignored or not, is compared with the blob the result commit
+    holds. A file the cut-off run wrote itself matches and is repeated.
+
+    Args:
+        project: The project, a git repository root.
+        marker: The cut-off run's marker, at the ``copy_back`` phase.
+
+    Raises:
+        UpdateInterruptedError: If any such path differs; the error names each
+            and nothing has been written.
+    """
+    added = list_added_paths(project, marker.start_commit, marker.result_commit)
+    differing = tuple(
+        path
+        for path in added
+        if (project / path).exists(follow_symlinks=False)
+        and not _added_matches(project, marker.result_commit, path)
+    )
+    if differing:
+        raise _stop(
+            marker,
+            " These paths already exist in your checkout with other content than "
+            "its result, and repeating the copy back would overwrite them: "
+            f"{', '.join(differing)}.",
+            remediation="Move or delete them, then run the command again.",
+        )
 
 
 def _run_finished(
