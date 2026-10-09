@@ -7,7 +7,7 @@ Root `AGENTS.md` (`## Testing`) holds the structural rules. This file holds the 
 | Pattern | Usage |
 | ------- | ----- |
 | In-process CLI invocation | `typer.testing.CliRunner` via the `typer_cli_runner` fixture: `result = typer_cli_runner.invoke(app, ["new", ...])`; assert on `result.exit_code` and `result.output`. Primary way to test command modules. |
-| Subprocess CLI invocation | `subprocess_cli_runner` fixture (runs `python -m boilerplate` with UTF-8 env) for true end-to-end behavior — log formatting, exit codes, stdout/stderr together. Integration tests wrap it in `CliResult`/`CliTestHelper`. The scenarios call `run_boilerplate` from `builders.py` instead: their module-scoped fixtures cannot use a function-scoped fixture. |
+| Subprocess CLI invocation | `subprocess_cli_runner` fixture (runs `python -m boilerplate` with UTF-8 env) for true end-to-end behavior — log formatting, exit codes, stdout/stderr together. Integration tests wrap it in `CliResult`/`CliTestHelper`. |
 | Mock at boundary | `mocker.patch("boilerplate.cli.commands.new.Composer")`; assert via `.return_value.render.call_args` / `.assert_called_once()`. Patch where the name is *used*, not where it's defined. |
 | Patch a module symbol | `monkeypatch.setattr(cli, "Settings", fake_settings)` to swap a collaborator the command imports; combine with `CliRunner` to exercise the callback. |
 | `pytest.raises` | Prefer `pytest.raises(Error, match=r"...")` when asserting message content; bare form is fine when only the type matters. |
