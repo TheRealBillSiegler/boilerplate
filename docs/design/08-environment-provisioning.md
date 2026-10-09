@@ -175,7 +175,7 @@ Boilerplate detects the current platform (Windows, WSL2, Linux, macOS) and evalu
 
 ### Behavior During `env apply`
 
-A declared package installs when an allowlisted, pinned, consented provider covers it — the `system-package` provider kind ([ADR-009](adr-009-environment-provider-protocol.md)), gated the same way as every other provider kind (allowlist-as-ceiling, mandatory pin, explicit consent). Boilerplate MUST NOT invoke a package manager outside that gate: an unpinned or un-allowlisted install would violate the "orchestrate, don't replace" principle and introduce privilege escalation and safety concerns.
+A declared package installs when the `system-package` provider kind covers it, under the trust gate ADR-009 §Trust specifies ([ADR-009](adr-009-environment-provider-protocol.md)); Boilerplate MUST NOT invoke a package manager outside that gate, because an ungated install would violate the "orchestrate, don't replace" principle and introduce privilege escalation and safety concerns.
 
 For a package with no covering provider, requirements stay **advisory, not automatically installed**. Boilerplate **validates** that the package is present on the system by checking for binaries on PATH or querying the platform's package manager. Missing packages produce a WARNING with the recommended install command. Success is silent.
 
