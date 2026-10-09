@@ -92,3 +92,36 @@ class TestCheckAnswersComplete:
             check_answers_complete(views, {"service": set()})
 
         assert caught.value.missing == {"service": ("a",)}
+
+
+class TestTheDeclaringLayersFileCountsToo:
+    """Design 04: a key passes when the layer's own or declaring layer's file has it."""
+
+    @staticmethod
+    def _service() -> dict[str, LayerView]:
+        questions: dict[str, object] = {"project_name": {}, "port": {}}
+        declared_by = {"project_name": "core", "port": "service"}
+        return {"service": LayerView(questions, (), (), declared_by)}
+
+    def test_a_key_only_the_declaring_layer_records_passes(self) -> None:
+        """The walk fills it for the old copy from core's file, so nothing stops."""
+        check_answers_complete(
+            self._service(), {"core": {"project_name"}, "service": {"port"}}
+        )
+
+    def test_a_key_no_layer_records_stops(self) -> None:
+        with pytest.raises(AnswersFileIncompleteError) as caught:
+            check_answers_complete(
+                self._service(), {"core": set(), "service": {"port"}}
+            )
+
+        assert caught.value.missing == {"service": ("project_name",)}
+
+    def test_another_layers_file_does_not_count(self) -> None:
+        """Only the declaring layer's record fills a key, never a sibling's copy."""
+        with pytest.raises(AnswersFileIncompleteError) as caught:
+            check_answers_complete(
+                self._service(), {"docs": {"project_name"}, "service": {"port"}}
+            )
+
+        assert caught.value.missing == {"service": ("project_name",)}

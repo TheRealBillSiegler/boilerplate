@@ -1,4 +1,4 @@
-"""Check that each layer's answers file records every answer its view asks for."""
+"""Check that an answers file records every answer each layer's view asks for."""
 # Spec: docs/design/04-composition-engine.md §Safe Update
 
 from collections.abc import Collection, Mapping
@@ -53,12 +53,13 @@ def required_answer_keys(view: LayerView) -> tuple[str, ...]:
 def check_answers_complete(
     views: Mapping[str, LayerView], recorded: Mapping[str, Collection[str]]
 ) -> None:
-    """Stop the update when an answers file lacks a key its view asks for.
+    """Stop the update when no answers file records a key a layer's view asks for.
 
-    The old copy reads only the layer's own answers file, so a file that lacks
-    an ancestor's answers, as a hand-run vanilla update of the layer leaves it,
-    renders the ancestor's questions at their defaults. This runs before any
-    layer does.
+    The old copy reads only the layer's own answers file, and the walk fills a
+    key that file lacks, as a hand-run vanilla update of the layer leaves it,
+    from the answers file of the layer that declares the question. A key
+    neither file records has no answer to fill, so the old copy would render
+    the question at its default. This runs before any layer does.
 
     Args:
         views: Each layer's scoped view at the recorded versions, keyed by layer
@@ -67,15 +68,18 @@ def check_answers_complete(
             name; a layer with no entry has no answers file.
 
     Raises:
-        AnswersFileIncompleteError: If any layer's file lacks a required key.
-            The message names each such layer and its missing keys.
+        AnswersFileIncompleteError: If a required key is in neither a layer's
+            own file nor its declaring layer's. The message names each such
+            layer and its missing keys.
     """
     missing: dict[str, tuple[str, ...]] = {}
     for layer, view in views.items():
+        own = recorded.get(layer, ())
         keys = tuple(
             key
             for key in required_answer_keys(view)
-            if key not in recorded.get(layer, ())
+            if key not in own
+            and key not in recorded.get(view.declared_by.get(key, layer), ())
         )
         if keys:
             missing[layer] = keys
@@ -84,7 +88,7 @@ def check_answers_complete(
             f"  {layer}: {', '.join(keys)}" for layer, keys in missing.items()
         )
         raise AnswersFileIncompleteError(
-            "A layer's answers file lacks answers its questions need, as a "
-            f"hand-run update of that layer leaves it:\n{lines}",
+            "Neither a layer's own answers file nor its declaring layer's "
+            f"records answers its questions need:\n{lines}",
             missing=missing,
         )
