@@ -19,6 +19,9 @@ my-streamlit-app/
 ├── uv.lock                 # Dependencies
 ├── Dockerfile              # Multi-stage container definition
 ├── .dockerignore
+├── .copier-answers.project.yml    # The project layer's answers, for future updates
+├── .copier-answers.streamlit.yml  # This layer's answers, for future updates
+├── boilerplate.lock        # Each layer's version, source and checksum
 ├── .vscode/
 │   ├── settings.json       # Workspace settings (inherited from project)
 │   ├── extensions.json     # Recommended extensions (inherited from project)
