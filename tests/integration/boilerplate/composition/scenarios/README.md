@@ -149,14 +149,12 @@ pytest session
 │
 ├─ tests/integration/boilerplate/composition/conftest.py
 │    family             session scope, tmp_path_factory: built once per xdist worker
-│
-├─ tests/integration/boilerplate/composition/updating/conftest.py
-│    isolated_temp      autouse, as below, for the tests of the update pieces
+│    isolated_temp      autouse, only for scenarios/ and updating/: TMP, TEMP and
+│                       TMPDIR → the test's tmp_path, so Copier's clones and old/new
+│                       copies stay inside it; the rendering tests keep the real one
 │
 └─ tests/integration/boilerplate/composition/scenarios/conftest.py
-     isolated_temp      autouse: TMP, TEMP and TMPDIR → the test's tmp_path,
-                        so Copier's clones and old/new copies stay inside it
-     collection hook    marks every test in the folder `scenario`
+     collection hook   marks every test in the folder `scenario`
 ```
 
 The fixtures a scenario gets: the family once per worker, a private temp directory per test, and the `scenario` marker for the run commands above.
