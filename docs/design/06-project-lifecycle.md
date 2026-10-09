@@ -153,7 +153,7 @@ Before starting the update pipeline, Boilerplate MUST run these checks in order:
 
 1. The project is a git repository root with at least one commit.
 2. Take the operation lock ([07 §Concurrency Control](07-operational-quality.md#concurrency-control)). Every check below runs inside the lock, so no second Boilerplate operation interleaves with a check.
-3. Run the [restore-marker rules](#interrupted-copy-back). A cut-off run's marker is finished (and the command then ends), discarded or reported before anything reads the working tree, which that run may have left dirty.
+3. Run the [restore-marker rules](#interrupted-copy-back). A cut-off run's marker is finished (and the command then ends), discarded or reported before anything reads the working tree, which that run may have left dirty. When the ref `refs/worktree/boilerplate/restore` exists and the marker does not, a crash fell between the two steps of the copy back's bracketing; remove the ref (`git update-ref -d`) and continue.
 4. The project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose `git status --porcelain` is not empty.
 5. The project has no submodules (a `.gitmodules` file). Otherwise Boilerplate MUST stop with `BP_UPDATE_SUBMODULES_UNSUPPORTED` and exit code `3`, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended ([git-worktree](https://git-scm.com/docs/git-worktree)).
 
