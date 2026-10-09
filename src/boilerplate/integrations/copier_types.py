@@ -21,6 +21,10 @@ file; reading recorded answers through it reads them the way Copier does.
 question; checking a recorded answer through them casts, narrows and validates
 it the way Copier will.
 
+``SandboxedEnvironment`` is the Jinja sandbox Copier renders with; ``Question``
+accepts no other environment class, so a ``when`` judged outside a worker
+renders through it.
+
 ``MISSING`` is the sentinel ``Question.get_default`` returns for a question with
 no default; the answer walk of an update tells such a question by it. A test
 pins it against ``get_default``.
@@ -41,6 +45,7 @@ these are private symbols copier may move without a deprecation cycle.
 import dataclasses
 import functools
 
+from copier._jinja_ext import SandboxedEnvironment
 from copier._main import Worker
 from copier._template import DEFAULT_EXCLUDE, Template, load_template_config
 from copier._types import MISSING
@@ -121,6 +126,7 @@ __all__ = [
     "OLD_COPY_DIR_PREFIX",
     "AnswersMap",
     "Question",
+    "SandboxedEnvironment",
     "Template",
     "Worker",
     "load_answersfile_data",
