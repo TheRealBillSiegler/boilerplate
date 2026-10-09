@@ -274,7 +274,7 @@ The RenderEngine delegates actual file generation to Copier via the `run_worker`
 | `answers` | map[string, JSON] | Pre-seeded answers; these override defaults and suppress prompts for matched keys |
 | `overwrite` | boolean | Whether to overwrite existing files in the destination |
 | `interactive` | boolean | Whether to prompt the user for unanswered questions |
-| `unsafe` | boolean | Whether to allow Jinja2 extensions and task execution (required when the `_jinja_extensions` union of the layer's scoped view is non-empty, or when the layer executes tasks this invocation) |
+| `unsafe` | boolean | Whether to allow Jinja2 extensions and task execution (required when the `_jinja_extensions` union of the layer's scoped view is non-empty, or when the operation runs the layer's tasks or migrations; an `update` step needs it when either the recorded or the target scoped view needs it) |
 | `run_tasks` | boolean | Whether to execute `_tasks` after rendering |
 
 **`WorkerResult`** contains:
@@ -288,7 +288,7 @@ The RenderEngine delegates actual file generation to Copier via the `run_worker`
 
 - When `interactive=false`, the worker MUST NOT prompt; it MUST use `answers` or question defaults for all values.
 - When `run_tasks=false`, the worker MUST skip task execution.
-- When `unsafe=true`, Copier permits Jinja2 extensions and task execution. Because a layer's Worker holds the `_jinja_extensions` union of its scoped view (see [merge strategies](#merge-strategies)), Boilerplate MUST set `unsafe=true` on a layer's Worker whenever that union is non-empty, and additionally on a layer that executes tasks this invocation ([ADR-003](adr-003-permissive-execution.md) records this permissive posture). A layer whose scoped view declares no extension keeps `unsafe=false` when it executes no tasks.
+- When `unsafe=true`, Copier permits Jinja2 extensions and task execution. Because a layer's Worker holds the `_jinja_extensions` union of its scoped view (see [merge strategies](#merge-strategies)), Boilerplate MUST set `unsafe=true` on a layer's Worker whenever that union is non-empty, and additionally on a layer whose tasks or migrations the operation runs ([ADR-003](adr-003-permissive-execution.md) records this permissive posture). An `update` step reads two scoped views, the recorded release's and the target's, and MUST set the flag when either view's union is non-empty. A layer whose scoped view declares no extension keeps `unsafe=false` when the operation runs none of its tasks or migrations.
 - The worker MUST NOT modify `source_path` in any way.
 
 **Assumed Copier behavior**: The `run_worker` contract assumes Copier operates synchronously and single-threaded — it blocks until rendering is complete and does not spawn background processes. If Copier's concurrency model changes in a future version, the worker interface MUST serialize invocations to preserve the sequential layer-rendering guarantee. Copier is also assumed to be non-interactive when `interactive=false` — it MUST NOT prompt on stdin.
@@ -314,7 +314,7 @@ The RenderEngine asks the questions of the full merged schema (no underscore-pre
 - Each layer produces its own `.copier-answers.<layer>.yml` — Copier renders the template's answers-file stub at the path its `_answers_file:` directive names, and both halves are required (the contract is specified at [Per-Layer Render Loop](#per-layer-render-loop) below). Each layer's answers file records the answers to its scoped view's questions, which the layer's later `copier update` starts from (see [Safe Update](#safe-update) and [06-project-lifecycle.md §Step 4: Three-Way Merge](06-project-lifecycle.md#step-4-three-way-merge)).
 - Layer N+1 overwrites Layer N's file collisions at the same path (file-level composition; see [Composition is file-level, not content-level](#managing-shared-files-across-layers)).
 - Layer-local directives (e.g., `_exclude`, `_skip_if_exists`, `_subdirectory`) are applied per-layer from each layer's own `copier.yml`; they do not propagate across layers. One exception: `_jinja_extensions` merges by union within each scoped view (see [merge strategies](#merge-strategies) above), so a layer's declared extensions reach its own Worker and every descendant's Worker, and no ancestor's or sibling's. For the rule on `_skip_if_exists`, see [Per-Layer Render Loop](#per-layer-render-loop) below.
-- The `unsafe=true` flag is passed to a layer's worker whenever the `_jinja_extensions` union of its scoped view is non-empty, and additionally to a layer that executes tasks this invocation (see [Copier Worker Interface](#copier-worker-interface)).
+- The `unsafe=true` flag is passed to a layer's worker whenever the `_jinja_extensions` union of its scoped view is non-empty, and additionally to a layer whose tasks or migrations the operation runs; an `update` step passes it when either the recorded or the target scoped view needs it (see [Copier Worker Interface](#copier-worker-interface)).
 - The render operation MUST be aborted with `BP_RENDER_TIMEOUT` if the wall-clock time exceeds the configured `render_timeout` setting (default: 300 seconds). See [09-settings-and-configuration.md §Settings](09-settings-and-configuration.md#settings) for the `BOILERPLATE_RENDER_TIMEOUT` environment variable.
 
 **Single-prompt answer reuse**:
