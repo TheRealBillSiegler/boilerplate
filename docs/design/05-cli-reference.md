@@ -1069,9 +1069,9 @@ Tip: Save your answers for CI reproducibility:
   boilerplate new fastapi my-project --save-answers answers.yml --non-interactive
 ```
 
-**After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted.
+**After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted. When the layer runs no tasks, or `--no-tasks` is active, Next steps also lists `uv sync`.
 
-**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv run pytest`). When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`, or set the partial update aside).
+**After `update`**: Show changed files list, then "Next steps:" (`git diff`, `uv sync`, `uv run pytest`). `uv sync` is always listed, because the project template's setup task runs only when Copier copies, so an update does not install dependencies. When conflicts are present, "Action required:" replaces "Next steps:" with resolution instructions (resolve and commit, then rerun `boilerplate update`, or set the partial update aside).
 
 ### Answer Presets
 
