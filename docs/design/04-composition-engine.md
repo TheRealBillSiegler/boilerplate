@@ -349,6 +349,17 @@ The RenderEngine iterates layers in topological order. For each layer:
 
 The source template directories on disk are never modified. The destination directory is the same across all layer invocations — file collisions are resolved by overwrite (later layers win), implementing file-level composition.
 
+Compose asks the merged questionnaire once and every layer renders with the same answers, each under its own scoped view, so a layer's answers file records the questions of that view and nothing more. In a composition of `project` and `streamlit`, `streamlit` extends `project`:
+
+```mermaid
+flowchart LR
+    Q["Merged questionnaire<br>asked once"] --> A["Resolved answers"]
+    A --> P["Render project<br>scoped view: project"]
+    A --> S["Render streamlit<br>scoped view: project + streamlit"]
+    P --> PF[".copier-answers.project.yml<br>project's questions"]
+    S --> SF[".copier-answers.streamlit.yml<br>project's and streamlit's questions"]
+```
+
 **Layer-local Copier directives** — `_exclude`, `_skip_if_exists`, `_subdirectory`, `_templates_suffix`, `_envops` — are scoped to the layer that declares them in its own `copier.yml`. They do NOT propagate across layers; each layer's invocation reads them only from its own `copier.yml`. `_jinja_extensions` is merged instead — see the [merge strategies table](#merge-strategies) — so every layer's Worker receives the union of the extensions its own layer and its ancestors declare. In a composed render no layer's `_skip_if_exists` applies: `new` writes every layer's files, and a later layer overlays this render's own output regardless of what it declares ([Composition is file-level, not content-level](#managing-shared-files-across-layers)). Each layer's declared list governs only that layer's own `copier update`.
 
 **Extensions follow the scoped view.** A layer's render receives the `_jinja_extensions` its own layer and its ancestors declare, and a layer's files and questions MAY use only extensions its own layer or an ancestor declares. When two layers in one scoped view define the same filter or extension name, the later layer in topological order wins; the render MUST warn when a later layer's extension replaces a filter, test or global an earlier layer's extension already registered in the same view, and `validate` warns on the static case ([05 §`validate`](05-cli-reference.md#validate), check `V15`). An extension declared as a file path inside a template, in the [`copier-templates-extensions`](https://github.com/copier-org/copier-templates-extensions#usage) syntax that resolves the path against the template root, MUST be registered by Boilerplate as an importable module loaded from the declaring layer's source at the version the render's scoped view joins, under a module name unique to that layer and version, and handed to the renders that need it. Boilerplate MUST NOT register such an extension once, from one source at the target versions, for every render, because the old copy then renders with the target version's code and the update silently keeps the old output ([ADR-015 §Verification (2026-10-06)](adr-015-idiomatic-artifacts.md#verification-2026-10-06)).
