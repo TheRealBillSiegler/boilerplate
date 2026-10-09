@@ -163,7 +163,7 @@ When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE
 
 ```text
 1. Load     →  Read boilerplate.lock + each layer's .copier-answers.<layer>.yml
-2. Resolve  →  Build new dependency graph for target version
+2. Resolve  →  Resolve each layer's target version
 3. Plan     →  Compute UpdatePlan (diff old vs new)
 4. Apply    →  Walk the layers in a staging worktree, then copy the result back (after user confirmation)
 5. Lock     →  Write new boilerplate.lock
@@ -179,9 +179,9 @@ When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE
 
 ### Step 2: Resolve Target
 
-- Resolve the target version using the same deterministic rules as project creation
-- Default: resolve the latest available version of the root template
-- Support explicit target version: `--target-version <version>`
+- Each layer the lock lists resolves its own target version, using the same deterministic rules as project creation. Default: the latest available version of that layer that the `extends` constraints of the lock's layers allow.
+- Support explicit target versions: `--target-version <version>` names the root template's target, and `--target-version <layer>@<version>`, repeatable, names the target of the layer called `<layer>` in the lock.
+- A target that names a layer the lock does not list MUST stop `update` before anything is staged with `BP_UPDATE_LAYER_UNKNOWN`, naming each unknown layer and listing the project's layers.
 - Downgrades MUST be rejected, with no flag to override. Before the walk starts, `update` MUST compare each layer's target version with the version that layer's answers file records in `_commit`, parsed the way Copier parses it, with Copier's own `Template.version` (a `git describe` string such as `v2.0.0-3-gabc1234` reads as a post-release of `2.0.0`, which sorts after `2.0.0`). When any target is older, `update` MUST stop before any layer changes with `BP_UPDATE_DOWNGRADE_REJECTED`, naming the layer, its recorded version and the target. The same rule applies when a recorded `_commit` yields no version. The way back from an applied update is reverting the commit that recorded it.
 
 ### Step 3: Build UpdatePlan
@@ -236,8 +236,8 @@ When `--dry-run` is active, print the UpdatePlan and exit without prompting or m
 
 **Structural changes to the `extends` chain**: When a template update adds or removes parent templates (changes to the `extends` list), the UpdatePlan MUST detect and report this:
 
-- **Added dependency**: A new template layer that was not in the previous composition. The UpdatePlan MUST list it as an `ADDED` layer. It has no merge base, so Boilerplate MUST render it as a copy that writes only paths not already present, with a skip pattern matching every path (`skip_if_exists=["*"]`): Copier checks `skip_if_exists` before `overwrite` (`Worker._solve_render_conflict` tests `match_skip` before `overwrite`, read at Copier 9.18.1), and the Worker's patterns join the template's in `Worker.all_skip_if_exists`. A descendant's file therefore keeps its precedence as at compose, where a rendering with `overwrite` would replace it and the descendant's step would then see that as a user change. The update MUST report each colliding path it left.
-- **Removed dependency**: A template layer that was in the previous composition but is no longer referenced. The UpdatePlan MUST list it as a `REMOVED` layer. Boilerplate drops the layer from the managed layer set and lock; it does NOT infer file provenance and does NOT auto-delete the removed layer's files. Cleanup of a removed layer's artifacts is the responsibility of a Copier `_migrations` script in the template that removed the dependency. When no such migration is provided, the removed layer's files are left in place (now unmanaged) and the user is WARNED: the warning names the removed layer and points to the migration as the cleanup mechanism. See [adr-007-update-model.md](adr-007-update-model.md).
+- **Added dependency**: A layer the root's target version reaches through `extends` that was not in the previous composition. The UpdatePlan MUST list it as an `ADDED` layer, and its lock entry records `joined_via: extends`. It has no merge base, so Boilerplate MUST render it as a copy that writes only paths not already present, with a skip pattern matching every path (`skip_if_exists=["*"]`): Copier checks `skip_if_exists` before `overwrite` (`Worker._solve_render_conflict` tests `match_skip` before `overwrite`, read at Copier 9.18.1), and the Worker's patterns join the template's in `Worker.all_skip_if_exists`. A descendant's file therefore keeps its precedence as at compose, where a rendering with `overwrite` would replace it and the descendant's step would then see that as a user change. The update MUST report each colliding path it left.
+- **Removed dependency**: A layer that joined through `extends` (`LockLayer.joined_via`, [02 §BoilerplateLock](02-data-models.md#boilerplatelock)) and that the root's target version no longer reaches. The UpdatePlan MUST list it as a `REMOVED` layer. Boilerplate drops the layer from the managed layer set and lock; it does NOT infer file provenance and does NOT auto-delete the removed layer's files. Cleanup of a removed layer's artifacts is the responsibility of a Copier `_migrations` script in the template that removed the dependency. When no such migration is provided, the removed layer's files are left in place (now unmanaged) and the user is WARNED: the warning names the removed layer and points to the migration as the cleanup mechanism. See [adr-007-update-model.md](adr-007-update-model.md). The rule never applies to a layer that joined through `add`: the root's target does not govern it, so it stays in the lock and in the walk until it is removed on purpose.
 - **Classification**: Any structural change to the `extends` chain (addition or removal of layers) MUST be classified as at least `MINOR`, regardless of version bumps within existing layers.
 
 ### Step 4: Three-Way Merge
@@ -255,7 +255,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 
 - **Single-layer projects** (no `extends`): Run the one layer's update through the same `Worker` subclass; its scoped view is the layer's own schema. Boilerplate writes `boilerplate.lock` afterward.
 
-- **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in topological order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the layer's scoped view ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate stages the walk in a git worktree and brings the result back as uncommitted changes (see [Staging worktree](#staging-worktree) and [Step 5](#step-5-failure-and-conflict)).
+- **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in lock order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the layer's scoped view ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate stages the walk in a git worktree and brings the result back as uncommitted changes (see [Staging worktree](#staging-worktree) and [Step 5](#step-5-failure-and-conflict)).
 
 The per-layer answers files (`.copier-answers.<layer>.yml`) record the answers each layer's update starts from, written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior). [Design 04 §Safe Update](04-composition-engine.md#safe-update) owns where each answer in a layer's step comes from, how the step prompts and checks recorded answers, how `--set` and `--answers` replace a rejected one, and when the walk runs tasks.
 
@@ -330,7 +330,7 @@ Stale worktrees left by an interrupted run are removed by the stale-staging clea
 
 **Per-file merge behavior**: Per-file merge semantics (clean updates for unchanged files, conflict-marker insertion for text-file conflicts, binary-conflict reporting for binary files, modify/delete handling, etc.) are owned by Copier's `update` mechanism. Boilerplate does not specify or implement these semantics; they are documented in Copier's own update reference.
 
-**Cross-layer ordering**: Per-layer Copier `update` invocations are always issued in topological order (same as creation): dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it ([design 04 §Safe Update](04-composition-engine.md#safe-update)). A failure or conflict in any layer halts the walk; subsequent layers are not invoked.
+**Cross-layer ordering**: Per-layer Copier `update` invocations are always issued in lock order, which is topological as at creation: dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it ([design 04 §Safe Update](04-composition-engine.md#safe-update)). A failure or conflict in any layer halts the walk; subsequent layers are not invoked.
 
 ### Step 5: Failure and conflict
 
@@ -479,6 +479,8 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | Task fails after the copy back (`--non-interactive`) | Files kept, lock written, failed task named with how to rerun it, `failed` migration record, exit `1` |
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
+| `--target-version <layer>@<version>` names a layer the lock does not list | `BP_UPDATE_LAYER_UNKNOWN` naming each unknown layer and listing the project's layers; nothing staged, exit `3` |
+| A layer `add` introduced, which the root's target version does not reach | Stays in the lock, walks to its own target, is not reported as `REMOVED` |
 | Failure mid-update | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
 | Copy back fails partway | Checkout restored to the starting commit, worktree kept and named, marker and ref removed, no migration record, `BP_UPDATE_COPY_BACK_FAILED`, exit `1` |
 | Run cut off while copying back or finishing, working tree holds only what it wrote | The same `update` again repeats the copy back, runs the tasks, writes the lock and appends `success`; exit `0` |

@@ -303,7 +303,7 @@ Update an existing project to a newer template version. The walk runs in a tempo
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
-| `--target-version` | `-t` | string | null | Target template version. Default: latest. Refused when it differs from the targets a pending `conflict` record names. |
+| `--target-version` | `-t` | string (repeatable) | null | Target version. `<version>` names the root template's target and `<layer>@<version>` names that layer's, so the option repeats to pin several layers. Default: each layer's latest. A layer the lock does not list stops the run with `BP_UPDATE_LAYER_UNKNOWN`; resolution is in [06 §Step 2](06-project-lifecycle.md#step-2-resolve-target). Refused when it differs from the targets a pending `conflict` record names. |
 | `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
 | `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
