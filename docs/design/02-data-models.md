@@ -486,7 +486,7 @@ An intent journal records the in-progress state of a mutating operation for cras
 | `create`, `update`, `add`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
 | `env_apply` | `staging`, `committing`, `locking` | Same three identifiers as project operations, but `locking` names the Record Write stage (Stage 6) — `environment.yml` is a provenance record, not a lock file. See [EnvironmentProvisionRecord](#environmentprovisionrecord) and §08 Stage 6. |
 
-**Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above.
+**Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above. For `update` and `add`, the journal identifies the staging folder for stale cleanup only; recovery of a cut-off copy back reads the [RestoreMarker](#restoremarker).
 
 ---
 
@@ -506,7 +506,7 @@ A restore marker keeps the state of an `update` or `add` run that is copying its
 
 **File location**: `git rev-parse --git-path boilerplate-restore.json`, which resolves under the git directory of the worktree the command runs in.
 
-**Ref**: `refs/worktree/boilerplate/restore`, set with `git update-ref` to `result_commit` and removed with `git update-ref -d`. A `refs/worktree/` ref is per worktree, keeps the commit reachable after the stale-staging cleanup removes the staging folder, and is not shared with other worktrees.
+**Ref**: `refs/worktree/boilerplate/restore`, set with `git update-ref` to `result_commit` and removed with `git update-ref -d`. A `refs/worktree/` ref is per worktree, keeps the commit reachable after the stale-staging cleanup removes the staging folder, and is not shared with other worktrees. The ref is set before the marker is written and removed after the marker is removed. The marker is written with the same tmp-then-rename recipe as the other single-file state ([07 §Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern)); a marker that does not parse stops the command with `BP_UPDATE_INTERRUPTED`.
 
 The marker differs from the `IntentJournal`: the journal sits in the staging folder, which the stale cleanup removes, and the marker sits in the git directory so it outlives that folder.
 
