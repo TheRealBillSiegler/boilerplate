@@ -110,6 +110,26 @@ class TestReadLock:
         with pytest.raises(LockReadFailedError):
             read_lock(tmp_path)
 
+    @pytest.mark.parametrize("layers", [[], None])
+    def test_a_lock_with_no_layers_is_a_read_failure(
+        self, tmp_path: Path, layers: list[object] | None
+    ) -> None:
+        """The root is the last layer, so a lock without one cannot be read."""
+        write_lock(tmp_path, _lock())
+        path = tmp_path / LOCK_FILE_NAME
+        body = yaml.safe_load(path.read_text(encoding="utf-8"))
+        del body["copier_answers_file_hashes"]  # hashes of layers that are now gone
+        if layers is None:
+            del body["layers"]
+        else:
+            body["layers"] = layers
+        path.write_text(yaml.safe_dump(body), encoding="utf-8")
+
+        with pytest.raises(LockReadFailedError) as caught:
+            read_lock(tmp_path)
+
+        assert caught.value.error_code == "BP_LOCK_READ_FAILED"
+
     @pytest.mark.parametrize(
         "schema",
         [
