@@ -87,7 +87,7 @@ def test_ruff_format_check(rendered_template: Path, template_name: str) -> None:
 
 def test_ruff_check(rendered_template: Path, template_name: str) -> None:
     _run(
-        [sys.executable, "-m", "ruff", "check", "."],
+        [sys.executable, "-m", "ruff", "check", "--no-fix", "."],
         cwd=rendered_template,
         label=f"'{template_name}' fails ruff check",
     )
@@ -123,7 +123,7 @@ def test_under_own_resolved_toolchain(
         label=f"'{template_name}' fails ruff format --check under its own resolved ruff",
     )
     _run(
-        ["uv", "run", "ruff", "check", "."],
+        ["uv", "run", "ruff", "check", "--no-fix", "."],
         cwd=rendered_template,
         label=f"'{template_name}' fails ruff check under its own resolved ruff",
     )
