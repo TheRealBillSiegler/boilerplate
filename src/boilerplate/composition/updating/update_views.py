@@ -34,7 +34,7 @@ class UpdateViews(NamedTuple):
     tasks_need_unsafe: bool = False
 
     def unsafe_for(self, *, skip_tasks: bool) -> bool:
-        """Return whether a step that skips its tasks or not is granted ``unsafe``.
+        """Return whether the step is granted ``unsafe``, given whether it skips tasks.
 
         Args:
             skip_tasks: Whether the step skips the layer's own tasks.
