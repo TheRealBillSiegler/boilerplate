@@ -17,11 +17,11 @@ from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.updating.failed_task import FailedTask
+from boilerplate.composition.updating.keep_or_undo import keep_or_undo
 from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers_by_layer,
 )
 from boilerplate.composition.updating.step_inputs import StepInputs
-from boilerplate.composition.updating.task_failure_choice import TaskFailureChoice
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.update_options import UpdateOptions
@@ -148,10 +148,9 @@ class AddRun:
         failed = self._task_failure(secrets)
         if failed is None:
             return True
-        untracked = staging.untracked_in_checkout()
-        if self._on_task_failure(failed) is TaskFailureChoice.UNDO:
-            staging.undo_copy_back(untracked)
-            _logger.warning("Undid the add after a failed task: %s", failed.command)
+        if not keep_or_undo(
+            staging.project, staging.start_commit, failed, self._on_task_failure
+        ):
             return False
         self._failed = failed
         return True
