@@ -9,7 +9,7 @@ This page tracks how much of Boilerplate's [design specification](design/01-over
 
 ## At a glance
 
-The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. *Reproducibility and lifecycle* is partly there: `new` writes the lock file, while project updates and three-way merge exist only as library code that no command calls yet. By contrast, *catalog federation* (remote/Git sources, trust tiers, search) and the *environment-provisioning subsystem* are design-only.
+The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `run_worker` contract), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. Reproducibility and lifecycle are partial: `new` writes `boilerplate.lock`, and the per-layer update and add engines (three-way merge, migration records) are implemented but driven only by tests, with no command wired to them. *Catalog federation* (remote/Git sources, trust tiers, search) and the *environment-provisioning subsystem* are design-only.
 
 | Design area | Status |
 | --- | --- |
@@ -35,7 +35,7 @@ The implemented core is **local template composition**: discover templates from 
 ### 02 — Data models :material-progress-clock:{ .status-partial }
 
 - :material-check-circle:{ .status-shipped } `TemplateMeta`, `TemplateInfo`, `TemplateSpecifier`, `SerializableVersion`, `TemplateCatalog`
-- :material-progress-clock:{ .status-partial } Lock / Project / MigrationRecord models — `BoilerplateLock`, `LockLayer`, and `MigrationRecord` exist (`models/`); no `Project` model exists
+- :material-progress-clock:{ .status-partial } `BoilerplateLock`, `LockLayer` and `MigrationRecord` (`models/`) — implemented; `new` writes the lock, and the update and add engines append migration records, driven only by tests
 
 ### 03 — Template system :material-progress-clock:{ .status-partial }
 
@@ -54,7 +54,7 @@ The most mature area. The resolution → graph → merge → render pipeline wor
 - :material-check-circle:{ .status-shipped } Cycle detection and merge-conflict errors (`composition/graph/exceptions.py`, `composition/merging/exceptions.py`)
 - :material-check-circle:{ .status-shipped } Version-conflict detection — an `extends` diamond that pins the same template name at two different versions is rejected during resolution, raising `VersionConflictError` with error code `BP_RESOLVE_VERSION_CONFLICT` (design 04 Stage 1) (`composition/resolution/resolver.py`, `composition/graph/exceptions.py`)
 - :material-circle-outline:{ .status-design } Graph size/depth limits — `BP_GRAPH_*` covers cycles only
-- :material-circle-outline:{ .status-design } `CopierWorker` abstraction — Copier's `Worker` is invoked directly; the isolation interface design 04 specifies does not exist
+- :material-progress-clock:{ .status-partial } `CopierWorker` abstraction — the `Worker` subclass ships as `ScopedWorker`, and composition renders and updates through it (`composition/rendering/scoped_worker.py`); the `run_worker` / `WorkerResult` contract and the startup `BP_COPIER_COMPAT_FAILED` check are not built
 - :material-check-circle:{ .status-shipped } Per-layer answers files — each bundled template declares `_answers_file: .copier-answers.<layer>.yml` and ships the answers-file stub; Copier writes one per layer natively during that layer's render, and no canonical `.copier-answers.yml` is written (design 04's per-layer `_answers_file:` contract, the foundation for per-layer update)
 - :material-check-circle:{ .status-shipped } Scoped rendering — `boilerplate new` asks the merged questionnaire once, then renders each layer under its scoped view (the questions and extensions of that layer and its ancestors), so each answers file records only its own scope; ancestors' file-path extensions load for the descendants that use them (`composition/rendering/engine.py`, `composition/views/`)
 
@@ -78,7 +78,8 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 - :material-check-circle:{ .status-shipped } Logging via stdlib `logging` — Rich console on TTY; non-TTY / `--ci` stderr gets one strict-JSON object per event with `phase`, `operation`, `request_id`, `success`, and `error_code` on failure, plus `BOILERPLATE_REQUEST_ID` passthrough (`logging_config.py`). Redaction and `duration_ms` terminal events are not implemented.
 - :material-progress-clock:{ .status-partial } Error attribution — a uniform CLI error boundary, exception hierarchy, phase-tagged `BP_{PHASE}_{DESCRIPTOR}` codes, and per-exception remediation hints exist (`cli/utils.py`, `common/exceptions.py`); the `severity` / `retryable` fields are declared but hardcoded (`"error"` / `False`) on every exception and read by nothing yet, and attribution labels and the `--verbose` diagnostic block are not emitted
 - :material-check-circle:{ .status-shipped } Exit codes — the design's canonical six-value set defined (`constants.py`), with `ACTION_REQUIRED=4` routed in the CLI error boundary (no shipped operation produces exit 4 yet; its first producer is the update conflict pause) and `USER_CANCELLED=130` shipped: Ctrl+C at a prompt exits 130 as clean cancellation
-- :material-circle-outline:{ .status-design } Metrics, performance budgets, retry policy, automation gates, and the per-operation invariants (advisory locks, intent journal, atomic staged writes)
+- :material-progress-clock:{ .status-partial } Advisory locks and the intent journal — implemented (`common/file_lock.py`, `composition/staging/`) and used by the update and add engines, driven only by tests
+- :material-circle-outline:{ .status-design } Metrics, performance budgets, retry policy, automation gates, and atomic staged writes for `new`
 
 ### 08 — Environment provisioning :material-circle-outline:{ .status-design }
 
@@ -122,13 +123,13 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 | `init-template` | :material-circle-outline:{ .status-design } | Not implemented |
 | `search` | :material-circle-outline:{ .status-design } | Discovery is `list` only — no search/filter/trust |
 | `env` (apply/status/diff/rollback/…) | :material-circle-outline:{ .status-design } | No `env` command group |
-| `lock` (migrate/verify) | :material-circle-outline:{ .status-design } | No `lock` command; the lock file model and I/O exist (`project_state/lock_file.py`) |
+| `lock` (migrate/verify) | :material-circle-outline:{ .status-design } | No `lock` command; `new` writes the lock and nothing reads it |
 | `cache warm` | :material-circle-outline:{ .status-design } | No cache layer |
 | shell completions | :material-progress-clock:{ .status-partial } Partial | Typer's built-in completion only |
 
-## Known gaps (design-only)
+## Known gaps
 
-These are specified in the design docs but no shipped command exercises them — listed here so expectations are clear. Items 2 to 4 have engines implemented and driven only by tests; their commands are not yet wired:
+These are specified in the design docs but no shipped command exercises them — listed here so expectations are clear. Items 2 to 4 have engines implemented and driven only by tests, so they are partial; their commands are not yet wired. The rest are design-only:
 
 1. **Using the lock (`boilerplate.lock`)** — `new` writes it, but no command reads it: there is no `lock verify`, `status` or `update`.
 2. **Project update lifecycle** — the per-layer update engine is implemented and driven only by tests; the `update` command is not yet wired, so no shipped command diffs versions or applies an update.
@@ -137,7 +138,7 @@ These are specified in the design docs but no shipped command exercises them —
 5. **Environment provisioning** — the entire proto toolchain subsystem and `env *` commands.
 6. **Catalog federation & discovery** — remote/Git sources, `search`, trust tiers, classification.
 7. **Security verification pipeline** — checksums, signatures, trust verification, Jinja sandbox.
-8. **Operational quality remainder** — metrics, performance budgets, retry policy, automation gates, advisory locks, and the intent journal (the phase-tagged error codes and six-value exit taxonomy are shipped; see design area 07 above).
+8. **Operational quality remainder** — metrics, performance budgets, retry policy, and automation gates (advisory locks and the intent journal are partial, above; the phase-tagged error codes and six-value exit taxonomy are shipped; see design area 07 above).
 9. **Lifecycle/quality commands** — `status`, `adopt`, `eject`, `doctor`, `test`, `init-template`, `cache warm`.
 
 ## Where next
