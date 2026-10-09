@@ -176,6 +176,7 @@ When check 1 or check 4 fails, Boilerplate MUST fail immediately with `BP_UPDATE
 - Read each layer's `.copier-answers.<layer>.yml` to retrieve the answers used for the current project state. Each layer's answers file records the answers to its own and its ancestors' questions, the questions of its [scoped view](04-composition-engine.md#scoped-view); the walk passes each layer's `copier update` invocation the data [design 04 §Safe Update](04-composition-engine.md#safe-update) specifies.
 - For each layer, compute the SHA-256 hash of the raw `.copier-answers.<layer>.yml` file contents and compare against the corresponding entry in `copier_answers_file_hashes` in `boilerplate.lock`. If any layer's hash differs, emit a WARNING: `"Answer state for layer '{layer}' may have been externally modified since the last Boilerplate operation. The update will use the current .copier-answers.{layer}.yml contents."`. The update proceeds despite the mismatch — the warning is informational, not blocking.
 - If any required answers file is missing or corrupted, fail with a clear error before proceeding.
+- Three more checks run before any layer does: layer drift, an incomplete answers file and, on a resume, targets that differ from the pending `conflict` record's ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each stops the update with its own error, listed in the outcomes table below.
 
 ### Step 2: Resolve Target
 
@@ -453,6 +454,9 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | Task fails after the copy back (`--non-interactive`) | Files kept, lock written, failed task named with how to rerun it, `failed` migration record, exit `1` |
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
+| A layer and one of its ancestors both disagree with `boilerplate.lock`, with no pending `conflict` record | `BP_UPDATE_LAYER_DRIFT` naming each layer's `_commit` and the lock's version, with the `git revert` remediation; no layer runs, no files modified, exit `3` |
+| A question of a layer's scoped view at the recorded versions, neither secret nor hidden, has no answer in the layer's own answers file or its declaring layer's | `BP_UPDATE_ANSWERS_INCOMPLETE` naming the layer and the keys, with the `git revert` remediation; no layer runs, no files modified, exit `3` |
+| `--target-version` differs from the targets of the pending `conflict` record | `BP_UPDATE_TARGET_MISMATCH` telling the user to set the partial update aside first; no layer runs, no files modified, exit `3` |
 | `--target-version <layer>@<version>` names a layer the lock does not list | `BP_UPDATE_LAYER_UNKNOWN` naming each unknown layer and listing the project's layers; nothing staged, exit `3` |
 | `--target-version <layer>@<version>` names a version another lock layer's `extends` constraint excludes | `BP_UPDATE_TARGET_EXCLUDED` naming the layer, the version and the constraining layer; nothing staged, exit `3` |
 | A layer `add` introduced, which the root's target version does not reach | Stays in the lock, walks to its own target, is not reported as `REMOVED` |
