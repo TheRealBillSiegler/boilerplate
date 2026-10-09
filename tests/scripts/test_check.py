@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from check import scenario_choice, touches_composition
+from check import _SCENARIOS, _STEPS, scenario_choice, touches_composition
 
 # One path under each entry of the CI workflow's composition list, and one in
 # each package under ``src/boilerplate/`` (the scenarios run the whole CLI).
@@ -118,3 +118,15 @@ class TestScenarioChoice:
         _, reason = scenario_choice("abc1234", ["README.md", "docs/index.md"])
 
         assert "no composition path" in reason
+
+
+class TestStepOrder:
+    """The order of the gate's steps, as ``docs/governance/ci.md`` describes it."""
+
+    def test_the_scenario_step_runs_last(self) -> None:
+        """Run the 20-minute scenarios after every other step.
+
+        The gate stops at the first failure, so a doctest or docs failure
+        placed after the scenarios costs a full scenario run to find.
+        """
+        assert [argv for argv, _ in _STEPS][-1] == _SCENARIOS
