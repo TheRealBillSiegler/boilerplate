@@ -31,6 +31,38 @@ from boilerplate.models import RestoreKind, RestoreOperation
 _logger = logging.getLogger(__name__)
 
 
+def record_add(
+    recorder: AddRecorder, specifier: str, failed: FailedTask | None
+) -> None:
+    """Append an add's one record, as the run ended.
+
+    Args:
+        recorder: The recorder of the project's log.
+        specifier: The added layer, ``name@version``.
+        failed: The task that failed and whose files were kept; ``None`` when
+            the tasks passed or none ran.
+    """
+    if failed is None:
+        recorder.success(specifier)
+    else:
+        recorder.failed(specifier, add_failure_message(failed))
+
+
+def add_failure_message(failed: FailedTask) -> str:
+    """Say which task failed after an add and what was kept.
+
+    Args:
+        failed: The task that failed.
+
+    Returns:
+        The message the error carries.
+    """
+    return (
+        f"Task '{failed.command}' exited with status {failed.returncode} after "
+        "the layer was added. The files are kept and boilerplate.lock is written."
+    )
+
+
 class AddRun:
     """One run of an add plan in a staging worktree.
 
@@ -126,7 +158,7 @@ class AddRun:
             return self._outcome(AddStatus.UNDONE)
         if self._failed is not None:
             raise UpdateTaskFailedError(
-                self._failure_message(self._failed),
+                add_failure_message(self._failed),
                 task=self._failed.command,
                 remediation=self._failed.rerun,
             )
@@ -191,20 +223,10 @@ class AddRun:
     def _record(self) -> None:
         """Append the add's record: ``success``, or ``failed`` after a kept task."""
         plan = self._inputs.plan
-        recorder = AddRecorder(self._inputs.project)
-        specifier = f"{plan.layer}@{plan.version}"
-        if self._failed is None:
-            recorder.success(specifier)
-        else:
-            recorder.failed(specifier, self._failure_message(self._failed))
-
-    @staticmethod
-    def _failure_message(failed: FailedTask) -> str:
-        """Say which task failed and what the add kept."""
-        return (
-            f"Task '{failed.command}' exited with status {failed.returncode} after "
-            "the layer's files were copied back. The files are kept and "
-            "boilerplate.lock is written."
+        record_add(
+            AddRecorder(self._inputs.project),
+            f"{plan.layer}@{plan.version}",
+            self._failed,
         )
 
     def _outcome(self, status: AddStatus) -> AddOutcome:

@@ -5,6 +5,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Self
 
+from boilerplate.composition.staging.copy_back import restore_working_tree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.restore_marker_file import (
     pin_result,
@@ -147,6 +148,26 @@ class Finisher:
             return False
         self._record()
         return True
+
+    def resume(self) -> bool:
+        """Finish a cut-off run from the phase its marker records.
+
+        At ``copy_back`` the copy back is repeated from the marker's result
+        commit, which writes the same files on every run, and the run goes on
+        as after a copy back. At ``tasks`` the tasks run again. At
+        ``recording`` only the lock and the record remain.
+
+        Returns:
+            Whether the files are kept: ``False`` when a task failed and the
+            run was undone.
+        """
+        marker = self._marker
+        if marker.phase is RestorePhase.COPY_BACK:
+            restore_working_tree(self._project, marker.result_commit)
+        if marker.phase is RestorePhase.RECORDING:
+            self._record()
+            return True
+        return self.finish()
 
     def _record(self) -> None:
         """Write the lock and the record under the ``recording`` phase, then unmark."""
