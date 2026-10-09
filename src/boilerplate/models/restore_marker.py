@@ -34,6 +34,10 @@ class RestoreMarker(BaseModel):
             commit when no layer finished; a full object id.
         targets: Each layer of the walk, in walk order, with the version the
             walk was moving it to; never empty, and one layer for an add.
+        finished: The layers whose steps a paused walk finished, in walk
+            order, the paused layer excluded; empty for a complete run.
+        paused_layer: The layer whose merge left conflict markers, which
+            follows the finished layers; ``None`` for a complete run.
         started_at: When the run began.
     """
 
@@ -45,6 +49,8 @@ class RestoreMarker(BaseModel):
     start_commit: str = Field(pattern=_OBJECT_ID_PATTERN)
     result_commit: str = Field(pattern=_OBJECT_ID_PATTERN)
     targets: Mapping[str, str]
+    finished: tuple[str, ...] = ()
+    paused_layer: str | None = None
     started_at: AwareDatetime
 
     @model_validator(mode="after")
@@ -80,6 +86,34 @@ class RestoreMarker(BaseModel):
             raise ValueError("a restore marker names at least one target")
         if self.operation is RestoreOperation.ADD and len(self.targets) != 1:
             raise ValueError("an add's restore marker names exactly one target")
+        return self
+
+    @model_validator(mode="after")
+    def _check_paused_layers(self) -> Self:
+        """Require the paused walk's layers on a paused run, and only there.
+
+        A conflict pauses the walk at one of its layers, after the layers it
+        finished; a complete run finished every layer and paused at none.
+
+        Returns:
+            The validated marker.
+
+        Raises:
+            ValueError: If a paused run names no paused layer, a complete run
+                names finished or paused layers, or a named layer is not one
+                of the walk's or is both finished and paused.
+        """
+        if self.kind is RestoreKind.COMPLETE:
+            if self.finished or self.paused_layer is not None:
+                raise ValueError("a complete run names no finished or paused layer")
+            return self
+        if self.paused_layer is None:
+            raise ValueError("a paused run names the layer that paused it")
+        named = (*self.finished, self.paused_layer)
+        if not set(named) <= set(self.targets):
+            raise ValueError("a paused run names only layers of its walk")
+        if self.paused_layer in self.finished:
+            raise ValueError("the paused layer is not among the finished layers")
         return self
 
     def at_phase(self, phase: RestorePhase) -> Self:
