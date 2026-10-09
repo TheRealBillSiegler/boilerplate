@@ -14,6 +14,8 @@ from boilerplate.composition.adding.add_status import AddStatus
 from boilerplate.composition.adding.layer_copier import copy_layer
 from boilerplate.composition.adding.task_runner import run_add_tasks
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
+from boilerplate.composition.staging.finish_steps import FinishSteps
+from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.recorded_answers import (
     read_recorded_answers_by_layer,
@@ -24,6 +26,7 @@ from boilerplate.composition.updating.task_failure_handler import TaskFailureHan
 from boilerplate.composition.updating.task_run import TaskRun
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.integrations.copier_types import TaskError
+from boilerplate.models import RestoreKind, RestoreOperation
 
 _logger = logging.getLogger(__name__)
 
@@ -56,6 +59,7 @@ class AddRun:
         self._on_task_failure = on_task_failure
         self._boilerplate_version = boilerplate_version
         self._warnings: tuple[str, ...] = ()
+        self._failed: FailedTask | None = None
 
     def execute(self) -> AddOutcome:
         """Run the plan.
@@ -90,30 +94,67 @@ class AddRun:
             )
             self._warnings = staging.warn_uncarried(plan.layer)
             staging.commit_layer(f"Add {plan.layer} {plan.release.ref}")
-            staging.copy_back()
             return self._finish(staging, secrets)
 
     def _finish(
         self, staging: StagingWorktree, secrets: Mapping[str, Any]
     ) -> AddOutcome:
-        """Run the tasks, then write the lock and the record, or undo the add.
+        """Copy back, run the tasks, then write the lock and the record, or undo.
 
         Args:
             staging: The worktree the layer was copied through.
             secrets: The secret answers the copy ended with, for the tasks.
+
+        Raises:
+            UpdateTaskFailedError: If a task failed and the handler kept the
+                files.
         """
-        failed = self._run_tasks(secrets)
+        finisher = Finisher(
+            RestoreOperation.ADD,
+            RestoreKind.COMPLETE,
+            FinishSteps(
+                write_record=self._record,
+                write_lock=lambda: self._write_lock(staging),
+                run_tasks=lambda: self._run_tasks(staging, secrets),
+            ),
+        )
+        finisher.copy_back(staging)
+        if not finisher.finish():
+            return self._outcome(AddStatus.UNDONE)
+        if self._failed is not None:
+            raise UpdateTaskFailedError(
+                self._failure_message(self._failed),
+                task=self._failed.command,
+                remediation=self._failed.rerun,
+            )
+        return self._outcome(AddStatus.ADDED)
+
+    def _run_tasks(self, staging: StagingWorktree, secrets: Mapping[str, Any]) -> bool:
+        """Run the layer's own tasks once in the user's checkout.
+
+        A task that fails is handed to the caller's handler, which keeps the
+        files or undoes the add.
+
+        Args:
+            staging: The worktree the layer was copied through.
+            secrets: The secret answers the copy ended with, for the tasks.
+
+        Returns:
+            Whether the files are kept.
+        """
+        failed = self._task_failure(secrets)
         if failed is None:
-            return self._complete(staging, None)
+            return True
         untracked = staging.untracked_in_checkout()
         if self._on_task_failure(failed) is TaskFailureChoice.UNDO:
             staging.undo_copy_back(untracked)
             _logger.warning("Undid the add after a failed task: %s", failed.command)
-            return self._outcome(AddStatus.UNDONE)
-        return self._complete(staging, failed)
+            return False
+        self._failed = failed
+        return True
 
-    def _run_tasks(self, secrets: Mapping[str, Any]) -> FailedTask | None:
-        """Run the layer's own tasks once in the user's checkout.
+    def _task_failure(self, secrets: Mapping[str, Any]) -> FailedTask | None:
+        """Run the layer's tasks and return the one that failed.
 
         Args:
             secrets: The secret answers the copy ended with, for the tasks.
@@ -136,35 +177,33 @@ class AddRun:
             return FailedTask.from_error(error)
         return None
 
-    def _complete(
-        self, staging: StagingWorktree, failed: FailedTask | None
-    ) -> AddOutcome:
-        """Write the lock and the record of an add whose files are kept.
-
-        Raises:
-            UpdateTaskFailedError: If `failed` is a task that failed.
-        """
-        plan = self._inputs.plan
+    def _write_lock(self, staging: StagingWorktree) -> None:
+        """Write the lock with the new layer last."""
         write_add_lock(
             self._inputs.project,
             staging,
-            plan,
+            self._inputs.plan,
             self._boilerplate_version,
             self._inputs.checkouts,
         )
+
+    def _record(self) -> None:
+        """Append the add's record: ``success``, or ``failed`` after a kept task."""
+        plan = self._inputs.plan
         recorder = AddRecorder(self._inputs.project)
         specifier = f"{plan.layer}@{plan.version}"
-        if failed is None:
+        if self._failed is None:
             recorder.success(specifier)
-            return self._outcome(AddStatus.ADDED)
-        message = (
+        else:
+            recorder.failed(specifier, self._failure_message(self._failed))
+
+    @staticmethod
+    def _failure_message(failed: FailedTask) -> str:
+        """Say which task failed and what the add kept."""
+        return (
             f"Task '{failed.command}' exited with status {failed.returncode} after "
             "the layer's files were copied back. The files are kept and "
             "boilerplate.lock is written."
-        )
-        recorder.failed(specifier, message)
-        raise UpdateTaskFailedError(
-            message, task=failed.command, remediation=failed.rerun
         )
 
     def _outcome(self, status: AddStatus) -> AddOutcome:
