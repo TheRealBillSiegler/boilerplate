@@ -377,7 +377,7 @@ def _trim_to_own_keys(project: Project, layer: str, own: set[str]) -> None:
     path.write_text(yaml.safe_dump(kept), encoding="utf-8", newline="\n")
 
 
-class TestATrimmedAnswersFileStopsTheUpdate:
+class TestATrimmedAnswersFile:
     """A vanilla hand-run of service keeps only service's own keys."""
 
     def test_an_untouched_project_passes(
@@ -385,18 +385,26 @@ class TestATrimmedAnswersFileStopsTheUpdate:
     ) -> None:
         check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
 
-    def test_a_trimmed_service_file_stops_listing_the_missing_keys(
+    def test_a_trimmed_service_file_passes_on_cores_record(
         self, project: Project, tmp_path: Path
     ) -> None:
+        """Core declares the keys service's file lost, and core's file records them."""
         _trim_to_own_keys(project, "service", {"python_version", "port"})
+
+        check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+
+    def test_a_key_no_layer_records_stops_naming_each_layer_that_lacks_it(
+        self, project: Project, tmp_path: Path
+    ) -> None:
+        """Core's file loses `author_name` too, so no file can fill service's."""
+        _trim_to_own_keys(project, "service", {"python_version", "port"})
+        core_keys = _recorded_keys(project)["core"] - {"author_name"}
+        _trim_to_own_keys(project, "core", core_keys)
 
         with pytest.raises(AnswersFileIncompleteError) as caught:
             check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
 
-        assert caught.value.error_code == "BP_UPDATE_ANSWERS_INCOMPLETE"
-        assert set(caught.value.missing) == {"service"}
-        assert set(caught.value.missing["service"]) == {
-            "project_name",
-            "author_name",
-            "use_tests",
+        assert caught.value.missing == {
+            "core": ("author_name",),
+            "service": ("author_name",),
         }
