@@ -617,31 +617,25 @@ def _add_first_remediation(layers: Sequence[str]) -> str:
 
 
 class ProjectNotManagedError(BoilerplateError):
-    """Raised when ``add`` finds no ``boilerplate.lock`` in the project."""
+    """Raised when ``add`` finds no ``boilerplate.lock`` in the project.
+
+    The message carries its own advice, so no default remediation repeats it.
+    """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
         """Initialize with default error code BP_UPDATE_PROJECT_NOT_MANAGED."""
-        super().__init__(
-            message,
-            error_code="BP_UPDATE_PROJECT_NOT_MANAGED",
-            remediation=kwargs.pop(
-                "remediation", "Use 'boilerplate adopt' to bring the project under it."
-            ),
-            **kwargs,
-        )
+        super().__init__(message, error_code="BP_UPDATE_PROJECT_NOT_MANAGED", **kwargs)
 
 
 class LayerAlreadyAddedError(BoilerplateError):
-    """Raised when ``add`` names a template the project's lock already lists."""
+    """Raised when ``add`` names a template the project's lock already lists.
+
+    The message carries its own advice, so no default remediation repeats it.
+    """
 
     def __init__(self, message: str = "", **kwargs: str | None) -> None:
         """Initialize with default error code BP_UPDATE_LAYER_ALREADY_ADDED."""
-        super().__init__(
-            message,
-            error_code="BP_UPDATE_LAYER_ALREADY_ADDED",
-            remediation=kwargs.pop("remediation", "Use 'boilerplate update' instead."),
-            **kwargs,
-        )
+        super().__init__(message, error_code="BP_UPDATE_LAYER_ALREADY_ADDED", **kwargs)
 
 
 class AddAncestorsMissingError(BoilerplateError):
