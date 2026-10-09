@@ -58,7 +58,7 @@ Ship **local-source update first**; remote-source update has a declared interfac
 
 Prerequisites inside the composition engine, in order:
 
-1. The `CopierWorker` abstraction ([design 04](design/04-composition-engine.md), Copier Worker Interface).
+1. The rest of the `CopierWorker` abstraction ([design 04](design/04-composition-engine.md), Copier Worker Interface): the `Worker` subclass ships, so what remains is the `run_worker` / `WorkerResult` contract and the startup `BP_COPIER_COMPAT_FAILED` check.
 2. Per-layer answers-file consumption (the per-layer answers files projects already carry).
 3. Version-conflict detection and graph size/depth limits.
 
