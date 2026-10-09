@@ -386,7 +386,7 @@ stateDiagram-v2
     state "Run the tasks again" as Tasks
     state "Write the lock if needed" as Lock
     state "Append the record" as Rec
-    state "Remove marker and ref, exit with the run's code" as Done
+    state "Remove marker and ref, then exit 0 or 4" as Done
     [*] --> R1
     R1 --> Fresh: last record after started_at names the targets
     R1 --> R2: no
