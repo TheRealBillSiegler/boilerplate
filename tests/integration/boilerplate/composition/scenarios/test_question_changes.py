@@ -477,8 +477,9 @@ REJECTED = [c for c, case in RETYPE_CASES.items() if case.rejection]
 # before the forced answer is rejected, so only the retype leaves the project
 # untouched; the narrowed-choice claim stays on the bundled layers below.
 UNTOUCHED = ["retype_bad"]
-# Every update here, clean ones included, prints this hint; Git 2.55 rejects the
-# negative --inter-hunk-context Copier tries first.
+# Copier prints this hint only when Git rejects the negative --inter-hunk-context
+# it tries first, as Git 2.55 and later do; a Git that accepts it prints nothing.
+# The silent-replacement tests drop this line and assert nothing else is on stderr.
 GIT_HINT = "Make sure Git >= 2.24 is installed to improve updates."
 
 
@@ -597,8 +598,8 @@ class TestRetypedQuestion:
     ) -> None:
         """S13: with data={} Copier drops the last answer and takes the new default.
 
-        No exception, and stderr carries only the hint every update prints:
-        eighty becomes 8000.
+        No exception, and stderr carries nothing but Copier's Git hint, which
+        Git 2.55 and later trigger: eighty becomes 8000.
         """
         case, scenario = retyped
         project = copy_project(scenario.project, tmp_path / "family-app")
@@ -620,8 +621,8 @@ class TestRetypedQuestion:
                 for line in lines(project / "Dockerfile")
                 if line.startswith("EXPOSE")
             ],
-            capsys.readouterr().err.splitlines(),
-        ) == (["EXPOSE 8000"], [GIT_HINT])
+            [line for line in capsys.readouterr().err.splitlines() if line != GIT_HINT],
+        ) == (["EXPOSE 8000"], [])
 
 
 def _narrowed_choices(ref: str, release: Path) -> None:
@@ -708,8 +709,8 @@ class TestNarrowedChoiceOnTheBundledLayers:
     ) -> None:
         """S13: with data={} Copier drops the last answer and takes the default.
 
-        No exception, and stderr carries only the hint every update prints:
-        GPL-3.0 becomes MIT.
+        No exception, and stderr carries nothing but Copier's Git hint, which
+        Git 2.55 and later trigger: GPL-3.0 becomes MIT.
         """
         project = copy_project(narrowed.project, tmp_path / "probe-app")
         capsys.readouterr()
@@ -717,8 +718,8 @@ class TestNarrowedChoiceOnTheBundledLayers:
 
         assert (
             lines(project / "settings.txt"),
-            capsys.readouterr().err.splitlines(),
-        ) == (["license=MIT"], [GIT_HINT])
+            [line for line in capsys.readouterr().err.splitlines() if line != GIT_HINT],
+        ) == (["license=MIT"], [])
 
 
 # ------------------------------------------------------------------ S14
