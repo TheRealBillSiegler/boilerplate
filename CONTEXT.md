@@ -35,6 +35,9 @@ A Layer's merged questions, secret-question list and Jinja extensions over itsel
 **Full Merged Schema**:  
 Every Layer's questions joined; the questionnaire at compose uses it, and an update step takes each question's definition and default from it. See design 04 §Scoped view and §Safe Update.
 
+**Hidden Question**:  
+A Question whose `when` evaluates false under the recorded answers, the literal `when: false` derived questions among them; no Answers File records it. See design 04 §Safe Update.
+
 **Task**:  
 A command declared in a Template's `_tasks` that runs after rendering — the escape hatch for arbitrary edits.  
 _Avoid_: hook, script, post-gen step
