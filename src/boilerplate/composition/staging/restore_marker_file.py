@@ -57,20 +57,19 @@ def read_marker(project: Path) -> RestoreMarker | None:
         The marker; ``None`` when no run left one.
 
     Raises:
-        UpdateInterruptedError: If the file exists but does not parse as a
-            restore marker; the error names the file and how to discard it.
+        UpdateInterruptedError: If the file exists but cannot be read, is not
+            UTF-8, or does not parse as a restore marker; the error names the
+            file and how to discard it.
     """
     path = marker_path(project)
     try:
-        text = path.read_text(encoding="utf-8")
+        return RestoreMarker.model_validate_json(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return None
-    try:
-        return RestoreMarker.model_validate_json(text)
-    except ValidationError as error:
+    except (OSError, UnicodeDecodeError, ValidationError) as error:
         raise UpdateInterruptedError(
             f"An earlier run was cut off while restoring its result into the "
-            f"working tree, and its restore marker {path} does not parse: {error}",
+            f"working tree, and its restore marker {path} cannot be read: {error}",
             remediation="Run 'git reset' and then 'git stash --include-untracked' "
             "to set the partial run aside. To discard the marker, delete the file "
             f"and run 'git update-ref -d {RESTORE_REF}'.",
