@@ -33,8 +33,9 @@ def required_answer_keys(view: LayerView) -> tuple[str, ...]:
 
     Returns:
         The non-secret, non-derived, unconditional question names, in the
-        view's question order. Directives (``_``-prefixed keys) are not
-        questions.
+        view's question order. A question is secret when it is marked
+        ``secret: true`` or the view's ``_secret_questions`` names it.
+        Directives (``_``-prefixed keys) are not questions.
 
     Examples:
         >>> view = LayerView(
@@ -46,7 +47,9 @@ def required_answer_keys(view: LayerView) -> tuple[str, ...]:
     return tuple(
         name
         for name, definition in view.questions.items()
-        if not name.startswith("_") and _is_recorded(definition)
+        if not name.startswith("_")
+        and name not in view.secret_questions
+        and _is_recorded(definition)
     )
 
 

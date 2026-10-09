@@ -23,9 +23,13 @@ class LayerView(NamedTuple):
             name: the first layer of the view's composition to hold it, not a
             later one that only overrides it. An update step reads a
             question's recorded answer from that layer's answers file.
+        secret_questions: The names the view's layers list in
+            ``_secret_questions``, accumulated over the view. Copier records
+            no answer for them, as for a question marked ``secret: true``.
     """
 
     questions: Mapping[str, Any]
     extensions: tuple[str, ...]
     ancestor_extensions: tuple[AncestorExtension, ...] = ()
     declared_by: Mapping[str, str] = MappingProxyType({})
+    secret_questions: frozenset[str] = frozenset()

@@ -75,6 +75,21 @@ class TestBuildLayerView:
 
         assert build_layer_view(composition).extensions == ()
 
+    def test_secret_questions_accumulate_across_the_layers(
+        self, composition_factory: Callable[..., Composition]
+    ) -> None:
+        """Design 04: the scoped view holds the accumulated `_secret_questions`."""
+        composition = composition_factory(
+            ["base@1.0.0", "child@1.0.0"],
+            [
+                {"token": {}, "_secret_questions": ["token"]},
+                {"key": {}, "_secret_questions": ["key"]},
+            ],
+            {},
+        )
+
+        assert build_layer_view(composition).secret_questions == {"token", "key"}
+
 
 class TestAncestorExtensions:
     """The view records each ancestor's file-path extension file at its release."""
