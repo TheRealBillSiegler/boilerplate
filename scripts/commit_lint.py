@@ -53,7 +53,6 @@ def _run(argv: Sequence[str], *, repo_root: Path) -> str:
         argv,
         cwd=repo_root,
         capture_output=True,
-        text=True,
         encoding="utf-8",
         check=True,
     )
