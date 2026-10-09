@@ -32,14 +32,15 @@ def apply_working_tree_changes(worktree: Path, project: Path) -> None:
 
     A file the worktree has, with Copier's conflict markers in it where the
     update conflicted, is written to the checkout; a path the worktree lacks is
-    removed from the checkout. The changes stay unstaged.
+    removed from the checkout. A symlink is copied as a symlink, wherever it
+    points. The changes stay unstaged.
 
     Args:
         worktree: The staging worktree, whose uncommitted state is read.
         project: The user's checkout, written to.
 
     Raises:
-        ValueError: If git reports a path that escapes the project.
+        ValueError: If git reports a path whose directory escapes the project.
     """
     status = run_git(
         worktree,
@@ -51,13 +52,20 @@ def apply_working_tree_changes(worktree: Path, project: Path) -> None:
     )
     root = project.resolve()
     for relative in parse_changed_paths(status):
-        target = (root / relative).resolve()
-        if not target.is_relative_to(root):
+        # Resolve the parent only: the final name may be a link that points
+        # outside the project, and the link itself is what gets written.
+        joined = root / relative
+        parent = joined.parent.resolve()
+        if not parent.is_relative_to(root):
             raise ValueError(f"'{relative}' escapes the project.")
+        target = parent / joined.name
         source = worktree / relative
-        if source.is_file():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
+        if source.is_symlink() or source.is_file():
+            parent.mkdir(parents=True, exist_ok=True)
+            if target.is_symlink():
+                # Writing through the existing link would change what it points at.
+                target.unlink()
+            shutil.copy2(source, target, follow_symlinks=False)
         else:
             target.unlink(missing_ok=True)
         _logger.debug("Applied the worktree's change to %s", relative)
