@@ -117,7 +117,7 @@ class AddRun:
             targets={plan.layer: plan.version},
             steps=FinishSteps(
                 write_record=self._record,
-                write_lock=lambda: self._write_lock(staging),
+                write_lock=self._write_lock,
                 run_tasks=lambda: self._run_tasks(staging, secrets),
             ),
         )
@@ -180,11 +180,10 @@ class AddRun:
             return FailedTask.from_error(error)
         return None
 
-    def _write_lock(self, staging: StagingWorktree) -> None:
+    def _write_lock(self) -> None:
         """Write the lock with the new layer last."""
         write_add_lock(
             self._inputs.project,
-            staging,
             self._inputs.plan,
             self._boilerplate_version,
             self._inputs.checkouts,
