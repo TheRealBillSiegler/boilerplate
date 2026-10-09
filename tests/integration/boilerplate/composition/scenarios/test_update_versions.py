@@ -12,7 +12,7 @@ import shutil
 from collections.abc import Iterator, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 import yaml
@@ -362,11 +362,8 @@ def _views(project: Project, work: Path) -> dict[str, LayerView]:
     return {name: layer_view(name, templates) for name in project.order}
 
 
-def _recorded_keys(project: Project) -> dict[str, set[str]]:
-    return {
-        layer: set(answers)
-        for layer, answers in read_recorded_answers_by_layer(project.root).items()
-    }
+def _recorded(project: Project) -> dict[str, dict[str, Any]]:
+    return read_recorded_answers_by_layer(project.root)
 
 
 def _trim_to_own_keys(project: Project, layer: str, own: set[str]) -> None:
@@ -383,7 +380,7 @@ class TestATrimmedAnswersFile:
     def test_an_untouched_project_passes(
         self, project: Project, tmp_path: Path
     ) -> None:
-        check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+        check_answers_complete(_views(project, tmp_path), _recorded(project))
 
     def test_a_trimmed_service_file_passes_on_cores_record(
         self, project: Project, tmp_path: Path
@@ -391,18 +388,18 @@ class TestATrimmedAnswersFile:
         """Core declares the keys service's file lost, and core's file records them."""
         _trim_to_own_keys(project, "service", {"python_version", "port"})
 
-        check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+        check_answers_complete(_views(project, tmp_path), _recorded(project))
 
     def test_a_key_no_layer_records_stops_naming_each_layer_that_lacks_it(
         self, project: Project, tmp_path: Path
     ) -> None:
         """Core's file loses `author_name` too, so no file can fill service's."""
         _trim_to_own_keys(project, "service", {"python_version", "port"})
-        core_keys = _recorded_keys(project)["core"] - {"author_name"}
+        core_keys = set(_recorded(project)["core"]) - {"author_name"}
         _trim_to_own_keys(project, "core", core_keys)
 
         with pytest.raises(AnswersFileIncompleteError) as caught:
-            check_answers_complete(_views(project, tmp_path), _recorded_keys(project))
+            check_answers_complete(_views(project, tmp_path), _recorded(project))
 
         assert caught.value.missing == {
             "core": ("author_name",),
