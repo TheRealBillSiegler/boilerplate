@@ -141,12 +141,11 @@ class Finisher:
             Whether the files are kept: ``False`` when a task failed and the
             run was undone.
         """
-        steps = self._steps
         if self._marker.kind is RestoreKind.PAUSED:
             self._record()
             return True
         self._advance(RestorePhase.TASKS)
-        if not steps.run_tasks():
+        if not self._steps.run_tasks():
             remove_marker(self._project)
             return False
         self._record()
