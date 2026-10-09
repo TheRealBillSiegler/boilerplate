@@ -1044,8 +1044,6 @@ Note: `--force` on `new` does NOT trigger confirmation — force implies consent
 
 All `update`, `add`, `env apply`, and `eject` invocations show a plan and prompt for confirmation by default. `--dry-run` suppresses the prompt (plan only). `--yes` suppresses the prompt (plan + apply).
 
-Under the target trust model, `add`'s plan prompt is also its consent prompt for the layer's tasks and extensions: one prompt, shown before any extension loads ([`add`](#add)).
-
 ### Post-Action Guidance
 
 After completing an operation, the CLI MUST print contextual next steps. Guidance sources, in display order:
