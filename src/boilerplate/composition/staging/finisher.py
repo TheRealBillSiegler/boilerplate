@@ -102,7 +102,9 @@ class Finisher:
 
         The ref is pinned and then the marker written once the checks have
         passed and before the first file of the checkout changes. A copy back
-        that fails restores the checkout, so the marker and the ref go too.
+        that fails restores the checkout, so the marker and the ref go too;
+        when that restore fails or is cut off, both stay at ``copy_back``, so
+        the rerun can repeat the copy back or stop on the partial checkout.
 
         Args:
             staging: The active staging of the run.
@@ -112,7 +114,8 @@ class Finisher:
             UpdatePathObstructedError: If a path the walk added already exists
                 in the checkout as a file or directory git ignores.
             UpdateCopyBackFailedError: If the copy back failed after it began
-                to write; the checkout is restored to the starting commit.
+                to write; the checkout is restored to the starting commit, or
+                the error says it could not be.
         """
         begun = False
 
@@ -127,7 +130,7 @@ class Finisher:
                 paused=self._marker.kind is RestoreKind.PAUSED, on_start=begin
             )
         except BaseException:
-            if begun:
+            if begun and not staging.checkout_partly_written:
                 remove_marker(self._project)
             raise
 

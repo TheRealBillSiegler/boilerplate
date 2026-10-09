@@ -92,6 +92,7 @@ class StagingWorktree:
         self._folder: Path | None = None
         self._lock: FileLock | None = None
         self._keep = False
+        self._partly_written = False
         self._seen_ignored: set[str] = set()
         self._start_commit: str | None = None
         self._last_commit: str | None = None
@@ -127,6 +128,15 @@ class StagingWorktree:
         if self._last_commit is None:
             raise RuntimeError("The staging worktree is not active.")
         return self._last_commit
+
+    @property
+    def checkout_partly_written(self) -> bool:
+        """Whether a failed copy back left part of its writes in the checkout.
+
+        True when the undo of a failed copy back failed or was cut off, so the
+        checkout is not back at the starting commit; False otherwise.
+        """
+        return self._partly_written
 
     def commit_layer(self, message: str) -> str:
         """Commit everything in the worktree with git's plumbing.
@@ -216,8 +226,11 @@ class StagingWorktree:
             UpdateCopyBackFailedError: If the copy back failed after it began
                 to write. The checkout is restored to the starting commit and
                 this staging worktree is kept, not discarded, so the walk's
-                result is not lost; the error names its path. An interrupt
-                restores and keeps the same way and then propagates as it is.
+                result is not lost; the error names its path. When the restore
+                fails too, the error says the checkout could not be restored
+                and names both failures, and ``checkout_partly_written`` is
+                set. An interrupt restores and keeps the same way and then
+                propagates as it is.
         """
         require_checkout_unchanged(self.project, self.start_commit, self.operation)
         added = list_added_paths(self.project, self.start_commit, self.last_commit)
@@ -233,42 +246,65 @@ class StagingWorktree:
                 apply_working_tree_changes(self.path, self.project)
                 replay_unmerged_entries(self.path, self.project)
         except Exception as error:
-            kept = self._keep_after_failed_copy_back()
-            raise UpdateCopyBackFailedError(
-                f"Copying the update back failed: {error}. Your checkout was "
-                f"restored to the starting commit; the update's result is kept in "
-                f"the staging worktree at {kept}.",
-                staging_path=str(kept),
-                remediation="Fix the cause, then run the command again; remove "
-                "the staging folder when you no longer need it.",
-            ) from error
+            undo_error = self._keep_after_failed_copy_back()
+            raise self._copy_back_failed(error, undo_error) from error
         except BaseException:
             self._keep_after_failed_copy_back()
             raise
 
-    def _keep_after_failed_copy_back(self) -> Path:
-        """Restore the checkout, and keep the staging worktree from being discarded.
+    def _keep_after_failed_copy_back(self) -> Exception | None:
+        """Keep the staging worktree from being discarded, then restore the checkout.
 
-        The checkout was clean and at the starting commit when the copy back
-        began, so every untracked file now in it is one the copy back wrote.
-        The kept folder loses its journal, which leaves it to the user: the
-        stale cleanup only removes folders that have one.
+        The worktree is kept before the restore is tried, so an interrupt
+        during the restore cannot discard the walk's result. The kept folder
+        loses its journal, which leaves it to the user: the stale cleanup only
+        removes folders that have one. The checkout was clean and at the
+        starting commit when the copy back began, so every untracked file now
+        in it is one the copy back wrote. Until the restore succeeds,
+        ``checkout_partly_written`` is set.
 
         Returns:
-            The kept staging worktree.
+            The restore's failure; ``None`` when the checkout was restored.
         """
+        self._keep = True
+        (self.folder / JOURNAL_NAME).unlink(missing_ok=True)
+        _logger.warning("Kept the staging worktree at %s", self.path)
+        self._partly_written = True
         try:
             undo_working_tree(
                 self.project, self.start_commit, list_untracked_paths(self.project)
             )
-        except Exception:
+        except Exception as error:
             _logger.exception(
                 "Restoring %s after the failed copy back failed", self.project
             )
-        self._keep = True
-        (self.folder / JOURNAL_NAME).unlink(missing_ok=True)
-        _logger.warning("Kept the staging worktree at %s", self.path)
-        return self.path
+            return error
+        self._partly_written = False
+        return None
+
+    def _copy_back_failed(
+        self, error: Exception, undo_error: Exception | None
+    ) -> UpdateCopyBackFailedError:
+        """Build the error for a failed copy back, saying whether it was undone."""
+        kept = f"the update's result is kept in the staging worktree at {self.path}."
+        if undo_error is None:
+            return UpdateCopyBackFailedError(
+                f"Copying the update back failed: {error}. Your checkout was "
+                f"restored to the starting commit; {kept}",
+                staging_path=str(self.path),
+                remediation="Fix the cause, then run the command again; remove "
+                "the staging folder when you no longer need it.",
+            )
+        return UpdateCopyBackFailedError(
+            f"Copying the update back failed: {error}. Restoring your checkout to "
+            f"the starting commit then failed too: {undo_error}. Your checkout "
+            f"could not be restored and holds part of the update; {kept}",
+            staging_path=str(self.path),
+            remediation="Fix the cause, then run the command again to finish the "
+            "update, or run 'git reset' and then 'git stash --include-untracked' "
+            "to set the partial update aside; remove the staging folder when you "
+            "no longer need it.",
+        )
 
     def __enter__(self) -> Self:
         """Check the project, then create the worktree and its journal.
