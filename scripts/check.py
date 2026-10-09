@@ -40,20 +40,21 @@ _BASE_BRANCH: Final = "origin/develop"
 _SCENARIOS: Final = ["uv", "run", "pytest", "-m", "scenario"]
 
 # (argv, extra environment) per gate step, in fail-fast order: cheap static
-# checks first, the test suite, the scenarios when ``main`` decides they run,
-# then both strict docs configs.
+# checks first, the test suite, the doctests and both strict docs configs, and
+# the scenarios last when ``main`` decides they run, so a failure in a cheap
+# step never waits behind a scenario run.
 _STEPS: Final[list[tuple[list[str], dict[str, str]]]] = [
     (["uv", "run", "ruff", "check", "--no-fix", "."], {}),
     (["uv", "run", "ruff", "format", "--check", "."], {}),
     (["uv", "run", "pyright"], {}),
     (["uv", "run", "pytest", "-m", "not scenario"], {}),
-    (_SCENARIOS, {}),
     (["uv", "run", "pytest", "--doctest-modules", "src", "-n0"], {}),
     (["uv", "run", "mkdocs", "build", "--strict"], {}),
     (
         ["uv", "run", "mkdocs", "build", "--strict", "--site-dir", "site-offline"],
         {"DOCS_OFFLINE": "true"},
     ),
+    (_SCENARIOS, {}),
 ]
 
 
