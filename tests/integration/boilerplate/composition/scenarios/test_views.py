@@ -67,7 +67,6 @@ LOADER = "copier_template_extensions.TemplateExtensionLoader"
 SLUGIFY = "boilerplate.templates._jinja_extensions.slugify:SlugifyExtension"
 LEAK_SPEC = "leak_hook:LeakHook"
 SHOUT_SPEC = "shout:ShoutExtension"
-ORDERS = [("project", "streamlit"), ("streamlit", "project")]
 FAMILY_ORDERS = [("core", "service"), ("service", "core")]
 
 CORE_QUESTIONS = frozenset(
