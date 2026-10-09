@@ -22,6 +22,7 @@ import yaml
 from boilerplate.composition.rendering.render_role import render_role
 from boilerplate.composition.rendering.scoped_worker import ScopedWorker
 from boilerplate.composition.views import LayerView
+from boilerplate.project_state.answers_file import answers_file_name
 from boilerplate.project_state.lock_builder import build_lock
 from boilerplate.project_state.lock_file import write_lock
 from tests.boilerplate.templates.conftest import (
@@ -224,7 +225,7 @@ def make_git_project(
             tag across layers.
     """
     for layer, repo in repos.items():
-        if (project / f".copier-answers.{layer}.yml").exists():
+        if (project / answers_file_name(layer)).exists():
             tag = tags if isinstance(tags, str) else tags[layer]
             rehome_layer(project, layer=layer, source=repo, commit=tag)
     init_repo(project)
@@ -403,7 +404,7 @@ def _project_root(path: Path) -> Path:
 
 def answers_file(project: Path, layer: str) -> dict[str, Any]:
     """Return everything `layer`'s answers file records, Copier's keys included."""
-    return read_yaml(project / f".copier-answers.{layer}.yml")
+    return read_yaml(project / answers_file_name(layer))
 
 
 def lines(path: Path) -> list[str]:
