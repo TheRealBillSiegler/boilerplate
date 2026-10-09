@@ -48,8 +48,6 @@ The config root is platform-specific: `%APPDATA%\boilerplate` on Windows, and `$
 
 **Precedence**, high to low: the user's interactive answer › `[templates.<name>]` › `[defaults]` › the template's own default. Defaults pre-fill prompts — the user can still override at the prompt; `--non-interactive` takes them as-is.
 
-> **Retired**: The typed Profile model, its resolution chain, and `boilerplate config` were retired in the template-customization redesign (see [ADR-010](adr-010-profile.md)). Named default sets and a repurposed `config` command are designed but deferred.
-
 ---
 
 ## Catalog Source Configuration File
