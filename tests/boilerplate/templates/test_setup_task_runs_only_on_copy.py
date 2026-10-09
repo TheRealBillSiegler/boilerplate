@@ -7,14 +7,16 @@ fails on every update. The layer guards it with Copier's mapping form and a
 `when` on `_copier_operation` (docs/design/adr-014-deferred-task-execution.md
 names the `when:` gate as the idiomatic one).
 
-Two claims are pinned. The bundled composition declares the task creation-only,
-and a `when` on a task survives the pipeline from `copier.yml` through the
-merge to Copier's own evaluation, on a copy and on an update, so that
-declaration is honoured. The second is checked with a throwaway layer whose
-task leaves a marker file outside the project, because the bundled task needs
-`uv` and the network, and a marker inside the project would be swept into the
-update's own diff. An unguarded control shows the update test can see a task
-run.
+Two claims are pinned:
+
+- The bundled composition declares the setup task creation-only.
+- A `when` on a task survives Boilerplate's task pipeline, from `copier.yml`
+  through the merge to Copier's own evaluation, on a copy and on an update.
+
+A throwaway layer checks the second claim. Its task leaves a marker file outside
+the project, because the bundled task needs `uv` and the network, and a marker
+inside the project would be swept into the update's own diff. An unguarded
+control shows the update test can see a task run.
 """
 
 import sys
