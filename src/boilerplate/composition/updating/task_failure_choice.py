@@ -11,7 +11,8 @@ class TaskFailureChoice(StrEnum):
         UNDO: Restore the tracked files and the index from the commit the
             run began at, and remove the untracked, non-ignored files the
             undo listed. Ignored files, ``.git`` and anything outside the
-            project stay as they are.
+            project stay as they are; the run's outcome names the ignored
+            files and folders the tasks made, and none is deleted.
     """
 
     KEEP = "keep"

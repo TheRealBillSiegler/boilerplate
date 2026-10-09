@@ -168,7 +168,12 @@ class InterruptedAdd:
 
     def _outcome(self, status: AddStatus) -> AddOutcome:
         """Describe how the cut-off add ended."""
-        return AddOutcome(status=status, layer=self._layer, version=self._version)
+        return AddOutcome(
+            status=status,
+            layer=self._layer,
+            version=self._version,
+            ignored_left=self._failure.ignored_left,
+        )
 
 
 def _lists(lock: BoilerplateLock, layer: str, version: str) -> bool:
