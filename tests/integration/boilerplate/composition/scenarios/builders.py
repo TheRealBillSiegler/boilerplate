@@ -11,7 +11,10 @@ writes lives under pytest's temp directory, Copier's own temp copies included
 """
 
 import contextlib
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 from collections.abc import Callable, Generator, Mapping, Sequence
 from pathlib import Path
@@ -92,6 +95,29 @@ def require(condition: bool, message: str) -> None:
             "before reading its verdict.",
             pytrace=False,
         )
+
+
+def run_boilerplate(
+    *args: str, cwd: Path | None = None
+) -> subprocess.CompletedProcess[str]:
+    """Run `python -m boilerplate` with UTF-8 output and capture the result.
+
+    Args:
+        *args: The command line after `python -m boilerplate`.
+        cwd: The directory to run in, or None for the current one.
+
+    Returns:
+        The finished process, with text output and no exit-code check.
+    """
+    return subprocess.run(
+        [sys.executable, "-m", "boilerplate", *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        cwd=cwd,
+        check=False,
+    )
 
 
 @contextlib.contextmanager
