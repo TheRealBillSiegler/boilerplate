@@ -2,7 +2,7 @@
 
 import logging
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
@@ -117,6 +117,11 @@ class StagingWorktree:
         return self._start_commit
 
     @property
+    def started_at(self) -> datetime:
+        """When the staging began, the start of the run it belongs to."""
+        return self._started_at
+
+    @property
     def last_commit(self) -> str:
         """The worktree's newest layer commit, or the start commit before any."""
         if self._last_commit is None:
@@ -204,7 +209,9 @@ class StagingWorktree:
         """
         undo_working_tree(self.project, self.start_commit, untracked)
 
-    def copy_back(self, *, paused: bool = False) -> None:
+    def copy_back(
+        self, *, paused: bool = False, on_start: Callable[[], None] | None = None
+    ) -> None:
         """Reproduce the worktree's state in the user's checkout.
 
         The checkout must still be at the starting commit with no changes. Its
@@ -219,6 +226,9 @@ class StagingWorktree:
 
         Args:
             paused: Whether the last layer paused on a conflict.
+            on_start: Called once the checks have passed and the journal says
+                ``committing``, before the first file of the checkout changes.
+                If it raises, nothing was written.
 
         Raises:
             UpdateCheckoutChangedError: If the checkout changed during staging;
@@ -238,6 +248,8 @@ class StagingWorktree:
             added = (*added, *list_uncommitted_paths(self.path))
         require_paths_unobstructed(self.project, added)
         self.record_phase("committing")
+        if on_start is not None:
+            on_start()
         try:
             restore_working_tree(self.project, self.last_commit)
             if paused:

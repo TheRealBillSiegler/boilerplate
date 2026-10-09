@@ -108,6 +108,12 @@ class UpdateWalk:
                 return self._pause(staging, conflicts)
             return self._finish(staging)
 
+    def _targets(self) -> dict[str, str]:
+        """Return each layer's target version in walk order, as the marker keeps it."""
+        return {
+            layer: str(version) for layer, version in self._inputs.plan.targets.items()
+        }
+
     def _update_layers(self, staging: StagingWorktree) -> tuple[str, ...]:
         """Update each layer in the worktree and return the paused layer's conflicts.
 
@@ -166,10 +172,12 @@ class UpdateWalk:
                 finished=(*plan.skipped, *self._ran),
             )
 
-        finisher = Finisher(
-            RestoreOperation.UPDATE,
-            RestoreKind.PAUSED,
-            FinishSteps(write_record=record_conflict),
+        finisher = Finisher.for_staging(
+            staging,
+            operation=RestoreOperation.UPDATE,
+            kind=RestoreKind.PAUSED,
+            targets=self._targets(),
+            steps=FinishSteps(write_record=record_conflict),
         )
         finisher.copy_back(staging)
         finisher.finish()
@@ -182,10 +190,12 @@ class UpdateWalk:
             UpdateTaskFailedError: If a task failed and the handler kept the
                 files.
         """
-        finisher = Finisher(
-            RestoreOperation.UPDATE,
-            RestoreKind.COMPLETE,
-            FinishSteps(
+        finisher = Finisher.for_staging(
+            staging,
+            operation=RestoreOperation.UPDATE,
+            kind=RestoreKind.COMPLETE,
+            targets=self._targets(),
+            steps=FinishSteps(
                 write_record=self._record,
                 write_lock=lambda: self._write_lock(staging),
                 run_tasks=lambda: self._run_tasks(staging),
