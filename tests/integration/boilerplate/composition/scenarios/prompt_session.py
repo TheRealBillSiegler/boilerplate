@@ -1,52 +1,39 @@
 """Drive Copier's prompts in-process from prompt_toolkit pipe input.
 
-``drive_prompts`` runs a callable on a worker thread whose prompt input is a
-pipe and whose output is discarded, so no console is needed. A spy on the
-prompt function Copier calls records every question's default and whether it
-was shown, and feeds the keystrokes of the answer a scenario wants for it: Enter
-to accept the default, or the typed text over a cleared prefill.
+``drive_prompts`` runs a callable on the calling thread with prompt input that is
+already at end of input and output that is discarded, so no console is needed.
+A spy on the prompt function Copier calls records every question's default and
+whether it was shown, and answers each call from a fresh pipe holding only the
+keystrokes of the answers a scenario wants for that call's shown questions:
+Enter to accept the default, or the typed text over a cleared prefill, then end
+of input. A rejected answer the prompt would ask again, or a question asked
+outside the spy, therefore reads end of input and fails at once, as Copier's
+``InteractiveSessionError``, with no clock to wait out.
 """
 
-import threading
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, NamedTuple
 
 import pytest
 import questionary
 from prompt_toolkit.application import create_app_session
-from prompt_toolkit.input import PipeInput, create_pipe_input
+from prompt_toolkit.input import create_pipe_input
 from prompt_toolkit.output import DummyOutput
 
-GUARD_SECONDS = 90
+from tests.integration.boilerplate.composition.scenarios.prompt import Prompt
+
 CLEAR_PREFILL = "\x15"  # Ctrl-U
-
-
-class Prompt(NamedTuple):
-    """One question as Copier put it to the prompt.
-
-    Attributes:
-        name: The question's name.
-        default: The default the prompt offered, as the value of its choice.
-        shown: Whether the question was shown, rather than skipped by its
-            ``when``.
-    """
-
-    name: str
-    default: object
-    shown: bool
 
 
 class PromptSession[T](NamedTuple):
     """What a driven run did.
 
     Attributes:
-        finished: Whether the run ended within the guard time.
         prompts: Every question put to the prompt, in order.
         result: The run's return value, if it returned.
         error: What the run raised, if it raised.
     """
 
-    finished: bool
     prompts: list[Prompt]
     result: T | None
     error: BaseException | None
@@ -69,7 +56,7 @@ def _plain(default: object) -> object:
 def drive_prompts[T](
     run: Callable[[], T], typed: Mapping[str, str] | None = None
 ) -> PromptSession[T]:
-    """Run `run` with Copier's prompts answered from a pipe.
+    """Run `run` with Copier's prompts answered from pipes that end after one call.
 
     Args:
         run: The work that prompts, such as an interactive layer update.
@@ -77,13 +64,12 @@ def drive_prompts[T](
             prefill; every other shown question gets Enter, its default.
 
     Returns:
-        What the run did and every question put to the prompt.
+        What the run did and every question put to the prompt. An error the
+        run raised, including end of input at a prompt that wanted more than
+        its keystrokes, is in `error`.
     """
     keystrokes = dict(typed or {})
     prompts: list[Prompt] = []
-    pipes: list[PipeInput] = []
-    outcome: list[T] = []
-    errors: list[BaseException] = []
     real = questionary.unsafe_prompt
 
     def spy(
@@ -91,6 +77,7 @@ def drive_prompts[T](
         answers: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         given = dict(answers or {})
+        keys: list[str] = []
         for question in questions:
             when = question.get("when", True)
             shown = bool(when(given)) if callable(when) else bool(when)
@@ -98,28 +85,26 @@ def drive_prompts[T](
             prompts.append(Prompt(name, _plain(question.get("default")), shown))
             if shown:
                 text = CLEAR_PREFILL + keystrokes[name] if name in keystrokes else ""
-                pipes[0].send_text(text + "\r")
-        return real(questions, answers=answers)
+                keys.append(text + "\r")
+        with (
+            create_pipe_input() as pipe,
+            create_app_session(input=pipe, output=DummyOutput()),
+        ):
+            pipe.send_text("".join(keys))
+            pipe.close()
+            return real(questions, answers=answers)
 
-    def work() -> None:
-        try:
-            with (
-                create_pipe_input() as pipe,
-                create_app_session(input=pipe, output=DummyOutput()),
-            ):
-                pipes.append(pipe)
-                outcome.append(run())
-        except BaseException as error:
-            errors.append(error)
-
-    with pytest.MonkeyPatch.context() as patch:
+    outcome: T | None = None
+    error: Exception | None = None
+    with (
+        pytest.MonkeyPatch.context() as patch,
+        create_pipe_input() as closed,
+        create_app_session(input=closed, output=DummyOutput()),
+    ):
+        closed.close()
         patch.setattr("copier._main.unsafe_prompt", spy)
-        thread = threading.Thread(target=work, daemon=True)
-        thread.start()
-        thread.join(timeout=GUARD_SECONDS)
-    return PromptSession(
-        not thread.is_alive(),
-        prompts,
-        outcome[0] if outcome else None,
-        errors[0] if errors else None,
-    )
+        try:
+            outcome = run()
+        except Exception as raised:
+            error = raised
+    return PromptSession(prompts, outcome, error)
