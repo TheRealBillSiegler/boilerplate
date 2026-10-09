@@ -478,6 +478,9 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
 | Failure mid-update | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
+| Copy back fails partway | Checkout restored to the starting commit, worktree kept and named, marker and ref removed, no migration record, `BP_UPDATE_COPY_BACK_FAILED`, exit `1` |
+| Run cut off while copying back or finishing, working tree holds only what it wrote | The same `update` again repeats the copy back, runs the tasks, writes the lock and appends `success`; exit `0` |
+| Run cut off, working tree edited since, or the run was paused by a conflict | `BP_UPDATE_INTERRUPTED` naming the run's targets; nothing changed, exit `3` |
 
 ### Performance Contracts
 
@@ -493,7 +496,7 @@ Adding a layer applies one more template to a project Boilerplate already manage
 
 ### Preconditions
 
-The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.md#add), checked before any file changes, with the working tree check the same as the update [Pre-Flight Check](#pre-flight-check). Each failure exits with code `3`.
+The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.md#add), checked before any file changes, with the working tree check the same as the update [Pre-Flight Check](#pre-flight-check), whose operation lock and [restore-marker rules](#interrupted-copy-back) run first. Each failure exits with code `3`.
 
 ### Add pipeline
 
@@ -517,6 +520,8 @@ The preconditions are the ones in [05-cli-reference.md §add](05-cli-reference.m
 7. **Append a migration record** to `.boilerplate/migrations.yml`. The record carries no classification, as for `created` and `adopted` records: no prior version of the layer exists to compare.
 8. **Run the new layer's tasks once**, as at compose, against the finished project.
 
+The copy back, its failure handling and the restore marker are those of `update` ([Staging worktree](#staging-worktree), [Interrupted copy back](#interrupted-copy-back)), with the marker's `operation` set to `add`.
+
 ### Files
 
 The new layer renders into the existing tree as the by-hand copy would. The new layer's `_skip_if_exists` applies, because Copier checks it before `overwrite` (`copier/_main.py` lines 505 then 514): a file it lists that already exists keeps its content, and any other file another layer already rendered is overwritten and shows in the uncommitted diff, where the user reviews it before committing. `new` with the layer and `add` of the layer later can therefore differ for the listed files, because a composed `new` render ignores every layer's `_skip_if_exists` ([04 §Per-Layer Render Loop](04-composition-engine.md#per-layer-render-loop)) while in the `add` case the project already owns them. A template intended to be added later SHOULD render only files no other layer renders.
@@ -536,6 +541,8 @@ A layer that offers alternatives (CI providers, docs site generators) SHOULD ask
 | An ancestor the layer `extends` is not in the lock | Error naming each missing layer with the remediation `boilerplate add <ancestor>` first; no files modified, exit `3` |
 | An ancestor's recorded version fails the layer's `extends` constraint | Error naming the ancestor, its recorded version and the constraint, with the remediation `boilerplate update` first; no files modified, exit `3` |
 | Failure mid-add | Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit `1` |
+| Run cut off while copying back or finishing, working tree holds only what it wrote | The same `add` again finishes the run: lock written, `success` record appended; exit `0` |
+| Run cut off, working tree edited since | `BP_UPDATE_INTERRUPTED` naming the layer; nothing changed, exit `3` |
 
 ---
 
