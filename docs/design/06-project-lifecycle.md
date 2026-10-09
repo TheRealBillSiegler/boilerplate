@@ -450,7 +450,7 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 | Merge conflict detected | Layers finished so far brought back as uncommitted changes with Copier's conflict markers, no new lock written, migration record with `conflict` status, exit `4` |
 | Dirty working tree, untracked files included | Error naming the uncommitted changes; no files modified, exit `3` |
 | Project with submodules | `BP_UPDATE_SUBMODULES_UNSUPPORTED` naming the paths; no files modified, exit `3` |
-| User's checkout changed during the walk | Worktree discarded, `BP_UPDATE_CHECKOUT_CHANGED`; no files modified, exit `3` |
+| User's checkout changed while the run worked in the staging worktree | Worktree discarded, `BP_UPDATE_CHECKOUT_CHANGED`; no files modified, exit `3` |
 | Task fails after the copy back (`--non-interactive`) | Files kept, lock written, failed task named with how to rerun it, `failed` migration record, exit `1` |
 | Recorded answer rejected by the target view's question type or validator (non-interactive) | `BP_INPUT_ANSWER_REJECTED` naming the layer, question and recorded value; the update stops, no lock written, exit `3` |
 | Downgrade attempt | Rejected before any layer changes, error names the layer, recorded version and target, exit `3` |
