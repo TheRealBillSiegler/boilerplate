@@ -378,15 +378,17 @@ _SET_ASIDE_REMEDIATION = (
 
 
 class AnswersFileIncompleteError(BoilerplateError):
-    """Raised when a layer's answers file lacks keys its scoped view asks for.
+    """Raised when no answers file records keys a layer's scoped view asks for.
 
     A hand-run vanilla update of a child layer leaves its answers file with only
-    the layer's own keys; the old copy would then render the ancestors'
-    questions at their defaults. The check runs before any layer does.
+    the layer's own keys, and the walk fills the rest for the old copy from the
+    declaring layers' files. A key neither the layer's own file nor its
+    declaring layer's records has no answer to fill. The check runs before any
+    layer does.
 
     Attributes:
-        missing: The question keys each layer's answers file lacks, keyed by
-            layer name.
+        missing: The question keys neither the layer's own answers file nor
+            its declaring layer's records, keyed by layer name.
     """
 
     def __init__(
