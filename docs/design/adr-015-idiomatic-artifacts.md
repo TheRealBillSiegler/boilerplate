@@ -98,9 +98,9 @@ Empirical run against the bundled `project` and `streamlit` templates and synthe
 
 ## Verification (2026-10-08)
 
-Probe scenarios against Copier 9.18.1 (`tests/integration/boilerplate/composition/scenarios/`), on the bundled `project` and `streamlit` templates.
+Probe scenarios against Copier 9.18.1, on the bundled `project` and `streamlit` templates.
 
-- **A questionnaire pass run before the walk forced a renamed question's default over the migrated answer.** `project` v2 renamed `author_name` to `maintainer_name` behind a before-migration. The pass ran before that migration, found `maintainer_name` unanswered, and its forced default `Your Name` replaced the migrated value in both layers and both orders (`test_question_changes.py::TestRenamedQuestion`).
+- **A questionnaire pass run before the walk forced a renamed question's default over the migrated answer.** `project` v2 renamed `author_name` to `maintainer_name` behind a before-migration. The pass ran before that migration, found `maintainer_name` unanswered, and its forced default `Your Name` replaced the migrated value in both layers and both orders.
 
 ## Relationship to other ADRs
 
