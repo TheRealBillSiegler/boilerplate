@@ -90,6 +90,18 @@ class TestBoilerplateLockSadPath:
                 _fields(created_at=datetime(2026, 10, 8, 12, 0))  # noqa: DTZ001
             )
 
+    def test_rejects_a_lock_with_no_layers(self) -> None:
+        """Hold at least one layer: the root, which every operation reads."""
+        with pytest.raises(ValidationError, match="layers"):
+            BoilerplateLock.model_validate(_fields(layers=[]))
+
+    def test_rejects_a_lock_that_leaves_the_layers_out(self) -> None:
+        fields = _fields()
+        del fields["layers"]
+
+        with pytest.raises(ValidationError, match="layers"):
+            BoilerplateLock.model_validate(fields)
+
     def test_rejects_two_layers_of_one_name(self) -> None:
         with pytest.raises(ValidationError, match="core"):
             BoilerplateLock.model_validate(
