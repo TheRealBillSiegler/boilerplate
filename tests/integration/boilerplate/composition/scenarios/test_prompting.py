@@ -8,112 +8,65 @@ prompt function Copier calls records each question's default and whether it
 was shown.
 """
 
-import threading
-from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, NamedTuple
+from collections.abc import Iterator
+from typing import Any
 
 import pytest
-import questionary
-from prompt_toolkit.application import create_app_session
-from prompt_toolkit.input import create_pipe_input
-from prompt_toolkit.output import DummyOutput
 
 from tests.boilerplate.templates.conftest import ask_merged_questionnaire
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
     templates_at,
 )
+from tests.integration.boilerplate.composition.scenarios.prompt_session import (
+    PromptSession,
+    drive_prompts,
+)
 from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
-KEYSTROKES = "\x15Typed App\r" + "\r" * 12  # Ctrl-U clears the prefill.
-GUARD_SECONDS = 90
 # Core 1.1.0 asks `license`, which app 1.1.0 overrides; service overrides core's
 # Python version.
 PROMPTED = {"core": "1.1.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.1.0"}
 
 
-def _plain(default: object) -> object:
-    """Return a choice question's default as the value of its choice."""
-    return default.value if isinstance(default, questionary.Choice) else default
-
-
-class Prompt(NamedTuple):
-    """One question as Copier put it to the prompt."""
-
-    name: str
-    default: object
-    shown: bool
-
-
-class Session(NamedTuple):
-    """What the interactive pass did."""
-
-    finished: bool
-    prompts: list[Prompt]
-    answers: dict[str, Any]
-
-
 @pytest.fixture(scope="module")
 def session(
     family: Family, tmp_path_factory: pytest.TempPathFactory
-) -> Iterator[Session]:
-    """Drive the unified questionnaire from pipe input on a worker thread."""
+) -> Iterator[PromptSession[dict[str, Any]]]:
+    """Drive the unified questionnaire from pipe input, typing a new project name."""
     root = tmp_path_factory.mktemp("prompting")
     templates = templates_at(family, root, PROMPTED)
-    prompts: list[Prompt] = []
-    answers: dict[str, Any] = {}
-    real = questionary.unsafe_prompt
-
-    def spy(
-        questions: Sequence[Mapping[str, Any]],
-        answers: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        given = dict(answers or {})
-        for question in questions:
-            when = question.get("when", True)
-            shown = bool(when(given)) if callable(when) else bool(when)
-            prompts.append(
-                Prompt(str(question["name"]), _plain(question.get("default")), shown)
-            )
-        return real(questions, answers=answers)
-
-    def ask() -> None:
-        with (
-            create_pipe_input() as pipe,
-            create_app_session(input=pipe, output=DummyOutput()),
-        ):
-            pipe.send_text(KEYSTROKES)
-            answers.update(
+    with temp_dir_inside(root):
+        yield drive_prompts(
+            lambda: dict(
                 ask_merged_questionnaire("app", {}, templates, defaults=False).user
-            )
-
-    with temp_dir_inside(root), pytest.MonkeyPatch.context() as patch:
-        patch.setattr("copier._main.unsafe_prompt", spy)
-        thread = threading.Thread(target=ask, daemon=True)
-        thread.start()
-        thread.join(timeout=GUARD_SECONDS)
-        yield Session(not thread.is_alive(), prompts, answers)
+            ),
+            {"project_name": "Typed App"},
+        )
 
 
 @pytest.mark.xdist_group("S17")
 class TestInteractivePrompting:
     """S17: the unified questionnaire under pipe input."""
 
-    def test_pass_finishes_and_takes_the_typed_answer(self, session: Session) -> None:
+    def test_pass_finishes_and_takes_the_typed_answer(
+        self, session: PromptSession[dict[str, Any]]
+    ) -> None:
         """S17: the pass runs without a console and returns the typed name."""
-        assert (session.finished, session.answers.get("project_name")) == (
-            True,
-            "Typed App",
-        )
+        answers = session.result or {}
 
-    def test_hidden_questions_are_never_shown(self, session: Session) -> None:
+        assert (session.error, answers.get("project_name")) == (None, "Typed App")
+
+    def test_hidden_questions_are_never_shown(
+        self, session: PromptSession[dict[str, Any]]
+    ) -> None:
         """S17: the `when: false` question reaches the prompt but is not shown."""
         hidden = [p.name for p in session.prompts if not p.shown]
 
         assert hidden == ["package_name"]
 
     def test_prompt_defaults_carry_the_descendants_overrides(
-        self, session: Session
+        self, session: PromptSession[dict[str, Any]]
     ) -> None:
         """S17: service's and app's overrides are the defaults the prompts show."""
         defaults = {
@@ -125,7 +78,7 @@ class TestInteractivePrompting:
         assert defaults == {"python_version": "3.13", "license": "Apache-2.0"}
 
     def test_folder_name_default_comes_from_the_scratch_destination(
-        self, session: Session
+        self, session: PromptSession[dict[str, Any]]
     ) -> None:
         """S17: project_name defaults to the pass's temp directory, not the project.
 
