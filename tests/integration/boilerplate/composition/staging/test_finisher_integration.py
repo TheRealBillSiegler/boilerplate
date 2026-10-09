@@ -34,10 +34,10 @@ from boilerplate.models import (
     RestorePhase,
 )
 from tests.boilerplate.templates.conftest import git
-from tests.integration.boilerplate.composition.staging.conftest import head
-from tests.integration.boilerplate.composition.staging.test_copy_back_failure_integration import (
+from tests.integration.boilerplate.composition.staging.conftest import (
     disk_full,
     file_in_use,
+    head,
     restore_and_undo_dying,
     restore_dying_after_one_file,
 )
