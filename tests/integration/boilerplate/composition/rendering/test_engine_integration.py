@@ -48,6 +48,9 @@ _WORKING_TREE_CONTENT = "unreleased content for {{ unreleased_question }}"
 _WORKING_TREE_QUESTIONS = (
     f"{_TAGGED_QUESTIONS}unreleased_question:\n  type: str\n  default: unreleased\n"
 )
+_PROJECT_NAME_QUESTION: dict[str, Any] = {
+    "project_name": {"type": "str", "default": "demo"}
+}
 _ANSWERS_STUB = (
     "# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY\n"
     "{{ _copier_answers|to_nice_yaml -}}\n"
@@ -132,24 +135,26 @@ def dirty_git_template(tmp_path: Path) -> Path:
     return template
 
 
-def _single_layer_composition(template: Path) -> Composition:
-    """Wrap ``template`` as a one-layer composition.
+def _single_layer_composition(
+    template: Path, name: str, final: dict[str, Any]
+) -> Composition:
+    """Wrap ``template`` as a one-layer composition at version ``0.1.0``.
 
     Args:
         template: Template directory to render.
+        name: Name the layer carries in the composition.
+        final: Questions the composition asks, keyed by question name.
 
     Returns:
         A composition whose only layer is ``template``.
     """
-    spec = "gitlayer@0.1.0"
-    node = GraphNode(name="gitlayer", version="0.1.0", path=template)
+    spec = f"{name}@0.1.0"
+    node = GraphNode(name=name, version="0.1.0", path=template)
     return Composition(
         graph=CompositionGraph(nodes={spec: node}, edges={}, sequence=[spec]),
         sequence=[spec],
-        layers=[
-            CompositionLayer(name="gitlayer", version="0.1.0", path=template, values={})
-        ],
-        final={"project_name": {"type": "str", "default": "demo"}},
+        layers=[CompositionLayer(name=name, version="0.1.0", path=template, values={})],
+        final=final,
     )
 
 
@@ -179,7 +184,10 @@ def _render(template: Path, destination: Path) -> None:
         template: Template directory to render.
         destination: Directory to render into.
     """
-    _render_composition(_single_layer_composition(template), destination)
+    _render_composition(
+        _single_layer_composition(template, "gitlayer", _PROJECT_NAME_QUESTION),
+        destination,
+    )
 
 
 def _catalog_config(catalog: Path) -> dict[str, Any]:
@@ -304,7 +312,7 @@ class TestMultiLayerPerLayerAnswers:
                     name="gitlayer", version="0.1.0", path=dirty_git_template, values={}
                 ),
             ],
-            final={"project_name": {"type": "str", "default": "demo"}},
+            final=_PROJECT_NAME_QUESTION,
         )
 
         _render_composition(composition, destination)
@@ -443,38 +451,12 @@ class TestGitTemplateCleanup:
         assert list(temp_root.glob("copier*")) == []
 
 
-def _plain_single_layer_composition(template: Path) -> Composition:
-    """Wrap a plain template as a one-layer composition.
-
-    Args:
-        template: Template directory to render.
-
-    Returns:
-        A composition whose only layer is ``template``.
-    """
-    spec = "baselayer@0.1.0"
-    return Composition(
-        graph=CompositionGraph(
-            nodes={spec: GraphNode(name="baselayer", version="0.1.0", path=template)},
-            edges={},
-            sequence=[spec],
-        ),
-        sequence=[spec],
-        layers=[
-            CompositionLayer(
-                name="baselayer", version="0.1.0", path=template, values={}
-            )
-        ],
-        final={"base_question": {"type": "str", "default": "base"}},
-    )
-
-
 class TestCopierVersionLine:
     """Copier's "Copying from template version" line names a real version.
 
     Seam: the progress line Copier writes to stderr when a layer renders.
     Source of truth: the layer version the composition carries, which is the
-    ``0.1.0`` literal in ``_plain_single_layer_composition`` for a plain
+    ``0.1.0`` literal in ``_single_layer_composition`` for a plain
     folder, and the git tag (``v1.0.0``) for a git-backed template, whose
     version Copier uses to choose migrations.
     Breaks if the engine stops supplying the version, or overrides a git one.
@@ -487,7 +469,11 @@ class TestCopierVersionLine:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         RenderEngine().render(
-            _plain_single_layer_composition(plain_base_template),
+            _single_layer_composition(
+                plain_base_template,
+                "baselayer",
+                {"base_question": {"type": "str", "default": "base"}},
+            ),
             ExecutionContext(
                 destination=tmp_path / "out",
                 context_data={},
@@ -573,7 +559,7 @@ def _two_layer_composition(base: Path, final: Path) -> Composition:
             CompositionLayer(name="base", version="0.1.0", path=base, values={}),
             CompositionLayer(name="final", version="0.1.0", path=final, values={}),
         ],
-        final={"project_name": {"type": "str", "default": "demo"}},
+        final=_PROJECT_NAME_QUESTION,
     )
 
 
