@@ -40,6 +40,12 @@ from tests.integration.boilerplate.composition.staging.test_copy_back_failure_in
 )
 
 TARGETS = {"core": "1.1.0", "service": "1.2.0"}
+ADDED = {"docs": "1.0.0"}
+
+
+def targets_of(operation: RestoreOperation) -> dict[str, str]:
+    """Return the walk's targets: an add walks only the layer it adds."""
+    return ADDED if operation is RestoreOperation.ADD else TARGETS
 
 
 class Seen:
@@ -91,7 +97,7 @@ def finish(
             stage,
             operation=operation,
             kind=kind,
-            targets=TARGETS,
+            targets=targets_of(operation),
             steps=seen.steps(keep=keep),
         )
         finisher.copy_back(stage)
@@ -336,7 +342,7 @@ def cut_off_marker(
             phase=phase,
             start_commit=stage.start_commit,
             result_commit=stage.commit_layer("layer one"),
-            targets=TARGETS,
+            targets=targets_of(operation),
             started_at=stage.started_at,
         )
     pin_result(project, marker.result_commit)

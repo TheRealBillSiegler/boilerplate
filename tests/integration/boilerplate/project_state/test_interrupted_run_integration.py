@@ -37,6 +37,7 @@ from tests.boilerplate.templates.conftest import commit_all, git, init_repo
 
 STARTED = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
 TARGETS = {"core": "1.1.0", "service": "1.2.0"}
+ADDED = {"docs": "1.0.0"}
 
 
 @pytest.fixture
@@ -60,7 +61,10 @@ def mark(
     operation: RestoreOperation = RestoreOperation.UPDATE,
     start_commit: str | None = None,
 ) -> RestoreMarker:
-    """Write the marker a run to TARGETS leaves when cut off, and dirty the tree."""
+    """Write the marker a run to TARGETS leaves when cut off, and dirty the tree.
+
+    An add walks only the layer it adds, so its marker names ADDED instead.
+    """
     commit = head(project)
     marker = RestoreMarker(
         operation=operation,
@@ -68,7 +72,7 @@ def mark(
         phase=RestorePhase.RECORDING,
         start_commit=start_commit or commit,
         result_commit=commit,
-        targets=TARGETS,
+        targets=ADDED if operation is RestoreOperation.ADD else TARGETS,
         started_at=STARTED,
     )
     pin_result(project, commit)
