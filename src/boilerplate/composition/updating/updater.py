@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from boilerplate import __version__
-from boilerplate.common.exceptions import UpdateConflictPausedError
+from boilerplate.common.exceptions import RESET_THEN_STASH, UpdateConflictPausedError
 from boilerplate.composition.staging import check_project_ready
 from boilerplate.composition.staging.operation_preflight import preflight
 from boilerplate.composition.updating.task_failure_handler import (
@@ -33,8 +33,7 @@ _logger = logging.getLogger(__name__)
 
 _PAUSE_REMEDIATION = (
     "Resolve conflicts and commit, then run 'boilerplate update' again. "
-    "'git reset' and then 'git stash --include-untracked' set the partial update "
-    "aside."
+    f"{RESET_THEN_STASH} set the partial update aside."
 )
 
 
