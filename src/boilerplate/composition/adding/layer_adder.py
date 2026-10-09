@@ -73,6 +73,8 @@ class LayerAdder:
                 ``boilerplate.yml``.
             UpdateTaskFailedError: If a task failed and the files were kept.
             UpdateCheckoutChangedError: If the checkout changed during the add.
+            ValueError: If Copier rejects a supplied answer; the error is
+                Copier's own, not a ``BoilerplateError``.
         """
         if not (project / LOCK_FILE_NAME).is_file():
             raise ProjectNotManagedError(
