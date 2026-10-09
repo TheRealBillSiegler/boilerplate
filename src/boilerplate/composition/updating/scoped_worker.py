@@ -13,7 +13,10 @@ from pydantic.dataclasses import dataclass
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
-from boilerplate.composition.updating.hidden_questions import RENDER_ERRORS
+from boilerplate.composition.updating.hidden_questions import (
+    RENDER_ERRORS,
+    hidden_questions,
+)
 from boilerplate.composition.updating.render_role import RenderRole, render_role
 from boilerplate.composition.views import (
     LayerView,
@@ -59,7 +62,8 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
     copy fills each key that file lacks, as a hand-run vanilla update leaves
     it, from the answers the declaring layers recorded when the walk began, so
     it renders as the layer was last rendered and not at the questions'
-    defaults. A key the file records keeps its own value.
+    defaults. A key the file records keeps its own value, and a question the
+    old view hides is not filled.
 
     Attributes:
         old_view: The view the old copy renders under.
@@ -122,10 +126,30 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         """
         role = render_role(Path(self.dst_path))
         if role is RenderRole.OLD_COPY:
-            self.data = {**self.old_copy_fill, **self.data}
+            self.data = self.old_copy_data()
         elif role is RenderRole.IN_PLACE:
             self.check_recorded_answers()
         super()._ask()
+
+    def old_copy_data(self) -> dict[str, Any]:
+        """Return the old copy's data, the layer's own answers filled from ancestors.
+
+        Copier records no answer for a question its ``when`` hides, yet data
+        given for one still reaches the render, so only a question the old
+        view shows under those answers is filled (``hidden_questions``); a
+        hidden one keeps Copier's default, as when the layer was last
+        rendered.
+
+        Returns:
+            The layer's own recorded answers, which Copier set as the old
+            copy's data, with each key they lack taken from ``old_copy_fill``.
+        """
+        answers = {**self.old_copy_fill, **self.data}
+        hidden = hidden_questions(
+            self.old_view.questions, answers, jinja_env=self.jinja_env
+        )
+        fill = {k: v for k, v in self.old_copy_fill.items() if k not in hidden}
+        return {**fill, **self.data}
 
     def check_recorded_answers(self) -> None:
         """Check the layer's recorded answers against the target view's questions.
