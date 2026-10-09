@@ -7,13 +7,13 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-from copier.errors import InvalidTypeError, UserMessageError
-from jinja2.exceptions import TemplateError
+from copier.errors import InvalidTypeError
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from boilerplate.common.exceptions import RecordedAnswerRejectedError
 from boilerplate.composition.rendering.models.merged_template import MergedTemplate
+from boilerplate.composition.updating.hidden_questions import RENDER_ERRORS
 from boilerplate.composition.updating.render_role import RenderRole, render_role
 from boilerplate.composition.views import (
     LayerView,
@@ -29,11 +29,6 @@ from boilerplate.integrations.copier_types import (
 )
 
 _logger = logging.getLogger(__name__)
-
-# What rendering a part of a question can raise: Copier wraps an undefined
-# variable in ``UserMessageError`` but lets a compile error, such as an unknown
-# filter, escape as Jinja's own ``TemplateError``.
-_RENDER_ERRORS = (UserMessageError, TemplateError)
 
 
 # pydantic's @dataclass erases the Worker base class's type (hence the
@@ -188,7 +183,7 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
             rejected = self._drop_rejected_recorded_answer(question)
             try:
                 asked = question.get_when()
-            except _RENDER_ERRORS:
+            except RENDER_ERRORS:
                 return
             if asked and rejected is not None:
                 self._handle_rejection(name, *rejected)
@@ -243,12 +238,12 @@ class ScopedWorker(Worker):  # pyright: ignore[reportUntypedBaseClass, reportGen
         value = self.answers.last[name]
         try:
             question.get_type_name()
-        except (InvalidTypeError, *_RENDER_ERRORS):
+        except (InvalidTypeError, *RENDER_ERRORS):
             reason = None
         else:
             try:
                 question.validate_answer(question.parse_answer(value))
-            except _RENDER_ERRORS:
+            except RENDER_ERRORS:
                 reason = None
             except Exception as error:
                 reason = str(error)

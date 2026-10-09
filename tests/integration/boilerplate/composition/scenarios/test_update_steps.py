@@ -571,7 +571,7 @@ def walk_after_the_hand_run(
     recorded_views = templates_at(family, work, HAND_RUN)
     check_answers_complete(
         {name: layer_view(name, recorded_views) for name in ("core", "service")},
-        {layer: set(answers) for layer, answers in walk_answers.items()},
+        walk_answers,
     )
     for layer in ("core", "service"):
         update_family_layer(
