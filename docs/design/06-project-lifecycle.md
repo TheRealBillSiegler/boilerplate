@@ -354,7 +354,7 @@ Before the tasks run, Boilerplate notes the entries git ignores in the checkout 
 
 The user resolves and commits as with plain Copier, then reruns `boilerplate update`. The rerun resumes from the `conflict` record ([design 04 §Safe Update](04-composition-engine.md#safe-update)), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records `success`. An explicit `--target-version` that differs from the record stops with `BP_UPDATE_TARGET_MISMATCH` until the user sets the partial update aside, after which the record no longer binds and `update` plans afresh. A rerun on an uncommitted tree stops at the [pre-flight check](#pre-flight-check), so the mismatch is reached only after the user commits, when [Setting a partial update aside](#setting-a-partial-update-aside) applies. A run cut off before it appends its record is finished or set aside as [Interrupted copy back](#interrupted-copy-back) describes.
 
-The lock file is only written after a fully successful update, so a failed or paused update leaves the previous lock in place.
+An update that fails before the copy back completes, or pauses on a conflict, leaves the previous lock in place; a task failure whose files are kept writes the lock.
 
 
 ### Interrupted copy back
