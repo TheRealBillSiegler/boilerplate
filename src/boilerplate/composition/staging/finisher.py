@@ -7,6 +7,9 @@ from typing import Self
 
 from boilerplate.composition.staging.copy_back import restore_working_tree
 from boilerplate.composition.staging.finish_steps import FinishSteps
+from boilerplate.composition.staging.interrupted_run import (
+    require_added_paths_match,
+)
 from boilerplate.composition.staging.restore_marker_file import (
     pin_result,
     remove_marker,
@@ -166,15 +169,22 @@ class Finisher:
 
         At ``copy_back`` the copy back is repeated from the marker's result
         commit, which writes the same files on every run, and the run goes on
-        as after a copy back. At ``tasks`` the tasks run again. At
-        ``recording`` only the lock and the record remain.
+        as after a copy back; first every path the run adds that already
+        exists in the checkout, ignored or not, must hold the result's content.
+        At ``tasks`` the tasks run again. At ``recording`` only the lock and
+        the record remain.
 
         Returns:
             Whether the files are kept: ``False`` when a task failed and the
             run was undone.
+
+        Raises:
+            UpdateInterruptedError: If a path the run adds holds other content
+                than the result's, so the repeated copy back would overwrite it.
         """
         marker = self._marker
         if marker.phase is RestorePhase.COPY_BACK:
+            require_added_paths_match(self._project, marker)
             restore_working_tree(self._project, marker.result_commit)
         if marker.phase is RestorePhase.RECORDING:
             self._record()
