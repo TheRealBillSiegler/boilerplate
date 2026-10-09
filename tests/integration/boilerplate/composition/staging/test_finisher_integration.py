@@ -109,7 +109,7 @@ def finish(
                 else None
             ),
         )
-        finisher.copy_back(stage)
+        finisher.copy_back()
         return result, finisher.finish()
 
 
@@ -200,7 +200,7 @@ class TestIncompleteSteps:
                 targets=TARGETS,
                 steps=steps,
             )
-            finisher.copy_back(stage)
+            finisher.copy_back()
             finisher.finish()
 
 
@@ -227,10 +227,26 @@ class TestJournal:
                     run_tasks=lambda: True,
                 ),
             )
-            finisher.copy_back(stage)
+            finisher.copy_back()
             finisher.finish()
 
         assert phases == ["locking"]
+
+
+class TestResumedFinisher:
+    def test_a_finisher_built_without_a_staging_has_nothing_to_copy_back(
+        self, project: Path, staging_root: Path
+    ) -> None:
+        """Refuse a copy back from a finisher that was built without a staging."""
+        marker = cut_off_marker(
+            project,
+            staging_root,
+            operation=RestoreOperation.UPDATE,
+            phase=RestorePhase.TASKS,
+        )
+
+        with pytest.raises(RuntimeError, match="staging"):
+            Finisher(project, marker, Seen(project).steps()).copy_back()
 
 
 class TestMarker:
@@ -415,7 +431,7 @@ class TestMarker:
                     run_tasks=cut_off,
                 ),
             )
-            finisher.copy_back(stage)
+            finisher.copy_back()
             finisher.finish()
 
         marker = read_marker(project)
