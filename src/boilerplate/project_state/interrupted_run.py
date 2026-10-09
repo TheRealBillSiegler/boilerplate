@@ -6,6 +6,7 @@ from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 from boilerplate.common.exceptions import UpdateInterruptedError
+from boilerplate.composition.staging.committed_lock import read_committed_lock
 from boilerplate.composition.staging.git_commands import run_git
 from boilerplate.composition.staging.restore_marker_file import (
     read_marker,
@@ -60,12 +61,14 @@ def resolve_interrupted_run(
             moved since the run began, or a copy back was cut off that cannot
             be repeated; the error names the run's targets. Also if the marker
             does not parse.
+        LockReadFailedError: If a cut-off update's starting commit holds no
+            lock that parses, so its last layer cannot be told.
     """
     marker = read_marker(project)
     if marker is None:
         remove_marker(project)
         return None
-    if _run_finished(marker, read_migrations(project)):
+    if _run_finished(project, marker, read_migrations(project)):
         remove_marker(project)
         return None
     if not run_git(project, "status", "--porcelain").strip():
@@ -103,7 +106,9 @@ def resolve_interrupted_run(
     return marker
 
 
-def _run_finished(marker: RestoreMarker, records: Sequence[MigrationRecord]) -> bool:
+def _run_finished(
+    project: Path, marker: RestoreMarker, records: Sequence[MigrationRecord]
+) -> bool:
     """Check whether the log's last record is the marked run's own.
 
     A ``conflict`` record matches on its targets; any other record matches when
@@ -114,8 +119,22 @@ def _run_finished(marker: RestoreMarker, records: Sequence[MigrationRecord]) -> 
     last = records[-1]
     if last.status is MigrationStatus.CONFLICT:
         return dict(last.targets or {}) == dict(marker.targets)
-    layer, version = list(marker.targets.items())[-1]
-    return last.to_version == f"{layer}@{version}"
+    layer = _last_layer(project, marker)
+    version = marker.targets.get(layer)
+    return version is not None and last.to_version == f"{layer}@{version}"
+
+
+def _last_layer(project: Path, marker: RestoreMarker) -> str:
+    """Name the marked walk's last layer: the added one, or the update's root.
+
+    An update walks the lock's layers in order, root last, so the root is read
+    from the lock at the run's starting commit rather than from the order the
+    marker's targets were written in.
+    """
+    if marker.operation is RestoreOperation.ADD:
+        (added,) = marker.targets
+        return added
+    return read_committed_lock(project, marker.start_commit).layers[-1].name
 
 
 def _matches_result(project: Path, result_commit: str) -> bool:
