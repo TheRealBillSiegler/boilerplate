@@ -17,7 +17,7 @@ The ancillary documents in this directory:
 - [`adr-007-update-model.md`](adr-007-update-model.md) — safe update: conflict is a pause (exit 4 + `--continue`/`--abort`); structural change is migration-driven; updatability is per-layer.
 - [`adr-008-distribution-name.md`](adr-008-distribution-name.md) — distribution name: PyPI `boilerplate` is taken by a same-niche tool; publish the dist as `boilerplate-cli`, keep `boilerplate` as the command/repo/brand (Pending — may become `boilerplate` if the name is acquired).
 - [`adr-009-environment-provider-protocol.md`](adr-009-environment-provider-protocol.md) — target: generalize Environment Provisioning into a provider protocol (proto is one kind, optional).
-- [`adr-010-profile.md`](adr-010-profile.md) — profiles are plain default-answer files (`profile.toml` riding Copier's overridable `user_defaults=` channel); the typed Profile model is retired.
+- [`adr-010-profile.md`](adr-010-profile.md) — profiles are plain default-answer files (`profile.toml` riding Copier's overridable `user_defaults=` channel).
 - [`adr-011-structured-overlay-merge.md`](adr-011-structured-overlay-merge.md) — proposed and deferred: deep-merge structured overlay fragments (`<file>.overlay.toml`) for downstream file customization; the 0.x releases ship without it.
 - [`adr-012-positioning.md`](adr-012-positioning.md) — docs framing relative to Copier: foundation framing (pixi/hatch pattern), the public-signal evidence behind it, and its pre-launch, proxy-only epistemic status.
 - [`adr-013-interactivity-contract.md`](adr-013-interactivity-contract.md) — stdin-TTY-gated prompting, fail-closed with named substitute flags, two-layer enforcement, no CI-env-var input-mode switching.
