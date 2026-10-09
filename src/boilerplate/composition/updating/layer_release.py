@@ -8,11 +8,11 @@ from boilerplate.composition.updating.release_ref import ReleaseRef
 class LayerRelease(ReleaseRef):
     """One layer of a composed project and the release to update it to.
 
-    The release is a `ReleaseRef`: the source stays the string the layer's
-    answers file records, where a path would rewrite a URL's slashes. The class
-    subclasses `ReleaseRef` rather than holding one, so a `LayerRelease` is
-    accepted wherever a `ReleaseRef` is, such as the mapping passed to
-    `ReleaseViews`.
+    A `LayerRelease` is a `ReleaseRef` that also names its layer. It subclasses
+    `ReleaseRef` rather than holding one, so it is accepted wherever a
+    `ReleaseRef` is, such as the mapping passed to `ReleaseViews`. Like its
+    parent, it keeps the source as the string the layer's answers file records,
+    where a path would rewrite a URL's slashes.
 
     Attributes:
         layer: The layer to update; names its ``.copier-answers.<layer>.yml``.
