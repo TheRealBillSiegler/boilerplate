@@ -81,6 +81,15 @@ class TestWriteAndRead:
         with pytest.raises(UpdateInterruptedError, match=r"boilerplate-restore\.json"):
             read_marker(project)
 
+    def test_a_marker_that_is_not_utf8_stops_naming_the_file(
+        self, project: Path
+    ) -> None:
+        """Stop with BP_UPDATE_INTERRUPTED on bytes that do not decode as UTF-8."""
+        (project / ".git" / "boilerplate-restore.json").write_bytes(b"\xff\xfe{")
+
+        with pytest.raises(UpdateInterruptedError, match=r"boilerplate-restore\.json"):
+            read_marker(project)
+
     def test_the_unparseable_marker_remediation_discards_the_ref(
         self, project: Path
     ) -> None:
