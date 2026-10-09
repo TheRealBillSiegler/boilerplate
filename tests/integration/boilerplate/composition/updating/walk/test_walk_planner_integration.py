@@ -14,6 +14,7 @@ from boilerplate.common.exceptions import (
     AnswersFileIncompleteError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
+    UpdateUnknownLayerError,
 )
 from boilerplate.composition.updating.update_request import UpdateRequest
 from boilerplate.composition.updating.walk.walk_plan import WalkPlan
@@ -89,8 +90,24 @@ class TestTargets:
         """Name the layer the project does not have."""
         project = planned.project(BASE)
 
-        with pytest.raises(ValueError, match="docs"):
+        with pytest.raises(UpdateUnknownLayerError, match="docs") as caught:
             planned.plan(project, UpdateRequest(targets={"docs": "1.0.0"}))
+
+        assert caught.value.layers == ("docs",)
+
+    def test_the_refusal_lists_the_layers_the_project_has(
+        self, planned: Planned
+    ) -> None:
+        """Tell the user which names a target may take."""
+        project = planned.project(BASE)
+
+        with pytest.raises(UpdateUnknownLayerError) as caught:
+            planned.plan(project, UpdateRequest(targets={"docs": "1.0.0"}))
+
+        assert (
+            caught.value.remediation
+            == "Name one of the project's layers: core, service."
+        )
 
 
 class TestSteps:

@@ -38,6 +38,7 @@ from boilerplate.common.exceptions import (
     UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
     UpdateTaskFailedError,
+    UpdateUnknownLayerError,
     UserCancelledError,
 )
 from boilerplate.composition.graph.exceptions import (
@@ -93,6 +94,7 @@ EXPECTED_CODES: dict[type[BoilerplateError], str] = {
     UpdateProjectNotReadyError: "BP_UPDATE_PROJECT_NOT_READY",
     UpdateTaskFailedError: "BP_UPDATE_TASK_FAILED",
     UpdateConflictPausedError: "BP_UPDATE_CONFLICT_PAUSED",
+    UpdateUnknownLayerError: "BP_UPDATE_LAYER_UNKNOWN",
 }
 
 # A registry row carries a severity and a retryable column; the phase-prefix
@@ -290,6 +292,7 @@ class TestSeverityAndRetryable:
             UpdateLayerDriftError,
             UpdateTargetMismatchError,
             UpdateDowngradeError,
+            UpdateUnknownLayerError,
             LockReadFailedError,
             LockSchemaUnsupportedError,
             ProfileError,

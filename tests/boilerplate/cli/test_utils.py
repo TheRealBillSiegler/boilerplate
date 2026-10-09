@@ -38,6 +38,7 @@ from boilerplate.common.exceptions import (
     UpdateProjectNotReadyError,
     UpdateSubmodulesUnsupportedError,
     UpdateTargetMismatchError,
+    UpdateUnknownLayerError,
     UserCancelledError,
 )
 from boilerplate.composition.graph.exceptions import (
@@ -245,6 +246,7 @@ class TestCliErrorHandler:
             (UpdateSubmodulesUnsupportedError("submodules"), ExitCode.VALIDATION_ERROR),
             (UpdateCheckoutChangedError("changed"), ExitCode.VALIDATION_ERROR),
             (UpdateProjectNotReadyError("dirty"), ExitCode.VALIDATION_ERROR),
+            (UpdateUnknownLayerError("no such layer"), ExitCode.VALIDATION_ERROR),
             # Exit 4 (ACTION_REQUIRED) — recoverable workflow pause
             (
                 ActionRequiredError("resolve conflicts, then re-run"),
@@ -272,6 +274,7 @@ class TestCliErrorHandler:
             "submodules-unsupported",
             "checkout-changed",
             "project-not-ready",
+            "unknown-layer",
             "action-required",
             "conflict-paused",
             "user-cancelled",
