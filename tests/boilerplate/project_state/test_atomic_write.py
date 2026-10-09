@@ -1,10 +1,28 @@
 """Tests for the atomic text write in atomic_write.py."""
 
+import os
+import stat
+import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
 from boilerplate.project_state.atomic_write import write_text_atomically
+
+POSIX_ONLY = pytest.mark.skipif(
+    sys.platform == "win32", reason="Windows has no POSIX permission bits"
+)
+
+
+@pytest.fixture
+def umask_022() -> Iterator[None]:
+    """Set the process umask to 022 for the test and restore it after."""
+    previous = os.umask(0o022)
+    try:
+        yield
+    finally:
+        os.umask(previous)
 
 
 class TestWriteTextAtomically:
@@ -60,3 +78,25 @@ class TestWriteTextAtomically:
 
         assert target.read_text(encoding="utf-8") == "old\n"
         assert [p.name for p in tmp_path.iterdir()] == ["state.yml"]
+
+
+@POSIX_ONLY
+class TestFileMode:
+    """A rewritten file keeps the mode an ordinary write would have given it."""
+
+    @pytest.mark.usefixtures("umask_022")
+    def test_a_new_file_gets_the_mode_the_umask_allows(self, tmp_path: Path) -> None:
+        target = tmp_path / "state.yml"
+
+        write_text_atomically(target, "a: 1\n")
+
+        assert stat.S_IMODE(target.stat().st_mode) == 0o644
+
+    def test_an_existing_file_keeps_its_mode(self, tmp_path: Path) -> None:
+        target = tmp_path / "state.yml"
+        target.write_text("old\n", encoding="utf-8")
+        target.chmod(0o664)
+
+        write_text_atomically(target, "new\n")
+
+        assert stat.S_IMODE(target.stat().st_mode) == 0o664
