@@ -49,8 +49,8 @@ class ActionRequiredError(BoilerplateError):
 
     Routed to exit code 4 (ACTION_REQUIRED) by the CLI error boundary, per
     docs/design/02-data-models.md §Exit Codes: the operation cannot complete
-    until the user acts (e.g. resolving update merge conflicts before
-    ``--continue``), which is distinct from a hard failure (exit 1).
+    until the user acts (e.g. resolving update merge conflicts and running the
+    update again), which is distinct from a hard failure (exit 1).
     Concrete pause conditions subclass this with their own error code.
     """
 
