@@ -12,7 +12,6 @@ from boilerplate.composition.adding.add_outcome import AddOutcome
 from boilerplate.composition.adding.add_recorder import AddRecorder
 from boilerplate.composition.adding.add_status import AddStatus
 from boilerplate.composition.adding.layer_copier import copy_layer
-from boilerplate.composition.adding.task_runner import run_add_tasks
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from boilerplate.composition.staging.finish_steps import FinishSteps
 from boilerplate.composition.staging.finisher import Finisher
@@ -24,6 +23,7 @@ from boilerplate.composition.updating.recorded_answers import (
 from boilerplate.composition.updating.step_inputs import StepInputs
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
+from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.integrations.copier_types import TaskError
 from boilerplate.models import RestoreKind, RestoreOperation
@@ -200,11 +200,11 @@ class AddRun:
         if self._inputs.request.no_tasks or not plan.tasks:
             return None
         try:
-            run_add_tasks(
+            run_tasks(
                 self._inputs.project,
                 plan.release,
                 plan.view,
-                TaskRun(tasks=plan.tasks, secrets=secrets),
+                TaskRun(operation="copy", tasks=plan.tasks, secrets=secrets),
                 UpdateOptions(quiet=self._inputs.request.quiet),
             )
         except TaskError as error:

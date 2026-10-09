@@ -91,7 +91,7 @@ def project(family: Family, tmp_path: Path) -> Path:
 def cut_off_update(project: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Update `project` and cut the run off right after the copy back."""
     monkeypatch.setattr(
-        "boilerplate.composition.updating.walk.update_walk.run_update_tasks",
+        "boilerplate.composition.updating.walk.update_walk.run_tasks",
         interrupted,
     )
     with pytest.raises(KeyboardInterrupt):
@@ -189,7 +189,7 @@ class TestInterruptedAdd:
     ) -> Path:
         """Add the tasked layer and cut the run off as its tasks start."""
         monkeypatch.setattr(
-            "boilerplate.composition.adding.add_run.run_add_tasks", interrupted
+            "boilerplate.composition.adding.add_run.run_tasks", interrupted
         )
         with pytest.raises(KeyboardInterrupt):
             LayerAdder().add(project, tasked)
