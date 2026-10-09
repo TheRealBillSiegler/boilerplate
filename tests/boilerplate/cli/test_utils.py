@@ -32,6 +32,7 @@ from boilerplate.common.exceptions import (
     RecordedAnswerRejectedError,
     TemplateNotFoundError,
     UpdateCheckoutChangedError,
+    UpdateConflictPausedError,
     UpdateDowngradeError,
     UpdateLayerDriftError,
     UpdateProjectNotReadyError,
@@ -249,6 +250,7 @@ class TestCliErrorHandler:
                 ActionRequiredError("resolve conflicts, then re-run"),
                 ExitCode.ACTION_REQUIRED,
             ),
+            (UpdateConflictPausedError("paused"), ExitCode.ACTION_REQUIRED),
             # Exit 130 (USER_CANCELLED)
             (UserCancelledError(), ExitCode.USER_CANCELLED),
         ],
@@ -271,6 +273,7 @@ class TestCliErrorHandler:
             "checkout-changed",
             "project-not-ready",
             "action-required",
+            "conflict-paused",
             "user-cancelled",
         ],
     )
