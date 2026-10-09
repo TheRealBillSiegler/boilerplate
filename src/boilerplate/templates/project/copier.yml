@@ -83,7 +83,7 @@ author_email:
 
 package_index_url:
   type: str
-  help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)."
+  help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)"
   default: ""
 
 _tasks:
