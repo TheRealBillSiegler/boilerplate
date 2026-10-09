@@ -609,7 +609,9 @@ class UpdateCopyBackFailedError(BoilerplateError):
     """Raised when copying the staging worktree back into the checkout failed partway.
 
     The checkout was restored to the starting commit, and the staging worktree
-    is kept so the walk's result is not lost.
+    is kept so the walk's result is not lost. When that restore failed too,
+    the message says the checkout could not be restored and names both
+    failures, and the restore marker stays for the rerun.
 
     Attributes:
         staging_path: The kept staging worktree, which holds the walk's result.
