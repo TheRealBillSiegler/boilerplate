@@ -483,6 +483,11 @@ UNTOUCHED = ["retype_bad"]
 GIT_HINT = "Make sure Git >= 2.24 is installed to improve updates."
 
 
+def _stderr_without_hint(capsys: pytest.CaptureFixture[str]) -> list[str]:
+    """Return the captured stderr lines, minus Copier's Git hint."""
+    return [line for line in capsys.readouterr().err.splitlines() if line != GIT_HINT]
+
+
 def _retype_case(case: str) -> object:
     return on_own_worker(case, f"S13-{case}")
 
@@ -508,6 +513,32 @@ def retyped(
         yield Retyped(
             case, _compose(family, work, case.root, case.before, case.answers)
         )
+
+
+def _vanilla_retyped_update(
+    family: Family,
+    retyped: Retyped,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> Path:
+    """Update a copy of the retyped project with data={} and return it.
+
+    Stderr is flushed first, so the caller sees only what the update prints.
+    """
+    case, scenario = retyped
+    project = copy_project(scenario.project, tmp_path / "family-app")
+    capsys.readouterr()
+    update_family_layer(
+        family,
+        project,
+        root=case.root,
+        layer=case.owner,
+        before=case.before,
+        after=case.after,
+        work=scenario.work,
+        data={},
+    )
+    return project
 
 
 class TestRetypedQuestion:
@@ -598,31 +629,26 @@ class TestRetypedQuestion:
     ) -> None:
         """S13: with data={} Copier drops the last answer and takes the new default.
 
-        No exception, and stderr carries nothing but Copier's Git hint, which
-        Git 2.55 triggers: eighty becomes 8000.
+        No exception: eighty becomes 8000.
         """
-        case, scenario = retyped
-        project = copy_project(scenario.project, tmp_path / "family-app")
-        capsys.readouterr()
-        update_family_layer(
-            family,
-            project,
-            root=case.root,
-            layer=case.owner,
-            before=case.before,
-            after=case.after,
-            work=scenario.work,
-            data={},
-        )
+        project = _vanilla_retyped_update(family, retyped, tmp_path, capsys)
 
-        assert (
-            [
-                line
-                for line in lines(project / "Dockerfile")
-                if line.startswith("EXPOSE")
-            ],
-            [line for line in capsys.readouterr().err.splitlines() if line != GIT_HINT],
-        ) == (["EXPOSE 8000"], [])
+        assert [
+            line for line in lines(project / "Dockerfile") if line.startswith("EXPOSE")
+        ] == ["EXPOSE 8000"]
+
+    @pytest.mark.parametrize("retyped", [_retype_case("retype_bad")], indirect=True)
+    def test_vanilla_update_of_an_unparseable_answer_prints_only_the_git_hint(
+        self,
+        family: Family,
+        retyped: Retyped,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """S13: the silent replacement writes nothing to stderr but Copier's hint."""
+        _vanilla_retyped_update(family, retyped, tmp_path, capsys)
+
+        assert _stderr_without_hint(capsys) == []
 
 
 def _narrowed_choices(ref: str, release: Path) -> None:
@@ -684,6 +710,19 @@ def _update_narrowed(
     )
 
 
+def _vanilla_narrowed_update(
+    narrowed: Narrowed, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> Path:
+    """Update a copy of the narrowed project with data={} and return it.
+
+    Stderr is flushed first, so the caller sees only what the update prints.
+    """
+    project = copy_project(narrowed.project, tmp_path / "probe-app")
+    capsys.readouterr()
+    _update_narrowed(narrowed, project, data={})
+    return project
+
+
 @pytest.mark.xdist_group("S13-narrowed")
 class TestNarrowedChoiceOnTheBundledLayers:
     """S13: project v2 drops a `license` choice, with no migration for the answer."""
@@ -709,17 +748,22 @@ class TestNarrowedChoiceOnTheBundledLayers:
     ) -> None:
         """S13: with data={} Copier drops the last answer and takes the default.
 
-        No exception, and stderr carries nothing but Copier's Git hint, which
-        Git 2.55 triggers: GPL-3.0 becomes MIT.
+        No exception: GPL-3.0 becomes MIT.
         """
-        project = copy_project(narrowed.project, tmp_path / "probe-app")
-        capsys.readouterr()
-        _update_narrowed(narrowed, project, data={})
+        project = _vanilla_narrowed_update(narrowed, tmp_path, capsys)
 
-        assert (
-            lines(project / "settings.txt"),
-            [line for line in capsys.readouterr().err.splitlines() if line != GIT_HINT],
-        ) == (["license=MIT"], [])
+        assert lines(project / "settings.txt") == ["license=MIT"]
+
+    def test_vanilla_update_of_the_lost_choice_prints_only_the_git_hint(
+        self,
+        narrowed: Narrowed,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """S13: the silent replacement writes nothing to stderr but Copier's hint."""
+        _vanilla_narrowed_update(narrowed, tmp_path, capsys)
+
+        assert _stderr_without_hint(capsys) == []
 
 
 # ------------------------------------------------------------------ S14
