@@ -5,10 +5,10 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
+from boilerplate.composition.staging.interrupted_run import resolve_interrupted_run
 from boilerplate.composition.staging.operation_lock import operation_lock
 from boilerplate.composition.staging.preflight import require_repository_root
 from boilerplate.models import RestoreMarker, RestoreOperation
-from boilerplate.project_state.interrupted_run import resolve_interrupted_run
 
 __all__ = ["preflight"]
 
