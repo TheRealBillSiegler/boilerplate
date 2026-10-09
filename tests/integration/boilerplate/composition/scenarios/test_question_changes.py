@@ -49,11 +49,11 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     merge_state,
     on_own_worker,
     recording_worker,
-    temp_dir_inside,
     templates_at,
     update_family_layer,
     write,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 BASE = {"core": "1.0.0", "service": "1.0.0", "docs": "1.0.0", "app": "1.0.0"}
 LOCK_ORDER = ("core", "app")

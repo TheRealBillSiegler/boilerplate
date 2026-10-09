@@ -19,8 +19,8 @@ from tests.integration.boilerplate.composition.scenarios.builders import (
     answers_file,
     check_bundled_questionnaire,
     read_yaml,
-    temp_dir_inside,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 LAYERS = ("project", "streamlit")

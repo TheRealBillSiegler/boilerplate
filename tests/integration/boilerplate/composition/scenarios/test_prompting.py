@@ -21,9 +21,9 @@ from prompt_toolkit.output import DummyOutput
 from tests.boilerplate.templates.conftest import ask_merged_questionnaire
 from tests.integration.boilerplate.composition.family import Family
 from tests.integration.boilerplate.composition.scenarios.builders import (
-    temp_dir_inside,
     templates_at,
 )
+from tests.integration.boilerplate.composition.temp_dir import temp_dir_inside
 
 KEYSTROKES = "\x15Typed App\r" + "\r" * 12  # Ctrl-U clears the prefill.
 GUARD_SECONDS = 90
