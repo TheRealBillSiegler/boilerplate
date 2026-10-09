@@ -281,7 +281,9 @@ class TestAllowedPrefixes:
     the fixup!/squash!/amend!/Revert bypass its stock default leaves open.
     """
 
-    def test_a_fixup_commit_fails_the_project_schema(self, tmp_path: Path) -> None:
+    @staticmethod
+    def _repo_with_project_schema(tmp_path: Path) -> Path:
+        """Build a repo that carries this project's `pyproject.toml` and one commit."""
         repo = tmp_path / "repo"
         _init_repo(repo, "develop")
         (repo / "pyproject.toml").write_text(
@@ -290,9 +292,12 @@ class TestAllowedPrefixes:
         )
         _git(repo, "add", "pyproject.toml")
         _git(repo, "commit", "-m", "chore: seed")
-        _git(repo, "commit", "--allow-empty", "-m", "fixup! feat: whatever")
+        return repo
 
-        result = subprocess.run(
+    @staticmethod
+    def _cz_check_last_commit(repo: Path) -> subprocess.CompletedProcess[str]:
+        """Run `cz check` over the repo's last commit."""
+        return subprocess.run(
             [
                 "cz",
                 "check",
@@ -306,5 +311,22 @@ class TestAllowedPrefixes:
             text=True,
             check=False,
         )
+
+    def test_a_conforming_commit_passes_the_project_schema(
+        self, tmp_path: Path
+    ) -> None:
+        """Positive control: the schema loads, so a fixup failure is about the fixup."""
+        repo = self._repo_with_project_schema(tmp_path)
+        _git(repo, "commit", "--allow-empty", "-m", "feat: whatever")
+
+        result = self._cz_check_last_commit(repo)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+
+    def test_a_fixup_commit_fails_the_project_schema(self, tmp_path: Path) -> None:
+        repo = self._repo_with_project_schema(tmp_path)
+        _git(repo, "commit", "--allow-empty", "-m", "fixup! feat: whatever")
+
+        result = self._cz_check_last_commit(repo)
 
         assert result.returncode != 0, result.stdout + result.stderr
