@@ -393,6 +393,7 @@ def update_layer(
     data: Mapping[str, Any] | None = None,
     force_recorded: bool = False,
     secrets: Mapping[str, Any] | None = None,
+    walk_answers: Mapping[str, Mapping[str, Any]] | None = None,
     old_templates: Path | None = None,
     old_view: LayerView | None = None,
     target_view: LayerView | None = None,
@@ -425,6 +426,8 @@ def update_layer(
             chain too, own on top (``force_recorded_answers``); the step's
             rule takes them from the declaring ancestors instead.
         secrets: Secret answers given earlier in the same update.
+        walk_answers: Each layer's recorded answers when the walk began,
+            keyed by layer name; by default, read when the step starts.
         old_templates: The directory the old copy's view is composed from,
             for an update whose layer keeps its ref while an ancestor moves,
             so `templates` cannot hold both; by default `templates` at the
@@ -470,7 +473,9 @@ def update_layer(
         project,
         LayerRelease(layer=layer, source=source, ref=ref),
         UpdateViews(old_view, target_view),
-        inputs=StepInputs(supplied=supplied, secrets=secrets or {}),
+        inputs=StepInputs(
+            supplied=supplied, secrets=secrets or {}, walk_answers=walk_answers
+        ),
         options=UpdateOptions(
             skip_tasks=skip_tasks,
             quiet=quiet,

@@ -260,6 +260,7 @@ class UpdateOptions(TypedDict, total=False):
     data: Mapping[str, Any] | None
     force_recorded: bool
     secrets: Mapping[str, Any] | None
+    walk_answers: Mapping[str, Mapping[str, Any]] | None
     skip_tasks: bool
     quiet: bool
     interactive: bool
