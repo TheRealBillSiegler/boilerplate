@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.project_state.lock_builder import build_lock
+from boilerplate.models import BoilerplateLock, JoinedVia
+from boilerplate.project_state.lock_builder import build_lock, mark_added
 from boilerplate.project_state.lock_file import read_lock, write_lock
 from boilerplate.repository.release_checkouts import ReleaseCheckouts
 from boilerplate.repository.template_checksum import template_checksum
@@ -178,3 +179,99 @@ class TestBuildLock:
         write_lock(layers.project, lock)
 
         assert read_lock(layers.project) == lock
+
+
+class TestJoinedVia:
+    """Each entry records how its layer joined, and the root stays the root."""
+
+    def test_a_layer_joins_through_extends_unless_it_is_marked_added(
+        self, layers: Layers
+    ) -> None:
+        """Write the origin ``new`` and ``adopt`` give every layer."""
+        lock = build_lock(layers.project, ["core", "app"], boilerplate_version="0.3.0")
+
+        assert [layer.joined_via for layer in lock.layers] == [JoinedVia.EXTENDS] * 2
+
+    def test_a_rebuilt_lock_keeps_how_a_layer_of_the_previous_lock_joined(
+        self, layers: Layers
+    ) -> None:
+        """Carry the origin over, as an update that rewrites the lock must."""
+        first = mark_added(
+            build_lock(layers.project, ["core", "app"], boilerplate_version="0.3.0"),
+            "app",
+        )
+
+        second = build_lock(
+            layers.project,
+            ["core", "app"],
+            boilerplate_version="0.3.0",
+            previous=first,
+        )
+
+        assert [layer.joined_via for layer in second.layers] == [
+            JoinedVia.EXTENDS,
+            JoinedVia.ADD,
+        ]
+
+    def test_a_layer_the_previous_lock_lacks_joins_through_extends(
+        self, layers: Layers
+    ) -> None:
+        """Write a layer an update newly reaches as an extends layer."""
+        first = build_lock(layers.project, ["core"], boilerplate_version="0.3.0")
+
+        second = build_lock(
+            layers.project,
+            ["core", "app"],
+            boilerplate_version="0.3.0",
+            previous=first,
+        )
+
+        assert second.layers[1].joined_via is JoinedVia.EXTENDS
+
+
+class TestMarkAdded:
+    """Marking a layer as added records its origin and leaves the root alone."""
+
+    @pytest.fixture
+    def lock(self, layers: Layers) -> BoilerplateLock:
+        """Return the lock of core and app, both through extends."""
+        return build_lock(layers.project, ["core", "app"], boilerplate_version="0.3.0")
+
+    def test_records_the_named_layer_as_added(self, lock: BoilerplateLock) -> None:
+        marked = mark_added(lock, "app")
+
+        assert [layer.joined_via for layer in marked.layers] == [
+            JoinedVia.EXTENDS,
+            JoinedVia.ADD,
+        ]
+
+    def test_the_root_template_is_the_last_layer_that_joined_through_extends(
+        self, lock: BoilerplateLock
+    ) -> None:
+        """Name the template the project was created from, not the layer added last."""
+        assert mark_added(lock, "app").root_template == "core@1.0.0"
+
+    def test_changes_nothing_but_the_origin_and_the_root_template(
+        self, lock: BoilerplateLock
+    ) -> None:
+        marked = mark_added(lock, "app")
+
+        assert (
+            marked.layers[1].model_copy(update={"joined_via": JoinedVia.EXTENDS})
+            == (lock.layers[1])
+        )
+
+    def test_a_layer_the_lock_does_not_list_is_refused(
+        self, lock: BoilerplateLock
+    ) -> None:
+        with pytest.raises(ValueError, match="ghost"):
+            mark_added(lock, "ghost")
+
+    def test_a_lock_left_with_no_layer_through_extends_is_refused(
+        self, layers: Layers
+    ) -> None:
+        """Fail early: there would be no root template to name."""
+        only_core = build_lock(layers.project, ["core"], boilerplate_version="0.3.0")
+
+        with pytest.raises(ValueError, match="extends"):
+            mark_added(only_core, "core")
