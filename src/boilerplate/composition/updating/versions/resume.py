@@ -46,13 +46,15 @@ def plan_resume(
         or last_record.targets is None
     ):
         return None
-    targets = {
-        layer: SerializableVersion(version)
-        for layer, version in last_record.targets.items()
-    }
     by_name = {layer.name: layer for layer in layers}
-    if set(targets) != set(by_name):
+    if set(last_record.targets) != set(by_name):
         return None
+    # The record's keys come back sorted; the walk, and the restore marker
+    # built from these targets, keep the lock's order, root last.
+    targets = {
+        layer.name: SerializableVersion(last_record.targets[layer.name])
+        for layer in layers
+    }
     for name in last_record.finished:
         if name not in by_name or by_name[name].commit_version != targets[name]:
             return None
