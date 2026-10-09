@@ -6,6 +6,8 @@ from typing import Any
 
 from boilerplate.common.exceptions import UpdateTaskFailedError
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
+from boilerplate.composition.staging.finish_steps import FinishSteps
+from boilerplate.composition.staging.finisher import Finisher
 from boilerplate.composition.updating.failed_task import FailedTask
 from boilerplate.composition.updating.layer_updater import update_layer
 from boilerplate.composition.updating.recorded_answers import (
@@ -23,6 +25,7 @@ from boilerplate.composition.updating.walk.update_lock_writer import write_updat
 from boilerplate.composition.updating.walk.update_recorder import UpdateRecorder
 from boilerplate.composition.updating.walk.walk_inputs import WalkInputs
 from boilerplate.integrations.copier_types import TaskError
+from boilerplate.models import BoilerplateLock, RestoreKind, RestoreOperation
 
 _logger = logging.getLogger(__name__)
 
@@ -75,6 +78,8 @@ class UpdateWalk:
         self._ran: list[str] = []
         self._uncarried: list[str] = []
         self._secrets: dict[str, Any] = {}
+        self._failed: FailedTask | None = None
+        self._lock: BoilerplateLock | None = None
 
     def execute(self) -> UpdateOutcome:
         """Run the plan.
@@ -101,7 +106,6 @@ class UpdateWalk:
             conflicts = self._update_layers(staging)
             if conflicts:
                 return self._pause(staging, conflicts)
-            staging.copy_back()
             return self._finish(staging)
 
     def _update_layers(self, staging: StagingWorktree) -> tuple[str, ...]:
@@ -152,30 +156,74 @@ class UpdateWalk:
         lock is written.
         """
         plan = self._inputs.plan
-        staging.copy_back(paused=True)
         paused_at = self._ran[-1]
-        UpdateRecorder(self._inputs.project, plan.lock).conflict(
-            f"{plan.root}@{plan.targets[plan.root]}",
-            conflict_message(paused_at, conflicts),
-            targets=plan.targets,
-            finished=(*plan.skipped, *self._ran),
+
+        def record_conflict() -> None:
+            UpdateRecorder(self._inputs.project, plan.lock).conflict(
+                f"{plan.root}@{plan.targets[plan.root]}",
+                conflict_message(paused_at, conflicts),
+                targets=plan.targets,
+                finished=(*plan.skipped, *self._ran),
+            )
+
+        finisher = Finisher(
+            RestoreOperation.UPDATE,
+            RestoreKind.PAUSED,
+            FinishSteps(write_record=record_conflict),
         )
+        finisher.copy_back(staging)
+        finisher.finish()
         return self._outcome(UpdateStatus.PAUSED, paused_at, conflicts)
 
     def _finish(self, staging: StagingWorktree) -> UpdateOutcome:
-        """Run the tasks, then write the lock and the record, or undo the update."""
-        failed = self._run_tasks()
+        """Copy back, run the tasks, then write the lock and the record, or undo.
+
+        Raises:
+            UpdateTaskFailedError: If a task failed and the handler kept the
+                files.
+        """
+        finisher = Finisher(
+            RestoreOperation.UPDATE,
+            RestoreKind.COMPLETE,
+            FinishSteps(
+                write_record=self._record,
+                write_lock=lambda: self._write_lock(staging),
+                run_tasks=lambda: self._run_tasks(staging),
+            ),
+        )
+        finisher.copy_back(staging)
+        if not finisher.finish():
+            return self._outcome(UpdateStatus.UNDONE)
+        if self._failed is not None:
+            raise UpdateTaskFailedError(
+                self._failure_message(self._failed),
+                task=self._failed.command,
+                remediation=self._failed.rerun,
+            )
+        return self._outcome(UpdateStatus.UPDATED)
+
+    def _run_tasks(self, staging: StagingWorktree) -> bool:
+        """Run the composition's tasks once in the user's checkout.
+
+        A task that fails is handed to the caller's handler, which keeps the
+        files or undoes the update.
+
+        Returns:
+            Whether the files are kept.
+        """
+        failed = self._task_failure()
         if failed is None:
-            return self._complete(staging, None)
+            return True
         untracked = staging.untracked_in_checkout()
         if self._on_task_failure(failed) is TaskFailureChoice.UNDO:
             staging.undo_copy_back(untracked)
             _logger.warning("Undid the update after a failed task: %s", failed.command)
-            return self._outcome(UpdateStatus.UNDONE)
-        return self._complete(staging, failed)
+            return False
+        self._failed = failed
+        return True
 
-    def _run_tasks(self) -> FailedTask | None:
-        """Run the composition's tasks once in the user's checkout.
+    def _task_failure(self) -> FailedTask | None:
+        """Run the tasks and return the one that failed.
 
         Returns:
             The task that failed; ``None`` when they all passed or none ran.
@@ -195,34 +243,35 @@ class UpdateWalk:
             return FailedTask.from_error(error)
         return None
 
-    def _complete(
-        self, staging: StagingWorktree, failed: FailedTask | None
-    ) -> UpdateOutcome:
-        """Write the lock and the record of an update whose files are kept.
-
-        Raises:
-            UpdateTaskFailedError: If `failed` is a task that failed.
-        """
+    def _write_lock(self, staging: StagingWorktree) -> None:
+        """Write the lock the finished update describes."""
         inputs = self._inputs
-        lock = write_update_lock(
+        self._lock = write_update_lock(
             inputs.project,
             staging,
             inputs.plan.lock,
             self._boilerplate_version,
             inputs.checkouts,
         )
-        recorder = UpdateRecorder(inputs.project, inputs.plan.lock)
-        if failed is None:
-            recorder.success(lock.root_template)
-            return self._outcome(UpdateStatus.UPDATED)
-        message = (
+
+    def _record(self) -> None:
+        """Append the update's record: ``success``, or ``failed`` after a kept task."""
+        assert self._lock is not None
+        recorder = UpdateRecorder(self._inputs.project, self._inputs.plan.lock)
+        if self._failed is None:
+            recorder.success(self._lock.root_template)
+        else:
+            recorder.failed(
+                self._lock.root_template, self._failure_message(self._failed)
+            )
+
+    @staticmethod
+    def _failure_message(failed: FailedTask) -> str:
+        """Say which task failed and what the update kept."""
+        return (
             f"Task '{failed.command}' exited with status {failed.returncode} after "
             "the update's files were copied back. The files are kept and "
             "boilerplate.lock is written."
-        )
-        recorder.failed(lock.root_template, message)
-        raise UpdateTaskFailedError(
-            message, task=failed.command, remediation=failed.rerun
         )
 
     def _outcome(
