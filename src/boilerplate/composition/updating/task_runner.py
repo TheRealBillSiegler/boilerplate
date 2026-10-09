@@ -1,4 +1,4 @@
-"""Run the composition's accumulated tasks once, after the update walk."""
+"""Run tasks once against a finished project, after an update's walk or an add."""
 # Spec: docs/design/04-composition-engine.md §Safe Update
 
 from pathlib import Path
@@ -9,28 +9,32 @@ from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.views import LayerView
 
 
-def run_update_tasks(
+def run_tasks(
     project: Path,
     release: LayerRelease,
     view: LayerView,
     work: TaskRun,
     options: UpdateOptions | None = None,
 ) -> None:
-    """Run the composition's tasks once in `project` as Copier's ``update`` operation.
+    """Run `work`'s tasks once in `project` under the operation it names.
 
-    Every render of the walk skips tasks; this is the one run, against the
-    finished project, as compose does at creation. It goes through the same
-    worker as the walk, over the root layer's view at the target releases, with
-    the root layer's recorded answers: the root's answers file records every
-    answer of the composition except the secrets, which the walk carried in
-    memory and passes here.
+    Every render before this skips tasks; this is the one run, against the
+    finished project, as compose does at creation. After an update it runs the
+    composition's accumulated tasks under ``update``, over the root layer's
+    view at the target releases, with the root's answers file, which records
+    every answer of the composition except the secrets. After an add it runs
+    the added layer's own tasks under ``copy``, as at compose, over that
+    layer's view, with its answers file. Either way it goes through the same
+    worker as the renders, and the secrets the run asked, which no answers file
+    records, are passed here.
 
     Args:
-        project: The updated project, in the user's checkout.
-        release: The root layer and the release it was updated to.
-        view: The root layer's view at the target releases.
-        work: The composition's accumulated tasks and the secret answers the
-            walk asked, for tasks that use them.
+        project: The finished project, in the user's checkout.
+        release: The layer whose answers file the tasks read: the root after
+            an update, the added layer after an add; at its new release.
+        view: That layer's view at the releases the project moved to.
+        work: The tasks, the Copier operation they run under, and the secret
+            answers the run asked, for tasks that use them.
         options: How the run goes: ``quiet``, the worker class, and
             ``interactive`` and ``skip_answered``, which a rerun of a
             cut-off run sets so a secret the tasks use is asked again.
@@ -58,4 +62,4 @@ def run_update_tasks(
         target_view=view,
         tasks=tuple(work.tasks),
     ) as worker:
-        worker.run_tasks()
+        worker.run_tasks(work.operation)

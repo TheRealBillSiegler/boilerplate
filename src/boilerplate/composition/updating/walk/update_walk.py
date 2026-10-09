@@ -17,7 +17,7 @@ from boilerplate.composition.updating.recorded_answers import (
 from boilerplate.composition.updating.step_inputs import StepInputs
 from boilerplate.composition.updating.task_failure_handler import TaskFailureHandler
 from boilerplate.composition.updating.task_run import TaskRun
-from boilerplate.composition.updating.task_runner import run_update_tasks
+from boilerplate.composition.updating.task_runner import run_tasks
 from boilerplate.composition.updating.update_options import UpdateOptions
 from boilerplate.composition.updating.update_outcome import UpdateOutcome
 from boilerplate.composition.updating.update_status import UpdateStatus
@@ -261,11 +261,13 @@ class UpdateWalk:
         if inputs.request.no_tasks or not inputs.plan.tasks:
             return None
         try:
-            run_update_tasks(
+            run_tasks(
                 inputs.project,
                 inputs.plan.final_release,
                 inputs.plan.task_view,
-                TaskRun(tasks=inputs.plan.tasks, secrets=self._secrets),
+                TaskRun(
+                    operation="update", tasks=inputs.plan.tasks, secrets=self._secrets
+                ),
                 UpdateOptions(quiet=inputs.request.quiet),
             )
         except TaskError as error:
