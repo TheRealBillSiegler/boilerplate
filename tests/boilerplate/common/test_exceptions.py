@@ -467,6 +467,19 @@ class TestUpdateTargetMismatchError:
         )
 
 
+class TestUpdateInterruptedError:
+    """An interrupted-run stop names the remediation that sets the run aside."""
+
+    def test_default_remediation_resets_before_it_stashes(self) -> None:
+        """Reset first: design 06 says a paused run's unmerged entries stop stash."""
+        err = UpdateInterruptedError("interrupted", targets={"core": "1.1.0"})
+
+        assert err.targets == {"core": "1.1.0"}
+        assert "'git reset' and then 'git stash --include-untracked'" in (
+            err.remediation or ""
+        )
+
+
 class TestUpdateDowngradeError:
     """A rejected downgrade carries the layer, its recorded version and the target."""
 

@@ -376,6 +376,14 @@ _SET_ASIDE_REMEDIATION = (
     "then run 'boilerplate update' again."
 )
 
+# A paused update leaves its conflicted files as unmerged index entries, which
+# ``git stash`` refuses; ``git reset`` returns the index to HEAD and keeps the
+# working tree, so it comes first.
+_RESET_AND_SET_ASIDE_REMEDIATION = (
+    "Run 'git reset' and then 'git stash --include-untracked' to set the "
+    "partial update aside, then run 'boilerplate update' again."
+)
+
 
 class AnswersFileIncompleteError(BoilerplateError):
     """Raised when no answers file records keys a layer's scoped view asks for.
@@ -461,12 +469,7 @@ class UpdateTargetMismatchError(BoilerplateError):
         super().__init__(
             message,
             error_code="BP_UPDATE_TARGET_MISMATCH",
-            remediation=kwargs.pop(
-                "remediation",
-                "Run 'git reset' and then 'git stash --include-untracked' to "
-                "set the partial update aside, then run 'boilerplate update' "
-                "again.",
-            ),
+            remediation=kwargs.pop("remediation", _RESET_AND_SET_ASIDE_REMEDIATION),
             **kwargs,
         )
         self.layers = tuple(layers)
@@ -629,7 +632,9 @@ class UpdateInterruptedError(BoilerplateError):
 
     An earlier update or add was interrupted after its copy back started: its
     changes may sit uncommitted in the checkout. The remediation is
-    ``git stash --include-untracked``, which sets them aside.
+    ``git reset`` and then ``git stash --include-untracked``, which set them
+    aside; the reset comes first because ``git stash`` refuses the unmerged
+    entries a paused run leaves.
 
     Attributes:
         targets: Each layer's target version the interrupted run was moving to.
@@ -648,8 +653,8 @@ class UpdateInterruptedError(BoilerplateError):
             error_code="BP_UPDATE_INTERRUPTED",
             remediation=kwargs.pop(
                 "remediation",
-                "Run 'git stash --include-untracked' to set the interrupted "
-                "run's uncommitted changes aside, then run the command again.",
+                "Run 'git reset' and then 'git stash --include-untracked' to set "
+                "the interrupted run's changes aside, then run the command again.",
             ),
             **kwargs,
         )
