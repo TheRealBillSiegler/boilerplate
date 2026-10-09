@@ -129,7 +129,7 @@ def _integration_refs(repo_root: Path) -> list[str]:
     ).splitlines()
 
 
-def _find_integration_ref(repo_root: Path, *, head: str) -> str:
+def _find_integration_ref(refs: Sequence[str], *, repo_root: Path, head: str) -> str:
     """Find the remote-tracking integration branch nearest to ``head``.
 
     A clone often has more than one remote carrying ``develop``: a
@@ -140,6 +140,8 @@ def _find_integration_ref(repo_root: Path, *, head: str) -> str:
     the first name in sort order, so the choice is deterministic.
 
     Args:
+        refs: The repository's ``refs/remotes/*/develop`` short names, as
+            ``_integration_refs`` lists them.
         repo_root: The repository to search.
         head: The range's head ref.
 
@@ -151,7 +153,6 @@ def _find_integration_ref(repo_root: Path, *, head: str) -> str:
         NoUpstreamError: No such ref exists, or none shares history with
             ``head``. Pass ``--base <ref>`` instead.
     """
-    refs = _integration_refs(repo_root)
     if not refs:
         raise NoUpstreamError(
             f"No --base given, the current branch's upstream does not point "
@@ -205,16 +206,17 @@ def resolve_base(
         base_ref = explicit_base
     else:
         upstream = _upstream_ref(repo_root)
-        if upstream is not None and upstream in _integration_refs(repo_root):
+        refs = _integration_refs(repo_root)
+        if upstream is not None and upstream in refs:
             # The branch tracks the integration branch directly: no need to
-            # scan remotes, and this also covers repos with more than one
-            # remote carrying a `develop` branch.
+            # search for the nearest one, and this also covers repos with more
+            # than one remote carrying a `develop` branch.
             base_ref = upstream
         else:
             # No upstream, or the upstream is the branch's own pushed copy
             # (e.g. after `git push -u origin feature`) — neither tells us
             # where the branch forked from, so find `develop` directly.
-            base_ref = _find_integration_ref(repo_root, head=head)
+            base_ref = _find_integration_ref(refs, repo_root=repo_root, head=head)
     return _run(["git", "merge-base", base_ref, head], repo_root=repo_root)
 
 
