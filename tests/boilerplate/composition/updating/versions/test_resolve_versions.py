@@ -2,18 +2,14 @@
 
 import pytest
 
-from boilerplate.common.exceptions import (
-    UpdateDowngradeError,
-    UpdateLayerDriftError,
-    UpdateTargetMismatchError,
+from boilerplate.common.exceptions import UpdateDowngradeError, UpdateLayerDriftError
+from boilerplate.composition.updating.versions import (
+    LayerVersions,
+    ResumePlan,
+    resolve_versions,
 )
-from boilerplate.composition.updating.versions import LayerVersions, resolve_versions
 from boilerplate.types import SerializableVersion
-from tests.boilerplate.composition.updating.versions.conftest import (
-    conflict,
-    layer,
-    v,
-)
+from tests.boilerplate.composition.updating.versions.conftest import layer, v
 
 TARGETS = {"core": "2.0.0", "service": "1.0.0", "app": "1.1.0"}
 
@@ -59,33 +55,28 @@ class TestAFreshUpdate:
         with pytest.raises(UpdateDowngradeError):
             resolve_versions(_layers(app="1.1.0"), _wanted(app="1.0.0"), None)
 
-    def test_a_non_binding_conflict_record_does_not_resume(self) -> None:
-        """The partial update was set aside: core is back at the lock."""
-        record = conflict(TARGETS, ["core", "service"])
 
-        resolution = resolve_versions(_layers(), _wanted(core="3.0.0"), record)
+class TestAGivenResumePlan:
+    """The plan the caller already made decides the walk; none is made again."""
 
-        assert resolution.resume is None
-        assert resolution.targets["core"] == v("3.0.0")
+    @staticmethod
+    def _plan() -> ResumePlan:
+        return ResumePlan(
+            finished=("core", "service"), remaining=("app",), targets=_wanted()
+        )
 
+    def test_runs_only_the_layers_the_plan_leaves(self) -> None:
+        """Pass no record: only the given plan can say that core finished."""
+        resolution = resolve_versions(
+            _layers(core="2.0.0"), _wanted(core="3.0.0"), self._plan()
+        )
 
-class TestAResume:
-    """A pending conflict record decides the walk, not the planned targets."""
-
-    def test_skips_the_finished_layers_and_runs_the_rest(self) -> None:
-        record = conflict(TARGETS, ["core", "service"])
-
-        resolution = resolve_versions(_layers(core="2.0.0"), _wanted(), record)
-
-        assert resolution.resume is not None
-        assert resolution.resume.finished == ("core", "service")
+        assert resolution.resume == self._plan()
         assert tuple(resolution.old_copies) == ("app",)
 
-    def test_uses_the_recorded_targets_when_a_newer_release_is_planned(self) -> None:
-        record = conflict(TARGETS, ["core", "service"])
-
+    def test_takes_the_plans_targets_over_the_planned_ones(self) -> None:
         resolution = resolve_versions(
-            _layers(core="2.0.0"), _wanted(core="3.0.0", app="1.2.0"), record
+            _layers(core="2.0.0"), _wanted(core="3.0.0"), self._plan()
         )
 
         assert dict(resolution.targets) == _wanted()
@@ -93,9 +84,7 @@ class TestAResume:
     def test_a_remaining_layers_old_copy_uses_the_locks_ancestor_versions(
         self,
     ) -> None:
-        record = conflict(TARGETS, ["core", "service"])
-
-        resolution = resolve_versions(_layers(core="2.0.0"), _wanted(), record)
+        resolution = resolve_versions(_layers(core="2.0.0"), _wanted(), self._plan())
 
         assert dict(resolution.old_copies["app"].versions) == {
             "core": v("1.0.0"),
@@ -103,25 +92,10 @@ class TestAResume:
             "app": v("1.0.0"),
         }
 
-    def test_a_differing_explicit_target_is_refused(self) -> None:
-        record = conflict(TARGETS, ["core", "service"])
-
-        with pytest.raises(UpdateTargetMismatchError):
-            resolve_versions(
-                _layers(core="2.0.0"),
-                _wanted(app="1.2.0"),
-                record,
-                {"app": v("1.2.0")},
-            )
-
     def test_the_drift_rule_does_not_apply_to_a_resume(self) -> None:
-        """Core and service both moved in the paused walk; the record owns that."""
-        record = conflict(
-            {"core": "2.0.0", "service": "1.1.0", "app": "1.1.0"}, ["core", "service"]
-        )
+        """Core and service both moved in the paused walk; the plan owns that."""
         layers = _layers(core="2.0.0", service="1.1.0")
 
-        resolution = resolve_versions(layers, _wanted(service="1.1.0"), record)
+        resolution = resolve_versions(layers, _wanted(service="1.1.0"), self._plan())
 
-        assert resolution.resume is not None
         assert resolution.warnings == ()
