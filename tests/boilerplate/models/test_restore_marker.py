@@ -81,6 +81,14 @@ class TestRestoreMarkerHappyPath:
             RestorePhase.RECORDING,
         )
 
+    def test_accepts_a_sha256_repository_commit(self) -> None:
+        """Accept the 64-digit object id of a SHA-256 repository as well as SHA-1's."""
+        marker = RestoreMarker.model_validate(
+            _fields(start_commit="c" * 64, result_commit="d" * 64)
+        )
+
+        assert (marker.start_commit, marker.result_commit) == ("c" * 64, "d" * 64)
+
     def test_at_phase_moves_only_the_phase(self) -> None:
         """Advance the phase as the run proceeds, every other field kept."""
         marker = RestoreMarker.model_validate(_fields())
@@ -105,5 +113,28 @@ class TestRestoreMarkerSadPath:
         self, overrides: dict[str, object]
     ) -> None:
         """Refuse what design 02 rules out: a paused run never runs tasks."""
+        with pytest.raises(ValidationError):
+            RestoreMarker.model_validate(_fields(**overrides))
+
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            pytest.param({"start_commit": "--output=x"}, id="start-is-an-option"),
+            pytest.param({"result_commit": "HEAD"}, id="result-is-a-ref-name"),
+            pytest.param({"start_commit": "a" * 12}, id="start-abbreviated"),
+            pytest.param({"result_commit": "A" * 40}, id="result-upper-case"),
+            pytest.param({"targets": {}}, id="no-targets"),
+            pytest.param(
+                {"operation": "add", "phase": "recording"}, id="add-with-two-targets"
+            ),
+        ],
+    )
+    def test_rejects_a_marker_no_run_writes(self, overrides: dict[str, object]) -> None:
+        """Refuse a marker read back from disk that no run could have written.
+
+        A run records full object ids from ``git rev-parse``, at least the one
+        layer it walked, and for an add exactly the one layer it adds; the
+        commits go into git's argv, so anything else is refused at the boundary.
+        """
         with pytest.raises(ValidationError):
             RestoreMarker.model_validate(_fields(**overrides))
