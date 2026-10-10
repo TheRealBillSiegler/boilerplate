@@ -158,3 +158,47 @@ class TestFailedUndo:
             stage.copy_back()
 
         assert kept.is_dir()
+
+
+# A cause that ends its own sentence, as the staging module's refusals do.
+SENTENCE_CAUSE = "'x' escapes the project."
+
+
+class TestFailureMessage:
+    """Each failure is joined into the message with one period after it, not two."""
+
+    def test_a_copy_back_cause_ending_in_a_period_is_joined_once(
+        self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Join the cause and the sentence after it with one period, not two."""
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_dying_after_one_file(ValueError(SENTENCE_CAUSE)),
+        )
+        with (
+            pytest.raises(UpdateCopyBackFailedError) as raised,
+            staging(project, staging_root) as stage,
+        ):
+            commit_layer_changes(stage)
+            stage.copy_back()
+
+        assert f"{SENTENCE_CAUSE} Your checkout was restored" in str(raised.value)
+
+    def test_an_undo_cause_ending_in_a_period_is_joined_once(
+        self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Join the undo's cause and the sentence after it with one period, not two."""
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_and_undo_dying(ValueError(SENTENCE_CAUSE)),
+        )
+        with (
+            pytest.raises(UpdateCopyBackFailedError) as raised,
+            staging(project, staging_root) as stage,
+        ):
+            commit_layer_changes(stage)
+            stage.copy_back()
+
+        assert f"{SENTENCE_CAUSE} Your checkout could not be restored" in str(
+            raised.value
+        )
