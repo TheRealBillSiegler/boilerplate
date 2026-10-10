@@ -3,10 +3,10 @@
 The script is not package code, so it is loaded from its path. The shape rules
 the generated art must meet are tested on the art itself, in
 tests/boilerplate/cli/display/test_banner_art.py; these tests cover the steps
-that get it there: reading the SVG's paths, hiding what the prompt is drawn
-over, lighting the bars a whole column at a time, the one-color-per-cell rule,
-and writing the art module. They also check that the committed art matches a
-fresh render, and the script's command line.
+that get it there: reading the SVG's paths, keeping the braces' feet above the
+underscore, lighting the bars a whole column at a time, the one-color-per-cell
+rule, and writing the art module. They also check that the committed art
+matches a fresh render, and the script's command line.
 """
 
 import importlib.util
@@ -87,15 +87,25 @@ class TestSubpaths:
 
 
 class TestLogoShapes:
-    def test_the_svg_holds_eight_bars_a_chevron_and_an_underscore(self) -> None:
-        """docs/assets/boilerplate-cli-logo.svg, the banner's source."""
+    """docs/assets/boilerplate-cli-logo.svg, the banner's source.
+
+    It draws eight bars, and the prompt as ``M59 115L83 91L59 67M91 123H123``.
+    """
+
+    def test_reads_the_eight_bars(self) -> None:
         shapes = render_cli_banner.logo_shapes(_LOGO.read_text(encoding="utf-8"))
 
-        assert (len(shapes.bars), shapes.chevron, shapes.underscore) == (
-            8,
-            ((59.0, 115.0), (83.0, 91.0), (59.0, 67.0)),
-            ((91.0, 123.0), (123.0, 123.0)),
-        )
+        assert len(shapes.bars) == 8
+
+    def test_reads_the_chevron_as_its_two_ends_and_its_tip(self) -> None:
+        shapes = render_cli_banner.logo_shapes(_LOGO.read_text(encoding="utf-8"))
+
+        assert shapes.chevron == ((59.0, 115.0), (83.0, 91.0), (59.0, 67.0))
+
+    def test_reads_the_underscore_as_its_two_ends(self) -> None:
+        shapes = render_cli_banner.logo_shapes(_LOGO.read_text(encoding="utf-8"))
+
+        assert shapes.underscore == ((91.0, 123.0), (123.0, 123.0))
 
     def test_a_logo_without_its_braces_is_refused(self) -> None:
         """Their outlines are the SVG's paths filled brand blue (#40B4E5)."""
@@ -107,7 +117,9 @@ class TestLogoShapes:
 
 
 class TestRenderLogo:
-    def test_the_prompt_hides_only_the_dots_it_is_drawn_over(self) -> None:
+    def test_a_brace_ending_at_the_feet_stays_whole_above_the_underscore(
+        self,
+    ) -> None:
         """05 §Banner: the braces end on the cell row above the underscore's.
 
         In the SVG the underscore overlaps the right brace's foot. The art
@@ -198,17 +210,19 @@ class TestCommittedArt:
 
 
 class TestMain:
-    def test_help_prints_the_docstring_and_exits(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
+    def test_help_exits_0(self) -> None:
         with pytest.raises(SystemExit) as exit_info:
             render_cli_banner.main(["--help"])
 
-        printed = capsys.readouterr().out
-        assert (exit_info.value.code, "Generate the CLI banner's art" in printed) == (
-            0,
-            True,
-        )
+        assert exit_info.value.code == 0
+
+    def test_help_prints_the_docstring(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        with pytest.raises(SystemExit):
+            render_cli_banner.main(["--help"])
+
+        assert "Generate the CLI banner's art" in capsys.readouterr().out
 
     def test_an_unknown_option_is_a_usage_error(self) -> None:
         """Exit status 2 is argparse's usage error."""
