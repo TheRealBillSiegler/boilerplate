@@ -1,20 +1,18 @@
 """Generate the CLI banner's art from the CLI logo's SVG.
 
-Draws ``docs/assets/boilerplate-cli-logo.svg`` in braille dots, 11 rows tall at
-every width from 22 to 29 columns, sets the name in FIGlet's ``standard`` font,
-and writes ``src/boilerplate/cli/display/banner_art.py``. The rules the art
-follows are in docs/design/05-cli-reference.md §Banner.
+Draws ``docs/assets/boilerplate-cli-logo.svg`` in braille dots at every width
+the banner uses, sets the name in FIGlet's ``standard`` font, and writes
+``src/boilerplate/cli/display/banner_art.py``. The rules the art follows are in
+docs/design/05-cli-reference.md §Banner.
 
 Each dot is 8 by 8 samples of the SVG, and lights when enough of them fall
 inside its shape: a brace's filled outline, with its curves flattened into a
 polygon, or within half the stroke width of a bar's or the prompt's segments,
 which draws their round caps and joins. Each shape maps the SVG's y to dot rows
-through its own vertical fit, so the bars land on 2-row bands 4 rows apart, the
-chevron's tip on a row boundary so its arms mirror, the underscore on the bottom
-3 rows, and the braces' feet on the cell row above the underscore's. The prompt
-is painted last, over the braces and bars, on the rows its own fit gives it. A
-bar lights a whole column at a time, both its rows or neither, so a bar's end
-that shows past the prompt keeps the bar's height.
+through its own vertical fit, which lands it where those rules put it. The
+prompt is painted last, over the braces and bars, on the rows its own fit gives
+it. A bar lights a whole column at a time, both its rows or neither, so a bar's
+end that shows past the prompt keeps the bar's height.
 
 Usage:
     uv run python scripts/render_cli_banner.py
