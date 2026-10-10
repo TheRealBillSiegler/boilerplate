@@ -19,10 +19,11 @@ from boilerplate.constants import ExitCode
 
 
 class TestVersion:
-    """docs/design/05-cli-reference.md §Global Options: `--version`, no short form.
+    """docs/design/05-cli-reference.md §Global Options: `--version`.
 
-    The flag is the one way to ask for the version: design 05 lists no
-    `version` command.
+    The flag is the one way to ask for the version: it has no short form, and
+    design 05 lists no `version` command, so both are usage errors
+    (TestUsageErrorExitCode).
     """
 
     def test_the_flag_prints_the_version_and_exits_0(
@@ -34,16 +35,6 @@ class TestVersion:
             ExitCode.SUCCESS,
             f"boilerplate {boilerplate.__version__}\n",
         )
-
-    def test_the_flag_has_no_short_form(self, typer_cli_runner: CliRunner) -> None:
-        result = typer_cli_runner.invoke(cli.app, ["-V"])
-
-        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
-
-    def test_version_is_not_a_command(self, typer_cli_runner: CliRunner) -> None:
-        result = typer_cli_runner.invoke(cli.app, ["version"])
-
-        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
 
 
 def test_cli_runs_minimally_behavior(typer_cli_runner: CliRunner):
@@ -208,6 +199,8 @@ class TestUsageErrorExitCode:
             ),
             pytest.param(["compose"], "Missing argument", id="missing-argument"),
             pytest.param(["lisst"], "Did you mean", id="unknown-command"),
+            pytest.param(["-V"], "No such option", id="removed-short-version-flag"),
+            pytest.param(["version"], "No such command", id="removed-version-command"),
             pytest.param(
                 ["compose", "project", "--sections", "bogus"],
                 "Unknown section",
