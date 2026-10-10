@@ -1307,3 +1307,31 @@ class TestDryRunShortFlag:
         assert re.search(r"--dry-run\s+-n\b", output)
         assert re.search(r"--non-interactive\s+[A-Za-z]", output)
         assert re.search(r"--no-tasks\s+[A-Za-z]", output)
+
+
+# The last full row of FIGlet's standard "boilerplate", the banner's name.
+_NAME_ROW = r"|_.__/ \___/|_|_|\___|_|  | .__/|_|\__,_|\__\___|"
+
+
+@pytest.mark.usefixtures("interactive_tty", "banner_terminal")
+class TestBanner:
+    """`new` prints no banner: only the top-level help opens with one.
+
+    docs/design/05-cli-reference.md §Banner. `new` is the command run most, so
+    its first prompt comes first.
+    """
+
+    def test_an_interactive_run_prints_none(
+        self,
+        typer_cli_runner: CliRunner,
+        fake_template_dir: Path,
+        temp_project_dir: Path,
+        seams: Seams,
+    ) -> None:
+        """On a terminal where the top-level help would show it."""
+        args = ["new", "mytpl", str(temp_project_dir)]
+        args += ["--templates-dir", str(fake_template_dir)]
+
+        output = typer_cli_runner.invoke(app, args, obj=seams).output
+
+        assert _NAME_ROW not in output
