@@ -111,7 +111,6 @@ Two mechanisms ship, both tested: an env-driven `Settings` object and the per-us
 | `compose` | :material-check-circle:{ .status-shipped } | `cli/commands/compose.py` |
 | `graph` | :material-check-circle:{ .status-shipped } | `cli/commands/graph.py` |
 | `validate` | :material-check-circle:{ .status-shipped } | Template-dir well-formedness (`cli/commands/validate.py`) |
-| `version` | :material-check-circle:{ .status-shipped } | `cli/commands/version.py` — beyond design 05's specified areas, which define `--version` as a global flag only |
 | `config` | :material-circle-outline:{ .status-design } | Retired with the Profile system; a repurposed `config` for the profile is designed, deferred |
 | `update` | :material-circle-outline:{ .status-design } | No update lifecycle |
 | `status` | :material-circle-outline:{ .status-design } | Not implemented |
