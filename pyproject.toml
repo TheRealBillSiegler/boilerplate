@@ -66,6 +66,8 @@ dev = [
     "pyte>=0.8.2",
     "mkdocs-llmstxt>=0.5.0",
     "commitizen>=4.19,<5",
+    "numpy>=2.3",
+    "pyfiglet>=1.0.4",
 ]
 # Separate from dev: mutmut needs os.fork, which native Windows does not have (it
 # refuses to even start there), so Windows contributors must not be forced to resolve
