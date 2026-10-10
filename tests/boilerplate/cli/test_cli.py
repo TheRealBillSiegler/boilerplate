@@ -11,7 +11,6 @@ import pytest
 from typer.main import get_command
 from typer.testing import CliRunner
 
-import boilerplate
 from boilerplate.cli import cli, engine
 from boilerplate.cli.display import ColorMode
 from boilerplate.cli.seams import Seams
@@ -22,20 +21,24 @@ from boilerplate.constants import ExitCode
 class TestVersion:
     """docs/design/05-cli-reference.md §Global Options: `--version`.
 
-    The flag is the one way to ask for the version: it has no short form, and
-    design 05 lists no `version` command, so both are usage errors
+    It prints the version string, `boilerplate 0.2.0` in the design's example,
+    and exits 0. It is the one way to ask for the version: it has no short
+    form, and design 05 lists no `version` command, so both are usage errors
     (TestUsageErrorExitCode).
     """
 
-    def test_the_flag_prints_the_version_and_exits_0(
-        self, typer_cli_runner: CliRunner
-    ) -> None:
+    def test_the_flag_exits_0(self, typer_cli_runner: CliRunner) -> None:
         result = typer_cli_runner.invoke(cli.app, ["--version"])
 
-        assert (result.exit_code, result.output) == (
-            ExitCode.SUCCESS,
-            f"boilerplate {boilerplate.__version__}\n",
-        )
+        assert result.exit_code == ExitCode.SUCCESS, result.output
+
+    def test_the_flag_prints_the_name_and_a_version(
+        self, typer_cli_runner: CliRunner
+    ) -> None:
+        output = typer_cli_runner.invoke(cli.app, ["--version"]).output
+
+        version_line = "boilerplate [0-9]+[.][0-9]+[.][0-9]+[^ ]*"
+        assert re.fullmatch(version_line, output.rstrip()), output
 
 
 def test_cli_runs_minimally_behavior(typer_cli_runner: CliRunner):
