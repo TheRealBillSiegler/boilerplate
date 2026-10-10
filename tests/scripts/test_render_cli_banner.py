@@ -206,7 +206,9 @@ class TestCommittedArt:
         }
         source = render_cli_banner.module_source(render_cli_banner.render_name(), logos)
 
-        assert _ART.read_text(encoding="utf-8") == source
+        assert _ART.read_text(encoding="utf-8") == source, (
+            "banner_art.py is stale: run uv run python scripts/render_cli_banner.py"
+        )
 
 
 class TestMain:
