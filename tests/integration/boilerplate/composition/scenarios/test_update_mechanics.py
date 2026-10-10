@@ -148,11 +148,10 @@ MARKER_TASK = """
       with open("task-marker.txt", "a", encoding="utf-8") as fh:
           fh.write("LAYER\\n")
 """
-BUNDLED_TASKS = (
-    "_tasks:\n"
-    '  - command: ["{{ _copier_python }}", _scripts/post_generation.py]\n'
-    "    when: \"{{ _copier_operation == 'copy' }}\"\n"
-)
+BUNDLED_TASKS = """_tasks:
+  - command: ["{{ _copier_python }}", _scripts/post_generation.py]
+    when: "{{ _copier_operation == 'copy' }}"
+"""
 
 
 def _marker_tasks(ref: str, release: Path) -> None:
