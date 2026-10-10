@@ -2,8 +2,6 @@
 
 **Status**: Accepted
 
-**Deciders**: Project team (Bill Siegler)
-
 > **Scope note.** This is a documentation-framing decision, not an architecture one. It governs how public-facing docs (README first screen, docs home, the [Why Boilerplate?](../why.md) page) frame Boilerplate's relationship to Copier, and records the evidence that framing rests on. It does not change any behavioral contract.
 >
 > **Epistemic status.** Boilerplate has no public users yet. Nothing below is first-party data; it is public-signal research on adjacent ecosystems (issue trackers, adoption counts of proxy tools), and every conclusion drawn from it is an inference from proxies. Replace these inferences with first-party signals (issues, installs, feedback) as soon as any exist.

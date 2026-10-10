@@ -2,8 +2,6 @@
 
 **Status**: Proposed (**deferred; not in the open-source release**). Captured because the customization design work surfaced it as the real developer-experience capability for arbitrary structured-file customization; deferred — the 0.x releases ship without it — the three taps of [ADR-010](adr-010-profile.md) plus the post-generation script escape hatch stand as the release story.
 
-**Deciders**: Project team (Bill Siegler)
-
 > **Scope note.** This records a *target* decision and changes nothing in the release. It is written now so the gap and the chosen direction are on the record before someone reaches for the wrong tool (post-generation `tomlkit` surgery) as if it were the pattern.
 
 ## Context

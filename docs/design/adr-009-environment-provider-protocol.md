@@ -2,8 +2,6 @@
 
 **Status**: Accepted
 
-**Deciders**: Project team (Bill Siegler)
-
 > **Scope note.** The *shape* recorded here — proto as one provider behind an abstraction — is load-bearing for how the pillar grows, and it reconciles a coherence gap (see Context).
 
 ## Context
