@@ -3,8 +3,8 @@
 Every test here drives `boilerplate` through Typer's `CliRunner` against a
 tiny on-disk template and reads what Copier actually wrote — nothing patches
 `compute_composition` or `RenderEngine`. Also covers exit codes for the
-`graph`, `list`, `version`, and top-level help commands, which are real
-end-to-end by construction (no rendering step to mock).
+`graph` and `list` commands, `--version`, and the top-level help, which are
+real end-to-end by construction (no rendering step to mock).
 """
 
 from pathlib import Path
