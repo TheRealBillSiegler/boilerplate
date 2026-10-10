@@ -27,7 +27,7 @@ Every environment variable the CLI reads. The generic `CI` variable is never rea
 | `BOILERPLATE_ACCESSIBLE` | Same as `--color never` (forces color-free output), and hides the banner. | `boilerplate.cli.display.core`, `boilerplate.cli.display.terminal_probe` |
 | `BOILERPLATE_NO_BANNER` | Hides the banner: the braille logo and ASCII name that open the top-level help. | `boilerplate.cli.display.terminal_probe` |
 | `TERM` | `dumb` or `unknown` hides the banner; `linux` (the Linux text console) prints its name without the braille logo. | `boilerplate.cli.display.terminal_probe` |
-| `NO_COLOR` | The standard color-disable convention; disables console color and switches log output from Rich to one JSON object per event. | `boilerplate.cli.display.core`, `boilerplate.logging_config` |
+| `NO_COLOR` | The standard color-disable convention; disables console color, prints the banner's name without its braille logo, and switches log output from Rich to one JSON object per event. | `boilerplate.cli.display.core`, `boilerplate.logging_config` |
 | `BOILERPLATE_DEBUG` | Same as `--verbose` when `--verbose` isn't passed: sets DEBUG-level logging. | `boilerplate.settings.Settings`, applied in `boilerplate.cli.cli` |
 | `BOILERPLATE_REQUEST_ID` | Correlation ID attached to every structured log line for the invocation; auto-generated once per run when unset. | `boilerplate.logging_config` |
 | `BOILERPLATE_DEFAULT_TEMPLATES_DIR` | Overrides the bundled templates directory searched first. | `boilerplate.settings.Settings` |
