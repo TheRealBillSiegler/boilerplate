@@ -6,7 +6,7 @@ Bootstraps settings, logging, Runtime, and registers commands.
 
 import codecs
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Final, NoReturn
 
 import typer
@@ -55,33 +55,18 @@ _ARGS_KEY: Final = "boilerplate.args"
 _ENCODING_KEY: Final = "boilerplate.stdout_encoding"
 
 
-def _color_mode(args: Sequence[str]) -> ColorMode:
-    """Return the ``--color`` mode among the root command's own options.
-
-    ``--help`` is eager, so the help it prints is formatted before Click
-    processes ``--color``; the banner reads the flag from the arguments
-    instead. Like Click, it reads the root's options only up to the
-    subcommand's name, and the last ``--color`` wins.
+def _color_mode(value: object) -> ColorMode:
+    """Return the ``--color`` mode that an unconverted option value names.
 
     Args:
-        args: The arguments the root command parsed.
+        value: What Click's parser read for ``--color``, if anything.
 
     Returns:
-        The mode given, or ``auto`` when none or an invalid one is given.
+        The mode named, or ``auto`` when none or an invalid one is given.
     """
-    mode = ColorMode.AUTO
-    tokens = iter(args)
-    for arg in tokens:
-        if arg == "--" or not arg.startswith("-"):
-            break  # the subcommand's name; what follows is not the root's
-        if arg == "--color":
-            value = next(tokens, "")
-        elif arg.startswith("--color="):
-            value = arg.partition("=")[2]
-        else:
-            continue
-        mode = ColorMode(value) if value in ColorMode else ColorMode.AUTO
-    return mode
+    if isinstance(value, str) and value in ColorMode:
+        return ColorMode(value)
+    return ColorMode.AUTO
 
 
 class BoilerplateGroup(TyperGroup):
@@ -108,14 +93,30 @@ class BoilerplateGroup(TyperGroup):
 
         Help formatted from a context that never parsed command-line
         arguments, such as one built directly to render the help text, prints
-        without the banner: there are no arguments to read ``--color`` from.
+        without the banner: there are no arguments to read the root's options
+        from.
         """
         args = ctx.meta.get(_ARGS_KEY)
         if args is not None:
-            Display(color=_color_mode(args)).banner(
+            options = self._root_options(ctx, args)
+            Display(color=_color_mode(options.get("color"))).banner(
                 terminal_encoding=ctx.meta.get(_ENCODING_KEY)
             )
         super().format_help(ctx, formatter)
+
+    def _root_options(
+        self, ctx: engine.Context, args: Sequence[str]
+    ) -> Mapping[str, object]:
+        """Return the root's own options as Click's parser reads them from ``args``.
+
+        ``--help`` is eager, so the help it prints is formatted before Click
+        processes the root's other options; the banner reads them with the
+        same parser instead, unconverted. The parser stops at the subcommand's
+        name, splits clustered short flags such as ``-qh``, and keeps the last
+        value of an option given twice.
+        """
+        options, _, _ = self.make_parser(ctx).parse_args(args=list(args))
+        return options
 
     def make_context(
         self,
