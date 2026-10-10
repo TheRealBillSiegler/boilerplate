@@ -8,9 +8,10 @@ import sys
 from pathlib import Path
 
 import pytest
+from typer.main import get_command
 from typer.testing import CliRunner
 
-from boilerplate.cli import cli
+from boilerplate.cli import cli, engine
 from boilerplate.cli.display import ColorMode
 from boilerplate.cli.seams import Seams
 from boilerplate.composition.rendering.renderer import Renderer
@@ -528,6 +529,16 @@ class TestHelpBanner:
         output = typer_cli_runner.invoke(cli.app, args).output
 
         assert _NAME_ROW not in output
+
+    def test_help_from_a_context_that_parsed_no_arguments_prints_none(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Help formatted from a context built directly has no --color to read."""
+        command = get_command(cli.app)
+
+        command.get_help(engine.Context(command))
+
+        assert _NAME_ROW not in capsys.readouterr().out
 
 
 def test_help_piped_to_a_non_terminal_prints_no_banner(
