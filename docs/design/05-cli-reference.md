@@ -209,6 +209,7 @@ The banner is the CLI logo drawn in braille dots beside the name `boilerplate` i
 - `BOILERPLATE_ACCESSIBLE` is enabled ([Terminal Accessibility](#terminal-accessibility) rule 5)
 - on Windows, the system reports a running screen reader (`SPI_GETSCREENREADER`), which could read each braille cell aloud
 - `BOILERPLATE_NO_BANNER` is enabled, by the truthiness rule of the other `BOILERPLATE_*` boolean env vars (see the environment variable equivalents note in [Global Options](#global-options))
+- `--quiet` is active ([Quiet Mode](#quiet-mode))
 
 ### "Did You Mean?" for Unknown Commands
 
@@ -1187,7 +1188,7 @@ When outputting to a terminal, rich formatting (color, tables, tree) is permitte
 
 ### Quiet Mode
 
-When `--quiet` is active, the command MUST produce no output to stdout under any normal condition. Only error messages (to stderr) are permitted.
+When `--quiet` is active, the command MUST produce no output to stdout under any normal condition. Only error messages (to stderr) are permitted. Help still prints for `--help`, or when no command is given, but without the [banner](#banner); `--version` still prints the version.
 
 **Interaction with `--format json`**: `--quiet` and `--format json` are mutually exclusive. If both are provided, the CLI MUST exit with code `3` (`VALIDATION_ERROR`) and the message: `Cannot combine --quiet (suppress output) with --format json (structured output). Use --format json without --quiet for machine-readable output, or --quiet without --format for silent operation.`
 
