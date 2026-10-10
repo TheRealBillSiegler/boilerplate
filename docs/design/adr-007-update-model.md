@@ -1,6 +1,6 @@
 # ADR-007: Safe-update model — conflict is a pause, structural change is migration-driven
 
-**Status**: Accepted **Deciders**: Project team
+**Status**: Accepted
 
 ## Context
 

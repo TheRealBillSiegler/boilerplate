@@ -1,6 +1,6 @@
 # ADR-002: Depend on Copier's internal Template/Worker via a single audited shim
 
-**Status**: Accepted **Deciders**: Project team
+**Status**: Accepted
 
 ## Context
 
