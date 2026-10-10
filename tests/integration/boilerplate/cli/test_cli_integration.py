@@ -215,7 +215,7 @@ class TestCLIExitCodeBehavior:
         "command,expected_exit_code,expected_content",
         [
             ([], ExitCode.SUCCESS, "boilerplate"),
-            (["version"], ExitCode.SUCCESS, "boilerplate"),
+            (["--version"], ExitCode.SUCCESS, "boilerplate"),
         ],
     )
     def test_global_commands_exit_codes(
@@ -404,8 +404,7 @@ class TestTopLevelHelp:
         assert "boilerplate" in result.output.lower()
         assert "Use a template" in result.output
         assert "Author a template" in result.output
-        assert "About" in result.output
-        for cmd in ("version", "list", "new", "graph", "compose"):
+        for cmd in ("list", "new", "graph", "compose"):
             assert cmd in result.output
 
     def test_verbose_without_subcommand_still_shows_help_and_success(
