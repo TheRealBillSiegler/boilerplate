@@ -189,17 +189,15 @@ extends: []
     return tmp_path
 
 
-@pytest.fixture()
-def banner_terminal(mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Present stdout as a 120 by 40 terminal that can draw the banner.
+def _present_banner_host(
+    mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Present a 120 by 40 host that could draw the banner, stdout aside.
 
-    CliRunner's stdout is never a terminal, and whether a screen reader runs
-    depends on the host, so both probes are replaced; the size and ``TERM``
-    come from the environment, where Rich and the probe read them.
+    Whether a screen reader runs depends on the host, so that probe is
+    replaced; the size and ``TERM`` come from the environment, where Rich and
+    the probe read them.
     """
-    mocker.patch(
-        "boilerplate.cli.display.terminal_probe._is_terminal", return_value=True
-    )
     mocker.patch(
         "boilerplate.cli.display.terminal_probe._screen_reader_running",
         return_value=False,
@@ -209,6 +207,24 @@ def banner_terminal(mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("TERM", "xterm-256color")
     for name in ("NO_COLOR", "FORCE_COLOR", "TTY_COMPATIBLE"):
         monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture()
+def banner_host(mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present a host that could draw the banner, leaving stdout as it is."""
+    _present_banner_host(mocker, monkeypatch)
+
+
+@pytest.fixture()
+def banner_terminal(mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present stdout as a 120 by 40 terminal that can draw the banner.
+
+    CliRunner's stdout is never a terminal, so the probe is told it is one.
+    """
+    _present_banner_host(mocker, monkeypatch)
+    mocker.patch(
+        "boilerplate.cli.display.terminal_probe._is_terminal", return_value=True
+    )
 
 
 @pytest.fixture(autouse=True)
