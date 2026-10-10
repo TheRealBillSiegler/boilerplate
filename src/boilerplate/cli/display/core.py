@@ -13,7 +13,9 @@ from rich.console import Console
 from rich.table import Table
 from rich.theme import Theme
 
+from boilerplate.cli.display.banner import build_banner
 from boilerplate.cli.display.color_mode import ColorMode
+from boilerplate.cli.display.terminal_probe import read_terminal_facts
 from boilerplate.common.env import env_flag
 
 ColorSystem = Literal["auto", "standard", "256", "truecolor", "windows"]
@@ -54,6 +56,7 @@ class Display:
     console: Console
     error_console: Console
     quiet: bool
+    terminal_encoding: str | None
 
     def __init__(
         self,
@@ -61,6 +64,7 @@ class Display:
         *,
         color: ColorMode = ColorMode.AUTO,
         quiet: bool = False,
+        terminal_encoding: str | None = None,
     ) -> None:
         """Initialize the display with a custom or default theme.
 
@@ -68,6 +72,9 @@ class Display:
             theme: Optional Rich theme override.
             color: The mode selected with ``--color``.
             quiet: If True, suppress info/success output (errors still shown).
+            terminal_encoding: The encoding stdout had before the CLI forced
+                UTF-8 onto it, which decides whether the banner may draw
+                braille; ``None`` takes the console's own encoding.
         """
         if theme is not None:
             merged_styles = dict(DEFAULT_THEME.styles)
@@ -110,6 +117,7 @@ class Display:
             self.error_console = Console(theme=self.theme, stderr=True)
 
         self.quiet = quiet
+        self.terminal_encoding = terminal_encoding
 
     # Pager removed from CLI.
 
@@ -136,6 +144,24 @@ class Display:
         if self.quiet:
             return
         self.console.print(message, style="success", markup=False)
+
+    def banner(self) -> None:
+        """Print the banner, after a blank line, when the terminal can show it.
+
+        The layout, and every case where none prints, follow
+        docs/design/05-cli-reference.md §Banner. Suppressed when ``quiet`` is
+        set. When no banner prints, neither does its blank line. Nothing
+        follows the banner: the top-level help it opens starts with a blank
+        line of its own.
+        """
+        if self.quiet:
+            return
+        facts = read_terminal_facts(self.console, encoding=self.terminal_encoding)
+        art = build_banner(facts)
+        if art is None:
+            return
+        self.console.print()
+        self.console.print(art, no_wrap=True, overflow="ignore", crop=False)
 
     def warning(self, message: str) -> None:
         """Print a warning message using the 'warning' style."""

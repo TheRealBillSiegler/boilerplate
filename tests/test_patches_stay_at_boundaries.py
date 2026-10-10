@@ -37,6 +37,12 @@ ALLOWED_SEAMS: dict[str, str] = {
     "boilerplate.cli.commands.new._stdin_is_real_console": (
         "Win32 console API probe; the answer depends on the host."
     ),
+    "boilerplate.cli.display.terminal_probe._is_terminal": (
+        "Console probe; CliRunner's stdout is never a terminal."
+    ),
+    "boilerplate.cli.display.terminal_probe._screen_reader_running": (
+        "Win32 accessibility probe; the answer depends on the host."
+    ),
     "boilerplate.cli.cli.configure_logging": (
         "Process-global logging state; the arguments are the observable effect."
     ),
