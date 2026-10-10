@@ -43,7 +43,6 @@ ALLOWED_SEAMS: dict[str, str] = {
     "boilerplate.cli.cli.Settings": (
         "Reads the environment; a failing settings load cannot be staged through it."
     ),
-    "boilerplate.__version__": ("Package metadata fixed at install time."),
     "boilerplate.settings.profile.profile_toml_path": ("The user's home directory."),
     "boilerplate.cli.utils.DirectoryTemplateRepository": (
         "Filesystem fault injection: a PermissionError or disk error cannot "

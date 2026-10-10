@@ -10,11 +10,40 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+import boilerplate
 from boilerplate.cli import cli
 from boilerplate.cli.display import ColorMode
 from boilerplate.cli.seams import Seams
 from boilerplate.composition.rendering.renderer import Renderer
 from boilerplate.constants import ExitCode
+
+
+class TestVersion:
+    """docs/design/05-cli-reference.md §Global Options: `--version`, no short form.
+
+    The flag is the one way to ask for the version: design 05 lists no
+    `version` command.
+    """
+
+    def test_the_flag_prints_the_version_and_exits_0(
+        self, typer_cli_runner: CliRunner
+    ) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["--version"])
+
+        assert (result.exit_code, result.output) == (
+            ExitCode.SUCCESS,
+            f"boilerplate {boilerplate.__version__}\n",
+        )
+
+    def test_the_flag_has_no_short_form(self, typer_cli_runner: CliRunner) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["-V"])
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
+
+    def test_version_is_not_a_command(self, typer_cli_runner: CliRunner) -> None:
+        result = typer_cli_runner.invoke(cli.app, ["version"])
+
+        assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
 
 
 def test_cli_runs_minimally_behavior(typer_cli_runner: CliRunner):
@@ -38,8 +67,8 @@ def test_cli_verbose_enables_debug(
 
     monkeypatch.setattr(cli, "configure_logging", fake_configure_logging)
 
-    # Pass --verbose *and* a subcommand (version) to exercise the callback
-    result = typer_cli_runner.invoke(cli.app, ["--verbose", "version"])
+    # Pass --verbose *and* a subcommand (list) to exercise the callback
+    result = typer_cli_runner.invoke(cli.app, ["--verbose", "list"])
     assert result.exit_code == 0
     assert called.get("debug") is True
     assert called.get("ci") is False
@@ -48,7 +77,7 @@ def test_cli_verbose_enables_debug(
 @pytest.mark.parametrize(
     "command,error_message",
     [
-        (["version"], "boom"),
+        (["list"], "boom"),
         (["new", "project"], "Settings initialization failed"),
     ],
 )
@@ -117,7 +146,7 @@ class TestColorOption:
     def test_each_mode_is_accepted(
         self, typer_cli_runner: CliRunner, mode: str
     ) -> None:
-        result = typer_cli_runner.invoke(cli.app, ["--color", mode, "version"])
+        result = typer_cli_runner.invoke(cli.app, ["--color", mode, "list"])
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
 
@@ -125,7 +154,7 @@ class TestColorOption:
     def test_any_other_value_is_rejected_naming_the_choices(
         self, typer_cli_runner: CliRunner, value: str
     ) -> None:
-        result = typer_cli_runner.invoke(cli.app, ["--color", value, "version"])
+        result = typer_cli_runner.invoke(cli.app, ["--color", value, "list"])
 
         assert result.exit_code == ExitCode.VALIDATION_ERROR, result.output
         output = " ".join(_plain(result.output).split())
@@ -232,7 +261,7 @@ class TestBoilerplateCiEnvVar:
         """``banana`` is a garbage-but-truthy value per the spec's truthiness rule."""
         monkeypatch.setenv("BOILERPLATE_CI", value)
         assert (
-            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["version"])
+            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["list"])
             is True
         )
 
@@ -245,7 +274,7 @@ class TestBoilerplateCiEnvVar:
     ) -> None:
         monkeypatch.setenv("BOILERPLATE_CI", value)
         assert (
-            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["version"])
+            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["list"])
             is False
         )
 
@@ -255,7 +284,7 @@ class TestBoilerplateCiEnvVar:
         monkeypatch.setenv("BOILERPLATE_CI", "1")
         assert (
             self._invoke_and_capture_ci_mode(
-                monkeypatch, typer_cli_runner, ["--ci", "version"]
+                monkeypatch, typer_cli_runner, ["--ci", "list"]
             )
             is True
         )
@@ -266,7 +295,7 @@ class TestBoilerplateCiEnvVar:
         """Regression: generic CI=true does not change --ci behavior (ADR-013)."""
         monkeypatch.setenv("CI", "true")
         assert (
-            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["version"])
+            self._invoke_and_capture_ci_mode(monkeypatch, typer_cli_runner, ["list"])
             is False
         )
 
@@ -284,7 +313,7 @@ class TestBoilerplateCiEnvVar:
 
         monkeypatch.setattr(cli, "configure_logging", fake_configure_logging)
 
-        result = typer_cli_runner.invoke(cli.app, ["--ci", "--verbose", "version"])
+        result = typer_cli_runner.invoke(cli.app, ["--ci", "--verbose", "list"])
 
         assert result.exit_code == ExitCode.SUCCESS, result.output
         assert called == {"debug": True, "ci": True}

@@ -11,7 +11,6 @@ from boilerplate.cli.commands import (
     new,
     templates,
     validate,
-    version,
 )
 
 __all__ = [
@@ -20,5 +19,4 @@ __all__ = [
     "new",
     "templates",
     "validate",
-    "version",
 ]

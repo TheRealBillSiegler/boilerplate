@@ -161,7 +161,7 @@ Boilerplate itself ships with public defaults. Organizations customize in two pl
 Test your boilerplate installation by getting the version.
 
 ```powershell
-boilerplate version
+boilerplate --version
 ```
 
 Expected: prints a semantic version and exits 0.
