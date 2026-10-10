@@ -2,7 +2,7 @@
 
 **Status**: Accepted
 
-**Date**: 2026-07-14 **Deciders**: Project team (Bill Siegler)
+**Deciders**: Project team (Bill Siegler)
 
 ## Context
 

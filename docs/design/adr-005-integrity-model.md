@@ -1,6 +1,6 @@
 # ADR-005: Integrity model — filesystem-permission-based; cryptographic signing deferred
 
-**Status**: Accepted (retroactively documented 2026-06-11) **Date**: documented 2026-06-11 **Deciders**: Project team
+**Status**: Accepted **Deciders**: Project team
 
 ## Context
 
