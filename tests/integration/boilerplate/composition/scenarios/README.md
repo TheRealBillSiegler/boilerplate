@@ -16,7 +16,7 @@ uv run pytest tests/integration/boilerplate/composition/scenarios/test_views.py 
 uv run pytest tests/integration/boilerplate/composition -m scenario -k TestRenamedQuestion  # one scenario, by its test class
 ```
 
-Every scenario builds its template repositories and project under pytest's temp directory and points `TMP`, `TEMP` and `TMPDIR` there, so Copier's clones and update copies stay inside it; git checks out with LF endings there, whatever `core.autocrlf` says. The scoped-view harness lives in `tests/boilerplate/templates/conftest.py`, over the view builder, the render engine and the update pieces in `src/boilerplate/composition/views/`, `rendering/` and `updating/`; `builders.py` holds the project builders and readers, `family.py` (one folder up) builds the family, and `extensions/` holds the bundled-layer scenarios' probe-only Jinja extensions.
+Every scenario builds its template repositories and project under pytest's temp directory and points `TMP`, `TEMP`, `TMPDIR` and `tempfile.gettempdir` there, so Copier's clones and update copies stay inside it; git checks out with LF endings there, whatever `core.autocrlf` says. The scoped-view harness lives in `tests/boilerplate/templates/conftest.py`, over the view builder, the render engine and the update pieces in `src/boilerplate/composition/views/`, `rendering/` and `updating/`; `builders.py` holds the project builders and readers, `family.py` (one folder up) builds the family, and `extensions/` holds the bundled-layer scenarios' probe-only Jinja extensions.
 
 ## How the harness works
 
@@ -167,9 +167,10 @@ pytest session
 │
 ├─ tests/integration/boilerplate/composition/conftest.py
 │    family             session scope, tmp_path_factory: built once per xdist worker
-│    isolated_temp      autouse, only for scenarios/ and updating/: TMP, TEMP and
-│                       TMPDIR → the test's tmp_path, so Copier's clones and old/new
-│                       copies stay inside it; the rendering tests keep the real one
+│    isolated_temp      autouse, only for scenarios/ and updating/: TMP, TEMP,
+│                       TMPDIR and tempfile.gettempdir → under the test's
+│                       tmp_path, so Copier's clones and old/new copies stay
+│                       inside it; the rendering tests keep the real one
 │
 └─ tests/integration/boilerplate/composition/scenarios/conftest.py
      collection hook   marks every test in the folder `scenario`
