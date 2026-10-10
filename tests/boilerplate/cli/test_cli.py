@@ -513,6 +513,9 @@ class TestHelpBanner:
             pytest.param(
                 ["-h", "new", "--color", "never"], True, id="subcommand-args-ignored"
             ),
+            pytest.param(
+                ["--color", "never", "--", "--help"], False, id="before-a-separator"
+            ),
         ],
     )
     def test_the_banner_reads_the_last_root_color_flag(
@@ -546,6 +549,25 @@ class TestHelpBanner:
         output = typer_cli_runner.invoke(cli.app, ["--help"]).output
 
         assert _NAME_ROW not in output
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            ["-q", "--help"],
+            ["--help", "--quiet"],
+            ["-qh"],
+            ["-q"],
+            ["-q", "--", "--help"],
+        ],
+        ids=str,
+    )
+    def test_quiet_opens_the_help_at_its_usage_line(
+        self, typer_cli_runner: CliRunner, args: list[str]
+    ) -> None:
+        """05 §Banner: no banner prints while --quiet is active; the help still does."""
+        lines = _plain(typer_cli_runner.invoke(cli.app, args).output).splitlines()
+
+        assert next(line for line in lines if line.strip()).strip().startswith("Usage:")
 
     @pytest.mark.parametrize("args", [["new", "--help"], ["--version"]], ids=str)
     def test_subcommand_help_and_version_print_none(

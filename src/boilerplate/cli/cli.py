@@ -83,9 +83,12 @@ class BoilerplateGroup(TyperGroup):
 
         That is the arguments themselves and stdout's encoding as the
         terminal set it, before the root callback reconfigures it to UTF-8.
+        A command name after ``--`` that looks like an option, as in
+        ``-q -- --help``, is parsed a second time on its own; the banner keeps
+        the first parse's arguments, which hold the root's own options.
         """
-        ctx.meta[_ARGS_KEY] = tuple(args)
-        ctx.meta[_ENCODING_KEY] = getattr(sys.stdout, "encoding", None)
+        ctx.meta.setdefault(_ARGS_KEY, tuple(args))
+        ctx.meta.setdefault(_ENCODING_KEY, getattr(sys.stdout, "encoding", None))
         return super().parse_args(ctx, args)
 
     def format_help(self, ctx: engine.Context, formatter: engine.HelpFormatter) -> None:
@@ -99,9 +102,10 @@ class BoilerplateGroup(TyperGroup):
         args = ctx.meta.get(_ARGS_KEY)
         if args is not None:
             options = self._root_options(ctx, args)
-            Display(color=_color_mode(options.get("color"))).banner(
-                terminal_encoding=ctx.meta.get(_ENCODING_KEY)
-            )
+            Display(
+                color=_color_mode(options.get("color")),
+                quiet=bool(options.get("quiet")),
+            ).banner(terminal_encoding=ctx.meta.get(_ENCODING_KEY))
         super().format_help(ctx, formatter)
 
     def _root_options(
@@ -253,7 +257,7 @@ def main(
         False,
         "--quiet",
         "-q",
-        help="Hide progress, success, and hint messages.",
+        help="Hide the banner and progress, success, and hint messages.",
     ),
     color: ColorMode = COLOR_OPTION,
     ci: bool = typer.Option(
