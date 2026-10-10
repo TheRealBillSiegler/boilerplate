@@ -212,6 +212,13 @@ class TestSymlinksInAPausedCopyBack:
     def test_link_leaving_the_staging_directory_is_refused(
         self, project: Path, staging_root: Path, link_target: str
     ) -> None:
+        """Refuse a link that points outside staging, saying why in the error.
+
+        The refusal comes after the copy back has begun to write, so it reaches
+        the caller as the copy-back failure, which restores the checkout and
+        keeps the worktree. It fails if the check goes, or if the failure stops
+        naming its cause.
+        """
         with staging(project, staging_root) as stage:
             link_in_worktree(stage, link_target)
 
