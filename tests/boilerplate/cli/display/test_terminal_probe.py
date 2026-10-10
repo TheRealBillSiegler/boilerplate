@@ -287,6 +287,18 @@ class TestCellShape:
 
         assert facts.cell_shape is None
 
+    def test_the_terminal_is_never_asked_for_it(self) -> None:
+        """05 §Banner: the CLI MUST NOT ask the terminal with escape sequences.
+
+        A query would be written to the terminal; reading the facts writes
+        nothing to it.
+        """
+        terminal = _Terminal()
+
+        read_terminal_facts(_console(file=terminal))
+
+        assert terminal.getvalue() == ""
+
     if sys.platform != "win32":  # TIOCGWINSZ and pseudo-terminals are POSIX-only
 
         def test_a_pty_reports_the_shape_of_its_window(self) -> None:
