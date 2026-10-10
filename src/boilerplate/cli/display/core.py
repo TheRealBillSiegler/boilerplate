@@ -56,7 +56,6 @@ class Display:
     console: Console
     error_console: Console
     quiet: bool
-    terminal_encoding: str | None
 
     def __init__(
         self,
@@ -64,7 +63,6 @@ class Display:
         *,
         color: ColorMode = ColorMode.AUTO,
         quiet: bool = False,
-        terminal_encoding: str | None = None,
     ) -> None:
         """Initialize the display with a custom or default theme.
 
@@ -72,9 +70,6 @@ class Display:
             theme: Optional Rich theme override.
             color: The mode selected with ``--color``.
             quiet: If True, suppress info/success output (errors still shown).
-            terminal_encoding: The encoding stdout had before the CLI forced
-                UTF-8 onto it, which decides whether the banner may draw
-                braille; ``None`` takes the console's own encoding.
         """
         if theme is not None:
             merged_styles = dict(DEFAULT_THEME.styles)
@@ -117,7 +112,6 @@ class Display:
             self.error_console = Console(theme=self.theme, stderr=True)
 
         self.quiet = quiet
-        self.terminal_encoding = terminal_encoding
 
     # Pager removed from CLI.
 
@@ -145,7 +139,7 @@ class Display:
             return
         self.console.print(message, style="success", markup=False)
 
-    def banner(self) -> None:
+    def banner(self, *, terminal_encoding: str | None = None) -> None:
         """Print the banner, after a blank line, when the terminal can show it.
 
         The layout, and every case where none prints, follow
@@ -153,10 +147,15 @@ class Display:
         set. When no banner prints, neither does its blank line. Nothing
         follows the banner: the top-level help it opens starts with a blank
         line of its own.
+
+        Args:
+            terminal_encoding: The encoding stdout had before the CLI forced
+                UTF-8 onto it, which decides whether the banner may draw
+                braille; ``None`` takes the console's own encoding.
         """
         if self.quiet:
             return
-        facts = read_terminal_facts(self.console, encoding=self.terminal_encoding)
+        facts = read_terminal_facts(self.console, encoding=terminal_encoding)
         art = build_banner(facts)
         if art is None:
             return
