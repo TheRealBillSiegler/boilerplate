@@ -112,11 +112,9 @@ class BoilerplateGroup(TyperGroup):
         """
         args = ctx.meta.get(_ARGS_KEY)
         if args is not None:
-            display = Display(
-                color=_color_mode(args),
-                terminal_encoding=ctx.meta.get(_ENCODING_KEY),
+            Display(color=_color_mode(args)).banner(
+                terminal_encoding=ctx.meta.get(_ENCODING_KEY)
             )
-            display.banner()
         super().format_help(ctx, formatter)
 
     def make_context(
