@@ -2,7 +2,7 @@
 
 **Status**: Pending — the default decision below stands *unless* the current PyPI `boilerplate` owner agrees to surrender the name. A voluntary-transfer request to the incumbent is outstanding; [PEP 541](https://peps.python.org/pep-0541/) is the fallback escalation. This ADR **must** resolve to Accepted before the **first PyPI publish**, because a PyPI distribution name is effectively immutable once published. It does **not** gate the git-URL-first launch (`uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`) or the first public tag, which publish no wheel.
 
-**Date**: 2026-06-22 **Deciders**: Project team (Bill Siegler)
+**Deciders**: Project team (Bill Siegler)
 
 > **Scope note.** This is a packaging / go-public decision, not an architecture one. It gates INT-007 (PyPI installability) and INT-010 (publish pipeline), both in the [intentions register](../intentions/README.md) — the PyPI path only; it does **not** gate the git-URL-first launch, which consumes no PyPI distribution name. It does not touch the import package, the CLI surface, or any persisted schema.
 

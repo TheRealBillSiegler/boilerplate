@@ -1,6 +1,6 @@
 # ADR-003: Render with Copier `unsafe` — no task/extension consent gate
 
-**Status**: Accepted (current posture; deliberately diverges from the target security model) **Date**: 2026-06-09, reworked 2026-08-15, revised 2026-10-09 **Deciders**: Project team
+**Status**: Accepted (current posture; deliberately diverges from the target security model) **Deciders**: Project team
 
 ## Context
 

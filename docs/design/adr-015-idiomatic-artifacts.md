@@ -1,6 +1,6 @@
 # ADR-015: Idiomatic artifacts, orchestrated engine — a composed project is plain Copier on disk
 
-**Status**: Accepted **Date**: 2026-07-28; revised 2026-09-30, 2026-10-06 and 2026-10-08 **Deciders**: Project team (Bill Siegler)
+**Status**: Accepted **Deciders**: Project team (Bill Siegler)
 
 > **Scope note.** This ADR names the paradigm the composition and update designs assume, so later decisions can cite an invariant instead of re-deriving it. For what exists in code today, see [status.md](../status.md).
 

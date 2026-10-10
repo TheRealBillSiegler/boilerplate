@@ -2,7 +2,7 @@
 
 **Status**: Accepted
 
-**Date**: 2026-07-11 **Deciders**: Project team (Bill Siegler)
+**Deciders**: Project team (Bill Siegler)
 
 > **Scope note.** This is a documentation-framing decision, not an architecture one. It governs how public-facing docs (README first screen, docs home, the [Why Boilerplate?](../why.md) page) frame Boilerplate's relationship to Copier, and records the evidence that framing rests on. It does not change any behavioral contract.
 >

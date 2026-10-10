@@ -7,8 +7,6 @@ This page tracks how much of Boilerplate's [design specification](design/01-over
 
 **Legend:** :material-check-circle:{ .status-shipped } Implemented · :material-progress-clock:{ .status-partial } Partial · :material-circle-outline:{ .status-design } Planned (design-only)
 
-**Last updated:** 2026-08-05
-
 ## At a glance
 
 The implemented core is **local template composition**: discover templates from local directories, resolve an `extends` graph, merge their configuration and question schemas, and render through Copier. That pipeline ships end to end and is covered by the test suite, but several of design 04's contracts are still open (graph limits, the `CopierWorker` abstraction), so the area is rated Partial below. Beyond the core, two customization mechanisms ship: an env/`.env`-driven `Settings` object (three of design 09's ten Settings fields, plus two code-only extras) and the per-user **profile** (`profile.toml`); the earlier typed Profile model, its resolution chain, and the `boilerplate config` command were retired in favor of the profile. Everything tied to *reproducibility and lifecycle* (lock files, project updates, three-way merge), *catalog federation* (remote/Git sources, trust tiers, search), and the *environment-provisioning subsystem* is currently design-only.
