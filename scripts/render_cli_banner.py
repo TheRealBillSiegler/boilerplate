@@ -24,7 +24,7 @@ import argparse
 import json
 import re
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from itertools import pairwise
 from pathlib import Path
 from typing import Final, NamedTuple
@@ -150,12 +150,42 @@ def subpaths(d: str) -> list[list[Point]]:
         ValueError: The path does not start with M, uses a command this
             reader does not handle, or gives a command too few numbers.
     """
-    tokens = _PATH_TOKEN.findall(d)
-    if tokens and tokens[0] != "M":
-        raise ValueError("An SVG path must start with M.")
     paths: list[list[Point]] = []
     points: list[Point] = []
     current: Point = (0.0, 0.0)
+    for command, numbers in _commands(d):
+        if command == "Z":
+            if points:
+                paths.append(points)
+                current, points = points[0], []
+        elif command == "M":
+            if points:
+                paths.append(points)
+            current = (numbers[0], numbers[1])
+            points = [current]
+        else:
+            if not points:
+                points = [current]  # drawing on after a Z
+            if command == "C":
+                points += _flatten(current, numbers)
+                current = (numbers[4], numbers[5])
+            else:
+                current = _line_end(command, current, numbers)
+                points.append(current)
+    if points:
+        paths.append(points)
+    return paths
+
+
+def _commands(d: str) -> Iterator[tuple[str, list[float]]]:
+    """Yield an SVG path's commands, each with one group of its numbers.
+
+    A command given several groups yields once per group, and the groups
+    after a move's first draw lines. Z yields with no numbers.
+    """
+    tokens = _PATH_TOKEN.findall(d)
+    if tokens and tokens[0] != "M":
+        raise ValueError("An SVG path must start with M.")
     command = ""
     index = 0
     while index < len(tokens):
@@ -165,9 +195,8 @@ def subpaths(d: str) -> list[list[Point]]:
                 raise ValueError(f"Unsupported SVG path command {token!r}.")
             command = token
             index += 1
-            if command == "Z" and points:
-                paths.append(points)
-                current, points = points[0], []
+            if command == "Z":
+                yield command, []
             continue
         arity = _ARITY.get(command, 0)
         values = tokens[index : index + arity]
@@ -175,26 +204,10 @@ def subpaths(d: str) -> list[list[Point]]:
             raise ValueError(
                 f"SVG path command {command!r} takes {arity} numbers at a time."
             )
-        numbers = [float(value) for value in values]
         index += arity
+        yield command, [float(value) for value in values]
         if command == "M":
-            if points:
-                paths.append(points)
-            current = (numbers[0], numbers[1])
-            points = [current]
             command = "L"  # coordinates after a move draw lines
-            continue
-        if not points:
-            points = [current]  # drawing on after a Z
-        if command == "C":
-            points += _flatten(current, numbers)
-            current = (numbers[4], numbers[5])
-        else:
-            current = _line_end(command, current, numbers)
-            points.append(current)
-    if points:
-        paths.append(points)
-    return paths
 
 
 def _line_end(command: str, current: Point, numbers: Sequence[float]) -> Point:
