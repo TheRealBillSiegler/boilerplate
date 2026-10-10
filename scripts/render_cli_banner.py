@@ -187,13 +187,16 @@ def _commands(d: str) -> Iterator[tuple[str, list[float]]]:
     if tokens and tokens[0] != "M":
         raise ValueError("An SVG path must start with M.")
     command = ""
+    owed = False  # the last command letter has had no numbers yet
     index = 0
     while index < len(tokens):
         token = tokens[index]
         if token.isalpha():
             if token not in "MLHVCZ":
                 raise ValueError(f"Unsupported SVG path command {token!r}.")
-            command = token
+            if owed:
+                raise _arity_error(command)
+            command, owed = token, token != "Z"
             index += 1
             if command == "Z":
                 yield command, []
@@ -201,13 +204,20 @@ def _commands(d: str) -> Iterator[tuple[str, list[float]]]:
         arity = _ARITY.get(command, 0)
         values = tokens[index : index + arity]
         if not arity or len(values) < arity or any(v.isalpha() for v in values):
-            raise ValueError(
-                f"SVG path command {command!r} takes {arity} numbers at a time."
-            )
+            raise _arity_error(command)
+        owed = False
         index += arity
         yield command, [float(value) for value in values]
         if command == "M":
             command = "L"  # coordinates after a move draw lines
+    if owed:
+        raise _arity_error(command)
+
+
+def _arity_error(command: str) -> ValueError:
+    """Return the error for an SVG path command given too few numbers."""
+    arity = _ARITY.get(command, 0)
+    return ValueError(f"SVG path command {command!r} takes {arity} numbers at a time.")
 
 
 def _line_end(command: str, current: Point, numbers: Sequence[float]) -> Point:
