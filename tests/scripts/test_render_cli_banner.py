@@ -75,6 +75,9 @@ class TestSubpaths:
         [
             pytest.param("L1 1", id="no-starting-move"),
             pytest.param("M0 0L1", id="too-few-numbers"),
+            pytest.param("M", id="a-move-without-numbers"),
+            pytest.param("M0 0L", id="a-command-without-numbers-at-the-end"),
+            pytest.param("M0 0LH5", id="a-command-without-numbers-before-the-next"),
             pytest.param("M0 0Z5 5", id="numbers-after-close"),
         ],
     )
