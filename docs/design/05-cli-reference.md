@@ -8,6 +8,7 @@
     - [Trust Flags](#trust-flags)
     - [Template Argument Resolution](#template-argument-resolution)
 - [Help Text Structure](#help-text-structure)
+    - [Banner](#banner)
     - ["Did You Mean?" for Unknown Commands](#did-you-mean-for-unknown-commands)
     - [Help Topics](#help-topics)
     - [Command Examples](#command-examples)
@@ -131,7 +132,7 @@ This means `boilerplate compose ./project` is always a path, and `boilerplate co
 
 ## Help Text Structure
 
-The `--help` output MUST use visual grouping to organize commands by domain. A `Get started:` block MUST appear before command groups to give new users an immediate entry point. Global options MUST appear at the bottom (lowest priority for new users):
+The `--help` output MUST use visual grouping to organize commands by domain. A `Get started:` block MUST appear before command groups to give new users an immediate entry point. Global options MUST appear at the bottom (lowest priority for new users). On a terminal that can show it, the top-level help opens with the [banner](#banner):
 
 ```text
 Usage: boilerplate [OPTIONS] COMMAND [ARGS]
@@ -178,6 +179,36 @@ Global options:
   -h, --help          Show this message and exit
       --version       Show version and exit
 ```
+
+### Banner
+
+The banner is the CLI logo drawn in braille dots beside the name `boilerplate` in ASCII art. It prints in one place: above the top-level help (`boilerplate` and `boilerplate --help`). Subcommand help, `--version`, and every command print none; `new` is the command people run most, so its first prompt opens the run. A blank line MUST come before the banner, setting it apart from the command line above; when no banner prints, neither does that line.
+
+**Look**: the logo is `docs/assets/boilerplate-cli-logo.svg` drawn in braille at 11 rows, its braces and bars in brand blue (`#40B4E5`) and its `>_` prompt in the terminal's default text color, so the prompt follows the theme. The name is FIGlet's `standard` font in bold, 49 columns by 6 rows, centered vertically 3 columns to the logo's right. Both ship as text that `scripts/render_cli_banner.py` generates from the SVG ahead of time; the CLI reads no image at runtime. At every width, the art MUST keep the logo's shapes clean at braille resolution:
+
+- Each bar is exactly two dot rows tall in every column it lights, with equal gaps between bars.
+- Where the logo shows a bar's end past the chevron, the art shows it too: the long bars all end in one column unless a prompt cell covers it.
+- The chevron is mirror-symmetric about its tip.
+- The prompt is painted over the bars. A character cell prints in one color, so a cell holding any prompt dot drops its blue dots, and the braces end on the cell row above the underscore's so the two never share a cell.
+- No stray dots: only a bar's end showing past the prompt forms a cluster of four dots or fewer.
+
+**Layout**: the CLI MUST print the first layout below that fits. A layout fits when the terminal is at least as wide as the layout, so no row wraps, and tall enough for the layout and the blank line before it, so the whole banner can be on screen at once. More height buys nothing: the help that follows scrolls the banner away regardless. When neither fits, no banner prints.
+
+| Layout | Fits when the terminal has at least | Also requires |
+| --- | --- | --- |
+| Logo beside name | logo width + 3 + 49 columns (74–81), and 12 lines | Braille output |
+| Name alone | 49 columns and 7 lines | — |
+
+**Braille output** requires a UTF-8 stdout, a `TERM` other than `linux` (the Linux text console, whose fonts lack braille), and output that is not ASCII-only. When color is off (`--color never`, or `NO_COLOR` without `--color always`, per [Terminal Accessibility](#terminal-accessibility) rules 1 and 4), only printable ASCII may print, so the name prints alone, without color or bold.
+
+**Logo width**: the source image is square, so the logo's width in columns MUST follow the terminal's cell shape (cell height divided by cell width). The default shape is 2.25, which gives 25 columns. On POSIX, when the terminal reports its window size in pixels (`TIOCGWINSZ`) and the report is plausible (at least 2 pixels per column and 4 per row), the CLI MUST derive the shape from it and use the generated width nearest to 11 × shape, from 22 to 29 columns. The CLI MUST NOT ask the terminal for its cell size with escape sequences: the reply needs raw mode and a timeout, and Windows Terminal answers with a fixed virtual cell.
+
+**Suppression**: the banner MUST NOT print when any of these holds:
+
+- stdout is not a terminal, or `TERM` is `dumb` or `unknown`
+- `BOILERPLATE_ACCESSIBLE` is enabled ([Terminal Accessibility](#terminal-accessibility) rule 5)
+- on Windows, the system reports a running screen reader (`SPI_GETSCREENREADER`), which could read each braille cell aloud
+- `BOILERPLATE_NO_BANNER` is enabled, by the truthiness rule of the other `BOILERPLATE_*` boolean env vars (see the environment variable equivalents note in [Global Options](#global-options))
 
 ### "Did You Mean?" for Unknown Commands
 
@@ -1181,7 +1212,7 @@ This section defines the universal accessibility contract for all CLI output. In
 
 4. **`--color` flag**: The `--color auto|always|never` global flag provides explicit control over color output. `auto` (default) uses TTY detection and respects `NO_COLOR`. `always` forces color on (useful when piping to `less -R`). `never` forces color off. When `--color` is provided, it takes precedence over `NO_COLOR`.
 
-5. **`BOILERPLATE_ACCESSIBLE` environment variable**: When enabled, activates all accessibility accommodations as a single toggle. It follows the same truthiness rule as the other `BOILERPLATE_*` boolean env vars (see the environment variable equivalents note in [Global Options](#global-options)): the value is trimmed of surrounding whitespace, then enabled when the trimmed value is non-empty and not `0` or `false` (case-insensitive). Equivalent to setting `NO_COLOR=1` plus: append-mode progress (no carriage-return overwrite), `PASS`/`WARN`/`FAIL` text labels (no Unicode symbols), and `TERM=dumb`-compatible output. This variable exists so that screen reader users and accessibility-focused workflows can enable the full suite of accommodations without remembering individual settings. When `BOILERPLATE_ACCESSIBLE` is active, `--color auto` resolves to `never`.
+5. **`BOILERPLATE_ACCESSIBLE` environment variable**: When enabled, activates all accessibility accommodations as a single toggle. It follows the same truthiness rule as the other `BOILERPLATE_*` boolean env vars (see the environment variable equivalents note in [Global Options](#global-options)): the value is trimmed of surrounding whitespace, then enabled when the trimmed value is non-empty and not `0` or `false` (case-insensitive). Equivalent to setting `NO_COLOR=1` plus: append-mode progress (no carriage-return overwrite), `PASS`/`WARN`/`FAIL` text labels (no Unicode symbols), no [banner](#banner), and `TERM=dumb`-compatible output. This variable exists so that screen reader users and accessibility-focused workflows can enable the full suite of accommodations without remembering individual settings. When `BOILERPLATE_ACCESSIBLE` is active, `--color auto` resolves to `never`.
 
 ---
 
