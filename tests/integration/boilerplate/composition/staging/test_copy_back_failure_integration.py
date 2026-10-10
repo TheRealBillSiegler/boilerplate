@@ -21,8 +21,6 @@ from tests.integration.boilerplate.composition.staging.conftest import (
     restore_dying_after_one_file,
 )
 
-SEAM = "boilerplate.composition.staging.copy_back.run_git"
-
 
 def staging(project: Path, root: Path) -> StagingWorktree:
     return StagingWorktree(project, operation=IntentOperation.UPDATE, temp_root=root)
@@ -41,7 +39,10 @@ class TestPartialCopyBack:
         self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         start = head(project)
-        monkeypatch.setattr(SEAM, restore_dying_after_one_file(disk_full()))
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_dying_after_one_file(disk_full()),
+        )
         with (
             pytest.raises(UpdateCopyBackFailedError),
             staging(project, staging_root) as stage,
@@ -56,7 +57,10 @@ class TestPartialCopyBack:
     def test_worktree_is_kept_and_the_error_names_its_path(
         self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(SEAM, restore_dying_after_one_file(disk_full()))
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_dying_after_one_file(disk_full()),
+        )
         with (
             pytest.raises(UpdateCopyBackFailedError) as raised,
             staging(project, staging_root) as stage,
@@ -73,7 +77,10 @@ class TestPartialCopyBack:
     def test_kept_worktree_survives_a_later_stale_cleanup(
         self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(SEAM, restore_dying_after_one_file(disk_full()))
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_dying_after_one_file(disk_full()),
+        )
         with (
             pytest.raises(UpdateCopyBackFailedError),
             staging(project, staging_root) as stage,
@@ -93,7 +100,10 @@ class TestPartialCopyBack:
     def test_interrupt_restores_and_keeps_then_propagates(
         self, project: Path, staging_root: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(SEAM, restore_dying_after_one_file(KeyboardInterrupt()))
+        monkeypatch.setattr(
+            "boilerplate.composition.staging.copy_back.run_git",
+            restore_dying_after_one_file(KeyboardInterrupt()),
+        )
         with pytest.raises(KeyboardInterrupt), staging(project, staging_root) as stage:
             kept = stage.path
             commit_layer_changes(stage)
