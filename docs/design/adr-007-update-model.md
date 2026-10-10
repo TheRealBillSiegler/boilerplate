@@ -1,6 +1,6 @@
 # ADR-007: Safe-update model — conflict is a pause, structural change is migration-driven
 
-**Status**: Accepted (target; the update subsystem is not yet implemented; amended 2026-06-22 and 2026-07-28) **Date**: 2026-06-20 **Deciders**: Project team
+**Status**: Accepted **Date**: 2026-06-20 **Deciders**: Project team
 
 ## Context
 
@@ -8,7 +8,7 @@
 
 ## Decision
 
-**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, leave Copier's conflict markers in the working tree, record a `conflict` MigrationRecord, and exit **4 (`ACTION_REQUIRED`)**. The user resolves markers in place, then `boilerplate update --continue` finalizes (writes the new lock, advances the record to `success`) or `update --abort` restores from the pre-merge backup. **Atomic rollback is reserved for *unexpected* (non-conflict) errors**, which restore the pre-update state and record `failed` (exit 1). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional. (An earlier plan for the update-apply slice proposed rollback-on-conflict; that is corrected to this pause model. No change to the [02] Error-Hierarchy table — `MergeConflictError` is the composition-time error and correctly stays exit 1.)
+**A conflict is a designed pause, not a failure.** On a layer reporting conflicts, leave Copier's conflict markers in the working tree, record a `conflict` MigrationRecord, and exit **4 (`ACTION_REQUIRED`)**. The user resolves markers in place, then `boilerplate update --continue` finalizes (writes the new lock, advances the record to `success`) or `update --abort` restores from the pre-merge backup. **Atomic rollback is reserved for *unexpected* (non-conflict) errors**, which restore the pre-update state and record `failed` (exit 1). INT-003's "atomic, no partial state" guarantee applies to *failures*; a pause is intentional.
 
 **A changed `extends` chain is handled by author migrations, not provenance inference.**
 
