@@ -86,6 +86,8 @@ def cell_shape(rows: int, columns: int, x_pixels: int, y_pixels: int) -> float |
 def _is_terminal(stream: IO[str]) -> bool:
     """Return True when ``stream`` is a terminal.
 
+    This asks the stream itself, not Rich: ``--color always`` makes Rich treat
+    even a pipe as a terminal, and the banner stays out of a pipe regardless.
     A stream without ``isatty``, as some embedding hosts install, is none.
     """
     isatty = getattr(stream, "isatty", None)
