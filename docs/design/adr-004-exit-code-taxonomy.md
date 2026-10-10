@@ -1,6 +1,6 @@
 # ADR-004: Coarse exit-code taxonomy, with fine diagnosis in BP* codes
 
-**Status**: Accepted **Date**: documented 2026-06-09 **Deciders**: Project team
+**Status**: Accepted **Deciders**: Project team
 
 ## Context
 
