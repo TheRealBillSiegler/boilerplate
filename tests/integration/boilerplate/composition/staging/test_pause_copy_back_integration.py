@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from boilerplate.common.exceptions import UpdateCheckoutChangedError
+from boilerplate.common.exceptions import (
+    UpdateCheckoutChangedError,
+    UpdateCopyBackFailedError,
+)
 from boilerplate.composition.staging import IntentOperation, StagingWorktree
 from tests.boilerplate.templates.conftest import commit_all, git
 from tests.integration.boilerplate.composition.staging.conftest import FILES, head
@@ -212,7 +215,9 @@ class TestSymlinksInAPausedCopyBack:
         with staging(project, staging_root) as stage:
             link_in_worktree(stage, link_target)
 
-            with pytest.raises(ValueError, match="outside the staging directory"):
+            with pytest.raises(
+                UpdateCopyBackFailedError, match="outside the staging directory"
+            ):
                 stage.copy_back(paused=True)
 
 
