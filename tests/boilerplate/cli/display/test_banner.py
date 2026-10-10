@@ -198,6 +198,7 @@ class TestColors:
         ]
 
     def test_the_name_is_bold(self) -> None:
-        output = _ansi(build_banner(_facts(ascii_only=True)))
+        """The name alone, as a terminal that cannot draw braille gets it."""
+        output = _ansi(build_banner(_facts(braille=False)))
 
         assert f"\x1b[1m{FIGLET_NAME[1]}" in output
