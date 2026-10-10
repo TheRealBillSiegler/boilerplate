@@ -86,6 +86,7 @@ _BRAILLE_BITS: Final = (
     (1, 3, 0x80),
 )
 _PATH_TOKEN: Final = re.compile(r"[A-Za-z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+_ARITY: Final = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6}  # numbers per command
 _CURVE_STEPS: Final = 48  # straight segments per flattened Bezier curve
 
 _MODULE_HEADER: Final = '''"""Braille logo and ASCII name for the CLI banner.
@@ -150,7 +151,7 @@ def subpaths(d: str) -> list[list[Point]]:
             reader does not handle, or gives a command too few numbers.
     """
     tokens = _PATH_TOKEN.findall(d)
-    if tokens[:1] not in ([], ["M"]):
+    if tokens and tokens[0] != "M":
         raise ValueError("An SVG path must start with M.")
     paths: list[list[Point]] = []
     points: list[Point] = []
@@ -194,9 +195,6 @@ def subpaths(d: str) -> list[list[Point]]:
     if points:
         paths.append(points)
     return paths
-
-
-_ARITY: Final = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6}
 
 
 def _line_end(command: str, current: Point, numbers: Sequence[float]) -> Point:
