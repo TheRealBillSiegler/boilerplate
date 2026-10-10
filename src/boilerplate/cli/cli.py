@@ -20,7 +20,6 @@ from boilerplate.cli.commands import (
     new,
     templates,
     validate,
-    version,
 )
 from boilerplate.cli.context import CliContext
 from boilerplate.cli.display import ColorMode, Display
@@ -264,7 +263,6 @@ def main(
     _version: bool = typer.Option(
         False,
         "--version",
-        "-V",
         help="Show version and exit.",
         callback=_version_callback,
         is_eager=True,
@@ -301,4 +299,3 @@ app.command("new", rich_help_panel="Use a template")(new.new)
 app.command("graph", rich_help_panel="Author a template")(graph.graph)
 app.command("compose", rich_help_panel="Author a template")(compose.compose)
 app.command("validate", rich_help_panel="Author a template")(validate.validate)
-app.command("version", rich_help_panel="About")(version.version)

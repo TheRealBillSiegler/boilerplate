@@ -16,7 +16,7 @@ The installer places the `boilerplate` executable in a user-local bin directory 
         2. If still not found, open **Start → Edit the system environment variables → Environment Variables** and check or add `%USERPROFILE%\.local\bin` to `Path` under *User variables*.
     - **Verify:**
         ```powershell
-        boilerplate version
+        boilerplate --version
         Get-Command boilerplate
         ```
 
@@ -30,7 +30,7 @@ The installer places the `boilerplate` executable in a user-local bin directory 
     - **Verify:**
         ```bash
         command -v boilerplate
-        boilerplate version
+        boilerplate --version
         ```
 <!-- markdownlint-enable MD046 -->
 

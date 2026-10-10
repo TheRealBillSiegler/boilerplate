@@ -199,7 +199,7 @@ jobs:
           uv build
           uv venv smoke
           VIRTUAL_ENV="$PWD/smoke" uv pip install dist/*.whl
-          smoke/bin/boilerplate version
+          smoke/bin/boilerplate --version
           smoke/bin/boilerplate --help > /dev/null
 
   tests-go-red:
