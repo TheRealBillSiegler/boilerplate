@@ -97,6 +97,14 @@ class TestLogoShapes:
             ((91.0, 123.0), (123.0, 123.0)),
         )
 
+    def test_a_logo_without_its_braces_is_refused(self) -> None:
+        """Their outlines are the SVG's paths filled brand blue (#40B4E5)."""
+        logo = _LOGO.read_text(encoding="utf-8")
+        svg = re.sub(r'<path d="[^"]*" fill="#40B4E5"/>', "", logo)
+
+        with pytest.raises(ValueError, match="braces"):
+            render_cli_banner.logo_shapes(svg)
+
 
 class TestRenderLogo:
     def test_the_prompt_hides_only_the_dots_it_is_drawn_over(self) -> None:

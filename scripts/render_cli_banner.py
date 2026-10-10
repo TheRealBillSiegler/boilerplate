@@ -255,8 +255,8 @@ def logo_shapes(svg: str) -> LogoShapes:
         The logo's shapes.
 
     Raises:
-        ValueError: The SVG no longer holds eight evenly spaced horizontal
-            bars, one chevron and one underscore.
+        ValueError: The SVG no longer holds the braces' outlines, eight evenly
+            spaced horizontal bars, one chevron and one underscore.
     """
     braces: list[Floats] = []
     bars: list[tuple[Point, Point]] = []
@@ -275,6 +275,8 @@ def logo_shapes(svg: str) -> LogoShapes:
         elif element.get("stroke") == _PROMPT_STROKE:
             prompt_half_width = float(element.get("stroke-width", "0")) / 2
             prompt += subpaths(d)
+    if not braces:
+        raise ValueError("The logo no longer has its braces' outlines.")
     bars.sort(key=lambda bar: bar[0][1])
     _check_bars(bars)
     chevrons = [tuple(points) for points in prompt if len(points) == _CHEVRON_POINTS]
