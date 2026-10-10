@@ -182,7 +182,7 @@ Global options:
 
 ### Banner
 
-The banner is the CLI logo drawn in braille dots beside the name `boilerplate` in ASCII art. It prints in one place: above the top-level help (`boilerplate` and `boilerplate --help`). Subcommand help, `--version`, and every command print none; `new` is the command people run most, so its first prompt opens the run. A blank line MUST come before the banner, setting it apart from the command line above; when no banner prints, neither does that line.
+The banner is the CLI logo drawn in braille dots beside the name `boilerplate` in ASCII art. It prints in one place: above the top-level help (`boilerplate`, `boilerplate --help`, and `boilerplate -h`). Subcommand help, `--version`, and every command MUST NOT print it; `new` is the command people run most, so its first prompt opens the run. A blank line MUST come before the banner, setting it apart from the command line above; when no banner prints, neither does that line.
 
 **Look**: the logo is `docs/assets/boilerplate-cli-logo.svg` drawn in braille at 11 rows, its braces and bars in brand blue (`#40B4E5`) and its `>_` prompt in the terminal's default text color, so the prompt follows the theme. The name is FIGlet's `standard` font in bold, 49 columns by 6 rows, centered vertically 3 columns to the logo's right. Both ship as text that `scripts/render_cli_banner.py` generates from the SVG ahead of time; the CLI reads no image at runtime. At every width, the art MUST keep the logo's shapes clean at braille resolution:
 
@@ -199,7 +199,7 @@ The banner is the CLI logo drawn in braille dots beside the name `boilerplate` i
 | Logo beside name | logo width + 3 + 49 columns (74–81), and 12 lines | Braille output |
 | Name alone | 49 columns and 7 lines | — |
 
-**Braille output** requires a UTF-8 stdout, a `TERM` other than `linux` (the Linux text console, whose fonts lack braille), and output that is not ASCII-only. When color is off (`--color never`, or `NO_COLOR` without `--color always`, per [Terminal Accessibility](#terminal-accessibility) rules 1 and 4), only printable ASCII may print, so the name prints alone, without color or bold.
+**Braille output** requires a UTF-8 stdout, a `TERM` other than `linux` (the Linux text console, whose fonts lack braille), and output that is not ASCII-only. When color is off (`--color never`, or `NO_COLOR` without `--color always`, per [Terminal Accessibility](#terminal-accessibility) rules 1 and 4), the banner MUST contain only printable ASCII, so the name prints alone, without color or bold.
 
 **Logo width**: the source image is square, so the logo's width in columns MUST follow the terminal's cell shape (cell height divided by cell width). The default shape is 2.25, which gives 25 columns. On POSIX, when the terminal reports its window size in pixels (`TIOCGWINSZ`) and the report is plausible (at least 2 pixels per column and 4 per row), the CLI MUST derive the shape from it and use the generated width nearest to 11 × shape, from 22 to 29 columns. The CLI MUST NOT ask the terminal for its cell size with escape sequences: the reply needs raw mode and a timeout, and Windows Terminal answers with a fixed virtual cell.
 
