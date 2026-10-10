@@ -287,17 +287,21 @@ class StagingWorktree:
     ) -> UpdateCopyBackFailedError:
         """Build the error for a failed copy back, saying whether it was undone."""
         kept = f"the update's result is kept in the staging worktree at {self.path}."
+        # Each failure is joined as a clause; one that ends its own sentence
+        # would otherwise leave two periods.
+        cause = str(error).removesuffix(".")
         if undo_error is None:
             return UpdateCopyBackFailedError(
-                f"Copying the update back failed: {error}. Your checkout was "
+                f"Copying the update back failed: {cause}. Your checkout was "
                 f"restored to the starting commit; {kept}",
                 staging_path=str(self.path),
                 remediation="Fix the cause, then run the command again; remove "
                 "the staging folder when you no longer need it.",
             )
+        undo_cause = str(undo_error).removesuffix(".")
         return UpdateCopyBackFailedError(
-            f"Copying the update back failed: {error}. Restoring your checkout to "
-            f"the starting commit then failed too: {undo_error}. Your checkout "
+            f"Copying the update back failed: {cause}. Restoring your checkout to "
+            f"the starting commit then failed too: {undo_cause}. Your checkout "
             f"could not be restored and holds part of the update; {kept}",
             staging_path=str(self.path),
             remediation="Fix the cause, then run the command again to finish the "
