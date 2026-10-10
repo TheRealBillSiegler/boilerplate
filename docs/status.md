@@ -65,6 +65,7 @@ The questionnaire pass sees the merged `_jinja_extensions` union (see [What gets
 See the [command table](#cli-specified-vs-implemented) below for the specified-vs-implemented command areas.
 
 - :material-check-circle:{ .status-shipped } Global options (`--verbose/--quiet/--color/--ci/--version`) and Typer's own did-you-mean on a mistyped command
+- :material-check-circle:{ .status-shipped } The banner above the top-level help — the braille logo beside the name, the name alone where the logo can't show, and its opt-outs (`cli/display/banner.py`, `cli/display/terminal_probe.py`)
 - :material-circle-outline:{ .status-design } Design 05's confirmation contracts (plan-then-prompt for mutating commands) — no code; sequencing in the [backlog](roadmap.md#backlog)
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial }
