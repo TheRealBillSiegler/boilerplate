@@ -113,6 +113,13 @@ class TestInteractive:
     def test_a_stdout_without_isatty_is_not(self) -> None:
         assert read_terminal_facts(_console(file=_NoIsatty())).interactive is False
 
+    def test_a_closed_stdout_is_not(self) -> None:
+        """A closed stream raises when asked; the probe takes it as none."""
+        closed = io.StringIO()
+        closed.close()
+
+        assert read_terminal_facts(_console(file=closed)).interactive is False
+
     @pytest.mark.parametrize("term", ["dumb", "unknown"])
     def test_a_dumb_terminal_is_not(
         self, monkeypatch: pytest.MonkeyPatch, term: str
@@ -142,6 +149,17 @@ class TestBraille:
 
     def test_a_legacy_code_page_does_not(self) -> None:
         facts = read_terminal_facts(_console(file=_Cp1252Terminal()))
+
+        assert facts.braille is False
+
+    def test_the_encoding_stdout_had_before_utf8_was_forced_decides(self) -> None:
+        """The console reads UTF-8 once the CLI forces it; the terminal did not."""
+        facts = read_terminal_facts(_console(), encoding="cp1252")
+
+        assert facts.braille is False
+
+    def test_an_unknown_encoding_does_not(self) -> None:
+        facts = read_terminal_facts(_console(), encoding="no-such-codec")
 
         assert facts.braille is False
 
