@@ -189,6 +189,28 @@ extends: []
     return tmp_path
 
 
+@pytest.fixture()
+def banner_terminal(mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Present stdout as a 120 by 40 terminal that can draw the banner.
+
+    CliRunner's stdout is never a terminal, and whether a screen reader runs
+    depends on the host, so both probes are replaced; the size and ``TERM``
+    come from the environment, where Rich and the probe read them.
+    """
+    mocker.patch(
+        "boilerplate.cli.display.terminal_probe._is_terminal", return_value=True
+    )
+    mocker.patch(
+        "boilerplate.cli.display.terminal_probe._screen_reader_running",
+        return_value=False,
+    )
+    monkeypatch.setenv("COLUMNS", "120")
+    monkeypatch.setenv("LINES", "40")
+    monkeypatch.setenv("TERM", "xterm-256color")
+    for name in ("NO_COLOR", "FORCE_COLOR", "TTY_COMPATIBLE"):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture(autouse=True)
 def clear_boilerplate_env(monkeypatch: pytest.MonkeyPatch):
     """Remove all BOILERPLATE_* env vars and the generic CI var for hermetic isolation.

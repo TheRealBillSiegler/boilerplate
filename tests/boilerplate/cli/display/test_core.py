@@ -207,6 +207,25 @@ class TestQuiet:
         assert "success message" in captured.out
 
 
+class TestBanner:
+    """docs/design/05-cli-reference.md §Banner: the blank line before it is its own."""
+
+    def test_prints_nothing_when_the_terminal_cannot_show_it(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Under pytest, stdout is captured rather than a terminal."""
+        Display().banner()
+
+        assert capsys.readouterr().out == ""
+
+    @pytest.mark.usefixtures("banner_terminal")
+    def test_quiet_suppresses_it(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Quiet silences chatter, and the banner is chatter."""
+        Display(quiet=True).banner()
+
+        assert capsys.readouterr().out == ""
+
+
 class TestTablePathLinks:
     """Path columns emit file:// links with forward slashes."""
 

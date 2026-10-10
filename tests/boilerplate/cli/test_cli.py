@@ -391,3 +391,149 @@ def test_a_renderer_passed_as_obj_reaches_the_new_command(
 
     assert result.exit_code == ExitCode.SUCCESS, result.output
     assert len(renderer.calls) == 1  # type: ignore[attr-defined]
+
+
+# The last full row of FIGlet's standard "boilerplate", the banner's name.
+_NAME_ROW = r"|_.__/ \___/|_|_|\___|_|  | .__/|_|\__,_|\__\___|"
+_BRAILLE = re.compile("[\u2800-\u28ff]")
+
+
+def _name_lines(output: str) -> list[str]:
+    """Return the output lines that carry the banner's name row, unstyled."""
+    return [line for line in _plain(output).splitlines() if _NAME_ROW in line]
+
+
+@pytest.mark.usefixtures("banner_terminal")
+class TestHelpBanner:
+    """The top-level help opens with the banner on a terminal that can show it.
+
+    docs/design/05-cli-reference.md §Banner.
+    """
+
+    @pytest.mark.parametrize("args", [[], ["--help"], ["-h"]], ids=str)
+    def test_top_level_help_opens_with_the_name(
+        self, typer_cli_runner: CliRunner, args: list[str]
+    ) -> None:
+        output = typer_cli_runner.invoke(cli.app, args).output
+
+        assert output.index(_NAME_ROW) < output.index("Usage")
+
+    def test_the_logo_sits_beside_the_name(self, typer_cli_runner: CliRunner) -> None:
+        output = typer_cli_runner.invoke(cli.app, ["--help"]).output
+
+        assert _BRAILLE.search(_name_lines(output)[0])
+
+    @pytest.mark.parametrize(
+        "args",
+        [["--help"], ["--color", "never", "--help"]],
+        ids=["logo-beside-name", "name-alone"],
+    )
+    def test_one_blank_line_comes_before_the_banner(
+        self, typer_cli_runner: CliRunner, args: list[str]
+    ) -> None:
+        lines = _plain(typer_cli_runner.invoke(cli.app, args).output).splitlines()
+
+        assert next(i for i, line in enumerate(lines) if line.strip()) == 1
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            ["--color", "never", "--help"],
+            ["--help", "--color", "never"],
+            ["--color=never", "--help"],
+        ],
+        ids=str,
+    )
+    def test_color_never_prints_the_name_without_the_logo(
+        self, typer_cli_runner: CliRunner, args: list[str]
+    ) -> None:
+        output = typer_cli_runner.invoke(cli.app, args).output
+
+        assert _name_lines(output) == [_NAME_ROW]
+
+    def test_no_color_prints_the_name_without_the_logo(
+        self, typer_cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+
+        output = typer_cli_runner.invoke(cli.app, ["--help"]).output
+
+        assert _name_lines(output) == [_NAME_ROW]
+
+    def test_color_always_draws_the_logo_despite_no_color(
+        self, typer_cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An explicit --color wins over NO_COLOR (Terminal Accessibility rule 4)."""
+        monkeypatch.setenv("NO_COLOR", "1")
+
+        output = typer_cli_runner.invoke(cli.app, ["--color", "always", "-h"]).output
+
+        assert _BRAILLE.search(_name_lines(output)[0])
+
+    @pytest.mark.parametrize(
+        ("args", "logo"),
+        [
+            pytest.param(
+                ["--color", "always", "--color", "never", "-h"],
+                False,
+                id="last-never-wins",
+            ),
+            pytest.param(
+                ["--color", "never", "--color", "always", "-h"],
+                True,
+                id="last-always-wins",
+            ),
+            pytest.param(["--color", "purple", "-h"], True, id="invalid-means-auto"),
+            pytest.param(
+                ["-h", "new", "--color", "never"], True, id="subcommand-args-ignored"
+            ),
+        ],
+    )
+    def test_the_banner_reads_the_last_root_color_flag(
+        self, typer_cli_runner: CliRunner, args: list[str], logo: bool
+    ) -> None:
+        """Click keeps the last ``--color`` and parses only the root's own options."""
+        output = typer_cli_runner.invoke(cli.app, args).output
+
+        assert bool(_BRAILLE.search(_name_lines(output)[0])) is logo
+
+    @pytest.mark.parametrize("args", [[], ["--help"]], ids=["bare", "--help"])
+    def test_a_legacy_code_page_prints_the_name_without_the_logo(
+        self, args: list[str]
+    ) -> None:
+        """Braille needs a UTF-8 stdout, judged before the CLI forces UTF-8 on it."""
+        output = CliRunner(charset="cp1252").invoke(cli.app, args).output
+
+        assert _name_lines(output) == [_NAME_ROW]
+
+    @pytest.mark.parametrize(
+        "variable", ["BOILERPLATE_NO_BANNER", "BOILERPLATE_ACCESSIBLE"]
+    )
+    def test_an_env_var_turns_it_off(
+        self,
+        typer_cli_runner: CliRunner,
+        monkeypatch: pytest.MonkeyPatch,
+        variable: str,
+    ) -> None:
+        monkeypatch.setenv(variable, "1")
+
+        output = typer_cli_runner.invoke(cli.app, ["--help"]).output
+
+        assert _NAME_ROW not in output
+
+    @pytest.mark.parametrize("args", [["new", "--help"], ["--version"]], ids=str)
+    def test_subcommand_help_and_version_print_none(
+        self, typer_cli_runner: CliRunner, args: list[str]
+    ) -> None:
+        output = typer_cli_runner.invoke(cli.app, args).output
+
+        assert _NAME_ROW not in output
+
+
+def test_help_piped_to_a_non_terminal_prints_no_banner(
+    typer_cli_runner: CliRunner,
+) -> None:
+    """A piped --help stays plain (docs/design/05-cli-reference.md §Banner)."""
+    output = typer_cli_runner.invoke(cli.app, ["--help"]).output
+
+    assert _NAME_ROW not in output

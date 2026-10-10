@@ -6,7 +6,8 @@ Bootstraps settings, logging, Runtime, and registers commands.
 
 import codecs
 import sys
-from typing import NoReturn
+from collections.abc import Sequence
+from typing import Final, NoReturn
 
 import typer
 from typer.core import TyperGroup
@@ -49,14 +50,74 @@ def _reraise_as_validation_error(error: engine.UsageError) -> NoReturn:
     raise error
 
 
+# Where the root context keeps, for the banner, the arguments it parsed and the
+# encoding stdout had before the root callback forces UTF-8 onto it.
+_ARGS_KEY: Final = "boilerplate.args"
+_ENCODING_KEY: Final = "boilerplate.stdout_encoding"
+
+
+def _color_mode(args: Sequence[str]) -> ColorMode:
+    """Return the ``--color`` mode among the root command's own options.
+
+    ``--help`` is eager, so the help it prints is formatted before Click
+    processes ``--color``; the banner reads the flag from the arguments
+    instead. Like Click, it reads the root's options only up to the
+    subcommand's name, and the last ``--color`` wins.
+
+    Args:
+        args: The arguments the root command parsed.
+
+    Returns:
+        The mode given, or ``auto`` when none or an invalid one is given.
+    """
+    mode = ColorMode.AUTO
+    tokens = iter(args)
+    for arg in tokens:
+        if arg == "--" or not arg.startswith("-"):
+            break  # the subcommand's name; what follows is not the root's
+        if arg == "--color":
+            value = next(tokens, "")
+        elif arg.startswith("--color="):
+            value = arg.partition("=")[2]
+        else:
+            continue
+        mode = ColorMode(value) if value in ColorMode else ColorMode.AUTO
+    return mode
+
+
 class BoilerplateGroup(TyperGroup):
-    """Typer group where usage-error exit codes are pinned.
+    """Typer group that pins usage-error exit codes and opens help with the banner.
 
     ``make_context`` covers root-level parsing and ``invoke`` covers subcommand
     parsing plus errors raised inside command bodies, which is every path the
     engine routes through ``Command.main``. Suggesting a close command on a
     typo is Typer's own behavior and needs nothing here.
     """
+
+    def parse_args(self, ctx: engine.Context, args: list[str]) -> list[str]:
+        """Parse the root arguments, keeping what the banner needs.
+
+        That is the arguments themselves and stdout's encoding as the
+        terminal set it, before the root callback reconfigures it to UTF-8.
+        """
+        ctx.meta[_ARGS_KEY] = tuple(args)
+        ctx.meta[_ENCODING_KEY] = getattr(sys.stdout, "encoding", None)
+        return super().parse_args(ctx, args)
+
+    def format_help(self, ctx: engine.Context, formatter: engine.HelpFormatter) -> None:
+        """Print the top-level help, opening with the banner (05 §Banner).
+
+        Help that a docs generator renders never parsed command-line
+        arguments, so it prints without the banner.
+        """
+        args = ctx.meta.get(_ARGS_KEY)
+        if args is not None:
+            display = Display(
+                color=_color_mode(args),
+                terminal_encoding=ctx.meta.get(_ENCODING_KEY),
+            )
+            display.banner()
+        super().format_help(ctx, formatter)
 
     def make_context(
         self,

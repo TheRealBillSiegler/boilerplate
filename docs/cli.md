@@ -18,13 +18,15 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
 
 ## Environment variables
 
-Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, and `BOILERPLATE_ACCESSIBLE` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory. `PYTHONIOENCODING` is forced to `utf-8` while a template renders and restored afterward — it's not read as a setting.
+Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, `BOILERPLATE_ACCESSIBLE`, and `BOILERPLATE_NO_BANNER` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory. `PYTHONIOENCODING` is forced to `utf-8` while a template renders and restored afterward — it's not read as a setting.
 
 | Variable | Effect | Where it's read |
 | --- | --- | --- |
 | `BOILERPLATE_CI` | Same as the global `--ci` flag: forces CI mode (non-interactive; post-generation tasks still run unless `--no-tasks` is passed) and one-JSON-object-per-event logs on stderr. | `boilerplate.cli.cli` |
 | `BOILERPLATE_NON_INTERACTIVE` | Same as `boilerplate new --non-interactive`: renders without prompting. | `boilerplate.cli.commands.new` |
-| `BOILERPLATE_ACCESSIBLE` | Same as `--color never`: forces color-free output. | `boilerplate.cli.display.core` |
+| `BOILERPLATE_ACCESSIBLE` | Same as `--color never` (forces color-free output), and hides the banner. | `boilerplate.cli.display.core`, `boilerplate.cli.display.terminal_probe` |
+| `BOILERPLATE_NO_BANNER` | Hides the banner: the braille logo and ASCII name that open the top-level help. | `boilerplate.cli.display.terminal_probe` |
+| `TERM` | `dumb` or `unknown` hides the banner; `linux` (the Linux text console) prints its name without the braille logo. | `boilerplate.cli.display.terminal_probe` |
 | `NO_COLOR` | The standard color-disable convention; disables console color and switches log output from Rich to one JSON object per event. | `boilerplate.cli.display.core`, `boilerplate.logging_config` |
 | `BOILERPLATE_DEBUG` | Same as `--verbose` when `--verbose` isn't passed: sets DEBUG-level logging. | `boilerplate.settings.Settings`, applied in `boilerplate.cli.cli` |
 | `BOILERPLATE_REQUEST_ID` | Correlation ID attached to every structured log line for the invocation; auto-generated once per run when unset. | `boilerplate.logging_config` |
