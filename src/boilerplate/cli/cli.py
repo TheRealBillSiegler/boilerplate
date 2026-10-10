@@ -107,8 +107,9 @@ class BoilerplateGroup(TyperGroup):
     def format_help(self, ctx: engine.Context, formatter: engine.HelpFormatter) -> None:
         """Print the top-level help, opening with the banner (05 §Banner).
 
-        Help that a docs generator renders never parsed command-line
-        arguments, so it prints without the banner.
+        Help formatted from a context that never parsed command-line
+        arguments, such as one built directly to render the help text, prints
+        without the banner: there are no arguments to read ``--color`` from.
         """
         args = ctx.meta.get(_ARGS_KEY)
         if args is not None:
