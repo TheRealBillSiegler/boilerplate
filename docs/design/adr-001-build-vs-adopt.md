@@ -1,6 +1,6 @@
 # ADR-001: Build vs. Adopt Analysis
 
-**Status**: Accepted **Date**: 2026-03-19 **Deciders**: Project team
+**Status**: Accepted **Deciders**: Project team
 
 > **Scope note.** This ADR records the build-vs-adopt *decisions* and the supply-chain assessment. The Copier integration *mechanism* is recorded separately in [ADR-002](adr-002-copier-internals-shim.md).
 
