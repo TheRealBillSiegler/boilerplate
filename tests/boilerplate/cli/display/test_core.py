@@ -218,6 +218,19 @@ class TestBanner:
 
         assert capsys.readouterr().out == ""
 
+    @pytest.mark.usefixtures("banner_host")
+    def test_forced_color_prints_none_into_a_pipe(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """``--color always`` makes Rich treat the pipe as a terminal; it is none.
+
+        05 §Banner: no banner prints when stdout is not a terminal. The pipe is
+        roomy enough for the logo, so only stdout's own answer keeps it out.
+        """
+        Display(color=ColorMode.ALWAYS).banner()
+
+        assert capsys.readouterr().out == ""
+
     @pytest.mark.usefixtures("banner_terminal")
     def test_quiet_suppresses_it(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Quiet silences chatter, and the banner is chatter."""
