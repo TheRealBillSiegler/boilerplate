@@ -2,8 +2,6 @@
 
 **Status**: Accepted
 
-**Deciders**: Project team (Bill Siegler)
-
 ## Context
 
 `boilerplate new` renders in one of two modes: interactive (Copier prompts for unanswered questions) or non-interactive (`--non-interactive` / `--ci`, where every answer must come from a default, `profile.toml`, or a forced answer). Prompting has a failure mode with no natural backstop: when stdin cannot host a real terminal session, Copier's prompt layer (`questionary` / `prompt_toolkit`) does not always raise cleanly on EOF — it can retry-loop, growing memory without bound instead of exiting. This is not hypothetical: an equivalent failure was confirmed live on this project (Windows, stdin redirected from `NUL`, which `isatty()` misreports as a terminal) reaching the prompt layer and hanging before the guard was hardened. It is also a category-wide problem — see Evidence.

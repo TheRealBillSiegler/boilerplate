@@ -1,6 +1,6 @@
 # ADR-006: Git-backed template distribution — monorepo authoring, published per-template repos
 
-**Status**: Accepted **Deciders**: Project team
+**Status**: Accepted
 
 > **Scope note.** This ADR **commits** the PROD-001 item `first_party_template_distribution` — the `update` spine depends on it. For what exists in code today, see [status.md](../status.md).
 

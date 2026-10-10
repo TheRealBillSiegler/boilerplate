@@ -2,8 +2,6 @@
 
 **Status**: Accepted
 
-**Deciders**: Project team (Bill Siegler)
-
 ## Context
 
 An organization generating projects from shared templates needs to point those projects at its own private package index and container registry. Both are template answers: a value the template asks for, which the organization wants pre-filled on every run.
