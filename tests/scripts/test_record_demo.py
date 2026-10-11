@@ -7,8 +7,10 @@ learns it. These tests fail on such a change before the recording does.
 
 import importlib.util
 import re
+from itertools import pairwise
 from pathlib import Path
 
+import pytest
 import yaml
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -71,3 +73,45 @@ class TestQuestionScript:
             assert _PROMPT_PREFIX_CELLS + match.end() < record_demo._COLS, (
                 f"{pattern!r} would straddle the {record_demo._COLS}-column wrap"
             )
+
+
+class _FakeClock:
+    """A monotonic clock that only moves when a wait is simulated."""
+
+    def __init__(self) -> None:
+        self.now = 100.0
+
+    def wait(self, seconds: float) -> None:
+        self.now += seconds
+
+
+def _lingering_recorder(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[record_demo._EventRecorder, _FakeClock]:
+    clock = _FakeClock()
+    monkeypatch.setattr(record_demo.time, "monotonic", lambda: clock.now)
+    return record_demo._EventRecorder(idle_cap_s=2.0), clock
+
+
+class TestLinger:
+    """A deliberate pause is credited in full; only a slow step is clamped."""
+
+    def test_a_pause_longer_than_the_cap_is_credited_in_full(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        recorder, clock = _lingering_recorder(monkeypatch)
+
+        recorder.linger(5.0, clock.wait)
+
+        assert recorder.virtual_time_s == 5.0
+
+    def test_no_gap_in_the_recording_exceeds_the_cap(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        recorder, clock = _lingering_recorder(monkeypatch)
+
+        recorder.linger(5.0, clock.wait)
+
+        times = [0.0, *(time_s for time_s, _, _ in recorder.events)]
+        assert max(later - earlier for earlier, later in pairwise(times)) <= 2.0
+        assert all(code == "o" and data == "" for _, code, data in recorder.events)
