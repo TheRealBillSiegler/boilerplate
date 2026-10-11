@@ -357,13 +357,7 @@ def _near(
 
 
 def _coverage(shapes: LogoShapes, width: int) -> dict[str, Floats]:
-    """Return each shape's share of every dot's samples, at ``width`` columns.
-
-    The braces and bars count only the samples the prompt leaves visible, as
-    the prompt is painted over them. Each shape has its own vertical fit, so
-    the prompt hides the samples where the art draws it, not where the SVG
-    does.
-    """
+    """Return each shape's share of every dot's samples, at ``width`` columns."""
     columns = 2 * width * _SAMPLES
     x = (np.arange(columns) + 0.5) / _SAMPLES * _VIEWBOX / (2 * width)
     u = (np.arange(_DOT_ROWS * _SAMPLES) + 0.5) / _SAMPLES
@@ -381,8 +375,7 @@ def _coverage(shapes: LogoShapes, width: int) -> dict[str, Floats]:
 
     chevron = _near(*grid(warps["chevron"]), shapes.chevron, half)
     underscore = _near(*grid(warps["underscore"]), shapes.underscore, half)
-    prompt = chevron | underscore
-    braces = np.zeros(prompt.shape, bool)
+    braces = np.zeros(chevron.shape, bool)
     for polygon in shapes.braces:
         braces |= _inside(x, warps["braces"](u), polygon)
     sx, sy = grid(warps["bars"])
@@ -390,8 +383,8 @@ def _coverage(shapes: LogoShapes, width: int) -> dict[str, Floats]:
     for bar in shapes.bars:
         bars |= _near(sx, sy, bar, shapes.bar_half_width)
     return {
-        "braces": per_dot(braces & ~prompt),
-        "bars": per_dot(bars & ~prompt),
+        "braces": per_dot(braces),
+        "bars": per_dot(bars),
         "chevron": per_dot(chevron),
         "underscore": per_dot(underscore),
     }
