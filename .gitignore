@@ -222,11 +222,16 @@ cython_debug/
 !.claude/plugins/
 .claude/**/settings.local.json
 .claude/**/*.local.md
+CLAUDE.local.md
 
 # Claude Code plugin output directories
 .dx-review/
 .ux-review/
 .ultrareview/
+
+# MCP server scratch output
+#   Playwright MCP writes screenshots, console logs and page snapshots here.
+.playwright-mcp/
 
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
