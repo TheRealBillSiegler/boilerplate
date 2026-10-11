@@ -248,12 +248,11 @@ jobs:
             --base "${{ github.event.pull_request.base.sha }}" \
             --head "${{ github.event.pull_request.head.sha }}"
 
-  gate:
-    name: CI gate
+  check:
     # Single required status check. Passes when no needed job failed or was
     # cancelled; skipped code jobs (on docs-only PRs) are fine. Configure branch
-    # protection to require ONLY this "gate" check. Skipped on drafts so a
-    # draft never shows a vacuously green gate.
+    # protection to require ONLY this job. Skipped on drafts so a draft
+    # never shows a vacuously green check.
     if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     needs: [changes, lint, shellcheck, typecheck, test, scenarios, package, docs, tests-go-red, commit-lint]
     runs-on: ubuntu-latest

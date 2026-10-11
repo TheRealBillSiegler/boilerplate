@@ -7,7 +7,7 @@ name: Demo recording
 # the bundled templates change on develop. On a pull request it only records
 # and uploads the files as an artifact, so a broken recorder fails the PR
 # instead of reaching develop.
-# The pull request is opened with GITHUB_TOKEN, so its CI gate run waits in
+# The pull request is opened with GITHUB_TOKEN, so its CI run waits in
 # an approval-required state: click "Approve and run" on the Actions tab
 # before merging.
 on:
