@@ -172,7 +172,7 @@ Use conventional commits:
 - Present tense, imperative mood: "add feature" not "added feature".
 - First line at most 72 characters (type, scope and description together).
 - Include issue references in commit messages when applicable.
-- A commit-range lint (`scripts/commit_lint.py`, run by the required CI gate and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request.
+- A commit-range lint (`scripts/commit_lint.py`, run by CI's required `check` job and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request.
 - Reword the subject `git revert` generates to `revert: <description>`; the lint rejects `Revert "..."`, merge commits and `fixup!`/`squash!`/`amend!` commits.
 - The "In the changelog" column above is `release-please-config.json`'s `changelog-sections`; that file decides visibility, this table mirrors it.
 - Mark a commit `!` (or add a `BREAKING CHANGE:` footer) when it is breaking per [Versioning § What qualifies as breaking](docs/governance/versioning.md#what-qualifies-as-breaking). Breaking is measured against the last release tag, not the parent commit. A `!`/`BREAKING CHANGE:` commit surfaces in the changelog regardless of type.

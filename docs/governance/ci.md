@@ -17,12 +17,12 @@ flowchart TD
         docsjob["docs build<br>always runs, no needs"]
         lint["commit-lint<br>pull_request events only"]
         lint --> gate
-        code --> gate["gate<br>the single pass/fail signal"]
+        code --> gate["check<br>the single pass/fail signal"]
         scen --> gate
         skip --> gate
         docsjob --> gate
     end
-    run -- "gate green, rebase merge" --> push["Push to develop<br>same workflow re-runs with the diagonal matrix"]
+    run -- "check green, rebase merge" --> push["Push to develop<br>same workflow re-runs with the diagonal matrix"]
     push -.-> free["Public repo: Actions minutes free"]
 ```
 
@@ -54,7 +54,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Draft PRs cost nothing
 
-`changes`, `docs`, and `gate` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`; `commit-lint` carries the same draft term inside its PR-only condition. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. The gate skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
+`changes`, `docs`, and `check` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`; `commit-lint` carries the same draft term inside its PR-only condition. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. `check` skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
 
 ## Test matrix policy
 
@@ -67,7 +67,7 @@ PRs run one leg because development and the local gate already exercise Windows;
 
 ## Composition scenarios
 
-The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only change never pays for them. The gate waits on the job like any other.
+The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only change never pays for them. `check` waits on it like any other job.
 
 ## New tests go red
 
@@ -75,15 +75,15 @@ A PR that changes `src/` and adds tests must show at least one added test failin
 
 ## Commit messages
 
-Every commit in a PR must be a conventional commit whose first line is at most 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of the gate, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; the gate treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
+Every commit in a PR must be a conventional commit whose first line is at most 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of `check`, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; `check` treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
 
 ## The docs job
 
 The strict docs build (both the online config and the `DOCS_OFFLINE` release-bundle config) has no `needs` and ignores the path filter: mkdocstrings and autorefs build API pages from source, so a code-only change can break the docs build. Its only guard is the draft skip. It is a single cheap ubuntu runner.
 
-## The gate
+## The `check` job
 
-`gate` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter, or by event (`commit-lint` and `tests-go-red` on pushes), don't break it. Configure required checks against `gate` alone, never against individual jobs.
+`check` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter, or by event (`commit-lint` and `tests-go-red` on pushes), don't break it. Configure required checks against `check` alone, never against individual jobs.
 
 ## Timeouts
 
