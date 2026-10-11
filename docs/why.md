@@ -45,7 +45,7 @@ The [environment overview](environment/index.md) walks the full toolchain and ho
 
 Boilerplate started in 2024 inside a small enablement team, as a way to stop re-explaining the same project setup to every new project. It was research before it was software: a systematic pass over the landscape — package and environment managers, scaffolders, type checkers, test runners — judged against one brief, *the most modern and lightweight in each*, and against what current PEPs actually prescribe. The stack settled late that year, and the tool was built for colleagues from its first mention. The leverage is structural: the judgment gets absorbed once, upstream, and one maintained path replaces the recurring setup conversation.
 
-The tool holds itself to the standard it hands out: this repository's own CI runs the same checks it configures in every generated project — Ruff, Pyright strict, pytest — plus a strict docs build. See [the local gate](governance/ci.md#the-local-gate).
+The tool holds itself to the standard it hands out: this repository's own CI runs the same checks it configures in every generated project — Ruff, Pyright strict, pytest — plus a strict docs build. See [the local check](governance/ci.md#the-local-check).
 
 One early user described the before-and-after: "before, it was like having your laundry folded — but on the floor. After, it's like sliding the drawer into the dresser: the clothes go in, and it slides friction-free." Another summed up the install as ending in "a fully suped-up Python environment."
 

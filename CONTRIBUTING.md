@@ -13,13 +13,13 @@ This file covers environment setup, code standards, tests, branching, and the pu
    uv sync
    ```
 
-3. Verify your setup with the local gate:
+3. Verify your setup with the local check:
 
    ```bash
    uv run python scripts/check.py
    ```
 
-   It mirrors the CI gate documented in [CI Pipeline](docs/governance/ci.md#the-local-gate); a failure here is a failure there.
+   It mirrors CI's `check` job, documented in [CI Pipeline](docs/governance/ci.md#the-local-check); a failure here is a failure there.
 
 ## Code standards
 

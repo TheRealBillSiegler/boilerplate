@@ -66,7 +66,7 @@ jobs:
             esac
             # The composition scenarios run only for these paths. Keep the list
             # in step with _COMPOSITION_DIRS and _COMPOSITION_FILES in scripts/check.py,
-            # the local gate.
+            # the local check.
             case "$f" in
               src/boilerplate/*) composition=true ;;
               tests/integration/boilerplate/composition/*|tests/boilerplate/templates/*) composition=true ;;
@@ -123,7 +123,7 @@ jobs:
     strategy:
       fail-fast: false
       # PRs run ubuntu-only on the latest Python: development and the local
-      # gate (scripts/check.py) already cover Windows, so CI's marginal PR
+      # check (scripts/check.py) already cover Windows, so CI's marginal PR
       # signal is the POSIX leg. Pushes to develop/main run the diagonal —
       # every OS on the latest Python, plus ubuntu on the oldest — because OS
       # bugs are Python-version-independent and version bugs are

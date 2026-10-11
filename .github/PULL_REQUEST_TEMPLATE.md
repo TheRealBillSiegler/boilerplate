@@ -8,6 +8,6 @@
 
 ## Checklist
 
-- [ ] Local gate passes (`uv run python scripts/check.py`)
+- [ ] Local check passes (`uv run python scripts/check.py`)
 - [ ] Commit messages follow [conventional commits](https://www.conventionalcommits.org/)
 - [ ] Documentation updated (if applicable)

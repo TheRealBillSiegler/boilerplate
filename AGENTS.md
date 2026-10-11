@@ -9,7 +9,7 @@
 - Dependencies are managed via `uv`. See `pyproject.toml` for index configuration.
 - Run tests: `uv run pytest` (from repo root; `testpaths = ["tests"]` resolves relative to root)
 - Run lint: `uv run ruff check --fix .`
-- Before every push, run the local gate: `uv run python scripts/check.py`. It mirrors the CI gate; a failure caught locally saves a billed CI run.
+- Before every push, run the local check: `uv run python scripts/check.py`. It mirrors CI's `check` job; a failure caught locally saves a billed CI run.
 
 ## Python
 
