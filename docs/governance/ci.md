@@ -12,8 +12,8 @@ flowchart TD
         direction TB
         changes{"changes job<br>anything outside docs touched?"}
         changes -- "docs-only" --> skip["code jobs skip"]
-        changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: ubuntu-only on PRs, diagonal on pushes<br>tests-go-red: pull_request events only"]
-        changes -- "composition paths" --> scen["scenarios<br>ubuntu, latest Python"]
+        changes -- "code" --> code["lint / shellcheck / typecheck / package<br>test: the matrix policy below<br>tests-go-red: pull_request events only"]
+        changes -- "composition paths" --> scen["scenarios<br>the matrix policy below"]
         docsjob["docs build<br>always runs, no needs"]
         lint["commit-lint<br>pull_request events only"]
         lint --> gate
@@ -22,7 +22,7 @@ flowchart TD
         skip --> gate
         docsjob --> gate
     end
-    run -- "check green, rebase merge" --> push["Push to develop<br>same workflow re-runs with the diagonal matrix"]
+    run -- "check green, rebase merge" --> push["Push to develop<br>same workflow re-runs with the push matrix"]
     push -.-> free["Public repo: Actions minutes free"]
 ```
 
@@ -58,16 +58,17 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Test matrix policy
 
-| Event | Legs |
-| --- | --- |
-| `pull_request` | ubuntu-latest × 3.13 |
-| `push` | ubuntu × {3.12, 3.13}, windows × 3.13, macos × 3.13 |
+| Repository | Event | `test` legs | `scenarios` legs |
+| --- | --- | --- | --- |
+| Public | `pull_request`, `push` | ubuntu, windows, macos × 3.12, 3.13, 3.14 | the same nine |
+| Private | `pull_request` | ubuntu × 3.12, 3.13, 3.14 | ubuntu × 3.14 |
+| Private | `push` | ubuntu, windows, macos × 3.14, plus ubuntu × 3.12 and 3.13 | ubuntu × 3.14 |
 
-PRs run one leg because development and the local check already exercise Windows; CI's marginal PR signal is the POSIX leg. Pushes run the *diagonal* instead of the full OS × version cross product: OS-specific bugs are Python-version-independent and version-specific bugs are OS-independent, so the missing cells add multiplier cost without adding coverage. Windows and macOS breakage cannot land silently — it is caught by the merge-time push run.
+The full cross product runs wherever Actions minutes are free, and a public repository's standard runners cost nothing. While the repository is private, minutes are metered and Windows bills 2× and macOS 10×, so PRs run every supported Python on Linux and pushes to `develop` and `main` run every OS on the newest Python; development and the local check already exercise Windows. The workflow reads the visibility from the event (`github.event.repository.private`), so the switch needs no edit at the flip. Python 3.15 joins once it is final and every dependency ships a wheel for it; today `pywin32` does not.
 
 ## Composition scenarios
 
-The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them on one leg, ubuntu with the latest Python, and only when the dispatcher flags composition. A docs-only change never pays for them. `check` waits on it like any other job.
+The scenarios rerun the composition design's evidence against real Copier and git, and a full run takes minutes. The test job deselects them (`-m "not scenario"`); the `scenarios` job runs them under the matrix policy above, and only when the dispatcher flags composition. A docs-only change never pays for them. `check` waits on it like any other job.
 
 ## New tests go red
 
@@ -87,7 +88,7 @@ The strict docs build (both the online config and the `DOCS_OFFLINE` release-bun
 
 ## Timeouts
 
-Every job sets `timeout-minutes` (5–25 by job). The GitHub default is 360, which would let a single hung job burn hours of runner time — on a 2× or 10× runner, a large slice of a month's included minutes.
+Every job sets `timeout-minutes` (5–45 by job). The GitHub default is 360, which would let a single hung job burn hours of runner time — on a 2× or 10× runner, a large slice of a month's included minutes.
 
 ## The local check
 
