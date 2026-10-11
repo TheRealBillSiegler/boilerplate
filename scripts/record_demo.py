@@ -1,4 +1,4 @@
-"""Records the ``boilerplate new`` demo scenario as an asciicast v2 file.
+"""Records the demo scenario, the help banner then ``boilerplate new``, as a cast.
 
 Drives the scenario the docs home page and the README show through a real
 pseudo-terminal (via pexpect) running PowerShell, the shell the demo is
@@ -45,18 +45,21 @@ import pyte
 if TYPE_CHECKING:
     import pexpect
 
-_ROWS: Final = 28
+# Tall enough for the top-level help, banner included, to stay on screen.
+_ROWS: Final = 48
 _COLS: Final = 100
 _TYPE_DELAY_S: Final = 0.045
 _IDLE_TIME_LIMIT_S: Final = 2.0
 _DRAIN_TIMEOUT_S: Final = 0.02
-# Pauses a viewer needs: to read a question before the answer is typed, to
-# take in the render's summary before the test run, and to see the final
-# result before the player loops.
+# Pauses a viewer needs: to read a question before the answer is typed, and
+# to read each finished screen (the help with its banner, the render's
+# summary, the test result) before the next command or the loop. A read pause
+# fits under the idle cap; a linger is longer and goes through
+# ``_EventRecorder.linger`` so the cap does not shorten it.
 _READ_PAUSE_S: Final = 0.4
-_AFTER_RENDER_PAUSE_S: Final = 1.2
-# Anything longer is clamped by the idle cap (recorder, header, player).
-_END_HOLD_S: Final = _IDLE_TIME_LIMIT_S
+_HELP_LINGER_S: Final = 5.0
+_AFTER_RENDER_LINGER_S: Final = 3.0
+_END_LINGER_S: Final = 4.0
 
 # Brand theme, matching docs/stylesheets/extra.css. The asciicast v2 theme
 # object supports only fg/bg/palette (no separate cursor color).
@@ -130,8 +133,8 @@ class _Question(NamedTuple):
 
 
 # The project template's questions in the order Copier asks them (see
-# src/boilerplate/templates/project/copier.yml). The first wait is longer
-# because it also covers the CLI's cold start.
+# src/boilerplate/templates/project/copier.yml). The first wait is longer:
+# it also covers whatever ``new`` loads before its first question.
 _QUESTIONS: Final[tuple[_Question, ...]] = (
     _Question(
         "name of the project", "Weather Report", timeout=60.0, mark="first question"
@@ -221,6 +224,27 @@ class _EventRecorder:
         something is recorded at the end of it.
         """
         self.events.append((self._advance(), "o", ""))
+
+    def linger(self, seconds: float, wait: Callable[[float], object]) -> None:
+        """Pause for ``seconds`` and credit all of it, in steps the idle cap allows.
+
+        A slow step is clamped to the idle cap on purpose; a deliberate pause
+        is not. ``wait`` passes the real time (reading the pty keeps the
+        cursor reporter answering), and an empty output event closes each
+        step, so no gap in the file exceeds the cap the header and the player
+        clamp to.
+
+        Args:
+            seconds: How long the viewer gets, in recorded time.
+            wait: Called with the seconds each step takes; returns once they
+                have passed.
+        """
+        remaining = seconds
+        while remaining > 0:
+            step = min(self._idle_cap_s, remaining)
+            wait(step)
+            self.hold()
+            remaining -= step
 
 
 class _CursorReporter:
@@ -570,7 +594,8 @@ def _spawn_shell(recorder: _EventRecorder, demo_root: Path) -> pexpect.spawn[str
 def _record_scenario(cast_path: Path) -> None:
     """Drives the demo scenario through a real PTY and writes the cast file.
 
-    Scenario: ``boilerplate new project weather-report``, answering each
+    Scenario: ``boilerplate --help``, held on the banner and the command
+    list, then ``boilerplate new project weather-report``, answering each
     Copier question, then ``cd weather-report && uv run pytest -q``. The
     cast and its JavaScript wrapper are written only after every step
     succeeds; callers must delete them themselves on failure (nothing is
@@ -604,6 +629,16 @@ def _record_scenario(cast_path: Path) -> None:
         recorder.restart()
         _settle(child, _READ_PAUSE_S)
 
+        def wait(seconds: float) -> None:
+            _settle(child, seconds)
+
+        # The first command also covers the CLI's cold start.
+        _type_slowly(child, "boilerplate --help")
+        _press_enter(child)
+        _expect_prompt(child, timeout=60)
+        recorder.mark("help")
+        recorder.linger(_HELP_LINGER_S, wait)
+
         _type_slowly(child, "boilerplate new project weather-report")
         _press_enter(child)
 
@@ -620,15 +655,14 @@ def _record_scenario(cast_path: Path) -> None:
         child.expect(r"Created (?:\x1b\[[0-9;]*m)*weather-report", timeout=180)
         _expect_prompt(child, timeout=60)
         recorder.mark("render done")
-        _settle(child, _AFTER_RENDER_PAUSE_S)
+        recorder.linger(_AFTER_RENDER_LINGER_S, wait)
 
         _type_slowly(child, "cd weather-report && uv run pytest -q")
         _press_enter(child)
         child.expect("passed", timeout=120)
         _expect_prompt(child, timeout=60)
         recorder.mark("tests done")
-        _settle(child, _END_HOLD_S)
-        recorder.hold()
+        recorder.linger(_END_LINGER_S, wait)
     finally:
         child.close(force=True)
         shutil.rmtree(project_dir, ignore_errors=True)
