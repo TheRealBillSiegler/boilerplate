@@ -6,7 +6,7 @@ How a change travels from your working tree to `develop`, what runs at each step
 
 ```mermaid
 flowchart TD
-    dev["Local development<br>scripts/check.py mirrors the gate"] --> draft["Draft PR<br>every job skips: free iteration"]
+    dev["Local development<br>scripts/check.py mirrors the check job"] --> draft["Draft PR<br>every job skips: free iteration"]
     draft -- "gh pr ready" --> run
     subgraph run["One billed run per event"]
         direction TB
@@ -54,7 +54,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 
 ## Draft PRs cost nothing
 
-`changes`, `docs`, and `check` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`; `commit-lint` carries the same draft term inside its PR-only condition. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. `check` skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local gate passes.
+`changes`, `docs`, and `check` each carry the guard `github.event_name != 'pull_request' || !github.event.pull_request.draft`; `commit-lint` carries the same draft term inside its PR-only condition. Every other job `needs: changes`, so when `changes` skips, they all skip transitively. `check` skips too — a draft never shows a vacuously green check. Iterate on drafts freely; flip ready when the local check passes.
 
 ## Test matrix policy
 
@@ -63,7 +63,7 @@ When BASE is unusable — empty, the zero SHA of a branch-creation push, or an o
 | `pull_request` | ubuntu-latest × 3.13 |
 | `push` | ubuntu × {3.12, 3.13}, windows × 3.13, macos × 3.13 |
 
-PRs run one leg because development and the local gate already exercise Windows; CI's marginal PR signal is the POSIX leg. Pushes run the *diagonal* instead of the full OS × version cross product: OS-specific bugs are Python-version-independent and version-specific bugs are OS-independent, so the missing cells add multiplier cost without adding coverage. Windows and macOS breakage cannot land silently — it is caught by the merge-time push run.
+PRs run one leg because development and the local check already exercise Windows; CI's marginal PR signal is the POSIX leg. Pushes run the *diagonal* instead of the full OS × version cross product: OS-specific bugs are Python-version-independent and version-specific bugs are OS-independent, so the missing cells add multiplier cost without adding coverage. Windows and macOS breakage cannot land silently — it is caught by the merge-time push run.
 
 ## Composition scenarios
 
@@ -89,7 +89,7 @@ The strict docs build (both the online config and the `DOCS_OFFLINE` release-bun
 
 Every job sets `timeout-minutes` (5–25 by job). The GitHub default is 360, which would let a single hung job burn hours of runner time — on a 2× or 10× runner, a large slice of a month's included minutes.
 
-## The local gate
+## The local check
 
 Run before every push:
 
@@ -97,6 +97,6 @@ Run before every push:
 uv run python scripts/check.py
 ```
 
-It mirrors the billable gate — ruff check `--no-fix`, `ruff format --check`, the commit-range lint, pyright, the pytest suite without the scenarios, doctests, and both strict docs builds. It runs the scenarios too when a composition path differs from the merge base with `origin/develop`, or when it cannot find that merge base, and prints which it chose and why. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
+It mirrors CI's billable `check` — ruff check `--no-fix`, `ruff format --check`, the commit-range lint, pyright, the pytest suite without the scenarios, doctests, and both strict docs builds. It runs the scenarios too when a composition path differs from the merge base with `origin/develop`, or when it cannot find that merge base, and prints which it chose and why. A failure caught locally costs seconds; the same failure in CI costs a full billed run plus the rerun after the fix.
 
 Next: [Versioning & Compatibility](versioning.md) — how releases are numbered and what compatibility they promise.

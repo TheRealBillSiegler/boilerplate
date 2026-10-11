@@ -10,7 +10,7 @@ Follow [Development environment setup](https://github.com/TheRealBillSiegler/boi
 
 ### Code quality
 
-Run the local gate before pushing; [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) has the command, and [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking) has the individual ruff, pyright and pytest commands. The gate mirrors CI's lint, typecheck, test and docs jobs; the package smoke test, ShellCheck and the new-tests-go-red check run only in CI. The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-gate).
+Run the local check before pushing; [Development environment setup](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#development-environment-setup) has the command, and [Running linting and type checking](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/CONTRIBUTING.md#running-linting-and-type-checking) has the individual ruff, pyright and pytest commands. The check mirrors CI's lint, typecheck, test and docs jobs; the package smoke test, ShellCheck and the new-tests-go-red check run only in CI. The pipeline these checks feed into is documented in [CI Pipeline](./ci.md#the-local-check).
 
 ### Mutation score ratchet
 
