@@ -1,6 +1,6 @@
 """Tests for scripts/check.py's choice of whether to run the composition scenarios.
 
-The local gate mirrors CI, whose ``changes`` job turns the scenarios job on when
+The local check mirrors CI, whose ``changes`` job turns the scenarios job on when
 the diff touches a composition path. The paths below are the ones
 ``.github/workflows/ci.yml`` lists, copied here by hand, so a path that runs the
 scenarios in CI must run them here. ``tests/`` has no ``__init__.py`` files
@@ -69,7 +69,7 @@ class TestTouchesComposition:
 
 
 class TestScenarioChoice:
-    """Which choice the gate makes, and the reason it prints."""
+    """Which choice the check makes, and the reason it prints."""
 
     def test_an_unknown_merge_base_runs_them(self) -> None:
         """Run the scenarios when the merge base with origin/develop is unknown."""
@@ -121,12 +121,12 @@ class TestScenarioChoice:
 
 
 class TestStepOrder:
-    """The order of the gate's steps, as ``docs/governance/ci.md`` describes it."""
+    """The order of the check's steps, as ``docs/governance/ci.md`` describes it."""
 
     def test_the_scenario_step_runs_last(self) -> None:
         """Run the 20-minute scenarios after every other step.
 
-        The gate stops at the first failure, so a doctest or docs failure
+        The check stops at the first failure, so a doctest or docs failure
         placed after the scenarios costs a full scenario run to find.
         """
         assert [argv for argv, _ in _STEPS][-1] == _SCENARIOS

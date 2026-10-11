@@ -1,4 +1,4 @@
-"""Local CI gate: run the same checks the CI workflow runs, before pushing.
+"""Local check: run the same checks the CI workflow runs, before pushing.
 
 A failure caught here costs seconds; the same failure in CI costs a full
 billed run plus the rerun after the fix. Mirrors the lint, typecheck, test,
@@ -6,7 +6,7 @@ scenarios, docs, and commit-lint jobs in ``.github/workflows/ci.yml`` (the
 package smoke test, ShellCheck, and the new-tests-go-red check are CI-only).
 The composition scenarios run only when a composition path differs from the
 merge base with ``origin/develop``, the way CI runs them only when its diff
-touches one; the gate prints which choice it made and why. Contributor
+touches one; the check prints which choice it made and why. Contributor
 instructions: ``docs/governance/ci.md``.
 
 Usage:
@@ -39,7 +39,7 @@ _COMPOSITION_FILES: Final = ("uv.lock", ".github/workflows/ci.yml")
 _BASE_BRANCH: Final = "origin/develop"
 _SCENARIOS: Final = ["uv", "run", "pytest", "-m", "scenario"]
 
-# (argv, extra environment) per gate step, in fail-fast order: cheap static
+# (argv, extra environment) per check step, in fail-fast order: cheap static
 # checks first, the test suite, the doctests and both strict docs configs, and
 # the scenarios last when ``main`` decides they run, so a failure in a cheap
 # step never waits behind a scenario run.
@@ -77,7 +77,7 @@ def touches_composition(paths: Iterable[str]) -> bool:
 def scenario_choice(
     merge_base: str | None, changed: Sequence[str] | None
 ) -> tuple[bool, str]:
-    """Decide whether the gate runs the scenarios, and say why.
+    """Decide whether the check runs the scenarios, and say why.
 
     Args:
         merge_base: The merge base with ``origin/develop``, or None when git
@@ -129,7 +129,7 @@ def _scenarios_wanted() -> bool:
 
 
 def main() -> int:
-    """Run every gate step, stopping at the first failure.
+    """Run every check step, stopping at the first failure.
 
     Returns:
         Process exit code: 0 when every step passes, 1 otherwise.
@@ -145,11 +145,11 @@ def main() -> int:
             check=False,
         )
         if result.returncode != 0:
-            print(f"\nGATE FAILED at: {' '.join(argv)}", file=sys.stderr)
+            print(f"\nCHECK FAILED at: {' '.join(argv)}", file=sys.stderr)
             return 1
     for site_dir in ("site", "site-offline"):
         shutil.rmtree(_REPO_ROOT / site_dir, ignore_errors=True)
-    print("\nAll gate steps passed; safe to push.")
+    print("\nAll checks passed; safe to push.")
     return 0
 
 
