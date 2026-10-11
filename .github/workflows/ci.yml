@@ -122,21 +122,26 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
-      # PRs run ubuntu-only on the latest Python: development and the local
-      # check (scripts/check.py) already cover Windows, so CI's marginal PR
-      # signal is the POSIX leg. Pushes to develop/main run the diagonal —
-      # every OS on the latest Python, plus ubuntu on the oldest — because OS
-      # bugs are Python-version-independent and version bugs are
-      # OS-independent; the full cross product doubles the billed minutes
-      # (Windows 2x, macOS 10x) for no added coverage.
+      # The full cross product, every OS on every supported Python, runs
+      # wherever Actions minutes are free: on a public repository, for every
+      # PR and push. While the repository is private, minutes are metered
+      # (Windows bills 2x, macOS 10x), so PRs run Linux on every Python and
+      # pushes to develop/main run every OS on the newest Python plus Linux
+      # on the older ones; development and the local check already exercise
+      # Windows. The event carries the visibility, so nothing here changes at
+      # the flip.
       matrix: >-
-        ${{ fromJSON(github.event_name == 'pull_request'
-        && '{"os": ["ubuntu-latest"], "python-version": ["3.13"]}'
+        ${{ fromJSON(!github.event.repository.private
+        && '{"os": ["ubuntu-latest", "windows-latest", "macos-latest"],
+             "python-version": ["3.12", "3.13", "3.14"]}'
+        || github.event_name == 'pull_request'
+        && '{"os": ["ubuntu-latest"], "python-version": ["3.12", "3.13", "3.14"]}'
         || '{"os": ["ubuntu-latest", "windows-latest", "macos-latest"],
-             "python-version": ["3.13"],
-             "include": [{"os": "ubuntu-latest", "python-version": "3.12"}]}') }}
+             "python-version": ["3.14"],
+             "include": [{"os": "ubuntu-latest", "python-version": "3.12"},
+                         {"os": "ubuntu-latest", "python-version": "3.13"}]}') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
@@ -154,16 +159,24 @@ jobs:
     # The scenarios rerun the composition design's evidence against real Copier
     # and git, and take minutes, so they run only when the diff touches the
     # composition code, the templates, their tests or fixtures, the lockfile or
-    # this workflow. One leg, ubuntu on the latest Python: the test job's
-    # diagonal covers the other platforms for everything else.
+    # this workflow. Their legs follow the test job's policy: every OS on every
+    # supported Python where minutes are free, one Linux leg on the newest
+    # Python while they are metered.
     if: needs.changes.outputs.composition == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: >-
+        ${{ fromJSON(!github.event.repository.private
+        && '{"os": ["ubuntu-latest", "windows-latest", "macos-latest"],
+             "python-version": ["3.12", "3.13", "3.14"]}'
+        || '{"os": ["ubuntu-latest"], "python-version": ["3.14"]}') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
         with:
-          python-version: "3.13"
+          python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen
       - name: Composition scenarios
         run: uv run pytest -m scenario
