@@ -148,6 +148,10 @@ extra_javascript:
   # docs/assets/mermaid.LICENSE from the upstream tag in the same change.
   - assets/mermaid-theme.js
 
+# Runs on every build, the offline bundle's and each mike deploy; see the module docstring.
+hooks:
+  - scripts/mkdocs_hooks.py
+
 plugins:
   - search
   - autorefs
