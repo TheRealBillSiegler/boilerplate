@@ -219,6 +219,7 @@ plugins:
           - governance/security.md: Security policy
           - roadmap.md: Sequencing of planned work
           - about/license.md
+          - about/notices.md
         Optional:
           - design/*.md: Target-state design, not implementation status
 
@@ -295,3 +296,4 @@ nav:
     - Versioning & Compatibility: governance/versioning.md
     - Security Policy: governance/security.md
     - License: about/license.md
+    - Notices: about/notices.md
