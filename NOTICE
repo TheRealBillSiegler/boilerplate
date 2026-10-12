@@ -55,12 +55,76 @@ the offline bundle keeps working:
   docs/assets/asciinema/asciinema-player.LICENSE. Boilerplate makes no
   modifications.
 
+The documentation shows third-party logos to identify the tools it describes:
+
+  docs/assets/git.svg — the Git Logo by Jason Long
+  (https://git-scm.com/community/logos), licensed under the Creative Commons
+  Attribution 3.0 Unported License
+  (https://creativecommons.org/licenses/by/3.0/).
+
+  docs/assets/ruff_bolt.svg — the Ruff logo, docs/assets/bolt.svg from Ruff
+  (https://github.com/astral-sh/ruff), MIT License, Copyright (c) 2022 Charles
+  Marsh, redistributed byte-for-byte. License text:
+  docs/assets/licenses/ruff.LICENSE.
+
+  docs/assets/pytest.png — the pytest logo, doc/en/img/favicon.png from pytest
+  (https://github.com/pytest-dev/pytest), MIT License, Copyright (c) 2004
+  Holger Krekel and others, redistributed byte-for-byte. License text:
+  docs/assets/licenses/pytest.LICENSE.
+
+  docs/assets/uv.svg — the uv logo, docs/assets/logo-letter.svg from uv
+  (https://github.com/astral-sh/uv), redistributed byte-for-byte under the
+  Apache License, Version 2.0 (uv is licensed MIT or Apache-2.0); its text is
+  this repository's LICENSE.
+
+  docs/assets/vscode.svg — the Visual Studio Code icon, used in documentation
+  as Microsoft's brand guidelines allow (https://code.visualstudio.com/brand).
+
+The documentation build (MkDocs with Material for MkDocs and its plugins) adds
+third-party files to the published site and the offline bundle. They are not
+in the repository; their license texts are in docs/assets/licenses/, which the
+build copies to assets/licenses/:
+
+  assets/javascripts/bundle.*.min.js,
+  assets/javascripts/workers/search.*.min.js,
+  assets/stylesheets/main.*.min.css, assets/stylesheets/palette.*.min.css and
+  assets/images/favicon.png — Material for MkDocs
+  (https://github.com/squidfunk/mkdocs-material), MIT License, Copyright (c)
+  2016-2025 Martin Donath. License text: mkdocs-material.LICENSE. The theme
+  script includes the focus-visible polyfill
+  (https://github.com/WICG/focus-visible), under the W3C Software and Document
+  License. License text: focus-visible.LICENSE. Further libraries inside the
+  theme's scripts carry their license banners in the files.
+
+  assets/javascripts/panzoom.min.js — panzoom
+  (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2026
+  Andrei Kashcha. It bundles amator (MIT, Copyright (c) 2016-2026 Andrei
+  Kashcha), wheel (MIT, Copyright (c) 2014-2023 Andrei Kashcha), bezier-easing
+  (MIT, Copyright (c) 2014 Gaëtan Renaudeau) and ngraph.events (BSD-3-Clause,
+  Copyright (c) 2013-2026 Andrei Kashcha). License texts: panzoom.LICENSE,
+  amator.LICENSE, wheel.LICENSE, bezier-easing.LICENSE, ngraph.events.LICENSE.
+
+  assets/javascripts/zoompan.js and assets/stylesheets/panzoom.css —
+  mkdocs-panzoom-plugin (https://github.com/PLAYG0N/mkdocs-panzoom), MIT
+  License, Copyright (c) 2024 PLAYG0N. License text: mkdocs-panzoom.LICENSE.
+
+  assets/_mkdocstrings.css — mkdocstrings-python
+  (https://github.com/mkdocstrings/python), ISC License, Copyright (c) 2021,
+  Timothée Mazzucotelli. License text: mkdocstrings-python.LICENSE.
+
+The build drops the theme's search language packs (assets/javascripts/lunr/):
+the site's search is English-only and never loads them.
+
 Any future vendored asset must be added to this file, with its upstream
 license, in the same change that vendors it.
 
-Third-party tool names and logos referenced in the documentation (Copier, Git,
-pytest, Ruff, uv, Pyright, Visual Studio Code, and others) are trademarks or
-registered trademarks of their respective owners. They are used for
-identification and nominative purposes only; their use does not imply any
-affiliation with, sponsorship by, or endorsement from those projects or their
-owners.
+Third-party tool names referenced in the documentation (Copier, Git, pytest,
+Ruff, uv, Pyright, Visual Studio Code, and others) are trademarks or registered
+trademarks of their respective owners. Git and the Git logo are either
+registered trademarks or trademarks of Software Freedom Conservancy, Inc.,
+corporate home of the Git Project, in the United States and/or other
+countries. Visual Studio Code, VS Code, and the Visual Studio Code icon are
+trademarks of Microsoft Corporation. The names identify the tools the
+documentation describes, and each logo is credited above; their use does not
+imply any affiliation with, sponsorship by, or endorsement from those projects
+or their owners.
