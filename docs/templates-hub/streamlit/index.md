@@ -52,13 +52,14 @@ my-streamlit-app/
     │   ├── models/
     │   │   ├── test_locked_package.py
     │   │   └── test_stack_filter.py
-    │   └── services/test_inventory.py
+    │   ├── services/test_inventory.py
+    │   └── test_import.py      # Checks the package imports (from project)
     └── integration/
         └── my_streamlit_app/
             └── test_app.py      # Drives the page with Streamlit's AppTest
 ```
 
-The package name derives from the project name. The render also inherits the project template's `notebooks/`, `.vscode/`, and `.gitignore`; the base layer's sample module stays off because this template answers `sample_module` with no. Each layer records its answers in its own `.copier-answers.<layer>.yml`.
+The package name derives from the project name. The render also inherits the project template's `notebooks/`, `.vscode/`, `.gitignore`, and `tests/<package>/test_import.py`; the base layer's sample module stays off, and the import test renders in its place, because this template answers `sample_module` with no. Each layer records its answers in its own `.copier-answers.<layer>.yml`.
 
 `README.md`, `src/<package>/app.py` and `tests/integration/<package>/test_app.py` are project-owned: the template lists them in `_skip_if_exists`, which [governs what an update does to them](../../design/04-composition-engine.md#per-layer-render-loop).
 

@@ -8,7 +8,7 @@ You need Python {{ python_version_major }}.{{ python_version_minor }} or later a
 
 ```bash
 uv sync                    # create .venv and install everything in uv.lock
-uv run pytest              # run the tests{% if not sample_module %} (empty until you add one){% endif %}
+uv run pytest              # run the tests
 uv run ruff check --fix .  # lint, and fix what it can
 uv run ruff format .       # format
 uv run pyright             # type-check src/ in strict mode
@@ -23,7 +23,7 @@ uv run pyright             # type-check src/ in strict mode
 ├── pyproject.toml            # metadata, dependencies, and the Ruff, Pyright, and pytest configuration
 ├── uv.lock                   # the resolved dependency set; commit it
 ├── src/{{ package_name }}/   # the package{% if sample_module %}; module.py is a sample to delete{% endif %}
-├── tests/{{ package_name }}/ # mirrors src/, one test module per source module{% if not sample_module %} (empty until you add one){% endif %}
+├── tests/{{ package_name }}/ # mirrors src/, one test module per source module{% if not sample_module %}; test_import.py checks the package imports{% endif %}
 ├── notebooks/                # a starter notebook; ipykernel is in the dev group
 ├── .vscode/                  # workspace settings and recommended extensions
 └── .gitattributes            # LF line endings on every platform, so scripts run in WSL and Linux

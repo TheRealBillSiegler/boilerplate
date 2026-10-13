@@ -172,6 +172,16 @@ class TestSampleModule:
         assert all(path.name for path in dest.rglob("*"))
         assert not list(package.glob(".jinja"))
 
+    def test_turning_it_off_keeps_one_test(self, tmp_path: Path):
+        """Without the sample, pytest still has a test to collect.
+
+        pytest exits 5 when it collects nothing (pytest docs, "Exit codes"),
+        which fails the README's `uv run pytest` and any CI built on it.
+        """
+        dest = render("project", tmp_path, context_data={"sample_module": False})
+        package = dest.name.replace("-", "_")
+        assert (dest / "tests" / package / "test_import.py").is_file()
+
 
 class TestRenderedListsAndReadme:
     def test_dependencies_render_one_per_line(self, tmp_path: Path):
@@ -199,21 +209,16 @@ class TestRenderedListsAndReadme:
         assert "Packages resolve from PyPI" in readme
 
     @pytest.mark.parametrize(
-        ("sample_module", "comment"),
-        [
-            (True, "# run the tests"),
-            (False, "# run the tests (empty until you add one)"),
-        ],
+        "sample_module",
+        [True, False],
         ids=["with-sample-module", "without-sample-module"],
     )
     def test_readme_quick_start_pytest_comment(
-        self, tmp_path: Path, sample_module: bool, comment: str
+        self, tmp_path: Path, sample_module: bool
     ):
         dest = _render_project(tmp_path, context_data={"sample_module": sample_module})
         readme = (dest / "README.md").read_text(encoding="utf-8")
-        assert re.search(
-            rf"^uv run pytest\s+{re.escape(comment)}$", readme, re.MULTILINE
-        )
+        assert re.search(r"^uv run pytest\s+# run the tests$", readme, re.MULTILINE)
 
 
 class TestLineEndings:
