@@ -22,9 +22,10 @@ components. Most carry their upstream license banners inside the file, which
 must never be stripped. elkjs (https://github.com/kieler/elkjs), under the
 Eclipse Public License 2.0 (https://www.eclipse.org/legal/epl-2.0/), carries no
 banner: its Source Code is available under that license from
-https://github.com/kieler/elkjs. Complete corresponding source for the bundle
-and everything in it is published by the Mermaid project at the repository
-above. Boilerplate makes no modifications.
+https://github.com/kieler/elkjs, which builds it from the Eclipse Layout
+Kernel's Java source at https://github.com/eclipse-elk/elk. The Mermaid project
+publishes Mermaid's own source at the repository above. Boilerplate makes no
+modifications.
 
 The repository also vendors four woff2 font files serving the documentation
 site's self-hosted type, so the site fetches no font from Google at view time
