@@ -1,3 +1,9 @@
+Ruff, https://github.com/astral-sh/ruff
+
+The MIT grant that opens LICENSE in that repository (its first 21 lines),
+verbatim. The rest of that file covers code Ruff derives from other projects,
+which the logo does not include.
+
 MIT License
 
 Copyright (c) 2022 Charles Marsh
