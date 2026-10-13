@@ -12,3 +12,4 @@ Set up for development, understand the pipeline, and the policies that govern th
 - **[Versioning & Compatibility](governance/versioning.md)** — the SemVer policy for this project.
 - **[Security Policy](governance/security.md)** — how to report a vulnerability.
 - **[License](about/license.md)** — the project's license.
+- **[Notices](about/notices.md)** — the third-party files the site and its offline bundle carry, and the projects Boilerplate builds on.
