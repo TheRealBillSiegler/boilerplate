@@ -15,13 +15,17 @@ Copier applies multiple independent templates [by hand, one answers file each](h
 
 Boilerplate is distributed via GitHub — it is **not yet published to PyPI**.
 
+<!-- x-release-please-start-version -->
+
 ```bash
 # Install the CLI from source (recommended)
-uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git
+uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
 
 # or with pip
-pip install git+https://github.com/TheRealBillSiegler/boilerplate.git
+pip install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
 ```
+
+<!-- x-release-please-end -->
 
 ## Quick Start
 

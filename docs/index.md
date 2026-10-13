@@ -77,12 +77,16 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
 ## Mini quickstart
 
+<!-- x-release-please-start-version -->
+
 ```powershell
 # Install (Windows 11; -ExecutionPolicy Bypass is per-process only)
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
 # Scaffold
 boilerplate new project my-first-project
 ```
+
+<!-- x-release-please-end -->
 
 That's the loop: install once, scaffold, then `uv run pytest` inside the new project to watch it pass its own gates. The [Quickstart](quickstart.md) walks every step with expected output; [Installation](install.md#setup-options) covers macOS/Linux and manual setup.
 
