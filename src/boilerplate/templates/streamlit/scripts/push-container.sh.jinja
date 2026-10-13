@@ -42,12 +42,14 @@ EOF
 # ------------------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------------------
+# POSIX character classes, not GNU's \s: mawk (Ubuntu's default awk) reads
+# \s as a literal 's'. Fails when pyproject.toml or its name is missing.
 get_project_name_from_pyproject() {
-    if [[ -f pyproject.toml ]]; then
-        awk -F '"' '/^\s*name\s*=\s*"/ { print $2; exit }' pyproject.toml | tr '_' '-'
-    else
-        return 1
-    fi
+    local name
+    [[ -f pyproject.toml ]] || return 1
+    name=$(awk -F '"' '/^[[:space:]]*name[[:space:]]*=[[:space:]]*"/ { print $2; exit }' pyproject.toml | tr '_' '-')
+    [[ -n "$name" ]] || return 1
+    printf '%s\n' "$name"
 }
 
 # ------------------------------------------------------------------------------
@@ -113,7 +115,7 @@ fi
 # ------------------------------------------------------------------------------
 if [[ -z "$LOCAL_IMAGE" ]]; then
     PROJECT_NAME=$(get_project_name_from_pyproject) || {
-        echo -e "${RED}❌ Image name not provided and pyproject.toml missing.${RESET}"
+        echo -e "${RED}❌ Image name not provided, and no project name was found in pyproject.toml.${RESET}"
         exit 1
     }
     LOCAL_IMAGE="${PROJECT_NAME}:local"
