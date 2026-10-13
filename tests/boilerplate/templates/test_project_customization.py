@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.boilerplate.templates.conftest import render
+from tests.boilerplate.templates.conftest import render, render_project
 
 _render_project = partial(render, "project")
 
@@ -54,6 +54,40 @@ class TestFreeTextAnswers:
             "It's fast",
             "Seán O'Brien",
         )
+
+
+class TestProjectName:
+    """A project name whose package Python cannot import is refused.
+
+    Seam: the `project_name` question, through a forced answer. The package
+    name is the slug with dashes as underscores, and an import statement
+    needs an identifier that is not a keyword (Python reference, "Identifiers
+    and keywords"). Dropping the validator breaks this.
+    """
+
+    @pytest.mark.parametrize(
+        "name",
+        ["2024 Report", "class", "!!!"],
+        ids=["leading-digit", "keyword", "no-letters"],
+    )
+    def test_name_without_an_importable_package_is_refused(
+        self, tmp_path: Path, name: str
+    ):
+        with pytest.raises(
+            ValueError, match="Validation error for question 'project_name'"
+        ):
+            _render_project(tmp_path, context_data={"project_name": name})
+
+    def test_folder_name_default_is_checked_too(self, tmp_path: Path):
+        """The name defaults to the folder's, and Copier validates defaults as well."""
+        with pytest.raises(
+            ValueError, match="Validation error for question 'project_name'"
+        ):
+            render_project("project", tmp_path / "2024-analysis")
+
+    def test_digits_after_a_letter_render(self, tmp_path: Path):
+        dest = _render_project(tmp_path, context_data={"project_name": "Analysis 2024"})
+        assert (dest / "src" / "analysis_2024" / "__init__.py").is_file()
 
 
 class TestPackageIndexUrl:
