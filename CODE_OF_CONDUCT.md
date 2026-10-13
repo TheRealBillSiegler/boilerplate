@@ -72,7 +72,7 @@ Community leaders will follow these Community Impact Guidelines in determining t
 
 This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
 
-The Contributor Covenant is licensed under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). This adaptation fills in the reporting method, GitHub's private vulnerability reporting, where the Covenant leaves a placeholder; the rest is the 2.1 text.
+Contributor Covenant 2.1 is licensed under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). This adaptation rewrites the Covenant's reporting sentence, which leaves the contact method as a placeholder, to send reports through GitHub's private vulnerability reporting and to say how that channel works; the rest is the 2.1 text.
 
 Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcement ladder][Mozilla CoC].
 
