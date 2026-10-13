@@ -87,14 +87,29 @@ build copies to assets/licenses/:
 
   assets/javascripts/bundle.*.min.js,
   assets/javascripts/workers/search.*.min.js,
-  assets/stylesheets/main.*.min.css, assets/stylesheets/palette.*.min.css and
-  assets/images/favicon.png — Material for MkDocs
+  assets/stylesheets/main.*.min.css and assets/stylesheets/palette.*.min.css,
+  the .map file beside each of them, and assets/images/favicon.png — Material
+  for MkDocs
   (https://github.com/squidfunk/mkdocs-material), MIT License, Copyright (c)
   2016-2025 Martin Donath. License text: mkdocs-material.LICENSE. The theme
   script includes the focus-visible polyfill
   (https://github.com/WICG/focus-visible), under the W3C Software and Document
-  License. License text: focus-visible.LICENSE. Further libraries inside the
-  theme's scripts carry their license banners in the files.
+  License. License text: focus-visible.LICENSE. The theme script also includes
+  RxJS (https://github.com/ReactiveX/rxjs), Apache License 2.0, Copyright (c)
+  2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors, whose
+  license text is this repository's LICENSE, and tslib
+  (https://github.com/microsoft/tslib), BSD Zero Clause License, Copyright (c)
+  Microsoft Corporation; minification strips both banners. clipboard.js,
+  escape-html and, in the search worker, lunr carry their license banners in
+  the files. The .map files embed the original sources of all of these.
+
+  The theme inlines icons into each page and into main.*.min.css: Material
+  Design Icons by Pictogrammers (https://github.com/Templarian/MaterialDesign),
+  Pictogrammers Free License, its icons under the Apache License 2.0 (license
+  text: material-design-icons.LICENSE), and Octicons
+  (https://github.com/primer/octicons), MIT License, Copyright (c) 2025 GitHub
+  Inc. (license text: octicons.LICENSE). Each inlined Font Awesome icon carries
+  its own attribution comment.
 
   assets/javascripts/panzoom.min.js — panzoom
   (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2026
