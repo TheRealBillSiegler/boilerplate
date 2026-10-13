@@ -70,6 +70,10 @@ winget is invoked with --accept-source-agreements, which accepts winget's source
 (feed) terms on your behalf so the install runs unattended. No third-party package
 license agreements (EULAs) are auto-accepted.
 
+Without winget (older Windows 10 builds, or machines without App Installer),
+VS Code and Git are used if they are already installed; the script stops with
+an error at the first one that is missing.
+
 Requires PowerShell 7+. Started from Windows PowerShell 5.1, it installs
 PowerShell 7 with winget when needed and relaunches itself under it.
 
@@ -119,19 +123,31 @@ function Install-Tool {
     .SYNOPSIS
     Installs a tool via winget if it's not already installed.
 
+    .DESCRIPTION
+    Without winget, the tool counts as installed when its command is on PATH;
+    otherwise the function throws, so the script stops instead of reporting a
+    setup it did not finish.
+
     .PARAMETER ToolId
     The winget identifier of the tool (e.g., "Microsoft.VisualStudioCode").
+
+    .PARAMETER Command
+    The command the tool puts on PATH (e.g., "code"), checked when winget is
+    not available.
 
     .PARAMETER Override
     Optional command-line arguments for the winget installer.
 
     .EXAMPLE
-    Install-Tool -ToolId "Microsoft.VisualStudioCode" -Override '/VERYSILENT /NORESTART /MERGETASKS="!runcode,desktopicon,addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath"'
+    Install-Tool -ToolId "Microsoft.VisualStudioCode" -Command "code" -Override '/VERYSILENT /NORESTART /MERGETASKS="!runcode,desktopicon,addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath"'
     #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
         [string]$ToolId,
+
+        [Parameter(Mandatory)]
+        [string]$Command,
 
         [Parameter()]
         [string]$Override = ""
@@ -139,10 +155,15 @@ function Install-Tool {
 
     Write-Host "Checking if $ToolId is installed..." -ForegroundColor Cyan
 
-    # Check if winget is available
     if (-not (Get-Command "winget" -ErrorAction SilentlyContinue)) {
-        Write-Host "winget is not available on this system. Assuming $ToolId is already installed." -ForegroundColor Yellow
-        return
+        Write-Host "winget is not available on this system." -ForegroundColor Yellow
+        # A tool installed after this terminal opened is not on its PATH yet.
+        Update-Path
+        if (Get-Command $Command -ErrorAction SilentlyContinue) {
+            Write-Host "'$Command' is on PATH, so $ToolId is already installed; continuing." -ForegroundColor Green
+            return
+        }
+        throw "'$Command' is not on PATH, and winget is not available to install $ToolId. Install it so '$Command' is on PATH, or get winget by installing App Installer from the Microsoft Store, then run this installer again."
     }
 
     # Check if the tool is already installed.
@@ -275,7 +296,7 @@ Write-Host "Starting Boilerplate environment setup..." -ForegroundColor Magenta
 
 try {
     # 1. Install VS Code
-    Install-Tool -ToolId "Microsoft.VisualStudioCode" -Override '/VERYSILENT /NORESTART /MERGETASKS="!runcode,desktopicon,addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath"'
+    Install-Tool -ToolId "Microsoft.VisualStudioCode" -Command "code" -Override '/VERYSILENT /NORESTART /MERGETASKS="!runcode,desktopicon,addcontextmenufiles,addcontextmenufolders,associatewithfiles,addtopath"'
 
     # 2. Install VS Code extensions
     $VSCodeExtensions = @(
@@ -288,7 +309,7 @@ try {
     Install-VSCodeExtensions -Extensions $VSCodeExtensions
 
     # 3. Install Git
-    Install-Tool -ToolId "Git.Git"
+    Install-Tool -ToolId "Git.Git" -Command "git"
 
     # 4. Install uv
     Write-Host "Installing uv (via Astral's official install script)..." -ForegroundColor Cyan
