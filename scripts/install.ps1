@@ -1,8 +1,8 @@
-#Requires -Version 7
-
-# Runtime guard: '#Requires' is ignored when this script is piped to iex, and
-# under Windows PowerShell 5.1 the native-command error trapping below is
-# inert, so a failed install step would still report success. Self-heal:
+# Runtime guard: this script needs PowerShell 7, but it usually starts in
+# Windows PowerShell 5.1 (the irm | iex one-liner, or powershell -File), where
+# the native-command error trapping below is inert, so a failed install step
+# would still report success. A '#Requires -Version 7' line would make 5.1
+# refuse the file outright, so this guard does the check instead. Self-heal:
 # hop to an existing pwsh, installing PowerShell 7 first if needed; fail
 # closed only when neither works. This block, and the whole file, must stay
 # parseable by 5.1.
@@ -70,7 +70,8 @@ winget is invoked with --accept-source-agreements, which accepts winget's source
 (feed) terms on your behalf so the install runs unattended. No third-party package
 license agreements (EULAs) are auto-accepted.
 
-Requires PowerShell 7+.
+Requires PowerShell 7+. Started from Windows PowerShell 5.1, it installs
+PowerShell 7 with winget when needed and relaunches itself under it.
 
 .EXAMPLE
 pwsh -ExecutionPolicy Bypass -File .\install.ps1
