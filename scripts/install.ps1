@@ -39,8 +39,8 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     }
     else {
         # Piped via iex: there is no script file on disk to relaunch, so
-        # re-fetch from the canonical URL.
-        & $pwsh -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1' | iex"
+        # re-fetch this release's copy by its tag.
+        & $pwsh -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1' | iex" # x-release-please-version
     }
     exit $LASTEXITCODE
 }
