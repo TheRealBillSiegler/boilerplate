@@ -305,10 +305,11 @@ try {
     }
 
     # 5. Install boilerplate from the public Git repo. The bare PyPI name
-    #    `boilerplate` is an unrelated project (see adr-008), so install by URL.
+    #    `boilerplate` is an unrelated project (see adr-008), so install by URL,
+    #    pinned to the release this script belongs to; each release PR rewrites the pin.
     Write-Host "Installing boilerplate..." -ForegroundColor Cyan
     try {
-        uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git
+        uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0 # x-release-please-version
         Write-Host "Boilerplate installed." -ForegroundColor Green
     }
     catch {
