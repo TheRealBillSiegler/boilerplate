@@ -40,9 +40,16 @@ project_name:
   type: str
   help: "The (human-readable) name of the project (e.g. My Project)"
   default: "{{ _folder_name }}"
+  # The package name is derived the same way as package_name below; a
+  # validator cannot see a computed answer. Copier validates the default too,
+  # so a folder name that fails stops the render before the first prompt,
+  # which is why the message names the way out.
   validator: >-
+    {%- set package = project_name | slugify | replace('-', '_') -%}
     {%- if '"' in project_name or '\\' in project_name or '\n' in project_name or '\r' in project_name -%}
     Leave out double quotes, backslashes and line breaks.
+    {%- elif not package.isidentifier() or package in ['and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'] -%}
+    This name makes the package "{{ package }}", which Python can't import. Use a name that starts with a letter and isn't a Python keyword, such as "Analysis 2024". The name defaults to the folder's, so rename the folder or pass --data project_name="Analysis 2024".
     {%- endif -%}
 
 project_slug:
