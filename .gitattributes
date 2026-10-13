@@ -11,6 +11,11 @@
 # one byte per line). binary = -text -diff -merge.
 docs/assets/mermaid.min.js  binary
 
+# The vendored asciinema player is redistributed byte-for-byte as npm
+# publishes it, so its files take the same rule.
+docs/assets/asciinema/asciinema-player.min.js  binary
+docs/assets/asciinema/asciinema-player.css  binary
+
 # Vendored woff2 font files are binary; without this, a checkout that treats
 # them as text can corrupt them via line-ending conversion.
 *.woff2  binary
