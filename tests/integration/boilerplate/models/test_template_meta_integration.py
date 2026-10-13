@@ -172,7 +172,7 @@ class TestRealTemplateValidation:
         meta = TemplateMeta.load(project_template_path)
 
         assert meta.name == "project"
-        assert meta.version == SerializableVersion("0.2.1")
+        assert meta.version == SerializableVersion("0.3.0")
         assert meta.description == "A suitable base for any Python project."
         assert meta.extends == []  # Project template has no extensions
 

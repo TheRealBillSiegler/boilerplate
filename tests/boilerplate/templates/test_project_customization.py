@@ -3,6 +3,7 @@
 import json
 import re
 import subprocess
+import tomllib
 from functools import partial
 from pathlib import Path
 
@@ -11,6 +12,48 @@ import pytest
 from tests.boilerplate.templates.conftest import render
 
 _render_project = partial(render, "project")
+
+
+class TestFreeTextAnswers:
+    """A free-text answer that would break the rendered TOML or Python is refused.
+
+    Seam: the layer's questions, through a forced answer. The answers land
+    inside double-quoted TOML strings in `pyproject.toml` and inside Python
+    string literals, where a double quote, a backslash or a line break ends or
+    escapes the string (TOML 1.0, "Basic strings"). Copier refuses an answer
+    whose validator renders a message, with "Validation error for question
+    '<name>'" (Copier's `Question.validate_answer`). Dropping a validator
+    breaks this.
+    """
+
+    @pytest.mark.parametrize(
+        "question", ["project_name", "description", "author_name", "author_email"]
+    )
+    @pytest.mark.parametrize(
+        "value",
+        ['A "fast" tool', "C:\\data", "Line one\nline two"],
+        ids=["double-quote", "backslash", "line-break"],
+    )
+    def test_string_breaking_character_is_refused(
+        self, tmp_path: Path, question: str, value: str
+    ):
+        with pytest.raises(
+            ValueError, match=f"Validation error for question '{question}'"
+        ):
+            _render_project(tmp_path, context_data={question: value})
+
+    def test_apostrophes_still_render_valid_toml(self, tmp_path: Path):
+        dest = _render_project(
+            tmp_path,
+            context_data={"description": "It's fast", "author_name": "Seán O'Brien"},
+        )
+        project = tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))[
+            "project"
+        ]
+        assert (project["description"], project["authors"][0]["name"]) == (
+            "It's fast",
+            "Seán O'Brien",
+        )
 
 
 class TestPackageIndexUrl:
