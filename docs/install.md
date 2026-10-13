@@ -25,16 +25,20 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
         **Run the installer (no repo clone required)** — it works from the stock Windows PowerShell 5.1: it installs PowerShell 7 via winget (if needed) and relaunches itself under it.
 
+        <!-- x-release-please-start-version -->
+
         ```powershell
-        powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
+        powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
         ```
+
+        <!-- x-release-please-end -->
 
         The script sets up the full Python development environment and installs the Boilerplate CLI. It:
 
         - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed.  
         - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
-        - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`.
+        - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0`. <!-- x-release-please-version -->
 
         !!! tip "No manual PATH edits needed"
             The script refreshes PATH for this terminal so you can use `uv` and `boilerplate` immediately.
@@ -100,9 +104,14 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
             Install using the [Windows instructions](https://docs.astral.sh/uv/getting-started/installation/#__tabbed_1_2).
 
         5. Install the **Boilerplate CLI**
+
+            <!-- x-release-please-start-version -->
+
             ```powershell
-            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git
+            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
             ```
+
+            <!-- x-release-please-end -->
 
         Using a private package feed? See the [Customization guide](customization.md) for the org-adoption pattern.
 
@@ -144,11 +153,22 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
         5. Install the **Boilerplate CLI**
 
+            <!-- x-release-please-start-version -->
+
             ```bash
-            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git
+            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
             ```
 
+            <!-- x-release-please-end -->
+
         Using a private package feed? See the [Customization guide](customization.md) for the org-adoption pattern.
+
+??? tip "Install the development version instead"
+    The commands above install a release. To try unreleased changes, install the CLI from the `develop` branch:
+
+    ```bash
+    uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@develop
+    ```
 
 See [Troubleshooting](troubleshooting.md) if you hit errors during installation.
 

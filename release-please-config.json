@@ -20,7 +20,10 @@
         { "type": "ci", "section": "Continuous Integration", "hidden": true }
       ],
       "extra-files": [
-        { "type": "generic", "path": "scripts/install.ps1" }
+        { "type": "generic", "path": "scripts/install.ps1" },
+        { "type": "generic", "path": "README.md" },
+        { "type": "generic", "path": "docs/index.md" },
+        { "type": "generic", "path": "docs/install.md" }
       ]
     }
   }

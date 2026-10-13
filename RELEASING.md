@@ -39,6 +39,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 - [ ] The release-please PR is open with the right next version — under SemVer `0.x`,
       breaking → minor and feat → patch (per `release-please-config.json`)
+- [ ] The release-please PR moves every install pin to the new tag: the `extra-files` in `release-please-config.json` (the installer, the README and the install commands in the docs)
 - [ ] The generated `CHANGELOG.md` entry is accurate (edit the prose if needed)
 - [ ] Every release-notes entry is true at the new tag and describes a change since the previous release. Drop an entry about something no release shipped, such as a feature added and changed again between the same two tags.
 - [ ] `.release-please-manifest.json` baseline version is correct
