@@ -4,7 +4,7 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
 !!! info "Overview"
     - **Windows 11:** Recommended path with a fully automated installer.  
-    - **Windows 10:** Use the manual path (no `winget` by default).  
+    - **Windows 10:** Older builds, and machines without App Installer, have no `winget`. Install PowerShell 7, Git, and VS Code first and then run the installer, or use the manual path.  
     - **macOS / Linux:** Manual setup.  
     - Python installation is handled by `uv`; no preinstallation is required.
 
@@ -31,7 +31,7 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
         The script sets up the full Python development environment and installs the Boilerplate CLI. It:
 
-        - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed.  
+        - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed. Without `winget`, it uses the copies already installed and stops with an error at the first one missing.  
         - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
         - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`.
