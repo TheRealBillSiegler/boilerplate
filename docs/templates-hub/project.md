@@ -31,7 +31,8 @@ my-app/
 │       └── module.py       # Example `add(a, b)` function (sample_module, default on)
 ├── tests/
 │   └── my_app/
-│       └── test_module.py  # Tests for the example module (sample_module, default on)
+│       ├── test_module.py  # Tests for the example module (sample_module, default on)
+│       └── test_import.py  # Checks the package imports (sample_module off)
 ├── uv.lock                 # Pinned deps (written by the post-generation tasks)
 ├── .copier-answers.project.yml  # This layer's answers, for future updates
 └── boilerplate.lock        # Each layer's version, source and checksum
@@ -59,7 +60,7 @@ Add dependencies with `uv add <pkg>` (see [Add a dependency](../environment/inde
 
 ## The sample module
 
-`module.py` and its test are a starting point, not scaffolding you must keep. Answer `sample_module` with no to render without them: `boilerplate new project ./my-app --data sample_module=false`. A template that extends `project` can set the default to off in its own `copier.yml`.
+`module.py` and its test are a starting point, not scaffolding you must keep. Answer `sample_module` with no to render without them: `boilerplate new project ./my-app --data sample_module=false`. `tests/<package>/test_import.py` renders in their place, so `uv run pytest` still has a test to run. A template that extends `project` can set the default to off in its own `copier.yml`.
 
 ## Where next
 

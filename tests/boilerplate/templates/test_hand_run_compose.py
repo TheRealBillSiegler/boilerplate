@@ -107,7 +107,10 @@ class TestByHandComposeRendersWhatNewRenders:
         by_hand_files = _files(by_hand)
         streamlit_package_files = {
             path for path in by_hand_files if "probe_app" in path
-        } - {"src/probe_app/__init__.py"}  # project's own, rendered in its run
+        } - {  # project's own, rendered in its run
+            "src/probe_app/__init__.py",
+            "tests/probe_app/test_import.py",
+        }
         assert set(by_hand_files) - set(_files(bare)) == streamlit_package_files
 
 

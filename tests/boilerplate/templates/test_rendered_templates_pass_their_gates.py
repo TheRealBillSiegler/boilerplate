@@ -72,15 +72,27 @@ class TestRenderedProjectPytestPasses:
     pytest by pointing `PYTHONPATH` at the rendered `src`, with no `uv sync`.
     """
 
-    def test_pytest_passes_over_pythonpath(self, tmp_path: Path) -> None:
-        dest = render("project", tmp_path, skip_tasks=True)
+    @pytest.mark.parametrize(
+        ("sample_module", "test_name"),
+        [(True, "test_add"), (False, "test_package_imports")],
+        ids=["with-sample-module", "without-sample-module"],
+    )
+    def test_pytest_passes_over_pythonpath(
+        self, tmp_path: Path, sample_module: bool, test_name: str
+    ) -> None:
+        dest = render(
+            "project",
+            tmp_path,
+            context_data={"sample_module": sample_module},
+            skip_tasks=True,
+        )
         env = {**os.environ, "PYTHONPATH": str(dest / "src")}
         output = _run(
             [sys.executable, "-m", "pytest", str(dest / "tests"), "-v"],
             cwd=dest,
             env=env,
         )
-        assert "test_add" in output
+        assert test_name in output
 
 
 @pytest.mark.slow
