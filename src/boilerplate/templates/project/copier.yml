@@ -32,10 +32,18 @@ _skip_if_exists:
   - "README.md"
   - "src/{{ package_name }}/__init__.py"
 
+# project_name, description, author_name and author_email land inside
+# double-quoted TOML strings in pyproject.toml and inside Python strings, where
+# a double quote, a backslash or a line break would end or escape the string,
+# so their validators refuse all three.
 project_name:
   type: str
   help: "The (human-readable) name of the project (e.g. My Project)"
   default: "{{ _folder_name }}"
+  validator: >-
+    {%- if '"' in project_name or '\\' in project_name or '\n' in project_name or '\r' in project_name -%}
+    Leave out double quotes, backslashes and line breaks.
+    {%- endif -%}
 
 project_slug:
   default: "{{ project_name | slugify }}"
@@ -49,6 +57,10 @@ description:
   type: str
   help: "A brief description of the project"
   default: "A new Python project."
+  validator: >-
+    {%- if '"' in description or '\\' in description or '\n' in description or '\r' in description -%}
+    Leave out double quotes, backslashes and line breaks.
+    {%- endif -%}
 
 dependencies:
   type: json
@@ -75,11 +87,19 @@ author_name:
   type: str
   help: "Your first and last name"
   default: "Your Name"
+  validator: >-
+    {%- if '"' in author_name or '\\' in author_name or '\n' in author_name or '\r' in author_name -%}
+    Leave out double quotes, backslashes and line breaks.
+    {%- endif -%}
 
 author_email:
   type: str
   help: "Your email address"
   default: "username@domain.com"
+  validator: >-
+    {%- if '"' in author_email or '\\' in author_email or '\n' in author_email or '\r' in author_email -%}
+    Leave out double quotes, backslashes and line breaks.
+    {%- endif -%}
 
 package_index_url:
   type: str
