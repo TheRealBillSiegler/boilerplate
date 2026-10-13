@@ -1,10 +1,85 @@
 """Tests for the streamlit template's customization Questions."""
 
+import re
+import shutil
 import subprocess
+import tomllib
 from functools import partial
 from pathlib import Path
 
+import pytest
+
 from tests.boilerplate.templates.conftest import render
+
+
+def _posix_awk_shell() -> tuple[str, str] | None:
+    """Return a bash plus a POSIX-mode awk command, or None when either is missing.
+
+    mawk is Ubuntu's default awk; gawk in --posix mode reads regexes the same
+    way. On Windows the bash is Git's, next to its gawk: the awk program holds
+    a lone double quote, which Windows command-line quoting would mangle on
+    the way to an MSYS program, so the lookup runs inside that bash instead.
+    """
+    if shutil.which("mawk"):
+        awk = "mawk"
+    elif gawk := shutil.which("gawk"):
+        awk = "gawk --posix"
+        sibling = Path(gawk).with_name("bash.exe")
+        if sibling.is_file():
+            return str(sibling), awk
+    else:
+        return None
+    bash = shutil.which("bash")
+    return (bash, awk) if bash else None
+
+
+class TestDefaultImageName:
+    r"""The container scripts find the project name under any POSIX awk.
+
+    Seam: each rendered script's `get_project_name_from_pyproject`, run as
+    written with `awk` bound to a POSIX-mode awk. With no `--image-name`, the
+    script names the image after `[project] name` in pyproject.toml, the
+    source of truth here. A GNU-only regex escape such as `\s` matches nothing
+    under mawk, Ubuntu's default awk, so the README's plain
+    `./scripts/build-container.sh` would tag the image `:local` and fail.
+    """
+
+    @pytest.mark.parametrize("script", ["build-container.sh", "push-container.sh"])
+    def test_name_lookup_reads_the_project_name(self, tmp_path: Path, script: str):
+        dest = render("streamlit", tmp_path)
+        result = _run_name_lookup(dest, script)
+        pyproject = tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))
+        assert result.stdout.strip() == pyproject["project"]["name"]
+
+    @pytest.mark.parametrize("script", ["build-container.sh", "push-container.sh"])
+    def test_name_lookup_fails_without_a_project_name(
+        self, tmp_path: Path, script: str
+    ):
+        """An empty name would tag the image `:local`, so the lookup fails instead."""
+        dest = render("streamlit", tmp_path)
+        (dest / "pyproject.toml").write_text(
+            '[project]\nversion = "0.1.0"\n', encoding="utf-8"
+        )
+        assert _run_name_lookup(dest, script).returncode != 0
+
+
+def _run_name_lookup(dest: Path, script: str) -> subprocess.CompletedProcess[str]:
+    """Run a rendered script's `get_project_name_from_pyproject` under a POSIX awk."""
+    shell = _posix_awk_shell()
+    if shell is None:
+        pytest.skip("no bash with mawk or gawk on PATH")
+    bash, awk = shell
+    text = (dest / "scripts" / script).read_text(encoding="utf-8")
+    lookup = re.search(
+        r"^get_project_name_from_pyproject\(\) \{\n.*?^\}\n",
+        text,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert lookup is not None
+    program = f'awk() {{ command {awk} "$@"; }}\n{lookup.group(0)}get_project_name_from_pyproject\n'
+    return subprocess.run(
+        [bash, "-c", program], cwd=dest, capture_output=True, text=True, check=False
+    )
 
 
 class TestContainerRegistry:
