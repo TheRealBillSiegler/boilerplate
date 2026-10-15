@@ -96,7 +96,7 @@ When Boilerplate encounters a `schema_version` with an unknown major version (e.
 schema_version: "1"
 name: project
 version: "2.1.0"
-description: A suitable base for any Python project.
+description: A general-purpose Python project, with its tools configured.
 post_create_message:
   - "Run 'cd {{ project_slug }}' to enter your project."
   - "Run 'uv run pytest' to run the tests."
@@ -107,7 +107,7 @@ post_create_message:
 schema_version: "1"
 name: streamlit
 version: "1.0.0"
-description: Streamlit data application, extending the base project template.
+description: A Streamlit app, built on the general-purpose template.
 extends:
   - project@2.1.0
 requires_profile:
@@ -750,11 +750,11 @@ On a fresh installation, `boilerplate list` MUST display first-party templates w
 
 ### `project` template
 
-A base template for any Python project. Collects standard project metadata (name, description, author, dependencies) and runs a post-generation script. See the template's `copier.yml` for the full question set.
+A general-purpose Python project, with its tools configured. The template collects standard project metadata (name, description, author, dependencies) and runs a post-generation script. See the template's `copier.yml` for the full question set.
 
 ### `streamlit` template
 
-A Streamlit data application template that **extends** `project`. Overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition and reach the layer through its scoped view at every render, compose and update alike ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
+A Streamlit app, built on the general-purpose template: it **extends** `project` and overrides dependency defaults to include Streamlit-specific packages. All other questions are inherited from `project` via composition and reach the layer through its scoped view at every render, compose and update alike ([ADR-015](adr-015-idiomatic-artifacts.md)). See the template's `copier.yml` for details.
 
 ---
 

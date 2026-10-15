@@ -235,8 +235,8 @@ nav:
     - Status: status.md
   - Templates:
     - templates-hub/index.md
-    - Project Template: templates-hub/project.md
-    - Streamlit Template:
+    - Project template: templates-hub/project.md
+    - Streamlit template:
       - templates-hub/streamlit/index.md
       - Container deployment: templates-hub/streamlit/deployment/containers/index.md
     - Template Authoring: templates-hub/authoring.md

@@ -9,7 +9,7 @@ Composition lets one template build on another through an `extends` list in its 
 ```yaml
 name: streamlit
 version: 0.2.0
-description: Streamlit boilerplate for data applications
+description: A Streamlit app, built on the general-purpose template.
 extends:
   - project
 ```

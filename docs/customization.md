@@ -42,7 +42,7 @@ Need files a template doesn't ship? Author a template that `extends` it and add 
 schema_version: "1"
 name: org-project
 version: 0.1.0
-description: Org house style on top of the base project template.
+description: Org house style on top of the general-purpose template.
 extends: [project]
 ```
 

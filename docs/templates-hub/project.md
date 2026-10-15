@@ -1,6 +1,6 @@
 # Project template
 
-The project template provides a complete Python application structure with modern toolchain integration.
+The project template creates a general-purpose Python project, with its tools configured.
 
 ## Features
 
