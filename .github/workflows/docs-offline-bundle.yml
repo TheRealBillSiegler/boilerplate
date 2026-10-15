@@ -34,6 +34,8 @@ jobs:
   bundle:
     name: Attach offline docs bundle
     runs-on: ubuntu-latest
+    # A caller job cannot bound a reusable workflow, so the bound lives here.
+    timeout-minutes: 15
     env:
       # Bind the release tag to an env var so it is a runtime shell variable,
       # never expanded into `run:` script source. This avoids GitHub Actions
