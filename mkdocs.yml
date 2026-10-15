@@ -1,5 +1,5 @@
-site_name: "Boilerplate Python Development Environment"
-site_description: "An ethos made executable - developer guidance, project scaffolding, and best-practice reference for Python 3.12+."
+site_name: "Boilerplate"
+site_description: "Boilerplate stamps out Python projects from templates that stack. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work."
 # Required by mike (versioned deploys) and the docs version selector.
 site_url: "https://therealbillsiegler.github.io/boilerplate/"
 repo_url: "https://github.com/TheRealBillSiegler/boilerplate"
@@ -185,9 +185,7 @@ plugins:
   # site_url, which mike rewrites per deployed version.
   - llmstxt:
       markdown_description: >-
-        Boilerplate is a project scaffolder for Python. It composes Copier
-        templates into layers and generates projects preconfigured for uv,
-        Ruff, Pyright strict, and pytest, with the editor settings to match.
+        Boilerplate stamps out Python projects from templates that stack. Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option.
         These pages describe the tool at its current version. The status page
         maps what is implemented; the design section describes the target
         state, not what exists.
