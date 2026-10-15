@@ -1,6 +1,6 @@
 # Install
 
-Set up the **Boilerplate** Python Development Environment on Windows, macOS, or Linux. Choose your operating system below and follow the steps appropriate to your platform.
+Set up Boilerplate and its Python development environment on Windows, macOS, or Linux. Choose your operating system below and follow the steps appropriate to your platform.
 
 !!! info "Overview"
     - **Windows 11:** Recommended path with a fully automated installer.  
