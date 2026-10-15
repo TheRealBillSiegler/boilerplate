@@ -1,42 +1,45 @@
-# Attaches the offline documentation bundle to each published GitHub Release.
+# Attaches the offline documentation bundle to a GitHub Release.
 #
 # The `offline` mkdocs plugin makes the built site/ openable from file:// with no
 # server; this packages it as boilerplate-docs-offline-<tag>.zip and uploads it
-# as a release asset for air-gapped / offline distribution.
+# as a release asset: an optional download for air-gapped / offline use, listed
+# beside the release's source archives. Nothing installs it.
 #
-# Fires on `release: published` or manual dispatch. The dispatch path is the
-# operative one for release-please releases: events created by the default
-# GITHUB_TOKEN do not trigger downstream `release:` workflows, so after merging
-# a release-please PR, run this manually against the new tag
-# (`gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`).
-# `contents: write` is required and scoped to this release-only workflow solely
-# to upload the asset (cf. ci.yml's read-only validation posture). Online docs
-# are deployed separately via mike to GitHub Pages (see RELEASING.md).
+# The release workflow (release-please.yml) calls this once it tags a release.
+# Dispatch it by hand to rebuild a release's bundle
+# (`gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`); `--clobber`
+# replaces the asset already there. `contents: write` is required and scoped to
+# this release-only workflow solely to upload the asset (cf. ci.yml's read-only
+# validation posture). Online docs deploy separately (docs-deploy.yml).
 name: Offline docs bundle
 
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to build and attach the bundle to (e.g. v0.4.0)"
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to build and attach the bundle to (e.g. v0.3.0)"
+        description: "Release tag to build and attach the bundle to (e.g. v0.4.0)"
         required: true
         type: string
 
 permissions:
-  contents: write # upload the bundle as a release asset (release events only)
+  contents: write # upload the bundle as a release asset
 
 jobs:
   bundle:
     name: Attach offline docs bundle
     runs-on: ubuntu-latest
     env:
-      # Bind the (publisher-influenceable) release tag to an env var so it is a
-      # runtime shell variable, never expanded into `run:` script source. This
-      # avoids GitHub Actions script injection (CWE-94 / CWE-78). Always use the
-      # quoted "$TAG" below, never ${{ github.event.* }} inside a run block.
-      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      # Bind the release tag to an env var so it is a runtime shell variable,
+      # never expanded into `run:` script source. This avoids GitHub Actions
+      # script injection (CWE-94 / CWE-78). Always use the quoted "$TAG" below,
+      # never ${{ inputs.* }} inside a run block.
+      TAG: ${{ inputs.tag }}
     steps:
       - name: Validate release tag shape
         run: |
@@ -44,7 +47,7 @@ jobs:
             || { echo "Unexpected release tag: $TAG" >&2; exit 1; }
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }} # build docs at the released tag
+          ref: ${{ inputs.tag }} # build docs at the released tag
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
       - run: uv sync --frozen
       - name: Build docs (strict; offline-capable via the offline plugin)

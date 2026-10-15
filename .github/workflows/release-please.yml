@@ -5,8 +5,9 @@ name: Release
 # release-please keeps one release PR open against develop and updates it as
 # work merges: the next version, worked out from conventional commits, and
 # its CHANGELOG entry. Merging that PR pushes to develop. On that push,
-# release-please tags the release and publishes it, and the job after it
-# deploys the versioned docs. RELEASING.md lists each step.
+# release-please tags the release and publishes it, and the jobs after it
+# deploy the versioned docs and attach the offline docs bundle. RELEASING.md
+# lists each step.
 #
 # `on.push.branches` decides when this workflow runs; `target-branch` decides
 # which branch release-please reads, opens its PR against and tags. They are
@@ -56,5 +57,15 @@ jobs:
     permissions:
       contents: write # push the gh-pages branch
     uses: ./.github/workflows/docs-deploy.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+
+  offline-docs:
+    name: Offline docs bundle
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write # upload the bundle as a release asset
+    uses: ./.github/workflows/docs-offline-bundle.yml
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}
