@@ -1,95 +1,65 @@
-# Boilerplate
+# <img src="docs/assets/boilerplate.svg" width="40" alt=""> Boilerplate
 
-[![CI](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![CI](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/TheRealBillSiegler/boilerplate)](LICENSE)
 
-Composable project scaffolding, built on [Copier](https://copier.readthedocs.io/) — template authors declare composition with `extends`; consumers get one command, one merged question set, and deterministic precedence when layers overlap.
+**Boilerplate stamps out Python projects from templates that stack.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
+
+Boilerplate takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
+
+Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option. The general-purpose Python template sets up uv, Ruff, Pyright in strict mode, pytest and VS Code, and configures them in `pyproject.toml` and `.vscode/`.
 
 **Less yak. More stack.**
 
-![Terminal recording: the Boilerplate banner, then boilerplate new project walks through a few prompts, scaffolds a project, and uv run pytest passes.](docs/assets/demo/boilerplate-new.gif)
+![Terminal recording: boilerplate new project asks a few questions and creates a project, then uv run pytest runs its tests.](docs/assets/demo/boilerplate-new.gif)
 
-Copier applies multiple independent templates [by hand, one answers file each](https://copier.readthedocs.io/en/stable/configuring/#applying-multiple-templates-to-the-same-subproject) — a pattern its maintainers note works easiest when templates stay disjoint; declared template hierarchies have [upstream design approval but are left to community contribution](https://github.com/copier-org/copier/issues/934). Boilerplate is that missing layer. Templates stay standard Copier templates — composition metadata lives in a separate `boilerplate.yml`, and your `copier.yml` is never modified. See [Why Boilerplate?](docs/why.md).
+*New project, dependencies installed, pytest passing.*
 
 ## Install
 
-Boilerplate is distributed via GitHub — it is **not yet published to PyPI**.
+You don't need Python first: uv installs it. Boilerplate installs from Git, not PyPI: `pip install boilerplate` gets an unrelated project that owns the name.
 
-<!-- x-release-please-start-version -->
+On Windows 11, the installer sets up a Python development environment. It installs Git and VS Code unless they're already there, then VS Code's recommended extensions, uv (through Astral's own installer) and the Boilerplate CLI. When it installs VS Code, it also adds a desktop icon, Explorer context-menu entries, file associations and VS Code's PATH entry. It runs from the stock Windows PowerShell and adds PowerShell 7 first if needed. [Read the script](https://github.com/TheRealBillSiegler/boilerplate/blob/main/scripts/install.ps1), then run it:
 
-```bash
-# Install the CLI from source (recommended)
-uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
-
-# or with pip
-pip install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
 ```
 
-<!-- x-release-please-end -->
+`-ExecutionPolicy Bypass` applies only to the installer's own PowerShell processes and leaves your machine's policy alone. Only the winget installs need admin rights.
 
-## Quick Start
+On macOS, Linux and Windows 10, [Install](docs/install.md) walks through the setup by hand; its macOS and Linux steps are still being verified. With [Git](https://git-scm.com/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) already installed, the CLI is one command:
 
 ```bash
-boilerplate list
+uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@main
+```
+
+## Start a project
+
+```bash
 boilerplate new project my-app
-boilerplate new streamlit my-dashboard
 ```
 
-## Customizing for your organization
+`project` is the template's name. After a few questions, Boilerplate creates `my-app/` with its tools configured. `boilerplate list` shows the other templates, such as one for Streamlit apps.
 
-Boilerplate ships with PyPI / GHCR defaults. To stamp your own values (a private package index, a container registry) into generated projects, drop a `profile.toml` in the boilerplate config directory — no forking required. See the [Customization guide](docs/customization.md) for profiles, layers, and the org-adoption pattern.
-
-## Features
-
-Available now:
-
-- **Layered templates** — compose multiple templates via `extends` inheritance
-- **Configuration & question merging** — combine layers into one coherent scaffold
-- **Dependency graphs** — visualize template relationships with `boilerplate graph`
-- **Profile** — pre-fill any template's questions (e.g. your org's feed and registry) from a `profile.toml`, without forking
-- **Lock file** — `boilerplate new` writes `boilerplate.lock`, recording each layer's template provenance; nothing reads it yet
-
-Planned (designed, not yet implemented):
-
-- **Lock verification** — check a project against its lock for reproducible scaffolding
-- **Three-way-merge updates** — update projects non-destructively when templates evolve
-- **Trust model** — control task execution by template source
-
-See [Implementation Status](docs/status.md) for the full design-vs-code map.
-
-## Documentation
-
-Full documentation is available at the [docs site](docs/index.md):
-
-- [Installation](docs/install.md)
-- [CLI Reference](docs/cli.md)
-- [Template Authoring](docs/templates-hub/authoring.md)
-- [Design Specifications](docs/design/01-overview.md) — authoritative design and requirements for the Boilerplate system
-
-## Shell Completion
+To put your team's standards on top, write a template of your own whose `boilerplate.yml` says `extends: [project]` and holds only your additions, then point Boilerplate at the folder that contains it:
 
 ```bash
-boilerplate --install-completion  # bash, zsh, fish, PowerShell
+boilerplate new org-project my-app --templates-dir ./my-templates
 ```
 
-## Development
+Your template applies when you create a project; carrying later changes from `project` into projects you've already made is planned.
 
-Boilerplate is managed with [uv](https://docs.astral.sh/uv/).
+## Learn more
 
-```bash
-git clone https://github.com/TheRealBillSiegler/boilerplate.git
-cd boilerplate
-uv sync
-```
+- [Documentation](https://therealbillsiegler.github.io/boilerplate/): guides and reference
+- [Quickstart](docs/quickstart.md): create and run your first project
+- [Why Boilerplate?](docs/why.md): the problem it solves and how its tools were chosen
+- [Customization](docs/customization.md): put your team's settings and templates on top
+- [Status](docs/status.md): what works today and what's planned, before 1.0
 
-### Run checks
+## Help and contributing
 
-```bash
-uv run ruff check --no-fix .  # lint
-uv run pytest                 # test
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full contribution guidelines.
+Stuck? Start with [Help](docs/help.md), then open an [issue](https://github.com/TheRealBillSiegler/boilerplate/issues). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
