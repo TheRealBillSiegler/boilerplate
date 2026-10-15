@@ -1,6 +1,6 @@
 # Notices
 
-The site and its offline bundle carry files from other projects: tool logos, fonts, scripts and stylesheets. `NOTICE` credits each file and names its license; the license texts ship beside the files, most of them under `assets/licenses/`.
+The site and its offline bundle carry files from other projects: tool logos, icons, fonts, scripts and stylesheets. `NOTICE` credits each file and names its license; the license texts ship beside the files, most of them under `assets/licenses/`.
 
 ```text
 --8<-- "NOTICE"
@@ -26,6 +26,7 @@ Boilerplate renders templates with Copier, configures generated projects for uv,
 | [mkdocstrings](https://github.com/mkdocstrings/mkdocstrings) | The API reference pages | ISC |
 | [mkdocs-typer](https://github.com/bruce-szalwinski/mkdocs-typer) | The CLI reference page | Apache-2.0 |
 | [Mermaid](https://github.com/mermaid-js/mermaid) | The site's diagrams | MIT |
+| [Font Awesome Free](https://github.com/FortAwesome/Font-Awesome) | The GitHub icon in the header, and four icons on the diagrams' zoom buttons | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | [asciinema player](https://github.com/asciinema/asciinema-player) | Plays the home page's terminal demo | Apache-2.0 |
 | [IBM Plex Sans](https://github.com/IBM/plex) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) | The site's type | OFL-1.1 |
 | [FIGlet](https://github.com/cmatsuoka/figlet), via [pyfiglet](https://github.com/pwaller/pyfiglet) | The CLI banner's lettering, in FIGlet's `standard` font | BSD-3-Clause (FIGlet), MIT (pyfiglet) |

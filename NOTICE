@@ -126,6 +126,17 @@ build copies to assets/licenses/:
   mkdocs-panzoom-plugin (https://github.com/PLAYG0N/mkdocs-panzoom), MIT
   License, Copyright (c) 2024 PLAYG0N. License text: mkdocs-panzoom.LICENSE.
 
+  The plugin inlines four icons into every page that has a diagram, for the
+  diagram's zoom buttons: circle-question (regular style), arrow-rotate-left,
+  expand and compress (solid style) from Font Awesome Free
+  (https://fontawesome.com), identical to the icons of release 6.7.2. Font
+  Awesome Free by @fontawesome, Copyright 2024 Fonticons, Inc.; the icons are
+  licensed under the Creative Commons Attribution 4.0 International License
+  (https://creativecommons.org/licenses/by/4.0/). The plugin drops the
+  attribution comment each icon file carries. It leaves the icon shapes
+  unchanged, wrapping each in its own svg element that the plugin's stylesheet
+  fills with the theme's colors. License text: font-awesome.LICENSE.
+
   assets/_mkdocstrings.css — mkdocstrings-python
   (https://github.com/mkdocstrings/python), ISC License, Copyright (c) 2021,
   Timothée Mazzucotelli. License text: mkdocstrings-python.LICENSE.
