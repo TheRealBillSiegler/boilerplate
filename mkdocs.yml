@@ -145,7 +145,8 @@ extra_javascript:
   # offline bundle. No external fetch at view time either way, and the
   # offline bundle still renders diagrams. When upgrading Mermaid, replace
   # docs/assets/mermaid.min.js byte-for-byte and refresh
-  # docs/assets/mermaid.LICENSE from the upstream tag in the same change.
+  # docs/assets/mermaid.LICENSE from the upstream tag in the same change, and
+  # re-derive the embedded libraries that NOTICE credits from that tag's lockfile.
   - assets/mermaid-theme.js
 
 # Runs on every build, the offline bundle's and each mike deploy; see the module docstring.
