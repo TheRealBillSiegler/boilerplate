@@ -100,9 +100,21 @@ build copies to assets/licenses/:
   2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors, whose
   license text is this repository's LICENSE, and tslib
   (https://github.com/microsoft/tslib), BSD Zero Clause License, Copyright (c)
-  Microsoft Corporation; minification strips both banners. clipboard.js,
-  escape-html and, in the search worker, lunr carry their license banners in
-  the files. The .map files embed the original sources of all of these.
+  Microsoft Corporation; minification strips both banners. escape-html and, in
+  the search worker, lunr carry their license banners in the files. The theme
+  script also includes clipboard.js 2.0.11
+  (https://github.com/zenorocha/clipboard.js), MIT License, Copyright (c) Zeno
+  Rocha, whose banner stays in the file, and the four packages it bundles,
+  which carry no banner: good-listener 1.2.2
+  (https://github.com/zenorocha/good-listener), delegate 3.2.0, a dependency
+  of good-listener (https://github.com/zenorocha/delegate), and select 1.1.2
+  (https://github.com/zenorocha/select), each MIT License by Zeno Rocha, and
+  tiny-emitter 2.1.0 (https://github.com/scottcorgan/tiny-emitter), MIT
+  License, Copyright (c) 2017 Scott Corgan. License texts: clipboard.LICENSE,
+  which also stands for good-listener, delegate and select because their
+  repositories ship no license file and name Zeno Rocha as their MIT licensor,
+  and tiny-emitter.LICENSE. The .map files embed the original sources of all
+  of these.
 
   The theme inlines icons into each page and into main.*.min.css: Material
   Design Icons by Pictogrammers (https://github.com/Templarian/MaterialDesign),
