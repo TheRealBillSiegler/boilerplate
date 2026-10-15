@@ -1,3 +1,8 @@
 # Every issue opened on GitHub goes through a form, so each one gets the
 # needs-triage label the forms apply.
 blank_issues_enabled: false
+# Questions go to Discussions, so the issue chooser offers a link there next to the forms.
+contact_links:
+  - name: Ask a question
+    url: https://github.com/TheRealBillSiegler/boilerplate/discussions
+    about: Ask how to use Boilerplate, or share what you are building.
