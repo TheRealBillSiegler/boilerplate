@@ -28,13 +28,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release-please:
-    name: Release PR and tag
+  release:
+    name: Tag and GitHub release
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write # create the tag and the GitHub release
-      pull-requests: write # open and update the release PR
+      pull-requests: write # label the merged release PR as tagged
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -42,40 +42,60 @@ jobs:
       # Pinned to a full commit SHA (supply-chain hardening / zero-trust posture).
       # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
       #
-      # The job's own short-lived GITHUB_TOKEN opens the release PR, so GitHub
-      # holds that PR's CI runs until someone approves them. The release App
-      # could open it instead and skip that approval, but only by holding
-      # pull-request access it otherwise never needs.
+      # Tagging runs in its own job, before the release PR is rebuilt, so a
+      # failure while rebuilding the PR cannot stop the jobs after a release.
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: develop
+          skip-github-pull-request: true
+
+  release-pr:
+    name: Release PR
+    needs: release
+    runs-on: ubuntu-latest
+    # Rebuilding the PR reads every commit since the last release, about one
+    # API request each, so the first rebuild after v0.3.0 is slow.
+    timeout-minutes: 30
+    permissions:
+      contents: write # push the release PR's branch
+      pull-requests: write # open and update the release PR
+    steps:
+      # The job's own short-lived GITHUB_TOKEN opens the release PR, so GitHub
+      # holds that PR's CI runs until someone approves them. The release App
+      # could open it instead and skip that approval, but only by holding
+      # pull-request access it otherwise never needs.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: develop
+          skip-github-release: true
 
   docs:
     name: Versioned docs
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
     permissions:
       contents: write # push the gh-pages branch
     uses: ./.github/workflows/docs-deploy.yml
     with:
-      tag: ${{ needs.release-please.outputs.tag_name }}
+      tag: ${{ needs.release.outputs.tag_name }}
 
   offline-docs:
     name: Offline docs bundle
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
     permissions:
       contents: write # upload the bundle as a release asset
     uses: ./.github/workflows/docs-offline-bundle.yml
     with:
-      tag: ${{ needs.release-please.outputs.tag_name }}
+      tag: ${{ needs.release.outputs.tag_name }}
 
   main:
     name: Move main to the release
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     # The App's key is a secret of this environment, and only develop may
@@ -86,7 +106,7 @@ jobs:
     env:
       # A runtime shell variable, never script source (avoids GitHub Actions
       # script injection, CWE-94 / CWE-78).
-      TAG: ${{ needs.release-please.outputs.tag_name }}
+      TAG: ${{ needs.release.outputs.tag_name }}
     steps:
       - name: Validate release tag shape
         run: |
