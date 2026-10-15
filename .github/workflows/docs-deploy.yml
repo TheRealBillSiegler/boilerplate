@@ -3,9 +3,11 @@
 # The release workflow (release-please.yml) calls this once it tags a release;
 # dispatch it by hand to redeploy a release's docs
 # (`gh workflow run docs-deploy.yml -f tag=vX.Y.Z`). mike builds the site at
-# the tag, commits it under MAJOR.MINOR, so patch releases redeploy the same
-# MAJOR.MINOR, and points the `latest` alias at it. GitHub Pages serves the
-# branch once Pages is turned on for the repository (see RELEASING.md).
+# the tag and commits it under MAJOR.MINOR, so patch releases redeploy the
+# same MAJOR.MINOR. Only the newest release also moves the `latest` alias, the
+# site root and the root 404 page; an older one leaves them where they are.
+# GitHub Pages serves the branch once Pages is turned on for the repository
+# (see RELEASING.md).
 name: Docs deploy
 
 on:
@@ -56,9 +58,36 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Deploy this version and point latest at it
-        run: uv run --frozen mike deploy --update-aliases "$DOCS_VERSION" latest
+      - name: Check where this release's docs belong
+        id: where
+        # Each MAJOR.MINOR holds the docs of its newest patch release, and only
+        # the newest release overall moves latest. A hand-run redeploy of an
+        # older tag must neither overwrite a newer patch's docs nor move latest
+        # back.
+        run: |
+          line_newest="$(git tag --list "v${DOCS_VERSION}.*" --sort=-v:refname | head -n 1)"
+          if [[ "$TAG" != "$line_newest" ]]; then
+            echo "$line_newest is the newest $DOCS_VERSION release; deploy its docs instead of $TAG's." >&2
+            exit 1
+          fi
+          newest="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)"
+          if [[ "$TAG" == "$newest" ]]; then
+            echo "newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "newest=false" >> "$GITHUB_OUTPUT"
+            echo "$TAG is older than $newest, so latest stays where it is."
+          fi
+      - name: Deploy this version
+        env:
+          IS_NEWEST: ${{ steps.where.outputs.newest }}
+        run: |
+          if [[ "$IS_NEWEST" == true ]]; then
+            uv run --frozen mike deploy --update-aliases "$DOCS_VERSION" latest
+          else
+            uv run --frozen mike deploy "$DOCS_VERSION"
+          fi
       - name: Make latest the site root (first release only)
+        if: steps.where.outputs.newest == 'true'
         # mike deploy never writes the branch root. set-default writes the
         # root redirect, and once it exists later releases leave it alone.
         run: |
@@ -66,6 +95,7 @@ jobs:
             uv run --frozen mike set-default latest
           fi
       - name: Publish the root 404 page
+        if: steps.where.outputs.newest == 'true'
         # GitHub Pages serves one site-wide 404.html from the branch root. The
         # copy links assets under the version it came from, so every release
         # refreshes it.
