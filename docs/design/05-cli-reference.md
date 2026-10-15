@@ -137,10 +137,9 @@ The `--help` output MUST use visual grouping to organize commands by domain. A `
 ```text
 Usage: boilerplate [OPTIONS] COMMAND [ARGS]
 
-  Less Yak. More Stack.
+  Less yak. More stack.
 
-  Composable project scaffolding with template layering, lock files,
-  and environment provisioning.
+  Stamps out Python projects from templates that stack.
 
   Get started:
     boilerplate list                    Browse available templates

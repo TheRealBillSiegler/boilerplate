@@ -147,7 +147,7 @@ app = typer.Typer(
     name="boilerplate",
     cls=BoilerplateGroup,
     help=(
-        "Composable project scaffolder with template layering on top of Copier."
+        "Stamps out Python projects from templates that stack."
         "\n\nGet started:\n\n"
         "    boilerplate list\n"
         "    boilerplate new project my-app\n"
