@@ -90,7 +90,7 @@ Each entry in `extends` is a template reference in the form `name` or `name@vers
 ```yaml
 schema_version: "1"
 name: project
-description: Standard Python project template
+description: A general-purpose Python project, with its tools configured.
 version: "2.1.0"
 extends:
   - base@1.0.0

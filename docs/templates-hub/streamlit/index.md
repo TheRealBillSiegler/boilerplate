@@ -1,6 +1,6 @@
 # Streamlit template
 
-The Streamlit template creates a data application that reads its own project's `uv.lock` and shows the stack it runs on, with container deployment included.
+The Streamlit template creates a Streamlit app, built on the [general-purpose template](../project.md). The app reads its own project's `uv.lock` and shows the stack it runs on, with container deployment included.
 
 ## Features
 

@@ -33,7 +33,7 @@ Want to set the project name, description, dependencies, and author yourself? Dr
 boilerplate new project my-first-project
 ```
 
-Need a web front-end? Use the Streamlit template:
+Building a Streamlit app? Use the Streamlit template:
 
 ```bash
 boilerplate new streamlit my-streamlit-app

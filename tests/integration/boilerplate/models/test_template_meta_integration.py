@@ -173,7 +173,10 @@ class TestRealTemplateValidation:
 
         assert meta.name == "project"
         assert meta.version == SerializableVersion("0.3.0")
-        assert meta.description == "A suitable base for any Python project."
+        assert (
+            meta.description
+            == "A general-purpose Python project, with its tools configured."
+        )
         assert meta.extends == []  # Project template has no extensions
 
     def test_loads_streamlit_template_successfully(self) -> None:
@@ -190,7 +193,10 @@ class TestRealTemplateValidation:
 
         assert meta.name == "streamlit"
         assert meta.version == SerializableVersion("0.2.0")
-        assert meta.description == "Streamlit boilerplate for data applications"
+        assert (
+            meta.description
+            == "A Streamlit app, built on the general-purpose template."
+        )
         assert meta.extends == ["project"]  # Streamlit extends project
 
     def test_all_template_files_are_valid(self) -> None:

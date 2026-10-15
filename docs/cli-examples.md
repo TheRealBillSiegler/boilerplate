@@ -13,8 +13,8 @@ boilerplate list
 ```text
   Name        Version   Description
  ───────────────────────────────────────────────────────
-  project     0.3.0     A suitable base for any Python project.
-  streamlit   0.2.0     Streamlit boilerplate for data applications
+  project     0.3.0     A general-purpose Python project, with its tools configured.
+  streamlit   0.2.0     A Streamlit app, built on the general-purpose template.
 ```
 
 ## Create a new project

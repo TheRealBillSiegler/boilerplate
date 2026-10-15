@@ -158,10 +158,10 @@ Starter templates are project scaffolds that encode platform decisions so develo
 
 ### Boilerplate reference implementation: Templates
 
-| Template | Use Case | Key Features |
+| Template | Description | Key Features |
 | --- | --- | --- |
-| [project](../../templates-hub/project.md) | General Python libraries/packages | Complete pyproject.toml, test suite |
-| [streamlit](../../templates-hub/streamlit/index.md) | Interactive data/ML applications | Streamlit app scaffold, container deployment configs |
+| [project](../../templates-hub/project.md) | A general-purpose Python project, with its tools configured. | Complete pyproject.toml, test suite |
+| [streamlit](../../templates-hub/streamlit/index.md) | A Streamlit app, built on the general-purpose template. | Streamlit app scaffold, container deployment configs |
 
 See [Choose a template](../../templates-hub/index.md#choose-a-template) for the full catalog. Templates use [Copier](https://copier.readthedocs.io/) for scaffolding. Complex projects can compose multiple templates; see [Template composition](../../templates-hub/composition.md).
 
