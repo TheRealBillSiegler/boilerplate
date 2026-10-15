@@ -54,7 +54,7 @@ jobs:
       - name: Build docs (strict; offline-capable via the offline plugin)
         env:
           DOCS_OFFLINE: "true" # the offline plugin is env-gated; the online site builds without it
-        run: uv run mkdocs build --strict
+        run: uv run --frozen mkdocs build --strict
       - name: Package offline bundle
         run: |
           cd site

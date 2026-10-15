@@ -57,13 +57,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Deploy this version and point latest at it
-        run: uv run mike deploy --update-aliases "$DOCS_VERSION" latest
+        run: uv run --frozen mike deploy --update-aliases "$DOCS_VERSION" latest
       - name: Make latest the site root (first release only)
         # mike deploy never writes the branch root. set-default writes the
         # root redirect, and once it exists later releases leave it alone.
         run: |
           if ! git cat-file -e gh-pages:index.html 2>/dev/null; then
-            uv run mike set-default latest
+            uv run --frozen mike set-default latest
           fi
       - name: Publish the root 404 page
         # GitHub Pages serves one site-wide 404.html from the branch root. The
