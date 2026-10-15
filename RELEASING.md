@@ -49,26 +49,36 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 ## Release mechanics
 
-Releases are cut from `main`: release-please only watches `main`, so merging
-`develop` into `main` **is** the release step.
+Releases are cut from `develop`. release-please keeps one release PR open there, titled `chore(develop): release X.Y.Z`, and updates it as work merges.
+
+**Merging that PR is the release trigger and the only manual step.** Before merging it:
+
+- [ ] Approve the PR's waiting CI runs, then wait for `check` to pass. release-please opens the PR with the workflow's own `GITHUB_TOKEN`, and GitHub holds the runs of such a PR until someone approves them.
+- [ ] Read the version and the `CHANGELOG.md` entry against [Versioning & changelog](#versioning--changelog-automated-by-release-please).
 
 `0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository. Everything below describes the automated flow starting with the next release.
 
-- [ ] Merging the release-please PR cuts the tag + GitHub release
-- [ ] The offline-docs bundle is attached to the release. Caveat: releases created by the
-      default `GITHUB_TOKEN` do not trigger downstream `release:`-event workflows, so
-      `docs-offline-bundle.yml` never fires on its own — run it via `workflow_dispatch`
-      against the tag (or re-publish the release with a user token)
-- [ ] (Once a PyPI publish workflow exists — deferred until the distribution name is
-      final, see [adr-008](docs/design/adr-008-distribution-name.md)) the same
-      `GITHUB_TOKEN` caveat applies to it
-- [ ] Versioned docs deployed from the release tag:
-      `uv run mike deploy --push --update-aliases X.Y latest`. One docs version per
-      MAJOR.MINOR; patch releases redeploy the same `X.Y`
-- [ ] First release only: `uv run mike set-default --push latest` creates the root redirect (`mike deploy` alone does not); skip this step on every later release. Once set, the version selector and root redirect are driven by the `gh-pages` branch mike maintains
-- [ ] Every release (the copy is idempotent; the root page links assets under the version it was copied from, so it goes stale when that version redeploys): publish the built 404 page to the `gh-pages` branch root — GitHub Pages serves exactly one site-wide 404.html there, and `mike deploy` never writes to the branch root (only version and alias directories): `git worktree add ../gh-pages-404 gh-pages && cp ../gh-pages-404/X.Y/404.html ../gh-pages-404/404.html && git -C ../gh-pages-404 add 404.html && git -C ../gh-pages-404 commit -m "chore: sync root 404 page" && git -C ../gh-pages-404 push origin gh-pages; git worktree remove ../gh-pages-404` (replace `X.Y` with the version just deployed)
+The merge starts the Release workflow (`.github/workflows/release-please.yml`), which does the rest with no further step:
 
-Milestone versions (`0.3.0`, `1.0.0`) are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with an empty commit on `main`: `git commit --allow-empty -m "chore: release 0.3.0" -m "Release-As: 0.3.0"`.
+- [ ] release-please tags `vX.Y.Z` and publishes the GitHub release with the changelog entry
+- [ ] The versioned docs deploy to the `gh-pages` branch (`docs-deploy.yml`): `mike deploy --push --update-aliases X.Y latest`, one docs version per MAJOR.MINOR, so patch releases redeploy the same `X.Y`. The first release also runs `mike set-default --push latest` to write the root redirect, which `mike deploy` never writes, and every release copies its `404.html` to the branch root, where GitHub Pages serves its one site-wide 404 page. Pages serves the branch once it is turned on, at the visibility flip: a Pages site is public even while the repository is private.
+- [ ] The offline-docs bundle is built at the tag and attached to the release as an optional download (`docs-offline-bundle.yml`)
+- [ ] `main` fast-forwards to the tag, pushed with the release App's token (see [One-time setup](#one-time-setup)). The push is never forced, so it fails if `main` holds a commit the tag lacks.
+- [ ] (Once a PyPI publish workflow exists — deferred until the distribution name is final, see [adr-008](docs/design/adr-008-distribution-name.md)) it joins the Release workflow as one more job after the tag
+
+The docs and bundle jobs also run on their own for any release tag: `gh workflow run docs-deploy.yml -f tag=vX.Y.Z` and `gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`.
+
+`release-please-config.json` sets `commit-search-depth` to 1000 because the first release after `0.3.0` reads more than 800 commits, and release-please stops reading at 500 by default.
+
+### One-time setup
+
+`main` moves on a GitHub App's token because the "Protected main" ruleset lets nothing else past its pull-request rule. The App holds only what that push needs, and its key is readable only by workflow jobs that run on `develop`.
+
+1. Create a GitHub App on your account (Settings → Developer settings → GitHub Apps): webhook off; repository permissions Contents: read and write and Workflows: read and write (the commits `main` gains can change workflow files), and nothing else; installable only on this account. Install it on this repository only, then generate a private key.
+2. Create the `release` environment (Settings → Environments) with its deployment branches limited to `develop`. Store the App's client ID as the environment variable `RELEASE_APP_CLIENT_ID` and the private key as the environment secret `RELEASE_APP_PRIVATE_KEY`.
+3. Add the App to the "Protected main" ruleset's bypass list, set to always allow. It stays the only bypass actor.
+
+Milestone versions (`0.3.0`, `1.0.0`) are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
 
 At 1.0, delete `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from `release-please-config.json` (dead config above 1.0). From then on a single `feat!:` cuts a major with **no deprecation window** — ship the deprecating minor first.
 
