@@ -53,7 +53,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 <#
 .SYNOPSIS
-Sets up the canonical boilerplate Python development environment on a Windows
+Sets up Boilerplate and its Python development environment on a Windows
 machine: Visual Studio Code (+ extensions), Git, uv, and the boilerplate CLI.
 
 .DESCRIPTION
