@@ -5,9 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "boilerplate"
 version = "0.3.0"
-description = "Composable project scaffolder with template layering on top of Copier."
+description = "Stamps out Python projects from templates that stack."
 authors = [{ name = "Boilerplate Contributors" }]
 readme = "README.md"
+keywords = ["cli", "copier", "python", "scaffolding", "project-template", "templates", "uv", "ruff", "pyright", "pytest"]
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 classifiers = [
@@ -38,10 +39,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TheRealBillSiegler/boilerplate"
+Homepage = "https://therealbillsiegler.github.io/boilerplate/"
 Repository = "https://github.com/TheRealBillSiegler/boilerplate"
 Issues = "https://github.com/TheRealBillSiegler/boilerplate/issues"
-Documentation = "https://github.com/TheRealBillSiegler/boilerplate/tree/main/docs"
+Documentation = "https://therealbillsiegler.github.io/boilerplate/"
 Changelog = "https://github.com/TheRealBillSiegler/boilerplate/blob/main/CHANGELOG.md"
 
 [dependency-groups]
