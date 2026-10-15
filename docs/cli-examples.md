@@ -13,7 +13,7 @@ boilerplate list
 ```text
   Name        Version   Description
  ───────────────────────────────────────────────────────
-  project     0.2.1     A suitable base for any Python project.
+  project     0.3.0     A suitable base for any Python project.
   streamlit   0.2.0     Streamlit boilerplate for data applications
 ```
 
@@ -41,7 +41,7 @@ boilerplate graph streamlit --format tree
 
 ```text
 - streamlit@0.2.0
-  - project@0.2.1
+  - project@0.3.0
 ```
 
 - JSON written to file:
@@ -55,14 +55,14 @@ The JSON payload's shape (the `streamlit` template extends `project`, so its gra
 ```json
 {
   "sequence": [
-    "project@0.2.1",
+    "project@0.3.0",
     "streamlit@0.2.0"
   ],
   "layers": [
     {
-      "specifier": "project@0.2.1",
+      "specifier": "project@0.3.0",
       "name": "project",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "path": ".../templates/project",
       "deps": []
     },
@@ -71,7 +71,7 @@ The JSON payload's shape (the `streamlit` template extends `project`, so its gra
       "name": "streamlit",
       "version": "0.2.0",
       "path": ".../templates/streamlit",
-      "deps": ["project@0.2.1"]
+      "deps": ["project@0.3.0"]
     }
   ]
 }
@@ -98,7 +98,7 @@ boilerplate compose project --sections stats
 ```
 
 ```text
-Layers: project@0.2.1
+Layers: project@0.3.0
 STATS
 layers: 1
 layers_count: 1

@@ -55,7 +55,7 @@ Output (abridged):
 
 ```text
 #   Layer       Version   Path
-1   project     0.2.1     .../templates/project
+1   project     0.3.0     .../templates/project
 2   streamlit   0.2.0     .../templates/streamlit
 ```
 
