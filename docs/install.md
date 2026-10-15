@@ -206,6 +206,12 @@ Verify the PATH is correct.
 
 Command not found? See [Troubleshooting](troubleshooting.md) or the [FAQ](faq.md).
 
+## Update the CLI
+
+To update, pick the newest version in the docs' version selector and run its install command again; uv replaces the installed CLI with that release. `uv tool upgrade boilerplate` does not move a release install, because the install names a fixed tag.
+
+An install from `develop` follows the branch instead: `uv tool upgrade boilerplate` moves it to the branch's latest commit.
+
 ---
 
 !!! success "Next steps"
