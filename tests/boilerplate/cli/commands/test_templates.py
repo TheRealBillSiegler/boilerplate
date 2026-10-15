@@ -56,6 +56,32 @@ def test_templates_list_wide_adds_the_path_column(
     assert "Path" in wide.output
 
 
+def test_templates_list_wraps_a_long_description_instead_of_cutting_it(
+    tmp_path: Path, typer_cli_runner: CliRunner
+):
+    """A description too long for one row of an 80-column table wraps whole.
+
+    The seam is the `list` table; the expected value is the template's own
+    description, whose last word only survives if the column wraps rather
+    than truncating with an ellipsis.
+    """
+    (tmp_path / "long").mkdir()
+    (tmp_path / "long" / "copier.yml").touch()
+    (tmp_path / "long" / "boilerplate.yml").write_text(
+        """
+schema_version: "1.0.0"
+name: "long"
+description: "A description far too long to fit beside the name and version columns, ending zephyr."
+version: "1.0.0"
+extends: []
+"""
+    )
+
+    result = typer_cli_runner.invoke(app, ["list", "--templates-dir", str(tmp_path)])
+
+    assert "zephyr" in result.output
+
+
 def test_templates_list_rejects_an_unknown_format(
     tmp_path: Path, typer_cli_runner: CliRunner
 ):
