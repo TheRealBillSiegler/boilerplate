@@ -43,42 +43,44 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 - [ ] The release-please PR is open with the right next version — under SemVer `0.x`,
       breaking → minor and feat → patch (per `release-please-config.json`)
 - [ ] The release-please PR moves every install pin to the new tag: the `extra-files` in `release-please-config.json` (the installer and the install commands in the versioned docs; the README names `main`, which holds the latest release)
-- [ ] The generated `CHANGELOG.md` entry is accurate (edit the prose if needed)
+- [ ] The generated `CHANGELOG.md` entry is accurate. To change its wording, edit the release PR's description, which becomes the GitHub release notes, and `CHANGELOG.md` on the release branch, both right before merging: release-please's next run after a merge into `develop` can replace them.
 - [ ] Every release-notes entry is true at the new tag and describes a change since the previous release. Drop an entry about something no release shipped, such as a feature added and changed again between the same two tags.
 - [ ] `.release-please-manifest.json` baseline version is correct
 
 ## Release mechanics
 
-Releases are cut from `develop`. release-please keeps one release PR open there, titled `chore(develop): release X.Y.Z`, and updates it as work merges.
+Releases are cut from `develop`. release-please keeps one release PR open there, titled `chore(develop): release X.Y.Z`, and rebuilds it after every merge. `0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository; everything below describes the automated flow from the next release on.
 
-**Merging that PR is the release trigger and the only manual step.** Before merging it:
+**Merging the release PR is the release trigger and the only manual step.** Before merging it:
 
 - [ ] Approve the PR's waiting CI runs, then wait for `check` to pass. release-please opens the PR with the workflow's own `GITHUB_TOKEN`, and GitHub holds the runs of such a PR until someone approves them.
 - [ ] Read the version and the `CHANGELOG.md` entry against [Versioning & changelog](#versioning--changelog-automated-by-release-please).
 
-`0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository. Everything below describes the automated flow starting with the next release.
+The merge starts the Release workflow (`.github/workflows/release-please.yml`). release-please tags `vX.Y.Z` and publishes the GitHub release with the changelog entry, and three jobs then run side by side:
 
-The merge starts the Release workflow (`.github/workflows/release-please.yml`), which does the rest with no further step:
+- The versioned docs deploy to the `gh-pages` branch (`docs-deploy.yml`): `mike deploy --update-aliases X.Y latest`, one docs version per MAJOR.MINOR, so patch releases redeploy the same `X.Y`. The first release also runs `mike set-default latest` to write the root redirect, which `mike deploy` never writes, and every release copies its `404.html` to the branch root, where GitHub Pages serves its one site-wide 404 page. Pages serves the branch once it is turned on, at the visibility flip: a Pages site is public even while the repository is private.
+- The offline-docs bundle is built at the tag and attached to the release as an optional download (`docs-offline-bundle.yml`).
+- `main` fast-forwards to the tag (`main-fast-forward.yml`), pushed with the release App's token (see [One-time setup](#one-time-setup)). The push is never forced, so it fails if `main` holds a commit the tag lacks.
 
-- [ ] release-please tags `vX.Y.Z` and publishes the GitHub release with the changelog entry
-- [ ] The versioned docs deploy to the `gh-pages` branch (`docs-deploy.yml`): `mike deploy --push --update-aliases X.Y latest`, one docs version per MAJOR.MINOR, so patch releases redeploy the same `X.Y`. The first release also runs `mike set-default --push latest` to write the root redirect, which `mike deploy` never writes, and every release copies its `404.html` to the branch root, where GitHub Pages serves its one site-wide 404 page. Pages serves the branch once it is turned on, at the visibility flip: a Pages site is public even while the repository is private.
-- [ ] The offline-docs bundle is built at the tag and attached to the release as an optional download (`docs-offline-bundle.yml`)
-- [ ] `main` fast-forwards to the tag, pushed with the release App's token (see [One-time setup](#one-time-setup)). The push is never forced, so it fails if `main` holds a commit the tag lacks.
-- [ ] (Once a PyPI publish workflow exists — deferred until the distribution name is final, see [adr-008](docs/design/adr-008-distribution-name.md)) it joins the Release workflow as one more job after the tag
+Once a PyPI publish workflow exists (deferred until the distribution name is final, see [adr-008](docs/design/adr-008-distribution-name.md)), it joins them as a fourth job.
 
-The docs and bundle jobs also run on their own for any release tag: `gh workflow run docs-deploy.yml -f tag=vX.Y.Z` and `gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`.
+The three jobs are independent, so one failing leaves the others to finish. Rerun a failed one for its tag:
 
-`release-please-config.json` sets `commit-search-depth` to 1000 because the first release after `0.3.0` reads more than 800 commits, and release-please stops reading at 500 by default.
+- `gh workflow run docs-deploy.yml -f tag=vX.Y.Z`. For a tag older than the newest release it deploys that version without moving `latest`, and it refuses a tag older than its own MAJOR.MINOR's newest patch.
+- `gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`
+- `gh workflow run main-fast-forward.yml --ref develop -f tag=vX.Y.Z`, on `develop`, the only branch the `release` environment accepts
+
+Until the first release after `0.3.0`, every rebuild of the release PR reads all the commits back to `v0.3.0`, more than 800, at about one API request each, against the workflow token's limit of 1,000 requests an hour per repository. A second rebuild within the hour can fail on that limit; the failure changes nothing, and a later run catches up. `release-please-config.json` sets `commit-search-depth` to 1000 so that the first read reaches `v0.3.0`, past release-please's default of 500. Both costs end with that first release, so cut it early.
 
 ### One-time setup
 
 `main` moves on a GitHub App's token because the "Protected main" ruleset lets nothing else past its pull-request rule. The App holds only what that push needs, and its key is readable only by workflow jobs that run on `develop`.
 
-1. Create a GitHub App on your account (Settings → Developer settings → GitHub Apps): webhook off; repository permissions Contents: read and write and Workflows: read and write (the commits `main` gains can change workflow files), and nothing else; installable only on this account. Install it on this repository only, then generate a private key.
-2. Create the `release` environment (Settings → Environments) with its deployment branches limited to `develop`. Store the App's client ID as the environment variable `RELEASE_APP_CLIENT_ID` and the private key as the environment secret `RELEASE_APP_PRIVATE_KEY`.
-3. Add the App to the "Protected main" ruleset's bypass list, set to always allow. It stays the only bypass actor.
+1. Create a GitHub App on your account (Settings → Developer settings → GitHub Apps → New GitHub App): webhook off; repository permissions Contents: read and write and Workflows: read and write (the commits `main` gains can change workflow files), and no others; installable only on this account. Install it on this repository only, then generate a private key.
+2. Create the `release` environment (the repository's Settings → Environments → New environment) with its deployment branches limited to `develop`. Store the App's client ID as the environment variable `RELEASE_APP_CLIENT_ID` and the private key as the environment secret `RELEASE_APP_PRIVATE_KEY`.
+3. Add the App to the "Protected main" ruleset's bypass list (the repository's Settings → Rules → Rulesets → Protected main → Bypass list → Add bypass), set to always allow. It stays the only bypass actor.
 
-Milestone versions (`0.3.0`, `1.0.0`) are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
+Milestone versions such as `1.0.0` are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
 
 At 1.0, delete `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from `release-please-config.json` (dead config above 1.0). From then on a single `feat!:` cuts a major with **no deprecation window** — ship the deprecating minor first.
 
