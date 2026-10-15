@@ -31,7 +31,7 @@ Set up the **Boilerplate** Python Development Environment on Windows, macOS, or 
 
         The script sets up the full Python development environment and installs the Boilerplate CLI. It:
 
-        - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed. Without `winget`, it uses the copies already installed and stops with an error at the first one missing.  
+        - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed. Without `winget`, it continues when the `code` and `git` commands are already on PATH, and stops with an error at the first one that is not.  
         - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
         - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git`.

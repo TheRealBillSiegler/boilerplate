@@ -71,8 +71,8 @@ winget is invoked with --accept-source-agreements, which accepts winget's source
 license agreements (EULAs) are auto-accepted.
 
 Without winget (older Windows 10 builds, or machines without App Installer),
-VS Code and Git are used if they are already installed; the script stops with
-an error at the first one that is missing.
+the script continues when the code and git commands are already on PATH, and
+stops with an error at the first one that is not.
 
 Requires PowerShell 7+. Started from Windows PowerShell 5.1, it installs
 PowerShell 7 with winget when needed and relaunches itself under it.
