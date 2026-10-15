@@ -16,6 +16,31 @@ Use the Boilerplate CLI to scaffold projects, inspect compositions, and list tem
 | `list --format wide` | Adds each template's path as a column. |
 | `new --format json` | One JSON object with `template`, `destination`, and `layers`; `--dry-run` adds `dry_run: true`. |
 
+## Shell completion
+
+Tab completion for commands and options is built in. Run this once from the shell you want it in, then restart the terminal:
+
+```bash
+boilerplate --install-completion
+```
+
+The CLI detects your shell and supports bash, zsh, fish, and PowerShell (Windows PowerShell and PowerShell 7). Installing writes to your home directory:
+
+| Shell | What `--install-completion` writes |
+| --- | --- |
+| bash | `~/.bash_completions/boilerplate.sh`, sourced from `~/.bashrc` |
+| zsh | `~/.zfunc/_boilerplate`, plus `fpath` and `compinit` lines in `~/.zshrc` |
+| fish | `~/.config/fish/completions/boilerplate.fish` |
+| PowerShell | The completion script, appended to your PowerShell profile; also sets the `CurrentUser` execution policy to `Unrestricted` |
+
+To read the script before installing it, or to place it yourself, print it for the detected shell:
+
+```bash
+boilerplate --show-completion
+```
+
+Completion covers command and option names; template names are not completed.
+
 ## Environment variables
 
 Every environment variable the CLI reads. The generic `CI` variable is never read — only the `BOILERPLATE_`-prefixed flags below switch modes. `BOILERPLATE_CI`, `BOILERPLATE_NON_INTERACTIVE`, `BOILERPLATE_ACCESSIBLE`, and `BOILERPLATE_NO_BANNER` are on for any value except unset, empty, `0`, or `false` (case-insensitive); `NO_COLOR` is on by mere presence, any value included; the `Settings`-parsed variables below accept `1/0`, `true/false`, `yes/no`, `on/off`, and exit 2 (CONFIG_ERROR) on anything else. The `Settings` variables are also read from a `.env` file in the working directory. `PYTHONIOENCODING` is forced to `utf-8` while a template renders and restored afterward — it's not read as a setting.
