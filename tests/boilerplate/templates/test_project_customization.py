@@ -31,8 +31,8 @@ class TestFreeTextAnswers:
     )
     @pytest.mark.parametrize(
         "value",
-        ['A "fast" tool', "C:\\data", "Line one\nline two"],
-        ids=["double-quote", "backslash", "line-break"],
+        ['A "fast" tool', "C:\\data", "Line one\nline two", "Line one\rline two"],
+        ids=["double-quote", "backslash", "line-feed", "carriage-return"],
     )
     def test_string_breaking_character_is_refused(
         self, tmp_path: Path, question: str, value: str
