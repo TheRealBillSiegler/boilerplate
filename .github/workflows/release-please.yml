@@ -5,8 +5,8 @@ name: Release
 # release-please keeps one release PR open against develop and updates it as
 # work merges: the next version, worked out from conventional commits, and
 # its CHANGELOG entry. Merging that PR pushes to develop. On that push,
-# release-please tags the release and publishes it. RELEASING.md lists each
-# step.
+# release-please tags the release and publishes it, and the job after it
+# deploys the versioned docs. RELEASING.md lists each step.
 #
 # `on.push.branches` decides when this workflow runs; `target-branch` decides
 # which branch release-please reads, opens its PR against and tags. They are
@@ -34,6 +34,9 @@ jobs:
     permissions:
       contents: write # create the tag and the GitHub release
       pull-requests: write # open and update the release PR
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       # Pinned to a full commit SHA (supply-chain hardening / zero-trust posture).
       # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
@@ -45,3 +48,13 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: develop
+
+  docs:
+    name: Versioned docs
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write # push the gh-pages branch
+    uses: ./.github/workflows/docs-deploy.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
