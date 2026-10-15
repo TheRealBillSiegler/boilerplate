@@ -6,8 +6,8 @@ name: Release
 # work merges: the next version, worked out from conventional commits, and
 # its CHANGELOG entry. Merging that PR pushes to develop. On that push,
 # release-please tags the release and publishes it, and the jobs after it
-# deploy the versioned docs and attach the offline docs bundle. RELEASING.md
-# lists each step.
+# deploy the versioned docs, attach the offline docs bundle and move main to
+# the new tag. RELEASING.md lists each step and the one-time setup.
 #
 # `on.push.branches` decides when this workflow runs; `target-branch` decides
 # which branch release-please reads, opens its PR against and tags. They are
@@ -43,7 +43,9 @@ jobs:
       # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
       #
       # The job's own short-lived GITHUB_TOKEN opens the release PR, so GitHub
-      # holds that PR's CI runs until someone approves them.
+      # holds that PR's CI runs until someone approves them. The release App
+      # could open it instead and skip that approval, but only by holding
+      # pull-request access it otherwise never needs.
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
@@ -69,3 +71,42 @@ jobs:
     uses: ./.github/workflows/docs-offline-bundle.yml
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}
+
+  main:
+    name: Move main to the release
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The App's key is a secret of this environment, and only develop may
+    # deploy to it, so no workflow running on another branch can read the key.
+    environment: release
+    # The push uses the App's token, so this job's GITHUB_TOKEN gets nothing.
+    permissions: {}
+    env:
+      # A runtime shell variable, never script source (avoids GitHub Actions
+      # script injection, CWE-94 / CWE-78).
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - name: Validate release tag shape
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "Unexpected release tag: $TAG" >&2; exit 1; }
+      # main's ruleset lets only this App past its pull-request rule. Its
+      # installation token is scoped to this repository, expires within an
+      # hour and is revoked when the job ends. It needs workflows access
+      # because the commits main gains can change .github/workflows.
+      - id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0 # the tag and main's history, for the fast-forward
+      - name: Fast-forward main to the tag
+        # No --force: the push is refused if main holds a commit the tag lacks.
+        run: git push origin "refs/tags/${TAG}^{commit}:refs/heads/main"
