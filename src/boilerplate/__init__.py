@@ -1,6 +1,6 @@
-"""Boilerplate: a composable Python project scaffolder with template layering.
+"""Boilerplate: stamps out Python projects from templates that stack.
 
-Built on top of Copier.
+Built on Copier.
 """
 
 from importlib.metadata import PackageNotFoundError
