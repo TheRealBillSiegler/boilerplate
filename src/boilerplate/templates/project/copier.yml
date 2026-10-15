@@ -32,10 +32,11 @@ _skip_if_exists:
   - "README.md"
   - "src/{{ package_name }}/__init__.py"
 
-# project_name, description, author_name and author_email land inside
-# double-quoted TOML strings in pyproject.toml and inside Python strings, where
-# a double quote, a backslash or a line break would end or escape the string,
-# so their validators refuse all three.
+# description, author_name and author_email land inside double-quoted TOML
+# strings in pyproject.toml. project_name and description land inside Python
+# docstrings, and project_name also inside the string literals of the
+# Streamlit template's app. A double quote, a backslash or a line break can
+# end or escape those strings, so the four validators refuse all three.
 project_name:
   type: str
   help: "The (human-readable) name of the project (e.g. My Project)"
