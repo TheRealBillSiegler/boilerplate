@@ -96,37 +96,8 @@ jobs:
     name: Move main to the release
     needs: release
     if: needs.release.outputs.release_created == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    # The App's key is a secret of this environment, and only develop may
-    # deploy to it, so no workflow running on another branch can read the key.
-    environment: release
-    # The push uses the App's token, so this job's GITHUB_TOKEN gets nothing.
+    # The push uses the release App's token, so GITHUB_TOKEN gets nothing.
     permissions: {}
-    env:
-      # A runtime shell variable, never script source (avoids GitHub Actions
-      # script injection, CWE-94 / CWE-78).
-      TAG: ${{ needs.release.outputs.tag_name }}
-    steps:
-      - name: Validate release tag shape
-        run: |
-          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
-            || { echo "Unexpected release tag: $TAG" >&2; exit 1; }
-      # main's ruleset lets only this App past its pull-request rule. Its
-      # installation token is scoped to this repository, expires within an
-      # hour and is revoked when the job ends. It needs workflows access
-      # because the commits main gains can change .github/workflows.
-      - id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-workflows: write
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          fetch-depth: 0 # the tag and main's history, for the fast-forward
-      - name: Fast-forward main to the tag
-        # No --force: the push is refused if main holds a commit the tag lacks.
-        run: git push origin "refs/tags/${TAG}^{commit}:refs/heads/main"
+    uses: ./.github/workflows/main-fast-forward.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
