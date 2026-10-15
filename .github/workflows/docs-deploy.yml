@@ -49,6 +49,7 @@ jobs:
         with:
           ref: ${{ inputs.tag }} # build the docs at the released tag
           fetch-depth: 0 # mike commits onto gh-pages, so it needs that branch
+          persist-credentials: false # only the final push step holds a credential
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
       - run: uv sync --frozen
       - name: Set the identity for mike's commits
@@ -56,13 +57,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Deploy this version and point latest at it
-        run: uv run mike deploy --push --update-aliases "$DOCS_VERSION" latest
+        run: uv run mike deploy --update-aliases "$DOCS_VERSION" latest
       - name: Make latest the site root (first release only)
         # mike deploy never writes the branch root. set-default writes the
         # root redirect, and once it exists later releases leave it alone.
         run: |
           if ! git cat-file -e gh-pages:index.html 2>/dev/null; then
-            uv run mike set-default --push latest
+            uv run mike set-default latest
           fi
       - name: Publish the root 404 page
         # GitHub Pages serves one site-wide 404.html from the branch root. The
@@ -76,5 +77,12 @@ jobs:
             echo "The root 404 page is already current."
           else
             git -C "$RUNNER_TEMP/gh-pages" commit -m "chore: sync root 404 page"
-            git -C "$RUNNER_TEMP/gh-pages" push origin gh-pages
           fi
+      - name: Push gh-pages
+        # The one step that holds a credential. mike built the local gh-pages
+        # on top of the remote one, so this push is a fast-forward.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          git push origin gh-pages
