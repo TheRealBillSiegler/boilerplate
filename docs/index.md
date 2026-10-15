@@ -1,20 +1,22 @@
 ---
-description: An ethos made executable. Scaffold Python projects fast with uv, Ruff, Pyright, and pytest—all preconfigured and ready to ship.
+description: Boilerplate stamps out Python projects from templates that stack. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
 demo: true
 ---
 
 # Boilerplate
 
+**Boilerplate stamps out Python projects from templates that stack.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
+
 **An ethos made executable** — Start fast. Stay consistent. Reproduce anywhere.
 
-Almost every Python project starts with work that isn't the work: picking the tools again, copying the last project's config, getting the linter and the type checker to agree on the same rules. Boilerplate is a project scaffolder for teams that want those decisions made once — uv, Ruff, a strict Pyright configuration, and pytest already wired into `pyproject.toml` and `.vscode/` — and for template maintainers who want templates that stack instead of fork.
+Almost every Python project starts with work that isn't the work: picking the tools again, copying the last project's config, getting the linter and the type checker to agree on the same rules. Boilerplate's templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option. The general-purpose Python template sets up uv, Ruff, Pyright in strict mode, pytest and VS Code, and configures them in `pyproject.toml` and `.vscode/`.
 
-Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment around it, and lets a base template carry your team's standards under every specialized one.
+Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment around it.
 
 **Less yak. More stack.**
 
 <figure class="demo">
-  <div id="demo-cast" role="region" aria-label="Terminal recording: the Boilerplate banner, then boilerplate new project walks through a few prompts, scaffolds a project, and uv run pytest passes."></div>
+  <div id="demo-cast" role="region" aria-label="Terminal recording: boilerplate new project asks a few questions and creates a project, then uv run pytest runs its tests."></div>
   <figcaption>New project, dependencies installed, pytest passing.</figcaption>
 </figure>
 
