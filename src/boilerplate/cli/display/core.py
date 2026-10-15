@@ -231,6 +231,14 @@ class Display:
                 tbl.add_column(
                     header, overflow="fold", no_wrap=False, min_width=20, max_width=60
                 )
+            elif header == "Description":
+                # Prose wraps onto more lines, so a long description never
+                # squeezes the short columns beside it down to an ellipsis;
+                # the ratio lets it share an expanded table's width with a
+                # path column instead of claiming its full length first
+                tbl.add_column(
+                    header, overflow="fold", no_wrap=False, min_width=20, ratio=2
+                )
             elif header in ["#", "Version"]:
                 # Numeric columns should be narrow and not wrap
                 tbl.add_column(header, overflow="ellipsis", no_wrap=True, max_width=12)
