@@ -26,6 +26,7 @@ Boilerplate renders templates with Copier, configures generated projects for uv,
 | [mkdocstrings](https://github.com/mkdocstrings/mkdocstrings) | The API reference pages | ISC |
 | [mkdocs-typer](https://github.com/bruce-szalwinski/mkdocs-typer) | The CLI reference page | Apache-2.0 |
 | [Mermaid](https://github.com/mermaid-js/mermaid) | The site's diagrams | MIT |
+| [D3](https://github.com/d3/d3), [Cytoscape.js](https://github.com/cytoscape/cytoscape.js), [KaTeX](https://github.com/KaTeX/KaTeX), [DOMPurify](https://github.com/cure53/DOMPurify), [elkjs](https://github.com/kieler/elkjs) and the other libraries inside Mermaid's script | Layout, math, sanitizing and dates inside the diagrams | MIT, ISC, BSD-3-Clause, EPL-2.0, Apache-2.0, and Apache-2.0 or MPL-2.0 (DOMPurify) |
 | [Font Awesome Free](https://github.com/FortAwesome/Font-Awesome) | The GitHub icon in the header, and four icons on the diagrams' zoom buttons | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | [asciinema player](https://github.com/asciinema/asciinema-player) | Plays the home page's terminal demo | Apache-2.0 |
 | [IBM Plex Sans](https://github.com/IBM/plex) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) | The site's type | OFL-1.1 |
