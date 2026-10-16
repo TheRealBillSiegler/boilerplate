@@ -154,6 +154,8 @@ hooks:
   - scripts/mkdocs_hooks.py
 
 plugins:
+  # English only: scripts/mkdocs_hooks.py deletes the theme's search language
+  # packs from every build, so set `lang` here only after changing that hook.
   - search
   - autorefs
   - mkdocstrings:
