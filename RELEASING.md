@@ -87,6 +87,17 @@ At 1.0, delete `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from 
 
 Dependency licenses: all **direct** dependencies are permissive, so distributing boilerplate's own code under Apache-2.0, and its template files under MIT-0, is fine. The vendored third-party works are the Mermaid bundle (MIT) with the libraries it embeds, the asciinema player (Apache-2.0), the IBM Plex Sans and JetBrains Mono fonts (OFL-1.1) and the logos of the tools the docs describe, all credited in `NOTICE`. The docs site and the offline docs bundle serve them — self-hosted deliberately, so using them triggers no third-party fetch — and nothing ships inside the Python package. (Raw Unicode emoji in docs prose still render via Material's twemoji CDN images; icon shortcodes don't. The docs tenets already prefer shortcodes.) The compliance posture is **unmodified redistribution**: the vendored file is byte-for-byte what the Mermaid project publishes (enforced by a `.gitattributes` `binary` entry — line-ending conversion would silently break the claim), upstream's LICENSE is copied verbatim from the pinned tag to `docs/assets/mermaid.LICENSE`, and the license banners inside the file stay intact — never re-minify or post-process it, since those banners are part of the embedded components' attribution (the other embedded components' license texts ship in `docs/assets/licenses/`, listed in `NOTICE`). The bundle does embed an EPL-2.0 component (elkjs); redistributing it unmodified with upstream's source pointer is the same posture Mermaid itself and every CDN takes, and the EPL does not reach boilerplate's own code. Upgrading Mermaid means replacing the vendored file byte-for-byte with upstream's published build and re-copying the LICENSE from the new tag, then re-deriving the embedded libraries and license texts that `NOTICE` credits from the new tag's `pnpm-lock.yaml` and the banners in the new file. There is no recurring automated license-scan gate, by design. The **transitive** tree is not all-permissive — `jinja2-ansible-filters` (GPL-3.0, via copier) and `text-unidecode` (Artistic, via python-slugify) — which is acceptable while dependencies are installed separately from PyPI, but must be revisited before ever shipping a bundled/frozen artifact (PyInstaller and similar). Re-check (`uvx pip-licenses`) when the dependency tree changes.
 
+### Rotating the App's key
+
+The App's private key never expires, so it is replaced by hand: whenever it may have leaked, and otherwise once a year. GitHub lets an App hold several keys at once, so the old key keeps working until the new one is proven.
+
+1. In the App's settings (Settings → Developer settings → GitHub Apps → the release App → Edit → Credentials → Key pairs), click **New key**. GitHub downloads it as a `.pem` file.
+2. Store it from the file, not the clipboard: `gh secret set RELEASE_APP_PRIVATE_KEY --env release < path/to/key.pem`. Then delete the file.
+3. Prove it: `gh workflow run main-fast-forward.yml --ref develop -f tag=vX.Y.Z`, naming the latest release. With `main` already at that tag, the run mints a token and pushes nothing.
+4. Back under Key pairs, delete the older key.
+
+If the old key may have leaked, delete it straight after step 2, before the check: until it is gone, anyone holding it can mint tokens.
+
 ---
 
 During `0.x`, only the distribution name is a stable commitment (see [Versioning & Compatibility Policy](docs/governance/versioning.md)); other CLI/exit-code/output surfaces may change.
