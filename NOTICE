@@ -240,12 +240,12 @@ build copies to assets/licenses/:
 
   assets/javascripts/panzoom.min.js — panzoom
   (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2024
-  Andrei Kashcha. It bundles amator (MIT, Copyright (c) 2016-2026 Andrei
+  Andrei Kashcha. It bundles amator 1.1.0 (MIT, Copyright (c) 2016 Andrei
   Kashcha), the JavaScript package wheel (https://github.com/anvaka/wheel, MIT,
   Copyright (c) 2014-2023 Andrei Kashcha), bezier-easing
-  (MIT, Copyright (c) 2014 Gaëtan Renaudeau) and ngraph.events (BSD-3-Clause,
-  Copyright (c) 2013-2026 Andrei Kashcha). License texts: panzoom.LICENSE,
-  amator.LICENSE, anvaka-wheel.LICENSE, bezier-easing.LICENSE,
+  (MIT, Copyright (c) 2014 Gaëtan Renaudeau) and ngraph.events 1.2.2
+  (BSD-3-Clause, Copyright (c) 2013-2022 Andrei Kashcha). License texts:
+  panzoom.LICENSE, amator.LICENSE, anvaka-wheel.LICENSE, bezier-easing.LICENSE,
   ngraph.events.LICENSE.
 
   assets/javascripts/zoompan.js and assets/stylesheets/panzoom.css —
