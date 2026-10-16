@@ -14,7 +14,10 @@ from logging import getLogger
 from pathlib import Path
 
 from boilerplate import __version__
-from boilerplate.common.exceptions import MissingRequiredAnswersError
+from boilerplate.common.exceptions import (
+    DestinationNotEmptyError,
+    MissingRequiredAnswersError,
+)
 from boilerplate.composition.models.composition import Composition
 from boilerplate.composition.models.composition_layer import CompositionLayer
 from boilerplate.composition.rendering.creation_lock import write_creation_lock
@@ -64,6 +67,19 @@ _WORKER_EXCLUDES: tuple[str, ...] = (
     *_AUTHORING_METADATA_EXCLUDES,
     *(p for p in DEFAULT_EXCLUDE if p not in {"copier.yaml", "copier.yml"}),
 )
+
+
+def _is_non_empty_directory(path: Path) -> bool:
+    """Report whether `path` is a directory holding at least one entry.
+
+    Args:
+        path: The render destination.
+
+    Returns:
+        Whether the directory exists and lists any file or folder, hidden
+        ones included.
+    """
+    return path.is_dir() and any(path.iterdir())
 
 
 def final_template_info(*, final_path: Path, fallback_name: str) -> TemplateInfo:
@@ -142,7 +158,27 @@ class RenderEngine:
 
         Returns:
             Information about the final (root) template after render.
+
+        Raises:
+            DestinationNotEmptyError: If the destination already holds files and
+                ``ctx.overwrite`` does not consent to writing over them.
+            MissingRequiredAnswersError: If a non-interactive render leaves a
+                question without a default or a supplied value.
         """
+        # Pre-flight: every layer after the first renders with overwrite
+        # forced, so a destination that already holds files would have them
+        # replaced unasked. Refuse it before anything is asked or written,
+        # unless --force consents (docs/design/06-project-lifecycle.md,
+        # Acceptance Criteria).
+        if not ctx.overwrite and _is_non_empty_directory(ctx.destination):
+            raise DestinationNotEmptyError(
+                f"Destination '{ctx.destination}' is not empty.",
+                remediation=(
+                    "Choose a new or empty directory, or add --force to "
+                    "overwrite the files in this one."
+                ),
+            )
+
         # Build the canonical questionnaire once from the merged schema
         questions_schema: dict[str, object] = dict(composition.merged_questions_schema)
 

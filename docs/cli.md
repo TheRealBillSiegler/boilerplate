@@ -45,7 +45,7 @@ Every command exits with one of six codes (defined in `boilerplate.constants.Exi
 | 0 | SUCCESS | Command completed. |
 | 1 | FAILURE | Unexpected error. |
 | 2 | CONFIG_ERROR | Configuration could not be loaded. |
-| 3 | VALIDATION_ERROR | Input failed validation (an unknown command or option, bad answers, missing TTY, conflicting options). |
+| 3 | VALIDATION_ERROR | Input failed validation (an unknown command or option, bad answers, missing TTY, conflicting options, a non-empty destination without `--force`). |
 | 4 | ACTION_REQUIRED | Recoverable pause; user intervention needed. Defined in the taxonomy but not yet produced by any shipped command — its first producer will be the planned `update` conflict pause. |
 | 130 | USER_CANCELLED | Cancelled at a prompt (Ctrl+C). |
 
@@ -60,7 +60,7 @@ Every `BP_*` code in the shipped exception hierarchy. A code the error boundary 
 | `BP_CONFIG_DIR_INVALID` | A configured template directory — the default templates directory (bundled, or overridden by `BOILERPLATE_DEFAULT_TEMPLATES_DIR`), `--templates-dir`, or a `BOILERPLATE_EXTRA_TEMPLATE_DIRS` entry — doesn't exist, isn't a directory, or can't be read. | Point the option or environment variable at a directory that exists and is readable. |
 | `BP_RESOLVE_TEMPLATE_NOT_FOUND` | Defined but not produced by any shipped command; a missing template by name/version surfaces as `BP_RESOLVE_DEP_NOT_FOUND`. | — |
 | `BP_VERSION_INVALID` | Reserved for a version string that fails PEP 440 validation. Defined in the exception hierarchy but not yet produced by any shipped command — an invalid version inside a template reference currently surfaces as `BP_INPUT_SPECIFIER_INVALID` instead. | — |
-| `BP_RENDER_DEST_NOT_EMPTY` | Defined but not produced by any shipped command; without `--force`, Copier's own per-file conflict handling applies. | — |
+| `BP_RENDER_DEST_NOT_EMPTY` | `boilerplate new` was given a destination directory that already holds files or folders, hidden ones included, without `--force`. Nothing is asked or written. | Choose a new or empty directory, or add `--force` to overwrite the files in this one. |
 | `BP_INPUT_FORCE_REQUIRED` | Defined but not produced by any shipped command. | — |
 | `BP_INPUT_SPECIFIER_INVALID` | A `name@version` template reference is malformed — an invalid name, or a version segment that isn't PEP 440 compliant, including inside an `extends` reference. | Use the format `name` or `name@version`. |
 | `BP_RESOLVE_METADATA_INVALID` | A template's `boilerplate.yml`/`copier.yml` is invalid: schema errors, or a `name@version` tag that disagrees with the directory's declared metadata. | Fix the metadata file; `boilerplate validate <template_dir>` reports which check failed. |

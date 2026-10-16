@@ -283,27 +283,14 @@ class TestNewCommandEndToEnd:
         normalized = " ".join(result.output.split())
         assert "not found" in normalized or "Template" in normalized
 
-    def test_conflicting_destination_fails_then_force_overwrites(
+    def test_a_non_empty_destination_without_force_exits_with_the_validation_code(
         self, tmp_path: Path, typer_cli_runner: CliRunner
     ) -> None:
-        """Documents the real (unmocked) behavior of a conflicting destination.
-
-        Without `--force`, Copier detects the conflicting `README.md` and
-        tries to prompt whether to overwrite it. That prompt needs a real
-        console; CliRunner never provides one, so `RenderEngine` translates
-        the failure to `InteractiveRenderFailedError`
-        (`BP_RENDER_PROMPT_FAILED`, exit `FAILURE`) instead of the
-        `--force`-suggesting message a mock previously injected. This is a
-        real gap against docs/design/02-data-models.md's `DestinationNotEmptyError`
-        contract (`BP_RENDER_DEST_NOT_EMPTY`, exit `VALIDATION_ERROR`), which
-        is never actually raised by the render path — tracked, not fixed
-        here.
-        """
+        """Design 07 gives ``BP_RENDER_DEST_NOT_EMPTY`` exit code 3."""
         templates_root = _write_renderable_template(tmp_path / "templates")
         dest = tmp_path / "existing_project"
         dest.mkdir()
-        readme = dest / "README.md"
-        readme.write_text("hand-authored, unrelated to the template", encoding="utf-8")
+        (dest / "README.md").write_text("hand-authored", encoding="utf-8")
 
         result = typer_cli_runner.invoke(
             app,
@@ -318,15 +305,54 @@ class TestNewCommandEndToEnd:
             ],
         )
 
-        assert result.exit_code == ExitCode.FAILURE, result.output
-        normalized = " ".join(result.output.split())
-        assert "BP_RENDER_PROMPT_FAILED" in normalized
-        assert (
-            readme.read_text(encoding="utf-8")
-            == "hand-authored, unrelated to the template"
+        assert result.exit_code == 3, result.output
+
+    def test_a_file_only_a_later_layer_ships_survives_a_render_without_force(
+        self, tmp_path: Path, typer_cli_runner: CliRunner
+    ) -> None:
+        """A later layer does not replace a file the user already had.
+
+        Every layer after the first renders with overwrite forced, so a file
+        that only a later layer ships was once replaced unasked, with exit 0.
+        Design 06's acceptance criteria refuse a non-empty destination without
+        ``--force`` instead, which leaves the user's file as it was.
+        """
+        templates_root = _write_renderable_template(tmp_path / "templates")
+        _write_template(templates_root, "tinier", "1.0.0", extends=["tiny"])
+        (templates_root / "tinier" / "Dockerfile").write_text(
+            "FROM scratch\n", encoding="utf-8"
+        )
+        dest = tmp_path / "existing_project"
+        dest.mkdir()
+        dockerfile = dest / "Dockerfile"
+        dockerfile.write_text("the user's own\n", encoding="utf-8")
+
+        typer_cli_runner.invoke(
+            app,
+            [
+                "new",
+                "tinier",
+                str(dest),
+                "--non-interactive",
+                "--no-tasks",
+                "--templates-dir",
+                str(templates_root),
+            ],
         )
 
-        result = typer_cli_runner.invoke(
+        assert dockerfile.read_text(encoding="utf-8") == "the user's own\n"
+
+    def test_force_renders_over_a_non_empty_destination(
+        self, tmp_path: Path, typer_cli_runner: CliRunner
+    ) -> None:
+        """Design 05: ``--force`` overwrites an existing destination."""
+        templates_root = _write_renderable_template(tmp_path / "templates")
+        dest = tmp_path / "existing_project"
+        dest.mkdir()
+        readme = dest / "README.md"
+        readme.write_text("hand-authored", encoding="utf-8")
+
+        typer_cli_runner.invoke(
             app,
             [
                 "new",
@@ -340,7 +366,6 @@ class TestNewCommandEndToEnd:
             ],
         )
 
-        assert result.exit_code == ExitCode.SUCCESS, result.output
         assert readme.read_text(encoding="utf-8").strip() == "# demo"
 
     @pytest.mark.usefixtures("interactive_tty")

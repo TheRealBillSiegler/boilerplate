@@ -17,6 +17,7 @@ from copier.errors import CopierAnswersInterrupt
 
 import boilerplate.composition.rendering.worker_session as session_mod
 from boilerplate.common.exceptions import (
+    DestinationNotEmptyError,
     MissingRequiredAnswersError,
     UserCancelledError,
 )
@@ -456,6 +457,72 @@ class TestPreflightMissingRequiredAnswers:
 
         RenderEngine().render(comp, ctx)
         assert len(_layer_workers()) == 1
+
+
+def _destination(tmp_path: Path, state: str) -> Path:
+    """Return a destination that is absent, an empty directory, or holds a file."""
+    destination = tmp_path / "destination"
+    if state in {"empty", "occupied"}:
+        destination.mkdir()
+    if state == "occupied":
+        (destination / "Dockerfile").write_text("the user's own\n", encoding="utf-8")
+    return destination
+
+
+class TestPreflightNonEmptyDestination:
+    """A render refuses a destination that holds files unless --force consents.
+
+    The expected outcomes are design 06's acceptance criteria for project
+    creation: a non-empty destination without ``--force`` raises
+    ``DestinationNotEmptyError``.
+    """
+
+    @pytest.mark.parametrize("interactive", [False, True])
+    def test_a_non_empty_destination_without_force_is_refused(
+        self, tmp_path: Path, interactive: bool
+    ) -> None:
+        ctx = ExecutionContext(
+            destination=_destination(tmp_path, "occupied"),
+            context_data={},
+            overwrite=False,
+            interactive=interactive,
+        )
+
+        with pytest.raises(DestinationNotEmptyError):
+            RenderEngine().render(_make_composition(tmp_path, 2), ctx)
+
+    def test_a_refused_render_asks_and_writes_nothing(self, tmp_path: Path) -> None:
+        """The refusal precedes the questionnaire and every layer's Worker."""
+        ctx = ExecutionContext(
+            destination=_destination(tmp_path, "occupied"),
+            context_data={},
+            overwrite=False,
+            interactive=False,
+        )
+
+        with pytest.raises(DestinationNotEmptyError):
+            RenderEngine().render(_make_composition(tmp_path, 2), ctx)
+
+        assert FakeWorker.last_instances == []
+
+    @pytest.mark.parametrize(
+        ("state", "overwrite"),
+        [("absent", False), ("empty", False), ("occupied", True)],
+        ids=["absent", "empty-directory", "non-empty-with-force"],
+    )
+    def test_every_layer_renders_into_a_destination_it_may_write(
+        self, tmp_path: Path, state: str, overwrite: bool
+    ) -> None:
+        ctx = ExecutionContext(
+            destination=_destination(tmp_path, state),
+            context_data={},
+            overwrite=overwrite,
+            interactive=False,
+        )
+
+        RenderEngine().render(_make_composition(tmp_path, 2), ctx)
+
+        assert len(_layer_workers()) == 2
 
 
 # ---------------------------------------------------------------------------
