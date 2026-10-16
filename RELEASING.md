@@ -89,5 +89,4 @@ Dependency licenses: all **direct** dependencies are permissive, so distributing
 
 ---
 
-During `0.x`, only the distribution name is a stable commitment (see
-[Versioning & Compatibility Policy](docs/governance/versioning.md)); other CLI/exit-code/output surfaces may change.
+During `0.x`, only the distribution name is a stable commitment (see [Versioning & Compatibility Policy](docs/governance/versioning.md)); other CLI/exit-code/output surfaces may change.
