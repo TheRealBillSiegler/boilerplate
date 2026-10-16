@@ -297,7 +297,7 @@ def new(
         False,
         "--force",
         "-f",
-        help="Overwrite an existing destination. Does not imply --non-interactive.",
+        help="Overwrite a non-empty destination. Does not imply --non-interactive.",
     ),
     non_interactive: bool = typer.Option(
         False,

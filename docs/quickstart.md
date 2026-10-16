@@ -48,7 +48,7 @@ boilerplate new project@0.3.0 my-versioned-project
 !!! note "Planned"
     `boilerplate update` — moving a generated project to a newer template version — is planned; see the [roadmap](roadmap.md) for sequencing and the [update model design](design/adr-007-update-model.md) for the approach.
 
-Non‑interactive (accept defaults) and overwrite existing destination:
+Non‑interactive (accept defaults) and overwrite a non-empty destination:
 
 ```bash
 boilerplate new project --non-interactive -f my-first-project
