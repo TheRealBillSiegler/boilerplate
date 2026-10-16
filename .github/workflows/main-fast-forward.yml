@@ -62,6 +62,11 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # the tag and main's history, for the fast-forward
+          persist-credentials: false # only the push step holds the token
       - name: Fast-forward main to the tag
         # No --force: the push is refused if main holds a commit the tag lacks.
-        run: git push origin "refs/tags/${TAG}^{commit}:refs/heads/main"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh auth setup-git
+          git push origin "refs/tags/${TAG}^{commit}:refs/heads/main"
