@@ -34,12 +34,12 @@ can carry less than a whole library.
   Cytoscape.js 3.28.1 (https://github.com/cytoscape/cytoscape.js), MIT License,
   Copyright (c) 2016-2023 The Cytoscape Consortium. License text:
   cytoscape.LICENSE. Four components inside it carry their own banners, all
-  naming the MIT License: Thenable (Copyright (c) 2013-2014 Ralf S.
-  Engelschall), event code derived from jQuery, and a Runge-Kutta spring
-  function adapted from Framer.js (Copyright Koen Bok), whose banners are the
-  only license text shipped for them, and a Bezier easing function (Copyright
-  Gaetan Renaudeau; license text: bezier-easing.LICENSE, the same author's MIT
-  License). Cytoscape.js also bundles heap 0.2.7
+  naming the MIT License. For three, the banner is the only license text
+  shipped: Thenable (Copyright (c) 2013-2014 Ralf S. Engelschall), event code
+  derived from jQuery, and a Runge-Kutta spring function adapted from
+  Framer.js (Copyright Koen Bok). The fourth, a Bezier easing function
+  (Copyright Gaetan Renaudeau), has its author's MIT License text in
+  bezier-easing.LICENSE. Cytoscape.js also bundles heap 0.2.7
   (https://github.com/qiao/heap.js, MIT License; heap.LICENSE) and lodash
   4.17.21 (https://github.com/lodash/lodash, MIT License, Copyright OpenJS
   Foundation and other contributors; lodash.LICENSE).
