@@ -29,6 +29,8 @@ concurrency:
 
 jobs:
   release:
+    # Tagging runs in its own job, before the release PR is rebuilt, so a
+    # failure while rebuilding the PR cannot stop the jobs after a release.
     name: Tag and GitHub release
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -41,9 +43,6 @@ jobs:
     steps:
       # Pinned to a full commit SHA (supply-chain hardening / zero-trust posture).
       # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
-      #
-      # Tagging runs in its own job, before the release PR is rebuilt, so a
-      # failure while rebuilding the PR cannot stop the jobs after a release.
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
