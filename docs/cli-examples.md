@@ -25,7 +25,7 @@ boilerplate list
 boilerplate new project my_app
 ```
 
-- Non-interactive with defaults, force overwrite if exists:
+- Non-interactive with defaults, overwrite a non-empty destination:
 
 ```powershell
 boilerplate new project --non-interactive -f my_app

@@ -345,7 +345,7 @@ class TestNewCommandEndToEnd:
     def test_force_renders_over_a_non_empty_destination(
         self, tmp_path: Path, typer_cli_runner: CliRunner
     ) -> None:
-        """Design 05: ``--force`` overwrites an existing destination."""
+        """Design 05: ``--force`` overwrites a non-empty destination."""
         templates_root = _write_renderable_template(tmp_path / "templates")
         dest = tmp_path / "existing_project"
         dest.mkdir()
