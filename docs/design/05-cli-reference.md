@@ -272,7 +272,7 @@ The selection prompt MUST NOT make network calls. It operates only on locally ca
 
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
-| `--force` | `-f` | flag | `false` | Overwrite destination if it already exists (no confirmation). Default: `false`. |
+| `--force` | `-f` | flag | `false` | Overwrite a non-empty destination (no confirmation). Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Use defaults for all unanswered questions without prompting. Default: `false`. |
 | `--dry-run` | `-n` | flag | `false` | Show the composition plan without rendering or writing files. Default: `false`. |
 | `--render-to` | — | path | null | Render the template to the specified directory for inspection without creating a managed project. Default: null. |
@@ -299,7 +299,7 @@ Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `
 
 **`--save-answers` notes**: The saved file is a YAML document containing only user-provided answer values (keys and their resolved values). It does not include Copier-internal metadata (`_commit`, `_src_path`, etc.) or default values that were not explicitly provided. Questions marked with `secret: true` in the template are excluded from the saved file; a placeholder comment indicates the omission: `# secret_question: <omitted — marked as secret>`. See [§10 Privacy](10-security.md#privacy) for details. The file can be passed directly to `--answers` in subsequent invocations.
 
-**`--force` and `--non-interactive` are independent concerns.** `--non-interactive` means "use defaults for all questions." `--force` means "overwrite existing destination." Neither implies the other: CI may need `--non-interactive` without `--force` (fail if destination exists), and a retry may need `--force` while still prompting interactively.
+**`--force` and `--non-interactive` are independent concerns.** `--non-interactive` means "use defaults for all questions." `--force` means "overwrite a non-empty destination." Neither implies the other: CI may need `--non-interactive` without `--force` (fail if the destination is non-empty), and a retry may need `--force` while still prompting interactively.
 
 **`--non-interactive` environment variable equivalent**: `BOILERPLATE_NON_INTERACTIVE` mirrors this flag with OR semantics — see the environment variable equivalents note in [Global Options](#global-options).
 
