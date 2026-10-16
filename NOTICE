@@ -76,8 +76,11 @@ can carry less than a whole library.
   Mike Bostock; d3-path-v1.LICENSE).
 
   dagre-d3-es 7.0.10 (https://github.com/tbo47/dagre-es), MIT License as its
-  package.json declares; the package ships no license text. It derives from
-  dagre and graphlib (https://github.com/dagrejs/dagre), MIT License,
+  package.json declares. The 7.0.10 package and tag carry no license text; the
+  repository's later LICENSE.md names its authors: Copyright (c) 2022-2024
+  Thibaut Lassalle, David Newell, Alois Klink, Sidharth Vinod and dagre-es
+  contributors (dagre-es.LICENSE). It derives from dagre and graphlib
+  (https://github.com/dagrejs/dagre), MIT License,
   Copyright (c) 2012-2014 Chris Pettitt (dagre.LICENSE, the text graphlib
   shares), and from dagre-d3 (https://github.com/dagrejs/dagre-d3), MIT
   License, Copyright (c) 2013 Chris Pettitt (dagre-d3.LICENSE).
