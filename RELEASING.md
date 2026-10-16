@@ -74,11 +74,12 @@ Until the first release after `0.3.0`, every rebuild of the release PR reads all
 
 ### One-time setup
 
-`main` moves on a GitHub App's token because the "Protected main" ruleset lets nothing else past its pull-request rule. The App holds only what that push needs, and its key is readable only by workflow jobs that run on `develop`.
+`main` moves on a GitHub App's token because the "Protected main" ruleset lets nothing else past its pull-request rule. The App holds only what that push needs, and its key is readable only by workflow jobs that run on `develop`. A bypass covers every rule in its ruleset, so the rules that guard `main`'s history sit in a second ruleset, "Main history", that nobody bypasses: the App can fast-forward `main` but cannot delete it, force-push it or push a merge commit to it.
 
 1. Create a GitHub App on your account (Settings → Developer settings → GitHub Apps → New GitHub App): webhook off; repository permissions Contents: read and write and Workflows: read and write (the commits `main` gains can change workflow files), and no others; installable only on this account. Install it on this repository only, then generate a private key.
 2. Create the `release` environment (the repository's Settings → Environments → New environment) with its deployment branches limited to `develop`. Store the App's client ID as the environment variable `RELEASE_APP_CLIENT_ID` and the private key as the environment secret `RELEASE_APP_PRIVATE_KEY`.
-3. Add the App to the "Protected main" ruleset's bypass list (the repository's Settings → Rules → Rulesets → Protected main → Bypass list → Add bypass), set to always allow. It stays the only bypass actor.
+3. Add the App to the "Protected main" ruleset's bypass list (the repository's Settings → Rules → Rulesets → Protected main → Bypass list → Add bypass), set to always allow. GitHub accepts the App there only once it is installed on the repository. It stays the only bypass actor, and the ruleset holds only the pull-request and required-status-check rules.
+4. Create the "Main history" ruleset (Settings → Rules → Rulesets → New branch ruleset) targeting `main`, with Restrict deletions, Block force pushes and Require linear history, and an empty bypass list.
 
 Milestone versions such as `1.0.0` are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
 
