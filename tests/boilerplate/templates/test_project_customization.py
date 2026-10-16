@@ -179,8 +179,7 @@ class TestSampleModule:
         which fails the README's `uv run pytest` and any CI built on it.
         """
         dest = render("project", tmp_path, context_data={"sample_module": False})
-        package = dest.name.replace("-", "_")
-        assert (dest / "tests" / package / "test_import.py").is_file()
+        assert (dest / "tests" / "out" / "test_import.py").is_file()
 
 
 class TestRenderedListsAndReadme:
