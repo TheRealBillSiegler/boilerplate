@@ -101,3 +101,10 @@ jobs:
     uses: ./.github/workflows/main-fast-forward.yml
     with:
       tag: ${{ needs.release.outputs.tag_name }}
+    # A called workflow gets only the secrets its caller passes, environment
+    # secrets included; an unpassed one is an empty string. Naming the key is
+    # enough although it exists only in the release environment: the called
+    # job sets that environment and receives the environment's value. Naming
+    # it, not `inherit`, hands the called workflow nothing else.
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

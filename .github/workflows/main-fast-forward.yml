@@ -15,6 +15,12 @@ on:
         description: "Release tag to move main to (e.g. v0.4.0)"
         required: true
         type: string
+    secrets:
+      # Required, so a caller that does not pass the key fails here instead of
+      # handing the token step an empty one. A dispatched run reads it from
+      # the environment directly.
+      RELEASE_APP_PRIVATE_KEY:
+        required: true
   workflow_dispatch:
     inputs:
       tag:
