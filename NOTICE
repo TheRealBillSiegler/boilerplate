@@ -236,7 +236,7 @@ build copies to assets/licenses/:
   its own attribution comment.
 
   assets/javascripts/panzoom.min.js — panzoom
-  (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2026
+  (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2024
   Andrei Kashcha. It bundles amator (MIT, Copyright (c) 2016-2026 Andrei
   Kashcha), the JavaScript package wheel (https://github.com/anvaka/wheel, MIT,
   Copyright (c) 2014-2023 Andrei Kashcha), bezier-easing
