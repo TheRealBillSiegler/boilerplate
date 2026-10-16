@@ -460,12 +460,20 @@ class TestPreflightMissingRequiredAnswers:
 
 
 def _destination(tmp_path: Path, state: str) -> Path:
-    """Return a destination that is absent, an empty directory, or holds a file."""
+    """Return a destination in the named state.
+
+    The state is absent, an empty directory, or a directory that holds a
+    visible file, a hidden file, or a subdirectory.
+    """
     destination = tmp_path / "destination"
-    if state in {"empty", "occupied"}:
+    if state in {"empty", "occupied", "hidden", "subdirectory"}:
         destination.mkdir()
     if state == "occupied":
         (destination / "Dockerfile").write_text("the user's own\n", encoding="utf-8")
+    if state == "hidden":
+        (destination / ".env").write_text("", encoding="utf-8")
+    if state == "subdirectory":
+        (destination / "sub").mkdir()
     return destination
 
 
@@ -477,12 +485,13 @@ class TestPreflightNonEmptyDestination:
     ``DestinationNotEmptyError``.
     """
 
+    @pytest.mark.parametrize("state", ["occupied", "hidden", "subdirectory"])
     @pytest.mark.parametrize("interactive", [False, True])
     def test_a_non_empty_destination_without_force_is_refused(
-        self, tmp_path: Path, interactive: bool
+        self, tmp_path: Path, interactive: bool, state: str
     ) -> None:
         ctx = ExecutionContext(
-            destination=_destination(tmp_path, "occupied"),
+            destination=_destination(tmp_path, state),
             context_data={},
             overwrite=False,
             interactive=interactive,
