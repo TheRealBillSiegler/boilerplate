@@ -74,6 +74,14 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0 # the tag and main's history, for the fast-forward
           persist-credentials: false # only the push step holds the token
+      # release-please tags the release commit on develop, so this passes on
+      # every release. A retry dispatched with a mistyped tag, or a tag cut
+      # anywhere else, would move main to a commit that skipped develop's
+      # pull-request gate; the tag ruleset blocks moving tags, not creating them.
+      - name: Check the tag is on develop
+        run: |
+          git merge-base --is-ancestor "refs/tags/${TAG}^{commit}" HEAD \
+            || { echo "$TAG is not on develop; main moves only to a release on develop" >&2; exit 1; }
       - name: Fast-forward main to the tag
         # No --force: the push is refused if main holds a commit the tag lacks.
         env:
