@@ -37,9 +37,10 @@
       return;
     }
     var reduced = prefersReducedMotion();
+    // No cols or rows: the player takes the terminal size from the cast's
+    // header, which scripts/record_demo.py writes, so a re-record at another
+    // size cannot crop the session.
     AsciinemaPlayer.create({ data: window.BOILERPLATE_DEMO_CAST }, el, {
-      cols: 100,
-      rows: 28,
       fit: "width",
       preload: true,
       autoPlay: !reduced,
