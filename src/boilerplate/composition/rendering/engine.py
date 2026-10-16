@@ -237,10 +237,11 @@ class RenderEngine:
             )
 
             # Non-first layers always overwrite: composition is defined as
-            # layers overlaying the previous output. User's --force only
-            # governs the first layer (writing into a pre-existing
-            # destination); subsequent layers are orchestrated writes, not
-            # conflicting ones.
+            # layers overlaying the previous output. Without --force the
+            # pre-flight above admits only an absent or empty destination, so
+            # the user's --force governs the first layer's write into a
+            # pre-existing destination; subsequent layers are orchestrated
+            # writes over this render's own output, not conflicting ones.
             worker_opts: WorkerOptions = {
                 "src_path": str(layer.path),
                 "dst_path": ctx.destination,
