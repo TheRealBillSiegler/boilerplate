@@ -51,6 +51,31 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 Releases are cut from `develop`. release-please keeps one release PR open there, titled `chore(develop): release X.Y.Z`, and rebuilds it after every merge. `0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository; everything below describes the automated flow from the next release on.
 
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    actor M as Maintainer
+    participant D as develop
+    participant W as Release workflow
+    participant G as GitHub
+    loop for each PR, as many as needed
+        M-)D: merge a PR
+        D-)W: push
+        W-)G: add it to the release PR
+    end
+    M-)G: approve the release PR's CI
+    M-)D: merge the release PR
+    D-)W: push
+    W-)G: tag vX.Y.Z (e.g. v0.4.0), publish the release
+    par at the same time
+        W-)G: deploy the X.Y docs to gh-pages
+    and
+        W-)G: attach the offline docs zip
+    and
+        W-)G: fast-forward main to vX.Y.Z
+    end
+```
+
 **Merging the release PR is the release trigger and the only manual step.** Before merging it:
 
 - [ ] Approve the PR's waiting CI runs, then wait for `check` to pass. release-please opens the PR with the workflow's own `GITHUB_TOKEN`, and GitHub holds the runs of such a PR until someone approves them.
