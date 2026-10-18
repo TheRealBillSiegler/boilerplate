@@ -14,7 +14,7 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 **Less yak. More stack.**
 
 <figure class="demo">
-  <div id="demo-cast" role="region" aria-label="Terminal recording: boilerplate --help shows the banner and the commands, then boilerplate new project walks through a few prompts, scaffolds a project, and uv run pytest passes."></div>
+  <div id="demo-cast" role="region" aria-label="Terminal recording: the Boilerplate banner, then boilerplate new project walks through a few prompts, scaffolds a project, and uv run pytest passes."></div>
   <figcaption>New project, dependencies installed, pytest passing.</figcaption>
 </figure>
 
