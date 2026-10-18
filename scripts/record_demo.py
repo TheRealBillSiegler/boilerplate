@@ -1,4 +1,4 @@
-"""Records the demo scenario, the help banner then ``boilerplate new``, as a cast.
+"""Record the demo scenario, a banner title card then ``boilerplate new``, as a cast.
 
 Drives the scenario the docs home page and the README show through a real
 pseudo-terminal (via pexpect) running PowerShell, the shell the demo is
@@ -17,6 +17,10 @@ col R``). Nothing sits on the other end of a pexpect pty, so this module
 keeps an emulated screen (pyte) fed with everything the shell prints and
 answers each request itself; without an answer PSReadLine draws at the
 wrong position or stalls.
+
+The recording opens on a title card: the CLI's own banner, drawn by
+``build_banner`` and written straight into the cast ahead of the shell's
+first prompt, with no command typed. It then clears to that prompt.
 
 pexpect's pty backend is POSIX-only, so the functions that spawn and drive
 the shell import it locally. The module itself stays importable everywhere;
@@ -41,23 +45,28 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pyte
+from rich.console import Console
+
+from boilerplate.cli.display.banner import build_banner
+from boilerplate.cli.display.terminal_facts import TerminalFacts
 
 if TYPE_CHECKING:
     import pexpect
 
-# Tall enough for the top-level help, banner included, to stay on screen.
-_ROWS: Final = 48
+# A common terminal height, with room around the 11-row title card.
+_ROWS: Final = 28
 _COLS: Final = 100
 _TYPE_DELAY_S: Final = 0.045
 _IDLE_TIME_LIMIT_S: Final = 2.0
 _DRAIN_TIMEOUT_S: Final = 0.02
 # Pauses a viewer needs: to read a question before the answer is typed, and
-# to read each finished screen (the help with its banner, the render's
-# summary, the test result) before the next command or the loop. A read pause
-# fits under the idle cap; a linger is longer and goes through
-# ``_EventRecorder.linger`` so the cap does not shorten it.
+# to read each finished screen (the title card, the render's summary, the
+# test result) before the next command or the loop. A read pause fits under
+# the idle cap; a linger is longer and goes through ``_EventRecorder.linger``
+# (the title card through ``_EventRecorder.open_on``) so the cap does not
+# shorten it.
 _READ_PAUSE_S: Final = 0.4
-_HELP_LINGER_S: Final = 5.0
+_TITLE_LINGER_S: Final = 3.0
 _AFTER_RENDER_LINGER_S: Final = 3.0
 _END_LINGER_S: Final = 4.0
 
@@ -103,6 +112,10 @@ _SHELL_SETUP: Final = (
 
 # The cursor-position request (DSR 6) the shell sends and the reporter answers.
 _CPR_REQUEST: Final = "\x1b[6n"
+# The title card hides the cursor; the clear after it shows the cursor again
+# and homes it on a blank screen, the screen the shell started on.
+_HIDE_CURSOR: Final = "\x1b[?25l"
+_CLEAR_SCREEN: Final = "\x1b[?25h\x1b[2J\x1b[H"
 
 _FAILED_PROMPT_RE: Final = r"\[exit -?\d*\]> "
 # The bare prompt may be followed by escape sequences PSReadLine sends the
@@ -197,6 +210,29 @@ class _EventRecorder:
         self.events = [(0.0, code, data) for _, code, data in self.events]
         self._virtual_time_s = 0.0
         self._last_wall_time_s = time.monotonic()
+
+    def open_on(self, screen: str, seconds: float) -> None:
+        """Open the recording on ``screen``, held for ``seconds`` before the rest.
+
+        Everything recorded so far moves to the end of the hold, after a
+        clear, so it plays on the blank screen it was first drawn on. The
+        hold takes no real time; like ``linger``, it records an empty event
+        at each step the idle cap allows.
+
+        Args:
+            screen: Terminal output to open on.
+            seconds: How long the viewer gets, in recorded time.
+        """
+        hold: list[tuple[float, str, str]] = [(0.0, "o", screen)]
+        step_s = self._idle_cap_s
+        while step_s < seconds:
+            hold.append((step_s, "o", ""))
+            step_s += self._idle_cap_s
+        hold.append((seconds, "o", _CLEAR_SCREEN))
+        self.events = hold + [
+            (moment_s + seconds, code, data) for moment_s, code, data in self.events
+        ]
+        self._virtual_time_s += seconds
 
     def output(self, s: str) -> None:
         """Record a chunk of terminal output at the current recorder time.
@@ -325,6 +361,41 @@ class _PtyObserver:
     def flush(self) -> object:
         """Implement the pexpect ``logfile_read`` flush protocol (a no-op)."""
         return None
+
+
+def _title_card() -> str:
+    """Return the title card: the CLI's banner, centered on the recording's screen.
+
+    Returns:
+        Terminal output that draws the banner, colored as the CLI colors it,
+        with the cursor hidden.
+
+    Raises:
+        DemoRecordingError: The banner does not fit the recording's size.
+    """
+    facts = TerminalFacts(
+        interactive=True,
+        columns=_COLS,
+        lines=_ROWS,
+        braille=True,
+        ascii_only=False,
+        accessible=False,
+        opted_out=False,
+    )
+    banner = build_banner(facts)
+    if banner is None:
+        msg = f"the banner does not fit a {_COLS}x{_ROWS} recording"
+        raise DemoRecordingError(msg)
+    console = Console(
+        force_terminal=True, color_system="truecolor", width=_COLS, legacy_windows=False
+    )
+    with console.capture() as capture:
+        console.print(banner, end="")
+    rows = capture.get().split("\n")
+    width = max(len(row) for row in banner.plain.split("\n"))
+    left = " " * ((_COLS - width) // 2)
+    above = "\r\n" * ((_ROWS - len(rows)) // 2)
+    return _HIDE_CURSOR + above + "\r\n".join(left + row for row in rows)
 
 
 def _write_cast(
@@ -592,11 +663,11 @@ def _spawn_shell(recorder: _EventRecorder, demo_root: Path) -> pexpect.spawn[str
 
 
 def _record_scenario(cast_path: Path) -> None:
-    """Drives the demo scenario through a real PTY and writes the cast file.
+    """Drive the demo scenario through a real PTY and write the cast file.
 
-    Scenario: ``boilerplate --help``, held on the banner and the command
-    list, then ``boilerplate new project weather-report``, answering each
-    Copier question, then ``cd weather-report && uv run pytest -q``. The
+    Scenario: the banner title card, then ``boilerplate new project
+    weather-report``, answering each Copier question, then ``cd
+    weather-report && uv run pytest -q``. The
     cast and its JavaScript wrapper are written only after every step
     succeeds; callers must delete them themselves on failure (nothing is
     written here in that case).
@@ -605,13 +676,15 @@ def _record_scenario(cast_path: Path) -> None:
         cast_path: Destination ``.cast`` file path.
 
     Raises:
-        DemoRecordingError: The shell prompt reported a non-zero exit
-            status after the render or the test run.
+        DemoRecordingError: The banner does not fit the recording, or the
+            shell prompt reported a non-zero exit status after the render or
+            the test run.
         pexpect.TIMEOUT: A prompt, the render, or the test run did not
             produce the expected output in time.
         pexpect.EOF: The shell exited unexpectedly.
     """
     recorder = _EventRecorder(idle_cap_s=_IDLE_TIME_LIMIT_S)
+    title_card = _title_card()
     # Recorded under the real home directory rather than a temp path: the
     # template's post-generation task prints the absolute repository path,
     # and a demo that says /tmp does not look like anyone's workstation.
@@ -627,18 +700,13 @@ def _record_scenario(cast_path: Path) -> None:
     try:
         _expect_prompt(child, timeout=30)
         recorder.restart()
+        recorder.open_on(title_card, _TITLE_LINGER_S)
         _settle(child, _READ_PAUSE_S)
 
         def wait(seconds: float) -> None:
             _settle(child, seconds)
 
-        # The first command also covers the CLI's cold start.
-        _type_slowly(child, "boilerplate --help")
-        _press_enter(child)
-        _expect_prompt(child, timeout=60)
-        recorder.mark("help")
-        recorder.linger(_HELP_LINGER_S, wait)
-
+        # The first question's longer wait also covers the CLI's cold start.
         _type_slowly(child, "boilerplate new project weather-report")
         _press_enter(child)
 

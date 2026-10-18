@@ -10,8 +10,11 @@ import re
 from itertools import pairwise
 from pathlib import Path
 
+import pyte
 import pytest
 import yaml
+
+from boilerplate.cli.display.banner_art import NAME
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _MODULE_PATH = _REPO_ROOT / "scripts" / "record_demo.py"
@@ -115,3 +118,81 @@ class TestLinger:
         times = [0.0, *(time_s for time_s, _, _ in recorder.events)]
         assert max(later - earlier for earlier, later in pairwise(times)) <= 2.0
         assert all(code == "o" and data == "" for _, code, data in recorder.events)
+
+
+class TestOpenOn:
+    """The recording opens on a screen held ahead of everything recorded so far."""
+
+    def _opened(self, monkeypatch: pytest.MonkeyPatch) -> list[tuple[float, str, str]]:
+        recorder, _ = _lingering_recorder(monkeypatch)
+        recorder.output("PS ~/repos> ")
+        recorder.restart()
+        recorder.open_on("TITLE", 5.0)
+        return recorder.events
+
+    def test_the_screen_is_the_first_event(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert self._opened(monkeypatch)[0] == (0.0, "o", "TITLE")
+
+    def test_what_was_recorded_follows_the_hold_on_a_cleared_screen(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        events = self._opened(monkeypatch)
+
+        assert events[-2] == (5.0, "o", record_demo._CLEAR_SCREEN)
+        assert events[-1] == (5.0, "o", "PS ~/repos> ")
+
+    def test_later_events_count_from_the_end_of_the_hold(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        recorder, clock = _lingering_recorder(monkeypatch)
+        recorder.restart()
+        recorder.open_on("TITLE", 5.0)
+
+        clock.wait(1.0)
+        recorder.output("x")
+
+        assert recorder.events[-1] == (6.0, "o", "x")
+
+    def test_no_gap_in_the_hold_exceeds_the_cap(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        times = [time_s for time_s, _, _ in self._opened(monkeypatch)]
+
+        assert max(later - earlier for earlier, later in pairwise(times)) <= 2.0
+
+
+def _screen_rows(text: str) -> list[str]:
+    screen = pyte.Screen(record_demo._COLS, record_demo._ROWS)
+    pyte.Stream(screen).feed(text)
+    return screen.display
+
+
+class TestTitleCard:
+    """The title card is the CLI's own banner, whole and centered on one screen."""
+
+    def test_the_card_shows_the_whole_name(self) -> None:
+        rows = _screen_rows(record_demo._title_card())
+
+        assert all(any(name_row.strip() in row for row in rows) for name_row in NAME)
+
+    def test_the_card_shows_the_braille_logo(self) -> None:
+        rows = _screen_rows(record_demo._title_card())
+
+        assert any("⠀" <= char <= "⣿" for row in rows for char in row)
+
+    def test_the_card_is_centered_across(self) -> None:
+        drawn = [row for row in _screen_rows(record_demo._title_card()) if row.strip()]
+        left = min(len(row) - len(row.lstrip()) for row in drawn)
+        right = record_demo._COLS - max(len(row.rstrip()) for row in drawn)
+
+        assert abs(left - right) <= 1
+
+    def test_the_card_is_centered_down(self) -> None:
+        rows = _screen_rows(record_demo._title_card())
+        drawn = [i for i, row in enumerate(rows) if row.strip()]
+        above = drawn[0]
+        below = record_demo._ROWS - 1 - drawn[-1]
+
+        assert abs(above - below) <= 1
