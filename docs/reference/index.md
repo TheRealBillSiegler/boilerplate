@@ -1,6 +1,6 @@
 # Reference
 
-The lookup shelf: the command reference, the platform model, the merge rules, and generated API documentation.
+The lookup shelf: the command reference, the reference model, the merge rules, and generated API documentation.
 
 ## Commands
 

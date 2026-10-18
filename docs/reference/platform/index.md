@@ -58,7 +58,7 @@ Category names in the curated stack below are drawn from it.
 
 The curated stack is the standardized technology stack: the subset of the landscape the organization commits to supporting. It answers *what do we use?*
 
-This is what the [Environment guide](../../environment/index.md) calls the **Toolchain** — that page documents each tool's configuration and daily use.
+The stack's picks for the inner-loop slots are what the [Environment guide](../../environment/index.md) calls the **Toolchain**; that page documents each tool's configuration and daily use.
 
 ### Boilerplate reference implementation: Stack
 
@@ -154,7 +154,7 @@ See [Choose a template](../../templates-hub/index.md#choose-a-template) for the 
 
 ## Guardrails
 
-Guardrails are automated policies that convert platform standards from documentation into enforced behavior. They answer *how do we ensure compliance?*
+Guardrails are automated policies that convert platform standards from documentation into enforced behavior. They answer *how do we comply?*
 
 ### Boilerplate reference implementation: Guardrails
 
