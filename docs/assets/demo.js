@@ -49,8 +49,9 @@
       idleTimeLimit: 2,
       // A poster is only wanted when playback will not start on its own;
       // with autoplay it shows for a beat before the first frame, which
-      // reads as a flash of the wrong moment.
-      poster: reduced ? "npt:0:04" : undefined,
+      // reads as a flash of the wrong moment. One second in, the recording
+      // is on its title card, the banner.
+      poster: reduced ? "npt:0:01" : undefined,
       terminalFontFamily: "'JetBrains Mono', monospace",
     });
   }
