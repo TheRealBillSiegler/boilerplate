@@ -5,13 +5,6 @@
     ".": {
       "release-type": "python",
       "changelog-path": "CHANGELOG.md",
-      "extra-files": [
-        {
-          "type": "toml",
-          "path": "uv.lock",
-          "jsonpath": "$.package[?(@.name.value=='boilerplate')].version"
-        }
-      ],
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "changelog-sections": [
@@ -30,7 +23,8 @@
       "extra-files": [
         { "type": "generic", "path": "scripts/install.ps1" },
         { "type": "generic", "path": "docs/index.md" },
-        { "type": "generic", "path": "docs/install.md" }
+        { "type": "generic", "path": "docs/install.md" },
+        { "type": "toml", "path": "uv.lock", "jsonpath": "$.package[?(@.name.value=='boilerplate')].version" }
       ]
     }
   }
