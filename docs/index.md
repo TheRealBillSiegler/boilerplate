@@ -138,7 +138,7 @@ Just want the CLI? See [Installation](install.md#setup-options).
 
     ---
 
-    The platform model and standards.
+    The reference model and standards.
 
 -   :material-account-group:{ .lg .middle } **[Contributing](governance/contributing.md)**
 
