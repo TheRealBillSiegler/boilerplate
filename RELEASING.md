@@ -76,7 +76,7 @@ sequenceDiagram
     end
 ```
 
-**Merging the release PR is the release trigger and the only manual step.** Before merging it:
+**Merging the release PR is the release trigger.** Before merging it:
 
 - [ ] Approve the PR's waiting CI runs, then wait for `check` to pass. release-please opens the PR with the workflow's own `GITHUB_TOKEN`, and GitHub holds the runs of such a PR until someone approves them.
 - [ ] Read the version and the `CHANGELOG.md` entry against [Versioning & changelog](#versioning--changelog-automated-by-release-please).

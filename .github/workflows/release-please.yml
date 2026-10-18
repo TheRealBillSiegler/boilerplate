@@ -1,6 +1,6 @@
 name: Release
 
-# The release pipeline. Its one manual step is merging the release PR.
+# The release pipeline. Merging the release PR starts each release.
 #
 # release-please keeps one release PR open against develop and updates it as
 # work merges: the next version, worked out from conventional commits, and
