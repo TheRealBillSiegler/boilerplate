@@ -72,11 +72,15 @@ Copier questionnaire file. Declares questions (variables) and tasks. Owned by Co
 **Copy back**:  
 The step of `update` and `add` that reproduces the staging worktree's result in the user's checkout as uncommitted changes: `git restore --source=<commit> --worktree -- :/` from the worktree's last per-layer commit. See design 06 §Staging worktree.
 
+**Curated stack**:  
+An element of the reference model, answering *what do we use?*: the subset of the **Tool landscape** Boilerplate commits to supporting, one pick per **slot**. See Developer platform architecture §The curated stack.  
+_Carve-out_: the verb "stack" (composing templates with `extends`) and "layer stack" (the layers so composed) are not this term.
+
 **DAG / Dependency Graph**:  
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
 
 **Development Environment**:  
-The setup a developer works in — its **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), **Project Layout**, **Workflow**, and **Guardrails**. What a generated project ships with. Distinct from **Environment Provisioning**, the subsystem that installs and pins it.
+The setup a developer works in — its **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), **Project Layout**, and **Workflow**. What a generated project ships with. Distinct from **Environment Provisioning**, the subsystem that installs and pins it.
 
 **enforced substrate**:  
 The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a `BP_*` code; there is no opt-out.
@@ -106,11 +110,11 @@ Templates Boilerplate publishes as their own git repositories, extracted from th
 See **first-party gating scaffolding**.
 
 **golden path**:  
-The supported, opinionated way to build one kind of project, from creating it through running it. Each template is one, and a project created from it starts on that path. Steps along the way can have golden paths of their own, such as Boilerplate's own workflow for creating, developing and updating a project, which the Quickstart walks through.  
+The supported, opinionated way to build one kind of project, from creating it through running it. Each template is one, and a project created from it starts on that path. Steps along the way can have golden paths of their own, such as Boilerplate's own workflow for creating, developing and updating a project, which the Quickstart walks through. An element of the reference model, answering *how do we work?*; see Developer platform architecture §The golden path.  
 _Avoid_: paved road, paved path
 
 **Guardrails**:  
-Where quality is enforced across a **Development Environment** — dev-time (format-on-save, live type-checking) and CI. A part of the Development Environment; see the Development Environment guide.
+An element of the reference model, answering *how do we comply?*: the automated checks that verify a project against the standards its templates configure — dev-time in a **Development Environment** (format-on-save, live type-checking) and CI — as part of the **preconfigured** substrate. See Developer platform architecture §Guardrails.
 
 **Lock File (`boilerplate.lock`)**:  
 Records exact versions, commit hashes, and checksums used. Owned by Boilerplate.
@@ -136,6 +140,9 @@ Out-of-scope content verdicts performed against generated projects after Boilerp
 **Project Layout**:  
 The standard project structure — `src/`, `tests/`, and their conventions. A part of the **Development Environment**; see the Development Environment guide.
 
+**Reference model**:  
+The model of what Boilerplate is — a **Tool landscape** feeding a **Curated stack**, a **golden path**, **Starter templates** and **Guardrails** — owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
+
 **RenderEngine**:  
 The proper-noun class that orchestrates Copier across composition layers.
 
@@ -148,14 +155,20 @@ The conflict-detected update workflow Boilerplate provides over Copier's per-lay
 **slot**:  
 One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Each first-party template fills the inner-loop slots of its ecosystem with one opinionated tool each; the template then fills slots *within* those slots (each tool's per-project configuration).
 
+**Starter templates**:  
+An element of the reference model, answering *how do we start?*: the **Templates**, each one a **golden path** that encodes the **Curated stack**. Outside the reference model, say **Template**. See Developer platform architecture §Starter templates.
+
 **substrate**:  
 A layer's enforcement mode — `enforced` (Boilerplate's own runtime gates and rejects on violation, with no opt-out) or `preconfigured` (defaults are shipped; user-runnable gating scaffolding executes the check in third-party venues; the user MAY opt out). Per-layer assignments live in PROD-001 `enforcement_layers`.
 
 **TOFU**:  
 Trust-on-first-use — a security model where the first interaction with a remote source is trusted, and subsequent interactions are verified against the initial state.
 
+**Tool landscape**:  
+An element of the reference model, answering *what exists?*: the descriptive catalog of the tools, technologies and practices available in a domain, organized by **slot**; the **Curated stack** is chosen from it. Boilerplate keeps it as the Development Environment Landscape guide. See Developer platform architecture §The tool landscape.
+
 **Toolchain**:  
-The tool *set* within a **Development Environment**: uv, ruff, pyright, pytest, VS Code, git. A part of the environment, **not** a synonym for it.
+The tool *set* within a **Development Environment**: uv, ruff, pyright, pytest, VS Code, git — the **Curated stack**'s picks for the inner-loop **slots**. A part of the environment, **not** a synonym for it.
 
 **Trust Level**:  
 Binary classification for a template's origin: *trusted* or *untrusted*. Untrusted code is default-deny and requires explicit consent. The lock's optional `trust_tier` field is a free-form string field reserved for future richer tiers. See design 03.
@@ -170,7 +183,7 @@ The first generation of this design suite's on-disk contracts (`schema_version` 
 WebAssembly — the plugin architecture used by proto for cross-platform tool installation.
 
 **Workflow**:  
-The everyday developer loop within a **Development Environment** — sync → edit → check → test → commit. A part of the Development Environment; see the Development Environment guide.
+The everyday developer loop of a **golden path**, run within a **Development Environment** — sync → edit → check → test → commit. A part of the Development Environment; see the Development Environment guide.
 <!-- --8<-- [end:language] -->
 
 ## Relationships
