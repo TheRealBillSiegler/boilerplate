@@ -237,7 +237,7 @@ Example for `new`:
 Examples:
   boilerplate new project my-service
   boilerplate new streamlit@1.0.0 ./my-dashboard --no-git-init
-  boilerplate new streamlit my-app --answers ci/answers.yml --non-interactive
+  boilerplate new streamlit my-app --data-file ci/answers.yml --non-interactive
 ```
 
 ---
@@ -276,27 +276,24 @@ The selection prompt MUST NOT make network calls. It operates only on locally ca
 | `--dry-run` | `-n` | flag | `false` | Show the composition plan without rendering or writing files. Default: `false`. |
 | `--render-to` | — | path | null | Render the template to the specified directory for inspection without creating a managed project. Default: null. |
 | `--git-init` | — | flag | `true` | Initialize a Git repository in the created project directory. Default: `true`. Use `--no-git-init` to skip. |
-| `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
-| `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
-| `--save-answers` | — | path | null | Write final merged answers to a YAML file for CI reproducibility. Default: null. See `--save-answers` notes below. |
-| `--data` | — | key=value | — | Forced answer for one question (repeatable). Never prompted for; satisfies the non-interactive required-answer pre-flight. Precedence on collision: `--data` > `--data-file` > profile pre-fills. |
-| `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8. Same forced-answer semantics as `--data`; `--data` wins on a key collision. |
+| `--data` | `-d` | key=value | — | Forced answer for one question (repeatable). Never prompted for; satisfies the non-interactive required-answer pre-flight. Precedence on collision: `--data` > `--data-file` > profile pre-fills > template default. See [Answer Presets](#answer-presets). |
+| `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8: an [answer preset](#answer-presets). Same forced-answer semantics as `--data`; `--data` wins on a key collision. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
 | `--yes` | `-y` | flag | `false` | Suppress confirmation prompts for task execution and Jinja2 extension loading. Default: `false`. For untrusted templates, `--allow-tasks` (or `--allow-untrusted`) is additionally required. Does not affect interactive question prompts — use `--non-interactive` for that. |
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
 
-**`--data`/`--data-file` vs `--answers`/`--set`/`--save-answers`**: `--data` and `--data-file` name Copier's own forced-answers channel directly (`--data`/`--data-file` in Copier itself), so the flag names carry over unchanged for anyone already familiar with Copier. `--answers`/`--set`/`--save-answers` cover the round-trip answers workflow; their overlap with the forced-answers flags is reconciled in that feature's design.
+**`--data` and `--data-file`**: The only channel for answers on a single invocation. Both name Copier's own forced-answers flags (`--data`/`-d` and `--data-file`), so the names and the short flag carry over unchanged for anyone already familiar with Copier. Precedence, the YAML format and the handling of `_`-prefixed keys are in [Answer Presets](#answer-presets).
 
 `--no-tasks` is the canonical flag name. `--skip-tasks` is accepted as an alias for compatibility but is not displayed in help text.
 
-Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `--non-interactive` and `--no-tasks` are scripted, safety-relevant switches and have no short form; `-n` means dry run here as it does in Copier, make and rsync.
+Short flags are reserved for options typed at a prompt, such as `-f`, `-n` and `-d` (`--data`, as in Copier). `--non-interactive` and `--no-tasks` are scripted, safety-relevant switches and have no short form; `-n` means dry run here as it does in Copier, make and rsync.
 
 **`--dry-run` vs `--render-to`**: `--dry-run` shows the composition plan and the list of files that would be created without producing any output. To render files for inspection without committing a managed project, use `--render-to <dir>`.
 
 **`--git-init` rationale**: Git initialization is the default because `boilerplate update` requires a Git repository.
 
-**`--save-answers` notes**: The saved file is a YAML document containing only user-provided answer values (keys and their resolved values). It does not include Copier-internal metadata (`_commit`, `_src_path`, etc.) or default values that were not explicitly provided. Questions marked with `secret: true` in the template are excluded from the saved file; a placeholder comment indicates the omission: `# secret_question: <omitted — marked as secret>`. See [§10 Privacy](10-security.md#privacy) for details. The file can be passed directly to `--answers` in subsequent invocations.
+**Reusing a finished run's answers**: the template's `.copier-answers.<layer>.yml` that `new` leaves in the project is a complete [answer preset](#answer-presets), secret answers excepted. Pass it to `--data-file`.
 
 **`--force` and `--non-interactive` are independent concerns.** `--non-interactive` means "use defaults for all questions." `--force` means "overwrite a non-empty destination." Neither implies the other: CI may need `--non-interactive` without `--force` (fail if the destination is non-empty), and a retry may need `--force` while still prompting interactively.
 
@@ -335,8 +332,8 @@ Update an existing project to a newer template version. The walk runs in a tempo
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show update plan and exit without prompting or applying. Default: `false`. |
 | `--target-version` | `-t` | string (repeatable) | null | Target version. `<version>` names the root template's target and `<layer>@<version>` names that layer's, so the option repeats to pin several layers. Default: each layer's latest. A layer the lock does not list stops the run with `BP_UPDATE_LAYER_UNKNOWN`, and a version another lock layer's `extends` constraint excludes with `BP_UPDATE_TARGET_EXCLUDED`; resolution is in [06 §Step 2](06-project-lifecycle.md#step-2-resolve-target). Refused when it differs from the targets a pending `conflict` record names. |
-| `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
-| `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
+| `--data` | `-d` | key=value | — | Forced answer for one question (repeatable). Never prompted for. Precedence on collision: `--data` > `--data-file` > the recorded answer > template default. See [Answer Presets](#answer-presets). |
+| `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8: an [answer preset](#answer-presets). `--data` wins on a key collision. |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Take every question's default without prompting, a recorded answer being its question's default. Default: `false`. |
 | `--skip-answered` | — | flag | `false` | Ask only the questions no answers file records. Default: `false`. |
@@ -349,7 +346,7 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 **`--non-interactive`**: Take every question's default without prompting, as Copier's `--defaults` does. A recorded answer is the default of its question, so existing answers from each layer's `.copier-answers.<layer>.yml` are reused and a new question takes its declared default.
 
-**`--answers` and `--set`**: Both are laid over the data each layer's step receives, as Copier's own `--data` is laid over the answers it reads. A value supplied for a question whose recorded answer the target view rejects replaces that answer, and Copier validates the supplied value instead.
+**`--data` and `--data-file`**: Both are laid over the data each layer's step receives, as Copier's own `--data` is laid over the answers it reads. A value supplied for a question whose recorded answer the target view rejects replaces that answer, and Copier validates the supplied value instead.
 
 **Default behavior**: Compute the update plan, display it, then prompt the user for confirmation before applying. This is one command, one flow — not a two-step dry-run-then-apply cycle.
 
@@ -422,8 +419,8 @@ Add one template layer to a project Boilerplate already manages, the way a by-ha
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show the add plan and exit without prompting or applying. Default: `false`. |
-| `--answers` | `-a` | path | null | YAML file containing question answers. Default: null. |
-| `--set` | `-s` | key=value | — | Inline answer override for scalar values (repeatable). |
+| `--data` | `-d` | key=value | — | Forced answer for one question (repeatable). Never prompted for. Precedence on collision: `--data` > `--data-file` > the recorded answer of an ancestor layer > template default. See [Answer Presets](#answer-presets). |
+| `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8: an [answer preset](#answer-presets). `--data` wins on a key collision. |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Use defaults for the layer's questions without prompting. Default: `false`. |
 | `--no-tasks` | — | flag | `false` | Skip execution of all template tasks (`_tasks`). Default: `false`. |
@@ -449,7 +446,7 @@ Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [T
 
 **Default behavior**: Compute the add plan, display it, then prompt for confirmation before applying, as `update` does. The plan, which `--dry-run` also prints, lists the layer and its version, the files, the layer's own tasks (each command), the Jinja extensions its scoped view loads, and one line on what undo can and cannot reverse ([06 §Undo](06-project-lifecycle.md#undo)). `--dry-run` prints the plan and exits; `--yes` skips the prompt. The result lands as uncommitted changes, so the user reviews and commits it.
 
-**`--answers` and `--set`**: Both are laid over the new layer's questionnaire data, as Copier's own `--data` is.
+**`--data` and `--data-file`**: Both are laid over the new layer's questionnaire data, as Copier's own `--data` is.
 
 **Task execution**: The new layer's tasks run once, before the lock and the record, under the same trust-level rules as `new` (see [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety)). A task that fails is handled as for `update` ([design 04 §Safe Update](04-composition-engine.md#safe-update)).
 
@@ -1082,7 +1079,7 @@ After completing an operation, the CLI MUST print contextual next steps. Guidanc
 1. **Default**: Always `cd {destination}`. `uv sync` follows it only when the template's setup tasks were skipped (`--no-tasks`); otherwise the tasks already installed dependencies and Next steps lists only what is left to do.
 2. **Profile-derived**: If the template declares `requires_profile`, include `boilerplate env apply`.
 3. **Template-declared** (printed after `new` only, per [03 §post_create_message](03-template-system.md#post_create_message)): `post_create_message` from `boilerplate.yml`, accumulated from all layers in topological order, labeled "From the template author:".
-4. **`Tip:` block**: Save-answers hint for CI reproducibility (suppressed when `--answers` or `--ci` was used).
+4. **`Tip:` block**: Hint that the template's answers file is a ready-made answer preset for CI reproducibility (suppressed when `--data-file` or `--ci` was used).
 
 Template-declared guidance is informational only — MUST NOT execute automatically.
 
@@ -1098,8 +1095,8 @@ From the template author:
   This template uses FastAPI. Start the dev server with:
   uvicorn src.main:app --reload
 
-Tip: Save your answers for CI reproducibility:
-  boilerplate new fastapi my-project --save-answers answers.yml --non-interactive
+Tip: Reuse these answers in CI:
+  boilerplate new fastapi my-project --data-file my-project/.copier-answers.fastapi.yml --non-interactive
 ```
 
 **After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted. When the layer runs no tasks, or `--no-tasks` is active, Next steps also lists `uv sync`.
@@ -1108,16 +1105,18 @@ Tip: Save your answers for CI reproducibility:
 
 ### Answer Presets
 
-An **answer preset** is a YAML file that supplies answers to template questions declaratively, enabling reproducible project creation in CI/CD pipelines and scripts.
+An **answer preset** is a YAML file, passed to `--data-file`, that supplies answers to template questions declaratively, enabling reproducible project creation in CI/CD pipelines and scripts.
 
-**CLI flags** (available on `new`, `update`, and `add`):
+**CLI flags** (available on `new`, `update`, and `add`), Copier's own names and short flag:
 
 | Option | Short | Type | Description |
 | --- | --- | --- | --- |
-| `--answers <path>` | `-a` | path | YAML file containing question answers |
-| `--set key=value` | `-s` | string | Inline answer override for scalar values (repeatable) |
+| `--data <key=value>` | `-d` | string | Forced answer for one question (repeatable) |
+| `--data-file <path>` | — | path | YAML file mapping question name to forced answer |
 
-**Precedence**: `--set` values take precedence over `--answers` values, which take precedence over question defaults. Prefer `--answers` for structured, multi-field, or cross-platform scenarios; use `--set` only for simple scalar overrides.
+Both flags feed Copier's `data` channel: a forced answer is never prompted for.
+
+**Precedence**: `--data` > `--data-file` > profile pre-fills (`new`) or the recorded answer (`update`, `add`) > template default. Prefer `--data-file` for structured, multi-field, or cross-platform scenarios; use `--data` for simple scalar overrides.
 
 **Answer preset format**:
 
@@ -1133,10 +1132,13 @@ author_name: "Platform Team"
 
 **Behavior**:
 
-- If `--answers` is provided without `--non-interactive`, the user is prompted for questions NOT present in the file (partial answers)
-- If `--answers` is provided WITH `--non-interactive`, unanswered questions use their declared defaults
-- Answer presets MUST NOT contain underscore-prefixed keys (Copier directives); if encountered, warn and ignore
+- If `--data-file` or `--data` is provided without `--non-interactive`, the user is prompted for questions NOT supplied (partial answers)
+- If `--data-file` or `--data` is provided WITH `--non-interactive`, questions not supplied use their declared defaults
+- `--data-file` skips underscore-prefixed keys (Copier directives) with a warning, so a Copier answers file is accepted as a preset; an underscore-prefixed key in `--data` is an error
+- A key that is not a string, or is empty, fails fast
 - Answer presets MUST be pure data (YAML maps). No Jinja2 expressions, no executable content.
+
+**The template's answers file is a preset**: `new` takes one template, and that template's `.copier-answers.<layer>.yml` records its own and every ancestor's answers ([ADR-015](adr-015-idiomatic-artifacts.md) point 4), so the file a finished `new` leaves in the project is a complete preset. Answers to questions marked `secret: true` are the exception: Copier does not record them, so supply them with `--data`.
 
 ### Interactive Prompting Contract
 
@@ -1147,7 +1149,7 @@ Boilerplate delegates prompting to Copier, but composition means the user faces 
 1. **One pass**: The user answers all questions once, on the first layer. Subsequent layers reuse answers silently.
 2. **No surprises**: The merged questionnaire is the union of all layers' questions. The user sees one flat list, not a per-layer interrogation.
 3. **Validation is immediate**: If a question declares `choices`, Copier validates the answer before moving to the next question. Invalid input is re-prompted.
-4. **Partial answers merge cleanly**: When `--answers` provides some values and the mode is interactive, only unanswered questions are prompted. Answered questions are shown as a summary before prompting begins:
+4. **Partial answers merge cleanly**: When `--data-file` provides some values and the mode is interactive, only unanswered questions are prompted. Answered questions are shown as a summary before prompting begins:
 
 ```text
 Using answers from answers.yml:
@@ -1245,9 +1247,8 @@ The following table summarizes flag availability across commands. **Global flags
 | `--non-interactive` | X | X | X | | | | | | | | | | | | | |
 | `--skip-answered` | | X | | | | | | | | | | | | | | |
 | `--dry-run` / `-n` | X | X | X | X | X | | | | | | | | | X | | |
-| `--answers` | X | X | X | | | | | | | | | | | | | |
-| `--set` | X | X | X | | | | | | | | | | | | | |
-| `--save-answers` | X | | | | | | | | | | | | | | | |
+| `--data` / `-d` (repeatable) | X | X | X | | | | | | | | | | | | | |
+| `--data-file` | X | X | X | | | | | | | | | | | | | |
 | `--no-tasks` | X | X | X | | | | | | | | | | | | | |
 | `--allow-extensions` | X | X | X | | | | | | | | | | | | | |
 | `--allow-tasks` | X | X | X | | | | | | | | | | | | | |
@@ -1304,7 +1305,7 @@ Common invocation patterns for automated environments:
 | Create project, no interaction | `boilerplate new template dest --ci` |
 | Create project, no interaction, env var instead of a flag (POSIX shells) | `BOILERPLATE_CI=1 boilerplate new template dest` |
 | Create project, no interaction, env var instead of a flag (PowerShell) | `$env:BOILERPLATE_CI = "1"; boilerplate new template dest` |
-| Create with answers file | `boilerplate new template dest --ci --answers answers.yml` |
+| Create with answers file | `boilerplate new template dest --ci --data-file answers.yml` |
 | Create from an untrusted source, tasks allowed | `boilerplate new template dest --ci --allow-tasks` |
 | Update project | `boilerplate update --ci` |
 | Add a template layer | `boilerplate add template --ci` |

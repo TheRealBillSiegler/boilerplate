@@ -26,7 +26,7 @@ intention:
     # Machine interface (agent-friendliness)
     - "Every command accepts `--format json` and emits a versioned, documented output schema"
     - "Every command exits with a documented semantic exit code"
-    - "Scaffolding commands accept `--answers` for fully non-interactive runs"
+    - "Scaffolding commands accept `--data` and `--data-file` for fully non-interactive runs"
     - "A template-introspection command emits questions, types, and defaults as JSON"
     - "A `--ci` convenience flag is recognised by all commands intended for CI use"
     # Security (distributed from PROD-001 security posture)

@@ -259,7 +259,7 @@ Three-way merge semantics preserve local modifications while incorporating templ
 
 - **Multi-layer compositions** (templates with `extends`): Boilerplate orchestrates per-layer updates by running Copier's `update` per layer in lock order (`copier update -a .copier-answers.<layer>.yml --vcs-ref=<target>` is the operation), each through the layer's scoped view ([design 04 §Safe Update](04-composition-engine.md#safe-update)). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it ([ADR-006](adr-006-template-distribution.md)). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate stages the walk in a git worktree and brings the result back as uncommitted changes (see [Staging worktree](#staging-worktree) and [Step 5](#step-5-failure-and-conflict)).
 
-The per-layer answers files (`.copier-answers.<layer>.yml`) record the answers each layer's update starts from, written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior). [Design 04 §Safe Update](04-composition-engine.md#safe-update) owns where each answer in a layer's step comes from, how the step prompts and checks recorded answers, how `--set` and `--answers` replace a rejected one, and when the walk runs tasks.
+The per-layer answers files (`.copier-answers.<layer>.yml`) record the answers each layer's update starts from, written at creation time per the [`_answers_file:` contract](04-composition-engine.md#render-behavior). [Design 04 §Safe Update](04-composition-engine.md#safe-update) owns where each answer in a layer's step comes from, how the step prompts and checks recorded answers, how `--data` and `--data-file` replace a rejected one, and when the walk runs tasks.
 
 **Non-git template sources**: If any locked template layer's source is a non-git source type (`filesystem` without a `.git/` directory, or `archive`), it has no commit for Copier to diff against — Copier has no three-way *or* two-way fallback for it ([ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28)). Boilerplate surfaces this:
 
@@ -514,7 +514,7 @@ The new layer renders into the existing tree as the by-hand copy would. The new 
 
 ### Choices inside a layer
 
-A layer that offers alternatives (CI providers, docs site generators) SHOULD ask one choice question and render conditional paths: Copier skips any path whose rendered name is empty, so the unchosen alternatives render nothing. Changing the choice later is an answer change on `update` (`--set`), merged by Copier's update.
+A layer that offers alternatives (CI providers, docs site generators) SHOULD ask one choice question and render conditional paths: Copier skips any path whose rendered name is empty, so the unchosen alternatives render nothing. Changing the choice later is an answer change on `update` (`--data`), merged by Copier's update.
 
 ### Acceptance Criteria
 
