@@ -5,27 +5,24 @@ demo: true
 
 # Boilerplate
 
-**Boilerplate stamps out Python projects from templates that build on one another.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
-
-**An ethos made executable** — Start fast. Stay consistent. Reproduce anywhere.
-
-Almost every Python project starts with work that isn't the work: picking the tools again, copying the last project's config, getting the linter and the type checker to agree on the same rules. Boilerplate's templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option. The general-purpose Python template sets up uv, Ruff, Pyright in strict mode, pytest and VS Code, and configures them in `pyproject.toml` and `.vscode/`.
-
-Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment around it.
-
-**Less yak. More stack.**
+--8<-- "README.md:opening"
 
 <figure class="demo">
   <div id="demo-cast" role="region" aria-label="Terminal recording: boilerplate new project asks a few questions and creates a project, then uv run pytest runs its tests."></div>
   <figcaption>New project, dependencies installed, pytest passing.</figcaption>
 </figure>
 
+The [Quickstart](quickstart.md) shows the same steps in text.
+
 [Quickstart](quickstart.md){ .md-button .md-button--primary } [Browse Templates Hub](templates-hub/index.md){ .md-button }
 
 !!! tip "Coming from Copier?"
     Start with [Why Boilerplate?](why.md) for the pitch, or go straight to [Template Composition](templates-hub/composition.md) for the `extends` mechanics.
 
-!!! tip "Evaluating for a team?"
+!!! tip "Already on uv?"
+    `uv init` gives you a package; Boilerplate gives you the judgment around it.
+
+!!! tip "Evaluating Boilerplate?"
     [Why Boilerplate?](why.md) covers the ethos and the environment; [Implementation Status](status.md) shows what is implemented.
 
 ---
@@ -62,7 +59,7 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
     ---
 
-    Sensible defaults out of the box — less setup before you write code.
+    Defaults from the first render, so there is less setup before you write code.
 
 -   :material-puzzle:{ .lg .middle } **[Template composition](templates-hub/composition.md)**
 
@@ -79,20 +76,33 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
 ## Mini quickstart
 
-<!-- x-release-please-start-version -->
+=== "Windows 11"
 
-```powershell
-# Install (Windows 11; -ExecutionPolicy Bypass is per-process only)
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
-# Scaffold
-boilerplate new project my-first-project
-```
+    <!-- x-release-please-start-version -->
 
-<!-- x-release-please-end -->
+    ```powershell
+    # Install (-ExecutionPolicy Bypass is per-process only)
+    powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
+    # Scaffold
+    boilerplate new project my-first-project
+    ```
 
-That's the loop: install once, scaffold, then `uv run pytest` inside the new project to watch it pass its own gates. The [Quickstart](quickstart.md) walks every step with expected output; [Installation](install.md#setup-options) covers macOS/Linux and manual setup.
+    <!-- x-release-please-end -->
 
-Just want the CLI? See [Installation](install.md#setup-options).
+=== "macOS and Linux"
+
+    With [Git](https://git-scm.com/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed:
+
+    <!-- x-release-please-start-version -->
+
+    ```bash
+    uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
+    boilerplate new project my-first-project
+    ```
+
+    <!-- x-release-please-end -->
+
+Then run `uv run pytest` inside `my-first-project`. The [Quickstart](quickstart.md) walks every step with expected output, and [Installation](install.md#setup-options) covers manual setup.
 
 ---
 
