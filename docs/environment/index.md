@@ -4,7 +4,7 @@ Boilerplate projects include a complete, modern Python development environment. 
 
 ## Toolchain
 
-Boilerplate fills each slot the dev loop uses with one preconfigured, overridable tool, [picked from the tool landscape](../reference/platform/index.md#the-toolchain), rather than a menu, on your machine, in each project and in your editor — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot); the [landscape](../design/dev-environment-landscape.md) holds the full taxonomy.
+Boilerplate fills each slot the dev loop uses with one preconfigured, overridable tool rather than a menu, and the [toolchain](../reference/platform/index.md#the-toolchain) lists the picks. They are set up on your machine, in each project and in your editor — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot); the [landscape](../design/dev-environment-landscape.md) holds the full taxonomy.
 
 ### ![uv Logo](../assets/uv.svg){ style="height: 1em; vertical-align: middle;" } uv
 
