@@ -239,6 +239,20 @@ class TestLowContrastColors:
         assert _recorded(monkeypatch, "\x1b[1;38;5;124;4mx") == "\x1b[1;31;4mx"
 
     @pytest.mark.parametrize(
+        ("chunk", "expected"),
+        [
+            ("\x1b[38;2;38;5;124mx", "\x1b[38;2;38;5;124mx"),
+            ("\x1b[48;2;38;5;124mx", "\x1b[48;2;38;5;124mx"),
+            ("\x1b[38;2;1;2;3;38;5;124mx", "\x1b[38;2;1;2;3;31mx"),
+            ("\x1b[48;5;124;38;5;124mx", "\x1b[48;5;124;31mx"),
+        ],
+    )
+    def test_a_color_argument_is_never_mistaken_for_the_dark_red(
+        self, monkeypatch: pytest.MonkeyPatch, chunk: str, expected: str
+    ) -> None:
+        assert _recorded(monkeypatch, chunk) == expected
+
+    @pytest.mark.parametrize(
         "chunk",
         ["\x1b[38;5;67mx", "\x1b[48;5;124mx", "\x1b[31mx", "plain 38;5;124 text"],
     )

@@ -127,6 +127,10 @@ _CLEAR_SCREEN: Final = "\x1b[?25h\x1b[2J\x1b[H"
 _SGR_RE: Final = re.compile(r"\x1b\[([0-9;]*)m")
 _DARK_RED_256_PARAMS: Final = ("38", "5", "124")
 _RED_PARAM: Final = "31"
+# SGR 38 and 48 introduce an extended color: "5;n" (256-colour) or "2;r;g;b"
+# (truecolor). The mode's arguments are numbers, not further SGR parameters.
+_EXTENDED_COLOR_PARAMS: Final = frozenset({"38", "48"})
+_EXTENDED_COLOR_ARGS: Final = {"5": 2, "2": 4}
 
 _FAILED_PROMPT_RE: Final = r"\[exit -?\d*\]> "
 # The bare prompt may be followed by escape sequences PSReadLine sends the
@@ -185,7 +189,9 @@ def _use_theme_red(data: str) -> str:
         data: A chunk of terminal output.
 
     Returns:
-        ``data`` with each ``38;5;124`` color parameter replaced by ``31``.
+        ``data`` with each ``38;5;124`` foreground color replaced by ``31``.
+        A background (``48``) and the arguments of a truecolor
+        (``38;2;r;g;b``) are left as written.
 
     Examples:
         >>> _use_theme_red("\x1b[1;38;5;124mx\x1b[0m")
@@ -200,9 +206,12 @@ def _use_theme_red(data: str) -> str:
             if tuple(params[index : index + 3]) == _DARK_RED_256_PARAMS:
                 out.append(_RED_PARAM)
                 index += 3
-            else:
-                out.append(params[index])
-                index += 1
+                continue
+            width = 1
+            if params[index] in _EXTENDED_COLOR_PARAMS and index + 1 < len(params):
+                width += _EXTENDED_COLOR_ARGS.get(params[index + 1], 0)
+            out.extend(params[index : index + width])
+            index += width
         return f"\x1b[{';'.join(out)}m"
 
     return _SGR_RE.sub(rewrite, data)
