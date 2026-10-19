@@ -173,7 +173,7 @@ An element of the reference model, answering *what exists?*: the descriptive cat
 **Toolchain**:  
 The development tools Boilerplate picks and sets up, one per **slot** (uv, Ruff, Pyright, pytest, …), chosen by **Curation** from the **Tool landscape**, whether or not their versions are pinned. **Environment Provisioning** pins them through an **EnvironmentProfile**; not every pick is pinned (the editor and git are not). An element of the reference model, answering *what do we use?*; see Developer platform architecture §The toolchain. A part of the **Development Environment**, **not** a synonym for it, and not an application's own framework stack.  
 _Avoid_: curated stack, dev stack, tech stack  
-_Carve-out_: the slogan "Less Yak. More Stack." puns on the toolchain handed to you and templates stacking; outside it, a template **layers** on another. The reference model page names "curated stack" once, as platform engineering's term.
+_Carve-out_: the slogan "Less Yak. More Stack." puns on the toolchain handed to you and templates stacking; outside it, a template **layers** on another. The reference model page names "curated stack" once, as something the toolchain is sometimes called.
 
 **Trust Level**:  
 Binary classification for a template's origin: *trusted* or *untrusted*. Untrusted code is default-deny and requires explicit consent. The lock's optional `trust_tier` field is a free-form string field reserved for future richer tiers. See design 03.
