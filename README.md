@@ -3,9 +3,9 @@
 [![CI](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/TheRealBillSiegler/boilerplate)](LICENSE)
 
-**Boilerplate stamps out Python projects from templates that build on one another.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
+**Boilerplate stamps out Python projects from templates that build on one another.** Use its templates as they are, or put your own standards on top of one instead of forking it. It renders each template with [Copier](https://copier.readthedocs.io/), a tool for project templates, and you don't need to know Copier to use it.
 
-Boilerplate takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
+Boilerplate takes care of the setup chores around writing code, the kind developers call yak shaving: a working toolchain and a configured project. You start at the work.
 
 Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option. The general-purpose Python template sets up uv, Ruff, Pyright in strict mode, pytest and VS Code, and configures them in `pyproject.toml` and `.vscode/`.
 
@@ -41,10 +41,10 @@ boilerplate new project my-app
 
 `project` is the template's name. After a few questions, Boilerplate creates `my-app/` with its tools configured. `boilerplate list` shows the other templates, such as one for Streamlit apps.
 
-To put your team's standards on top, write a template of your own whose `boilerplate.yml` says `extends: [project]` and holds only your additions, then point Boilerplate at the folder that contains it:
+To put your own standards on top, write a template of your own whose `boilerplate.yml` says `extends: [project]` and holds only your additions, then point Boilerplate at the folder that contains it:
 
 ```bash
-boilerplate new org-project my-app --templates-dir ./my-templates
+boilerplate new custom-project my-app --templates-dir ./my-templates
 ```
 
 Your template applies when you create a project; carrying later changes from `project` into projects you've already made is planned.
@@ -54,7 +54,7 @@ Your template applies when you create a project; carrying later changes from `pr
 - [Documentation](https://therealbillsiegler.github.io/boilerplate/): guides and reference
 - [Quickstart](docs/quickstart.md): create and run your first project
 - [Why Boilerplate?](docs/why.md): the problem it solves and how its tools were chosen
-- [Customization](docs/customization.md): put your team's settings and templates on top
+- [Customization](docs/customization.md): put your own settings and templates on top
 - [Status](docs/status.md): what works today and what's planned, before 1.0
 
 ## Help and contributing
