@@ -3,9 +3,9 @@
 
 # Developer platform architecture
 
-This page is the reference model behind Boilerplate: a toolchain picked from a tool landscape, one tool per slot, and carried by the development environment and the starter templates; golden paths run on it, and guardrails check the work. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
+This page is the reference model behind Boilerplate: a toolchain of one tool per slot, picked from a tool landscape, built into the development environment and carried by the starter templates; golden paths run on it, and guardrails check the work. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
 
-In platform-engineering terms, an internal developer platform (IDP) is the self-service layer an organization runs for its own developers — templates plus CI/CD, provisioning, deployment, and operations, usually behind a portal. Boilerplate is open-source tooling for the scaffolding-and-environment slice of that: the toolchain, starter templates, and dev-time guardrails, with the golden path pre-built — where most platform tools hand you the machinery and leave the path to you. Deployment and operations are out of scope.
+In platform-engineering terms, an internal developer platform (IDP) is the self-service layer an organization runs for its own developers — templates plus CI/CD, provisioning, deployment, and operations, usually behind a portal. Boilerplate is open-source tooling for the scaffolding-and-environment slice of that: the toolchain, development environment, starter templates, and dev-time guardrails, with the golden path pre-built — where most platform tools hand you the machinery and leave the path to you. Deployment and operations are out of scope.
 
 !!! note "Scope"
     The reference implementation documented here is Boilerplate's own: Python-focused, with one toolchain. It is one worked example, not a general prescription for other contexts.
