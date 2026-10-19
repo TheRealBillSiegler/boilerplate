@@ -36,7 +36,7 @@ Boilerplate fills each slot the dev loop uses with one preconfigured, overridabl
 
 ## The dev loop
 
-The **dev loop** is the cycle you repeat inside a project — sync → edit → check → test → commit — on the tools the Development Environment provides. Here it is from a new or cloned project.
+The **dev loop** is the cycle you repeat inside a project, which is test-driven development's red-green-refactor: write a failing test, make it pass with the least code, then refactor with the tests still green. Then run the checks, commit, and start the next turn. Steps 1 and 2 get a project ready; steps 3 and 4 are the loop.
 
 ### 1. Start or clone a project
 
@@ -81,7 +81,15 @@ Launch a fully configured editor with linting, auto-formatting, type checks, etc
 !!! warning
     Opening a cloned project before `uv sync` can leave VS Code without a detected interpreter — see [the fix](vscode.md#troubleshooting-the-interpreter-isnt-detected).
 
-### 3. Develop & test
+### 3. Red, green, refactor
+
+- **Pytest** runs your tests, via the command line or the VS Code Test Explorer. Write a test that fails (red), make it pass with the least code (green), then refactor while it stays green:
+
+    ```powershell
+    uv run pytest
+    ```
+
+The checks run alongside:
 
 - **Ruff** handles styling and lint checks in real time and formats on save — or run it yourself:
 
@@ -96,11 +104,13 @@ Launch a fully configured editor with linting, auto-formatting, type checks, etc
     uv run pyright
     ```
 
-- **Pytest** runs your automated tests, via the command line or the VS Code Test Explorer:
+### 4. Commit and repeat
 
-    ```powershell
-    uv run pytest
-    ```
+Commit each turn that passes its tests and checks, then start the next one. Many commits make one pull request.
+
+```powershell
+git commit
+```
 
 ## Project layout
 

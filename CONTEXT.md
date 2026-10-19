@@ -79,7 +79,7 @@ Choosing the **Toolchain**'s picks from the **Tool landscape** as a set, each fo
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
 
 **dev loop**:  
-The cycle you repeat inside a project — sync → edit → check → test → commit — on the tools the **Development Environment** provides: the **golden path** for everyday work. A part of the Development Environment; see the Development Environment guide.  
+The cycle you repeat inside a project, which is test-driven development's red-green-refactor: **red**, write a failing test; **green**, make it pass with the least code; **refactor**, clean up with the tests still green. Then run the checks, commit, and start the next turn. Many turns make one pull request, and a release gathers many pull requests. It runs on the tools the **Development Environment** provides: the **golden path** for everyday work. A part of the Development Environment; see the Development Environment guide.  
 _Avoid_: inner loop, developer workflow, development workflow
 
 **Development Environment**:  
