@@ -100,15 +100,23 @@ The path is not mandatory — developers may diverge when circumstances warrant 
 ``` mermaid
 flowchart TD
     accTitle: Golden path from new project to production
-    accDescr: A linear development flow from Create Project through Initialize Environment, Develop Features, Run Code Quality Checks, Run Tests, Build Artifacts, CI Validation, Deploy, to Operate and Monitor, with feedback arrows returning lint, type, test, CI, deploy, and incident failures to earlier stages for remediation.
-    A[Create Project] --> B[Initialize Environment]
-    B --> C[Develop Features]
-    C --> D[Run Code Quality Checks]
-    D --> E[Run Tests]
-    E --> F[Build Artifacts]
-    F --> G[CI Validation]
-    G --> H[Deploy]
-    H --> I[Operate & Monitor]
+    accDescr: A linear flow in four groups. A template's path to a starting point holds Create Project and Initialize Environment. The dev loop holds Develop Features, Run Code Quality Checks and Run Tests. Build and CI holds Build Artifacts and CI Validation. Deploy and Operate and Monitor sit in a group marked outside Boilerplate's scope. Feedback arrows return lint, type, test and CI failures to Develop Features, deploy failures to CI Validation, and incidents to Develop Features.
+    subgraph template["A template's path to a starting point"]
+        A[Create Project] --> B[Initialize Environment]
+    end
+    subgraph loop["Dev loop"]
+        C[Develop Features] --> D[Run Code Quality Checks]
+        D --> E[Run Tests]
+    end
+    subgraph build["Build and CI"]
+        F[Build Artifacts] --> G[CI Validation]
+    end
+    subgraph ops["Outside Boilerplate's scope"]
+        H[Deploy] --> I[Operate & Monitor]
+    end
+    B --> C
+    E --> F
+    G --> H
 
     D -->|Lint/type errors| C
     E -->|Test failures| C
