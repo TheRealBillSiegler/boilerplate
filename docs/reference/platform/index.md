@@ -15,7 +15,7 @@ In platform-engineering terms, an internal developer platform (IDP) is the self-
 ``` mermaid
 flowchart TD
     accTitle: Platform reference model overview
-    accDescr: Shows the Tool Landscape feeding a Developer Platform boundary that contains the Development Environment, Golden Path, Starter Templates, and Guardrails. The Toolchain is a part of the Development Environment. The toolchain drives the path, the templates and the guardrails, the environment also flows into the path and the guardrails, the path flows into the templates and the guardrails, and the templates flow into the guardrails.
+    accDescr: The Tool Landscape sits outside a Developer Platform boundary. Curation picks the Toolchain from the landscape, and the Toolchain is a part of the Development Environment. The Toolchain runs the Golden Path and is carried into projects by the Starter Templates, and Guardrails check both the path and the templates.
     L["Tool Landscape\nDescriptive context"]
 
     subgraph Platform["Developer Platform"]
@@ -27,15 +27,11 @@ flowchart TD
         R["Guardrails\nAutomated enforcement"]
     end
 
-    L ==> P
-    E ==> G
-    E ==> R
-    P ==> G
-    P ==> T
-    G ==> T
-    T ==> R
-    P ==> R
-    G ==> R
+    L ==>|curation picks| P
+    P ==>|runs| G
+    P ==>|carried into projects by| T
+    G ==>|checked by| R
+    T ==>|checked by| R
 ```
 
 | Element | Type | Question | Artifact |
