@@ -45,7 +45,7 @@ Every command exits with one of six codes (defined in `boilerplate.constants.Exi
 | 0 | SUCCESS | Command completed. |
 | 1 | FAILURE | Unexpected error. |
 | 2 | CONFIG_ERROR | Configuration could not be loaded. |
-| 3 | VALIDATION_ERROR | Input failed validation (an unknown command or option, bad answers, missing TTY (an interactive terminal), conflicting options, a non-empty destination without `--force`). |
+| 3 | VALIDATION_ERROR | Input failed validation: an unknown command or option, bad answers, a missing interactive terminal (TTY), conflicting options, or a non-empty destination without `--force`. |
 | 4 | ACTION_REQUIRED | Recoverable pause; user intervention needed. Defined in the taxonomy but not yet produced by any shipped command — its first producer will be the planned `update` conflict pause. |
 | 130 | USER_CANCELLED | Cancelled at a prompt (Ctrl+C). |
 
