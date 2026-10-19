@@ -99,7 +99,7 @@ Interactive platforms and hosted environments for learning Python, prototyping, 
 
 ## How Boilerplate maps onto the landscape
 
-Each first-party template fills the **inner-loop slots** of its ecosystem — the roles a developer exercises on every edit-check-test-commit cycle — with one opinionated, preconfigured pick each, declared through the profile the template requires. The Python picks:
+Each first-party template fills the slots its ecosystem's **dev loop** uses — the roles a developer exercises on every pass through it — with one opinionated, preconfigured pick each, declared through the profile the template requires. The Python picks:
 
 | Slot | Pick |
 | --- | --- |

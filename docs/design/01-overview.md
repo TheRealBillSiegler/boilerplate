@@ -24,7 +24,7 @@ Boilerplate has two surfaces:
 
 **The slot model.** A development environment decomposes into recurring roles — **slots** — catalogued in [The Development Environment Landscape](dev-environment-landscape.md). Each first-party template declares, through its required profile, the slots its kind of project needs, with one opinionated, preconfigured tool per slot:
 
-- **Declared slots** — the inner-loop slots of the template's ecosystem, plus any secondary toolchain.
+- **Declared slots** — the slots its ecosystem's dev loop uses, plus any secondary toolchain.
 - **Slots within those slots** — the template pre-wires each tool's per-project configuration (rule sets, strictness, markers, workspace settings).
 
 The environment installs and verifies what the profile declares. Slots no first-party template requires are out of scope; the [landscape page](dev-environment-landscape.md#how-boilerplate-maps-onto-the-landscape) states the rule.
