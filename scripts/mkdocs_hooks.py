@@ -13,8 +13,20 @@ The task lists (``pymdownx.tasklist``) render each checkbox inside a ``<label>``
 that wraps the box and an empty indicator, with the item's text outside it, so
 a screen reader meets a checkbox with no name. ``on_page_content`` gives each
 checkbox an ``aria-label`` holding the text of its own item.
+
+Material for MkDocs and mkdocs-panzoom-plugin ship some controls without an
+accessible name, and Material takes critical fixes only, so this module names
+them at build time. A site that moves to Zensical must port this: Zensical does
+not run MkDocs hooks.
+
+- The diagram controls that mkdocs-panzoom-plugin renders (a ``<nav>`` of
+  icon-only ``<button>`` elements) get a label on the ``<nav>`` and on each
+  button, and their SVG icons are hidden from assistive technology.
+  ``on_page_content`` does this, because the plugin writes the markup while the
+  page's Markdown renders.
 """
 
+import re
 import shutil
 from html import escape
 from html.parser import HTMLParser
@@ -141,8 +153,38 @@ class _TaskItemScanner(HTMLParser):
             self._texts[item].append(data)
 
 
+_PANZOOM_BUTTON_NAMES = {
+    "panzoom-info": "Show pan and zoom help",
+    "panzoom-reset": "Reset zoom",
+    "panzoom-max": "Enter full screen",
+    "panzoom-min": "Exit full screen",
+}
+_PANZOOM_NAV_NAME = "Diagram controls"
+_PANZOOM_START_TAG = re.compile(
+    r'<(?P<tag>button|svg|nav) class="(?P<classes>panzoom-[^"]*)"[^>]*>'
+)
+
+
+def _name_panzoom_start_tag(match: re.Match[str]) -> str:
+    """Return a panzoom start tag with its accessible name or icon hiding added."""
+    start_tag = match.group(0)
+    tag = match.group("tag")
+    first_class = match.group("classes").split()[0]
+    attributes = ""
+    if tag == "svg" and "aria-hidden" not in start_tag:
+        attributes = ' aria-hidden="true" focusable="false"'
+    elif tag == "button" and "aria-label" not in start_tag:
+        name = _PANZOOM_BUTTON_NAMES.get(first_class)
+        attributes = f' aria-label="{name}"' if name else ""
+    elif (
+        tag == "nav" and first_class == "panzoom-nav" and "aria-label" not in start_tag
+    ):
+        attributes = f' aria-label="{_PANZOOM_NAV_NAME}"'
+    return start_tag[:-1] + attributes + ">"
+
+
 def on_page_content(html: str, **_kwargs: object) -> str:
-    """Name each task-list checkbox by the text of its item.
+    """Name each task-list checkbox and each diagram control.
 
     Args:
         html: The page's rendered content.
@@ -150,8 +192,11 @@ def on_page_content(html: str, **_kwargs: object) -> str:
 
     Returns:
         ``html`` with an ``aria-label`` on each task-list checkbox that has
-        none. A page without task lists comes back unchanged.
+        none, an ``aria-label`` on each panzoom ``<nav>`` and button that has
+        none, and ``aria-hidden`` on each panzoom icon. A page with neither
+        task lists nor diagrams comes back unchanged.
     """
+    html = _PANZOOM_START_TAG.sub(_name_panzoom_start_tag, html)
     scanner = _TaskItemScanner(html)
     scanner.feed(html)
     scanner.close()
