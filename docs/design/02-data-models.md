@@ -6,7 +6,7 @@ This document defines every domain entity in the Boilerplate system: its fields,
 
 All models are **immutable** once constructed unless otherwise noted. Validation MUST fail fast: reject invalid input at construction time, not lazily during use.
 
-See [01-overview.md](01-overview.md) for the glossary.
+See [Product overview](01-overview.md) for the glossary.
 
 ---
 
@@ -114,7 +114,7 @@ When non-null, `requires_profile` MUST be an object with two fields:
 
 The constraint targets the profile version, not the underlying tool versions. Tool-version requirements are expressed via the profile's own version lineage: profile authors bump the profile version when tool constraints change. Templates do not override individual tools.
 
-See [03-template-system.md](03-template-system.md) for the full sub-field specification.
+See [Template system and discovery](03-template-system.md) for the full sub-field specification.
 
 #### `allowed_extensions` semantics
 
@@ -125,7 +125,7 @@ Consent is still required. An extension loads only when both conditions hold:
 1. Its package appears in the system-wide `allowed_extension_packages` setting, AND
 2. The user has consented via `--allow-extensions`, `--allow-untrusted`, or interactive confirmation per §03 Jinja2 Extension Safety.
 
-Per-template `allowed_extensions` does NOT waive the user-consent requirement — template-author metadata cannot grant consent on the user's behalf. See [03-template-system.md](03-template-system.md) for the full Jinja2 extension safety model.
+Per-template `allowed_extensions` does NOT waive the user-consent requirement — template-author metadata cannot grant consent on the user's behalf. See [Template system and discovery](03-template-system.md) for the full Jinja2 extension safety model.
 
 ---
 
@@ -315,7 +315,7 @@ A display and ranking model constructed on demand from a `TemplateInfo` + `Catal
 | `source` | string | `CatalogSource.name` |
 | `source_priority` | integer | `CatalogSource.priority` |
 | `classification` | enum | `boilerplate-enabled` or `copier-only` (determined by file presence) |
-| `trust_level` | enum | `CatalogSource.trust_level`; binary `trusted`/`untrusted`. Local filesystem sources are `untrusted` by default; first-party `git` sources — the published per-template repositories ([ADR-006](adr-006-template-distribution.md)) — are `trusted` by default, as is any other `git` source explicitly configured `trust_level: trusted`. The deferred `wheel_bundle` source type would be `trusted` when built. See [03-template-system.md](03-template-system.md#trust-ceiling-per-source-type). |
+| `trust_level` | enum | `CatalogSource.trust_level`; binary `trusted`/`untrusted`. Local filesystem sources are `untrusted` by default; first-party `git` sources — the published per-template repositories ([ADR-006](adr-006-template-distribution.md)) — are `trusted` by default, as is any other `git` source explicitly configured `trust_level: trusted`. The deferred `wheel_bundle` source type would be `trusted` when built. See [Template system and discovery](03-template-system.md#trust-ceiling-per-source-type). |
 | `lifecycle_state` | enum | Registry metadata; `published` for filesystem sources |
 | `last_updated` | ISO 8601 datetime | Registry metadata; filesystem mtime for filesystem sources |
 | `dependencies` | list[string] | `TemplateInfo.meta.extends` |
@@ -334,8 +334,8 @@ A configured origin from which the catalog discovers templates.
 | `location` | string | URI or path to the source |
 | `credentials` | reference | Reserved for Phase 4 (remote / third-party sources). Credential reference (env var name, vault path, etc.) for authenticated remote sources. Until Phase 4, sources are local and ignore this field. |
 | `priority` | integer | Lower number = higher priority; ties broken by registration order |
-| `trust_level` | enum | Binary `trusted`/`untrusted` — the trust level this source can grant. Trusted by default for first-party `git` sources — the published per-template repositories ([ADR-006](adr-006-template-distribution.md)) — and for any other `git` source explicitly configured `trust_level: trusted`; `filesystem` and `archive` sources are `untrusted` by default. The deferred `wheel_bundle` type would be trusted when built. See [03-template-system.md](03-template-system.md#trust-ceiling-per-source-type). (The richer tiered model is reserved for Phase 4.) |
-| `expected_commit` | string or null | TOFU (trust-on-first-use) pinning for `git` sources: the expected commit hash on first clone. When set, Boilerplate records the commit on first use and rejects later fetches whose tip does not descend from it. Ignored for `filesystem` and `archive` types. See [09-settings-and-configuration.md](09-settings-and-configuration.md#catalog-source-configuration-file). |
+| `trust_level` | enum | Binary `trusted`/`untrusted` — the trust level this source can grant. Trusted by default for first-party `git` sources — the published per-template repositories ([ADR-006](adr-006-template-distribution.md)) — and for any other `git` source explicitly configured `trust_level: trusted`; `filesystem` and `archive` sources are `untrusted` by default. The deferred `wheel_bundle` type would be trusted when built. See [Template system and discovery](03-template-system.md#trust-ceiling-per-source-type). (The richer tiered model is reserved for Phase 4.) |
+| `expected_commit` | string or null | TOFU (trust-on-first-use) pinning for `git` sources: the expected commit hash on first clone. When set, Boilerplate records the commit on first use and rejects later fetches whose tip does not descend from it. Ignored for `filesystem` and `archive` types. See [Settings and configuration files](09-settings-and-configuration.md#catalog-source-configuration-file). |
 
 ---
 
@@ -349,7 +349,7 @@ A catalog source backed by a compressed archive containing template directories.
 | `location` | string | Yes | — | Local file path or HTTPS URL to the archive |
 | `name` | string | Yes | — | Display name for this source |
 | `priority` | integer | No | `100` | Lower = higher priority |
-| `trust_level` | enum | No | `untrusted` | Binary `trusted`/`untrusted` trust ceiling. An archive source is `untrusted` by default; its tamper-evidence comes from `checksum`, not from a trust tier. See [03-template-system.md](03-template-system.md#trust-ceiling-per-source-type). |
+| `trust_level` | enum | No | `untrusted` | Binary `trusted`/`untrusted` trust ceiling. An archive source is `untrusted` by default; its tamper-evidence comes from `checksum`, not from a trust tier. See [Template system and discovery](03-template-system.md#trust-ceiling-per-source-type). |
 | `checksum` | string or null | No | `null` | Expected SHA-256 hex digest of the archive; validated before extraction |
 | `credentials` | CredentialRef or null | No | `null` | Reserved for Phase 4 (remote / third-party sources). Credential reference for HTTPS downloads. |
 
@@ -385,7 +385,7 @@ The `boilerplate.lock` file written into a project root after a successful creat
 | `joined_via` | enum | How the layer joined the project: `extends` for the root template and every layer its `extends` closure reaches, as `new` and `adopt` write them and as `update` writes a layer the closure newly reaches; `add` for a layer `boilerplate add` introduced. The value is fixed once written: a layer `add` introduced keeps `add` when a later root target reaches it through `extends`, and the `extends` constraint still bounds its version. `update` reads it to tell which layers the root's target governs ([06 §Step 3](06-project-lifecycle.md#step-3-build-updateplan)). |
 | `source` | string | URI or filesystem path of the template |
 | `commit` | string or null | Git commit hash of the template at render time |
-| `checksum` | string | SHA-256 hex digest of the template source directory content (excluding `.git/`, `__pycache__/`, `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `node_modules/`), prefixed with algorithm identifier (e.g., `"sha256:{hex}"`). Files are sorted lexicographically by relative path (forward slashes on all platforms), then path and content are concatenated and hashed. This is the authoritative definition of the checksum exclusion list. The source directory is a git checkout, so comparisons must be stated in git's content sense (line endings normalized), not raw bytes — Copier's git-based checkout rewrites line endings under `core.autocrlf=true` ([ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28)). See [06-project-lifecycle.md](06-project-lifecycle.md) for computation details. |
+| `checksum` | string | SHA-256 hex digest of the template source directory content (excluding `.git/`, `__pycache__/`, `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `node_modules/`), prefixed with algorithm identifier (e.g., `"sha256:{hex}"`). Files are sorted lexicographically by relative path (forward slashes on all platforms), then path and content are concatenated and hashed. This is the authoritative definition of the checksum exclusion list. The source directory is a git checkout, so comparisons must be stated in git's content sense (line endings normalized), not raw bytes — Copier's git-based checkout rewrites line endings under `core.autocrlf=true` ([ADR-015 §Verification](adr-015-idiomatic-artifacts.md#verification-2026-07-28)). See [Project lifecycle](06-project-lifecycle.md) for computation details. |
 | `subdirectory` | string or null | Deferred, conditional on the `wheel_bundle` seed cache ([ADR-006](adr-006-template-distribution.md)): when built, would hold the value of the layer's `_subdirectory:` Copier directive for a layer sourced from a shared Git bundle. Published per-template repositories carry no `_subdirectory:` — one repository, one template — so `null` for every layer today. |
 | `source_bundle` | string or null | Deferred, conditional on the `wheel_bundle` seed cache ([ADR-006](adr-006-template-distribution.md)): when built, would hold the bundle's relative path within the wheel (e.g., `boilerplate/_template_bundles/templates.bundle`), used for cache invalidation and audit. `null` for every layer today — first-party layers render from the published Git repositories, not a wheel-packaged bundle. |
 | `trust_tier` | string or null | Optional. The trust level of the layer's source at resolution time, recorded when the source declares one; `null` otherwise. With local sources the recorded value is `null` or `"local"`. Never consulted; reserved for the Phase 4 trust model. |
@@ -488,7 +488,7 @@ An intent journal records the in-progress state of a mutating operation for cras
 | `create`, `adopt` | `staging`, `committing`, `locking` | `locking` corresponds to writing `boilerplate.lock`. |
 | `env_apply` | `staging`, `committing`, `locking` | Same three identifiers as project operations, but `locking` names the Record Write stage (Stage 6) — `environment.yml` is a provenance record, not a lock file. See [EnvironmentProvisionRecord](#environmentprovisionrecord) and §08 Stage 6. |
 
-**Recovery behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) and [08-environment-provisioning.md](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above. `update` and `add` have no phase vocabulary of their own: the journal identifies the staging folder for stale cleanup only, and recovery of a cut-off copy back reads the [RestoreMarker](#restoremarker), whose `phase` is their one recovery vocabulary.
+**Recovery behavior**: See [Project lifecycle](06-project-lifecycle.md) and [Environment provisioning](08-environment-provisioning.md) for how each operation dispatches on the phase identifiers above. `update` and `add` have no phase vocabulary of their own: the journal identifies the staging folder for stale cleanup only, and recovery of a cut-off copy back reads the [RestoreMarker](#restoremarker), whose `phase` is their one recovery vocabulary.
 
 ---
 
@@ -608,7 +608,7 @@ An environment profile is declared in a standalone YAML file named `boilerplate-
 
 ## Error Hierarchy
 
-All errors inherit from `BoilerplateError` (the base class). Each exception type maps to one or more `BP_*` error codes (see [07-operational-quality.md](07-operational-quality.md)). The exception hierarchy is the implementation mechanism; the error codes are the stable public contract.
+All errors inherit from `BoilerplateError` (the base class). Each exception type maps to one or more `BP_*` error codes (see [Operational quality](07-operational-quality.md)). The exception hierarchy is the implementation mechanism; the error codes are the stable public contract.
 
 | Error | Exit code | Raised When |
 |-------|-----------|------------|
@@ -662,7 +662,7 @@ Unrecognized exceptions outside this hierarchy MUST exit with code `1` (`FAILURE
 
 ## Settings and Configuration Files
 
-Runtime settings (the `Settings` object) and the `boilerplate-sources.yml` catalog-source configuration file are operator-authored configuration — a different artifact class than the domain schemas defined in this document. Their full specification (fields, env vars, defaults, validation rules, read protocols) lives in [09-settings-and-configuration.md](09-settings-and-configuration.md). The `revoked-templates.yml` revocation file is reserved for Phase 4 (revocation is deferred); it is not a live operator-authored file.
+Runtime settings (the `Settings` object) and the `boilerplate-sources.yml` catalog-source configuration file are operator-authored configuration — a different artifact class than the domain schemas defined in this document. Their full specification (fields, env vars, defaults, validation rules, read protocols) lives in [Settings and configuration files](09-settings-and-configuration.md). The `revoked-templates.yml` revocation file is reserved for Phase 4 (revocation is deferred); it is not a live operator-authored file.
 
 ---
 

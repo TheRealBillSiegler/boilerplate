@@ -1,7 +1,7 @@
 # Merging and precedence rules
 
 !!! note "Authoritative specification"
-    The authoritative design specification for merge strategies and composition is [04-composition-engine.md](../design/04-composition-engine.md). This page provides supplementary implementation-level reference. For the file-level three-way merge, conflict-pause, and safe-orphan semantics designed for the future `update` command, see [ADR-007](../design/adr-007-update-model.md).
+    The authoritative design specification for merge strategies and composition is [Composition engine](../design/04-composition-engine.md). This page provides supplementary implementation-level reference. For the file-level three-way merge, conflict-pause, and safe-orphan semantics designed for the future `update` command, see [ADR-007](../design/adr-007-update-model.md).
 
 How configuration values are combined across template layers, with clear rules and deterministic outcomes.
 

@@ -157,8 +157,8 @@ A file your template keeps changing is template-owned: a project that edits it r
 
 The bundled templates serve as working examples:
 
-- **`project`** — base Python template ([source](https://github.com/TheRealBillSiegler/boilerplate/tree/main/src/boilerplate/templates/project))
-- **`streamlit`** — extends `project` with Streamlit defaults ([source](https://github.com/TheRealBillSiegler/boilerplate/tree/main/src/boilerplate/templates/streamlit))
+- **`project`** — base Python template ([project template source](https://github.com/TheRealBillSiegler/boilerplate/tree/main/src/boilerplate/templates/project))
+- **`streamlit`** — extends `project` with Streamlit defaults ([streamlit template source](https://github.com/TheRealBillSiegler/boilerplate/tree/main/src/boilerplate/templates/streamlit))
 
 Run `boilerplate list` to see all available templates.
 

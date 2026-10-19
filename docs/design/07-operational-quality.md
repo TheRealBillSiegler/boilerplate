@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Cross-cutting operational quality controls that apply to every feature slice: stable error codes, error attribution, structured logging, performance contracts, retry policy, the Atomic Staged Write Pattern, concurrency control, and platform portability. The security model itself lives in [10-security.md](10-security.md).
+Cross-cutting operational quality controls that apply to every feature slice: stable error codes, error attribution, structured logging, performance contracts, retry policy, the Atomic Staged Write Pattern, concurrency control, and platform portability. The security model itself lives in [Security model](10-security.md).
 
 ---
 
@@ -43,7 +43,7 @@ BP_{PHASE}_{DESCRIPTOR}
 | `BP_UPDATE_` | The update walk and adding a layer: drift between the lock and the answers files, an incomplete answers file, a resume whose targets differ from the paused update's, a resolved source that diverges from the lock (`BP_UPDATE_SOURCE_DIVERGED`, [10 §Verification Pipeline](10-security.md#verification-pipeline)), staging preconditions, and a task that fails after the copy back. Example: `BP_UPDATE_LAYER_DRIFT`. |
 | `BP_COPIER_` | Copier-engine compatibility failures (version mismatch, unsupported Copier feature). Example: `BP_COPIER_COMPAT_FAILED`. |
 
-> **Mapping to pipeline stages**: Error code phases are orthogonal to the operational pipeline stages defined in [06-project-lifecycle.md](06-project-lifecycle.md). The creation pipeline stages (Resolve → Compose → Render → Lock → Init) may trigger errors from multiple phases: the Resolve stage may produce `BP_RESOLVE_*`, `BP_VERSION_*`, or `BP_GRAPH_*` errors; the Render stage may produce `BP_RENDER_*` or `BP_GIT_*` errors; the Lock stage may produce `BP_LOCK_*` errors. Error code phases group errors by their root cause domain, not by the pipeline stage in which they occur.
+> **Mapping to pipeline stages**: Error code phases are orthogonal to the operational pipeline stages defined in [Project lifecycle](06-project-lifecycle.md). The creation pipeline stages (Resolve → Compose → Render → Lock → Init) may trigger errors from multiple phases: the Resolve stage may produce `BP_RESOLVE_*`, `BP_VERSION_*`, or `BP_GRAPH_*` errors; the Render stage may produce `BP_RENDER_*` or `BP_GIT_*` errors; the Lock stage may produce `BP_LOCK_*` errors. Error code phases group errors by their root cause domain, not by the pipeline stage in which they occur.
 
 ### Error Code Registry
 
@@ -261,7 +261,7 @@ All network operations MUST enforce a configurable timeout to prevent indefinite
 
 ## Security Model
 
-The full security model lives in [10-security.md](10-security.md). Operational invariants that gate the security checks (atomic-write pattern, concurrency control, retry policy, redaction mechanism, structured logging) remain in this document; the security rules cite them where needed.
+The full security model lives in [Security model](10-security.md). Operational invariants that gate the security checks (atomic-write pattern, concurrency control, retry policy, redaction mechanism, structured logging) remain in this document; the security rules cite them where needed.
 
 ---
 
@@ -271,7 +271,7 @@ Both project creation ([§06](06-project-lifecycle.md)) and environment provisio
 
 **Core invariant**: All destructive operations follow a stage → validate → commit sequence. Work is performed in an isolated staging directory. An intent journal tracks the current phase for crash recovery. On success, staged output is atomically moved into place and the journal is deleted. On failure or interruption, the staging directory is cleaned up and the project directory is left in its pre-operation state. For `update` and `add` the commit step is the copy back, which is not atomic: a copy back that fails is undone ([06 §Undo](06-project-lifecycle.md#undo)), and one cut off midway is finished or set aside as the restore marker directs ([06 §Interrupted copy back](06-project-lifecycle.md#interrupted-copy-back)).
 
-**Stale cleanup**: Before creating a new staging directory, stale staging directories (older than 1 hour; see [06-project-lifecycle.md](06-project-lifecycle.md)) from previous interrupted operations are detected and cleaned up. For `update` and `add`, whose staging directory holds a git worktree ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), the cleanup removes only worktrees Boilerplate created, identified by the journal and the owner check, and then runs `git worktree prune` in the project the journal's `destination` names, which drops the registration of a worktree whose folder is gone. A staging folder is stale only when it is older than the window and no running operation holds the exclusive lock each operation takes on its journal for the operation's lifetime: age alone would remove an update that is waiting at a prompt. `git worktree prune` runs only in this cleanup, never when an operation removes its own worktree, so the user's own worktree registrations are left alone.
+**Stale cleanup**: Before creating a new staging directory, stale staging directories (older than 1 hour; see [Project lifecycle](06-project-lifecycle.md)) from previous interrupted operations are detected and cleaned up. For `update` and `add`, whose staging directory holds a git worktree ([06 §Staging worktree](06-project-lifecycle.md#staging-worktree)), the cleanup removes only worktrees Boilerplate created, identified by the journal and the owner check, and then runs `git worktree prune` in the project the journal's `destination` names, which drops the registration of a worktree whose folder is gone. A staging folder is stale only when it is older than the window and no running operation holds the exclusive lock each operation takes on its journal for the operation's lifetime: age alone would remove an update that is waiting at a prompt. `git worktree prune` runs only in this cleanup, never when an operation removes its own worktree, so the user's own worktree registrations are left alone.
 
 **Intent journal invariants**:
 
@@ -304,7 +304,7 @@ Boilerplate MUST fail fast before rendering if any rendered file path would exce
 ### Filesystem Differences
 
 - Line endings: first-party templates carry a `.gitattributes` with `* text=auto eol=lf`, and third-party templates should ([03 §Template Authoring Constraints](03-template-system.md#template-authoring-constraints)). `boilerplate doctor` SHOULD validate that the file is present and declares it.
-- Git submodule paths can be problematic on NTFS. Submodule initialization failures MUST produce clear errors with remediation (see [06-project-lifecycle.md](06-project-lifecycle.md)).
+- Git submodule paths can be problematic on NTFS. Submodule initialization failures MUST produce clear errors with remediation (see [Project lifecycle](06-project-lifecycle.md)).
 
 ### Network Filesystems
 
@@ -322,4 +322,4 @@ Windows treats environment variables as case-insensitive. This cannot be enforce
 
 ## Exit Code Reference
 
-Exit codes are defined in [02-data-models.md](02-data-models.md). An implementer MUST use those codes exactly -- no custom codes beyond those defined in §02.
+Exit codes are defined in [Data models](02-data-models.md). An implementer MUST use those codes exactly -- no custom codes beyond those defined in §02.

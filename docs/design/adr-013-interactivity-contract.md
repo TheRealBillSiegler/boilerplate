@@ -6,7 +6,7 @@
 
 `boilerplate new` renders in one of two modes: interactive (Copier prompts for unanswered questions) or non-interactive (`--non-interactive` / `--ci`, where every answer must come from a default, `profile.toml`, or a forced answer). Prompting has a failure mode with no natural backstop: when stdin cannot host a real terminal session, Copier's prompt layer (`questionary` / `prompt_toolkit`) does not always raise cleanly on EOF — it can retry-loop, growing memory without bound instead of exiting. This is not hypothetical: an equivalent failure was confirmed live on this project (Windows, stdin redirected from `NUL`, which `isatty()` misreports as a terminal) reaching the prompt layer and hanging before the guard was hardened. It is also a category-wide problem — see Evidence.
 
-This ADR records the decision rationale for the interactivity contract of `boilerplate new` (`src/boilerplate/cli/commands/new.py`, `src/boilerplate/composition/rendering/engine.py`) and its error codes (design [07-operational-quality.md](07-operational-quality.md) §Error Code Registry; design [02-data-models.md](02-data-models.md) §Error Hierarchy), surveyed against primary sources across CLI standards and peer tools, July 2026.
+This ADR records the decision rationale for the interactivity contract of `boilerplate new` (`src/boilerplate/cli/commands/new.py`, `src/boilerplate/composition/rendering/engine.py`) and its error codes (design [Operational quality](07-operational-quality.md) §Error Code Registry; design [Data models](02-data-models.md) §Error Hierarchy), surveyed against primary sources across CLI standards and peer tools, July 2026.
 
 ## Decision
 
@@ -36,7 +36,7 @@ No template question is reachable only through a prompt:
 - **Persistent pre-fills** (`profile.toml`) — per-user `[defaults]` and `[templates.<name>]` tables that ride Copier's `user_defaults` channel; an interactive answer, or a forced answer, overrides them.
 - **A per-invocation answers channel** (`--data` / `--data-file`) — forced answers for a single invocation, on Copier's `data` channel.
 
-`--non-interactive` (and `BOILERPLATE_NON_INTERACTIVE`) is the only defaults-accepting mode for questions; `--yes` governs confirmation prompts only ([05-cli-reference.md](05-cli-reference.md)).
+`--non-interactive` (and `BOILERPLATE_NON_INTERACTIVE`) is the only defaults-accepting mode for questions; `--yes` governs confirmation prompts only ([CLI reference](05-cli-reference.md)).
 
 ### 5. Read-only operations are exempt
 

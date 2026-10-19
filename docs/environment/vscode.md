@@ -36,7 +36,7 @@ The interpreter path isn't set in `settings.json` — the Python extension auto-
 Most common right after generating or cloning a project, before the virtual environment exists:
 
 1. Run `uv sync` to create `.venv`.
-2. Open the Command Palette (`Ctrl+Shift+P`) → **Python: Select Interpreter**.
+2. Open the Command Palette (`Ctrl+Shift+P`, or `Cmd+Shift+P` on macOS) → **Python: Select Interpreter**.
 3. Choose the `.venv` interpreter in your project folder.
 
 If an extension doesn't activate, reload the window: Command Palette → **Developer: Reload Window**.

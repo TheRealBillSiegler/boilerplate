@@ -55,7 +55,7 @@ uv run --project "$BP" copier copy --trust --defaults --overwrite \
 
 The rendered files are identical. Two things differ:
 
-| | By hand | `boilerplate new` |
+| File | By hand | `boilerplate new` |
 |---|---|---|
 | `boilerplate.lock` | Not written. | Written. |
 | `.copier-answers.streamlit.yml` | Records only `streamlit`'s own questions: `container_registry`, `dependencies`, `sample_module`. | Also records `project`'s questions. |

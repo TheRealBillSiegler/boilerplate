@@ -21,7 +21,7 @@ Copier's contract runs `_tasks` after generating a project, in the destination d
 ## Consequences
 
 - A child layer cannot remove or reorder an inherited task; the idiomatic gate is a `when:` condition on the task, which shape pass-through preserves.
-- Task provenance (which layer contributed an entry) is not yet carried through the merge. The trust-tier consent and audit design ([03 §Task Execution Safety](03-template-system.md#task-execution-safety), [10-security](10-security.md)) requires per-layer attribution and selective execution; that needs a provenance-carrying merge and is deferred work this ADR explicitly does not cover.
+- Task provenance (which layer contributed an entry) is not yet carried through the merge. The trust-tier consent and audit design ([03 §Task Execution Safety](03-template-system.md#task-execution-safety), [Security model](10-security.md)) requires per-layer attribution and selective execution; that needs a provenance-carrying merge and is deferred work this ADR explicitly does not cover.
 - Mid-list failure leaves rendered files with partially applied post-processing — Copier's own no-rollback property, inherited unchanged. Task authors SHOULD keep tasks idempotent.
 - `{{ _copier_conf.src_path }}` and `_copier_operation` inside task templates resolve against the final layer's worker, not the declaring layer's.
 
