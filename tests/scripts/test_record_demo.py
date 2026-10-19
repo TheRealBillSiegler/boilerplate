@@ -261,8 +261,14 @@ class TestLowContrastColors:
     ) -> None:
         assert _recorded(monkeypatch, chunk) == chunk
 
-    def test_bright_black_is_legible_on_the_theme_background(self) -> None:
-        theme = record_demo._THEME
-        bright_black = theme["palette"].split(":")[8]
-
-        assert _contrast_ratio(bright_black, theme["bg"]) >= 4.5
+    @pytest.mark.parametrize(
+        "color",
+        [
+            record_demo._THEME["fg"],
+            *record_demo._THEME["palette"].split(":")[1:],
+        ],
+    )
+    def test_every_theme_color_is_legible_on_the_theme_background(
+        self, color: str
+    ) -> None:
+        assert _contrast_ratio(color, record_demo._THEME["bg"]) >= 4.5
