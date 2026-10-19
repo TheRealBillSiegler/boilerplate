@@ -15,11 +15,11 @@ You need one package for the task at hand. That package needs a newer Python. Th
 No single link in that chain is hard. The damage is the pattern — individually tolerable incidents that quietly become an operating model:
 
 - "I'll just copy the last project." "Works on my machine."
-- Tool choice re-litigated for every repository — Ruff or Black, uv or Poetry.
-- Onboarding that eats a day before the first test runs.
+- Tool choice debated again for every repository — Ruff or Black, uv or Poetry.
+- Onboarding that takes a day before the first test runs.
 - A setup README that drifted from what the tooling actually does.
 
-Python itself raises the stakes. The ecosystem ships no equivalent of `npm create` or `dotnet new` — no blessed on-ramp to a working project — and the tooling underneath keeps moving: packaging and environment managers compete, get replaced, and leave layers of guidance behind them. Much of what a search turns up teaches techniques the current PEPs have already superseded, and there is no canonical, up-to-date reference project to copy from. Every team re-derives "modern" on its own, or inherits whichever year's answer its oldest tutorial froze.
+Python itself raises the stakes. The ecosystem ships no equivalent of `npm create` or `dotnet new` — no official starting point for a working project — and the tooling underneath keeps moving: packaging and environment managers compete, get replaced, and leave layers of guidance behind them. Much of what a search turns up teaches techniques the current PEPs have already superseded, and there is no canonical, up-to-date reference project to copy from. Every project works out "modern" for itself, or keeps whichever year's answer its oldest tutorial gave.
 
 **Less yak. More stack.** is the promise to cut that chain down: the environment arrives working, the project arrives configured, and you start at the task itself.
 
@@ -33,7 +33,7 @@ Three opinions the tool executes rather than recommends:
 
 ## A whole environment, one pick per slot
 
-A development environment is a set of [slots](design/01-overview.md#term-slot) — shell, runtime and package manager, linter, type checker, test runner, editor — and most teams fill them by accretion. Boilerplate fills each slot with one opinionated, overridable pick, at three layers:
+A development environment is a set of [slots](design/01-overview.md#term-slot) — shell, runtime and package manager, linter, type checker, test runner, editor — and most projects fill them one tool at a time, as each need comes up. Boilerplate fills each slot with one opinionated, overridable pick, at three layers:
 
 - **Machine** — the [installer](install.md) bootstraps the baseline itself: PowerShell 7 (installed first when missing), Git, VS Code with extensions, uv, and the boilerplate CLI. There is no prerequisites section that quietly assumes an hour of setup.
 - **Project** — every generated project arrives with a uv-managed, locked environment and Ruff, Pyright strict, and pytest configured in `pyproject.toml`; its example module and test pass those checks on the first run.
