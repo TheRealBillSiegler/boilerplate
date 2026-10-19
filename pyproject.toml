@@ -39,10 +39,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://therealbillsiegler.github.io/boilerplate/"
+Homepage = "https://github.com/TheRealBillSiegler/boilerplate"
 Repository = "https://github.com/TheRealBillSiegler/boilerplate"
 Issues = "https://github.com/TheRealBillSiegler/boilerplate/issues"
-Documentation = "https://therealbillsiegler.github.io/boilerplate/"
+Documentation = "https://github.com/TheRealBillSiegler/boilerplate/tree/main/docs"
 Changelog = "https://github.com/TheRealBillSiegler/boilerplate/blob/main/CHANGELOG.md"
 
 [dependency-groups]
