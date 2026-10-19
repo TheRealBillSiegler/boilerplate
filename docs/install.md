@@ -217,4 +217,4 @@ An install from `develop` follows the branch instead: `uv tool upgrade boilerpla
 !!! success "Next steps"
     - [Read the Quickstart Guide](quickstart.md) — Create your first project and run it.
     - [Explore Boilerplate CLI Usage](cli.md) — Learn commands and workflows.
-    - [Review the Environment Overview](environment/index.md) — Understand the toolchain.
+    - [Review the Environment Overview](environment/index.md) — Understand the stack.

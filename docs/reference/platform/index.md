@@ -3,7 +3,7 @@
 
 # Developer platform architecture
 
-This page is the reference model behind Boilerplate: a tool landscape feeding a curated stack, a golden path, starter templates, and guardrails. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
+This page is the reference model behind Boilerplate: curation picks a curated stack from a tool landscape, the development environment and the starter templates carry it, golden paths run on it, and guardrails check the work. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
 
 In platform-engineering terms, an internal developer platform (IDP) is the self-service layer an organization runs for its own developers — templates plus CI/CD, provisioning, deployment, and operations, usually behind a portal. Boilerplate is open-source tooling for the scaffolding-and-environment slice of that: the curated stack, starter templates, and dev-time guardrails, with the golden path pre-built — where most platform tools hand you the machinery and leave the path to you. Deployment and operations are out of scope.
 
@@ -15,17 +15,21 @@ In platform-engineering terms, an internal developer platform (IDP) is the self-
 ``` mermaid
 flowchart TD
     accTitle: Platform reference model overview
-    accDescr: Shows the Tool Landscape feeding a Developer Platform boundary that contains the Curated Stack, Golden Path, Starter Templates, and Guardrails, with the stack driving the path, templates, and guardrails, and the path and templates also flowing into guardrails.
+    accDescr: Shows the Tool Landscape feeding a Developer Platform boundary that contains the Curated Stack, Development Environment, Golden Path, Starter Templates, and Guardrails, with the stack driving the environment, path, templates, and guardrails, the environment flowing into the path, and the environment, path and templates also flowing into guardrails.
     L["Tool Landscape\nDescriptive context"]
 
     subgraph Platform["Developer Platform"]
         P["Curated Stack\nPrescriptive stack"]
+        E["Development Environment\nMachine, project, editor"]
         G["Golden Path\nPrescriptive workflow"]
         T["Starter Templates\nImplementation scaffolds"]
         R["Guardrails\nAutomated enforcement"]
     end
 
     L ==> P
+    P ==> E
+    E ==> G
+    E ==> R
     P ==> G
     P ==> T
     G ==> T
@@ -39,10 +43,11 @@ flowchart TD
 | Tool landscape | Descriptive | What exists? | Survey, catalog |
 | Curated stack | Prescriptive | What do we use? | Stack list |
 | Golden path | Prescriptive | How do we work? | Workflow definition |
+| Development environment | Implementation | Where do we work? | Machine, project and editor setup |
 | Starter templates | Implementation | How do we start? | Project scaffolds |
 | Guardrails | Enforcement | How do we comply? | Automated policies |
 
-The landscape describes available options; the stack and path prescribe specific choices; templates automate setup; guardrails automate verification.
+The landscape describes available options; the stack and path prescribe specific choices; the environment and templates automate setup; guardrails automate verification.
 
 ## The tool landscape
 
@@ -56,9 +61,9 @@ Category names in the curated stack below are drawn from it.
 
 ## The curated stack
 
-The curated stack is the standardized technology stack: the subset of the landscape the organization commits to supporting. It answers *what do we use?*
+The curated stack is the standardized technology stack: the subset of the landscape Boilerplate commits to supporting. It answers *what do we use?*
 
-The stack's picks for the inner-loop slots are what the [Environment guide](../../environment/index.md) calls the **Toolchain**; that page documents each tool's configuration and daily use.
+The [Environment guide](../../environment/index.md) documents how each pick is configured and used day to day.
 
 ### Boilerplate reference implementation: Stack
 
