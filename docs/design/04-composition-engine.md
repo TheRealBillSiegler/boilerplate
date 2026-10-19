@@ -353,6 +353,8 @@ Compose asks the merged questionnaire once and every layer renders with the same
 
 ```mermaid
 flowchart LR
+    accTitle: Merged questionnaire to per-layer answers files
+    accDescr: The merged questionnaire is asked once and yields the resolved answers, which feed two renders, project under its own scoped view and streamlit under the project plus streamlit scoped view. The project render writes the project answers file with the project's questions, and the streamlit render writes the streamlit answers file with the project's and streamlit's questions.
     Q["Merged questionnaire<br>asked once"] --> A["Resolved answers"]
     A --> P["Render project<br>scoped view: project"]
     A --> S["Render streamlit<br>scoped view: project + streamlit"]
@@ -439,6 +441,8 @@ For the in-place render and the new copy, the walk passes as data the answer eac
 
 ```mermaid
 flowchart LR
+    accTitle: Files that feed each render of one layer update
+    accDescr: Streamlit's own file feeds the old copy with its own keys and feeds the in-place render with its own questions, read after migrations, while the project file as read when the walk began feeds the old copy only with the keys streamlit's file lacks. The project file as read when the step starts feeds the in-place render and the new copy as data, the in-place render writes streamlit's files and answers file, and the old copy and the new copy both go into the three-way merge.
     SF["streamlit's own file"]
     PW["project's file<br>as read when the walk began"]
     PS["project's file<br>as read when the step starts"]
