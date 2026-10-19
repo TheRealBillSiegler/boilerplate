@@ -8,12 +8,13 @@
  * to (see the mkdocs-material customization reference: both halves are
  * required or the built-in palette silently wins).
  *
- * Contrast is computed and verified for both schemes (see the PR/commit that
- * introduced this file for the numbers); all pairs clear WCAG AA (4.5:1) for
- * normal text. Brand blue #40B4E5 itself is too light to pass AA as text on
- * white, so the light scheme's link/accent color is a darker sky blue
- * (#1f78b8) instead — the literal brand blue stays reserved for the primary
- * button and the slate scheme, where the dark page background gives it room.
+ * Contrast is computed against each background the color lands on, for both
+ * schemes; every text pair clears WCAG AA (4.5:1) for normal text. Brand blue
+ * #40B4E5 itself is too light to pass AA as text on white, so the light
+ * scheme's link/accent color is a darker sky blue (#1c70ad, 5.29:1 on white
+ * and 4.85:1 on the #f5f5f5 inline-code background) instead — the literal
+ * brand blue stays reserved for the primary button and the slate scheme,
+ * where the dark page background gives it room.
  */
 
 /* Self-hosted type — vendored from the @fontsource packages (docs/assets/
@@ -64,7 +65,7 @@
 :root {
   --bp-brand-blue: #40b4e5;         /* the sticker-art sky blue; AA only on dark */
   --bp-brand-blue-hover: #2a9fd2;   /* one step darker, for hover/focus fills */
-  --bp-link-blue: #1f78b8;          /* link-safe blue: AA as text on white */
+  --bp-link-blue: #1c70ad;          /* link-safe blue: AA as text on white and on code */
   --bp-charcoal: #1f2124;           /* the sticker-art near-black */
   --bp-charcoal-light: #2b2f34;
   --bp-charcoal-dark: #121416;
@@ -93,10 +94,11 @@
   --md-primary-fg-color--light: var(--bp-charcoal-light);
   --md-primary-fg-color--dark: var(--bp-charcoal-dark);
   --md-primary-bg-color: var(--bp-white);
-  /* Darker sky blue: passes WCAG AA (4.73:1) as text on white, unlike the
-     literal brand blue (#40b4e5 on white is 2.37:1 — fails). */
+  /* Darker sky blue: passes WCAG AA as text on white (5.29:1) and on the
+     #f5f5f5 inline-code background (4.85:1), unlike the literal brand blue
+     (#40b4e5 on white is 2.37:1 — fails). */
   --md-accent-fg-color: var(--bp-link-blue);
-  --md-accent-fg-color--transparent: #1f78b81a;
+  --md-accent-fg-color--transparent: #1c70ad1a;
   --md-typeset-a-color: var(--bp-link-blue);
 }
 
@@ -125,8 +127,8 @@
 /* Primary buttons: the literal brand blue with dark text, in both schemes.
    A charcoal (--md-primary-fg-color) button — Material's stock
    .md-button--primary — would vanish against the slate background, and the
-   light scheme's link-safe accent (#1f78b8) is too dark to pass AA with dark
-   text (3.71:1); #40b4e5 with #0f1a26 text clears AA at 7.42:1 in both. */
+   light scheme's link-safe accent (#1c70ad) is too dark to pass AA with dark
+   text (3.32:1); #40b4e5 with #0f1a26 text clears AA at 7.42:1 in both. */
 .md-typeset .md-button--primary {
   background-color: var(--bp-brand-blue);
   border-color: var(--bp-brand-blue);
