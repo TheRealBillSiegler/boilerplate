@@ -91,7 +91,7 @@ For detailed configuration and usage, see:
 
 ## The golden path
 
-A golden path is the supported, opinionated way to build one kind of project, from creating it through running it ([glossary](../../design/01-overview.md#glossary)). Golden paths nest: each starter template is a golden path to a starting point, and the dev loop is the golden path for the work that follows. The path below strings them together for a general Python project: a template's path to a starting point, the dev loop, then build and CI. Deploy and operate appear for context; they are outside Boilerplate's scope. The term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
+A golden path is a workflow whose decisions are already thought out for you ([glossary](../../design/01-overview.md#term-golden-path)). Golden paths nest: each starter template is a golden path to a starting point, and the dev loop is the golden path for the work that follows. The path below strings them together for a general Python project: a template's path to a starting point, the dev loop, then build and CI. Deploy and operate appear for context; they are outside Boilerplate's scope. The term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
 
 The path is not mandatory — developers may diverge when circumstances warrant — but it's the most-supported, lowest-friction route, and platform investment (documentation, templates, CI automation) centers on it.
 
