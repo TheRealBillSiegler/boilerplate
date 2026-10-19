@@ -196,3 +196,59 @@ class TestTitleCard:
         below = record_demo._ROWS - 1 - drawn[-1]
 
         assert abs(above - below) <= 1
+
+
+def _relative_luminance(color: str) -> float:
+    """Return the WCAG 2.x relative luminance of a ``#rrggbb`` color."""
+    channels = [int(color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+    red, green, blue = (
+        value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+        for value in channels
+    )
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _contrast_ratio(foreground: str, background: str) -> float:
+    """Return the WCAG contrast ratio between two ``#rrggbb`` colors."""
+    lighter, darker = sorted(
+        (_relative_luminance(foreground), _relative_luminance(background)),
+        reverse=True,
+    )
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _recorded(monkeypatch: pytest.MonkeyPatch, chunk: str) -> str:
+    recorder, _ = _lingering_recorder(monkeypatch)
+    recorder.output(chunk)
+    return recorder.events[-1][2]
+
+
+class TestLowContrastColors:
+    """The cast shows its theme's legible colors, not a tool's dark ones."""
+
+    def test_256_colour_red_becomes_the_16_colour_red(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        recorded = _recorded(monkeypatch, '\x1b[38;5;124m"ipykernel"\x1b[0m')
+
+        assert recorded == '\x1b[31m"ipykernel"\x1b[0m'
+
+    def test_the_rewrite_keeps_the_other_parameters_of_the_sequence(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert _recorded(monkeypatch, "\x1b[1;38;5;124;4mx") == "\x1b[1;31;4mx"
+
+    @pytest.mark.parametrize(
+        "chunk",
+        ["\x1b[38;5;67mx", "\x1b[48;5;124mx", "\x1b[31mx", "plain 38;5;124 text"],
+    )
+    def test_other_output_is_recorded_as_written(
+        self, monkeypatch: pytest.MonkeyPatch, chunk: str
+    ) -> None:
+        assert _recorded(monkeypatch, chunk) == chunk
+
+    def test_bright_black_is_legible_on_the_theme_background(self) -> None:
+        theme = record_demo._THEME
+        bright_black = theme["palette"].split(":")[8]
+
+        assert _contrast_ratio(bright_black, theme["bg"]) >= 4.5
