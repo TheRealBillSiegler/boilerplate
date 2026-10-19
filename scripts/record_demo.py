@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -71,7 +72,10 @@ _AFTER_RENDER_LINGER_S: Final = 3.0
 _END_LINGER_S: Final = 4.0
 
 # Brand theme, matching docs/stylesheets/extra.css. The asciicast v2 theme
-# object supports only fg/bg/palette (no separate cursor color).
+# object supports only fg/bg/palette (no separate cursor color). Every
+# palette entry but the first, which is the background, holds at least 4.5:1
+# on the background (WCAG AA for normal text); bright black (index 8) is
+# lightened for that, as the usual dim grey is 2.77:1.
 _THEME: Final[dict[str, str]] = {
     "fg": "#e6e8eb",
     "bg": "#1f2124",
@@ -85,7 +89,7 @@ _THEME: Final[dict[str, str]] = {
             "#c7a4ff",
             "#5fd3d8",
             "#e6e8eb",
-            "#5d6672",
+            "#848e9b",
             "#f5a5a2",
             "#9fe0aa",
             "#ead588",
@@ -116,6 +120,13 @@ _CPR_REQUEST: Final = "\x1b[6n"
 # and homes it on a blank screen, the screen the shell started on.
 _HIDE_CURSOR: Final = "\x1b[?25l"
 _CLEAR_SCREEN: Final = "\x1b[?25h\x1b[2J\x1b[H"
+
+# An SGR sequence (CSI params m) and the 256-colour dark red (xterm index 124,
+# #af0000, 2.17:1 on the theme background) that a tool can ask for in one. The
+# theme palette cannot remap a 256-colour index, but it does remap SGR 31.
+_SGR_RE: Final = re.compile(r"\x1b\[([0-9;]*)m")
+_DARK_RED_256_PARAMS: Final = ("38", "5", "124")
+_RED_PARAM: Final = "31"
 
 _FAILED_PROMPT_RE: Final = r"\[exit -?\d*\]> "
 # The bare prompt may be followed by escape sequences PSReadLine sends the
@@ -160,6 +171,41 @@ _QUESTIONS: Final[tuple[_Question, ...]] = (
     _Question("email address", "bill@example.com"),
     _Question("Package index URL", None),
 )
+
+
+def _use_theme_red(data: str) -> str:
+    r"""Rewrite the 256-colour dark red in ``data`` to the 16-colour red.
+
+    The cast's theme sets the 16 ANSI colours to values that clear 4.5:1 on its
+    background, but cannot reach a 256-colour index, so the dark red a tool asks
+    for as ``38;5;124`` stays at 2.17:1. A rewrite to SGR 31 shows the theme's
+    red instead. A sequence split across two reads of the pty is not rewritten.
+
+    Args:
+        data: A chunk of terminal output.
+
+    Returns:
+        ``data`` with each ``38;5;124`` color parameter replaced by ``31``.
+
+    Examples:
+        >>> _use_theme_red("\x1b[1;38;5;124mx\x1b[0m")
+        '\x1b[1;31mx\x1b[0m'
+    """
+
+    def rewrite(match: re.Match[str]) -> str:
+        params = match.group(1).split(";")
+        out: list[str] = []
+        index = 0
+        while index < len(params):
+            if tuple(params[index : index + 3]) == _DARK_RED_256_PARAMS:
+                out.append(_RED_PARAM)
+                index += 3
+            else:
+                out.append(params[index])
+                index += 1
+        return f"\x1b[{';'.join(out)}m"
+
+    return _SGR_RE.sub(rewrite, data)
 
 
 class DemoRecordingError(Exception):
@@ -237,11 +283,15 @@ class _EventRecorder:
     def output(self, s: str) -> None:
         """Record a chunk of terminal output at the current recorder time.
 
+        The dark red of a 256-colour sequence is rewritten to the theme's red
+        first (see ``_use_theme_red``); the cast is what the viewer sees, so
+        the shell and the cursor reporter still get the bytes as written.
+
         Args:
             s: A chunk of data just read from the shell's pty.
         """
         if s:
-            self.events.append((self._advance(), "o", s))
+            self.events.append((self._advance(), "o", _use_theme_red(s)))
 
     def mark(self, label: str) -> None:
         """Record a labeled marker event at the current recorder time.
