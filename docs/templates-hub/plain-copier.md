@@ -73,7 +73,7 @@ uv run --project "$BP" copier update --trust --defaults \
   --vcs-ref <tag>
 ```
 
-Pass the answers file of each ancestor layer as `--data-file`, one flag per ancestor; `streamlit` extends `project`, so `project`'s file is the one here. A base layer such as `project` needs none.
+Copier accepts `--data-file` once: a second flag stops with `Switch --data-file already given`. Pass the answers file of the layer's direct parent; `streamlit` extends `project`, so `project`'s file is the one here. A base layer such as `project` needs none. A parent's file that `boilerplate new` wrote also records the parent's own ancestors' answers. A file from a by-hand `copier copy`, or one an earlier by-hand update trimmed, holds only that parent's own questions, so supply the rest with `--data key=value`, which wins over the same key in the file. A layer with two parents takes one parent's file with `--data-file` and the other parent's own keys with `--data`.
 
 Pass the two derived names too, as in the compose step: no answers file records them. Without `package_name`, Copier exits 0 and silently skips every file in a `<package_name>` folder under `src/` and `tests/`. Use the names your project has.
 
