@@ -26,6 +26,9 @@ not run MkDocs hooks.
   page's Markdown renders.
 - The theme's search dialog gets an ``aria-label``. ``on_post_page`` does this,
   because the dialog lives in the theme's page template, not the page content.
+
+The scroll regions Material wraps around tables are created by its JavaScript
+at view time, so ``docs/assets/scroll-region.js`` names them instead.
 """
 
 import re
