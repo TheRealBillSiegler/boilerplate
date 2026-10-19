@@ -33,7 +33,7 @@ Want to set the project name, description, dependencies, and author yourself? Dr
 boilerplate new project my-first-project
 ```
 
-Need a web front‑end? Use the Streamlit template:
+Need a web front-end? Use the Streamlit template:
 
 ```bash
 boilerplate new streamlit my-streamlit-app
@@ -48,7 +48,7 @@ boilerplate new project@0.3.0 my-versioned-project
 !!! note "Planned"
     `boilerplate update` — moving a generated project to a newer template version — is planned; see the [roadmap](roadmap.md) for sequencing and the [update model design](design/adr-007-update-model.md) for the approach.
 
-Non‑interactive (accept defaults) and overwrite a non-empty destination:
+Non-interactive (accept defaults) and overwrite a non-empty destination:
 
 ```bash
 boilerplate new project --non-interactive -f my-first-project
@@ -109,9 +109,9 @@ See [Project structure](templates-hub/project.md#project-structure) for the gene
 
 ## Next steps
 
-- **[Installation Guide](install.md)** — platform‑specific installation details  
+- **[Installation Guide](install.md)** — platform-specific installation details  
 - **[Templates Hub](templates-hub/index.md)** — pick a starting point  
 - **[Commands](cli.md)** — every command and option explained  
-- **[VS Code Guide](environment/vscode.md)** — tips for a friction‑free IDE experience
+- **[VS Code Guide](environment/vscode.md)** — tips for a friction-free experience in your IDE (code editor)
 
 Enjoy building with Boilerplate! ✨

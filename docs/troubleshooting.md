@@ -4,7 +4,7 @@
 
 ### Error: `boilerplate` command not found
 
-The installer places the `boilerplate` executable in a user-local bin directory that may not be on your PATH yet.
+The installer places the `boilerplate` executable in a user-local bin directory that may not be on your PATH (the list of folders your shell searches for commands) yet.
 
 <!-- markdownlint-disable MD046 -->
 === "Windows"

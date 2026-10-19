@@ -46,7 +46,7 @@ Authentication is chosen from the registry hostname at push time, so the same sc
 
 ### Azure Container Registry
 
-No namespace needed. The script requires the Azure CLI, checks `az account show` and runs `az login` if you're signed out, then acquires a short-lived AAD token with `az acr login --expose-token` and logs Docker in with it.
+No namespace needed. The script requires the Azure CLI, checks `az account show` and runs `az login` if you're signed out, then acquires a short-lived Microsoft Entra ID access token with `az acr login --expose-token` and logs Docker in with it.
 
 ### Any other registry
 

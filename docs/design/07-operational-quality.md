@@ -255,7 +255,7 @@ These defaults apply to all retryable operations (network fetches, transient sub
 
 ### Network Timeouts
 
-All network operations MUST enforce a configurable timeout to prevent indefinite hangs against unresponsive servers. Network timeouts and rendering timeouts are independent and independently configurable.
+All network operations MUST enforce a configurable timeout to prevent an operation from waiting indefinitely on unresponsive servers. Network timeouts and rendering timeouts are independent and independently configurable.
 
 ---
 
