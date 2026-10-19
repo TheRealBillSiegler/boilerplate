@@ -24,6 +24,8 @@ not run MkDocs hooks.
   button, and their SVG icons are hidden from assistive technology.
   ``on_page_content`` does this, because the plugin writes the markup while the
   page's Markdown renders.
+- The theme's search dialog gets an ``aria-label``. ``on_post_page`` does this,
+  because the dialog lives in the theme's page template, not the page content.
 """
 
 import re
@@ -206,3 +208,25 @@ def on_page_content(html: str, **_kwargs: object) -> str:
         label = f' aria-label="{escape(text, quote=True)}"'
         html = html[:offset] + label + html[offset:]
     return html
+
+
+_SEARCH_DIALOG = re.compile(
+    r'<div\b(?=[^>]*\bdata-md-component="search")(?=[^>]*\brole="dialog")'
+    r"(?![^>]*\baria-label=)[^>]*>"
+)
+
+
+def on_post_page(output: str, **_kwargs: object) -> str:
+    """Name the theme's search dialog.
+
+    Args:
+        output: The page's complete HTML, theme template included.
+        **_kwargs: The page and config MkDocs passes; unused.
+
+    Returns:
+        ``output`` with ``aria-label="Search"`` on the search dialog if it has
+        no label. A page without the dialog comes back unchanged.
+    """
+    return _SEARCH_DIALOG.sub(
+        lambda m: m.group(0)[:-1] + ' aria-label="Search">', output
+    )

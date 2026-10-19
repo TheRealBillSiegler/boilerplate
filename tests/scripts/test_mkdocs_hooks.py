@@ -13,7 +13,7 @@ import pytest
 from mkdocs.config.defaults import MkDocsConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
-from mkdocs_hooks import on_page_content, on_post_build
+from mkdocs_hooks import on_page_content, on_post_build, on_post_page
 
 
 def _config_for(site_dir: Path) -> MkDocsConfig:
@@ -256,3 +256,44 @@ class TestNamesPanzoomControls:
         page = '<pre><code>&lt;button class="panzoom-reset panzoom-button"&gt;</code></pre>'
 
         assert on_page_content(page) == page
+
+
+SEARCH_DIALOG = '<div class="md-search" data-md-component="search" role="dialog">'
+
+
+class TestNamesSearchDialog:
+    """The theme's search dialog gets a name, once."""
+
+    def test_names_the_dialog(self) -> None:
+        page = f"<body>{SEARCH_DIALOG}<input/></div></body>"
+
+        named = on_post_page(page)
+
+        assert (
+            '<div class="md-search" data-md-component="search" role="dialog" '
+            'aria-label="Search">'
+        ) in named
+
+    def test_is_idempotent(self) -> None:
+        once = on_post_page(SEARCH_DIALOG)
+
+        assert on_post_page(once) == once
+        assert once.count("aria-label") == 1
+
+    def test_keeps_a_name_the_dialog_already_has(self) -> None:
+        page = SEARCH_DIALOG.replace("dialog", 'dialog" aria-label="Find')
+
+        assert on_post_page(page) == page
+
+    def test_leaves_the_search_field_and_other_divs_alone(self) -> None:
+        page = (
+            '<div class="md-search__inner" role="search">'
+            '<input data-md-component="search-query"/></div>'
+        )
+
+        assert on_post_page(page) == page
+
+    def test_a_page_without_the_dialog_is_unchanged(self) -> None:
+        page = "<p>Hello</p>"
+
+        assert on_post_page(page) == page
