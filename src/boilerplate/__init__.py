@@ -1,4 +1,4 @@
-"""Boilerplate: stamps out Python projects from templates that stack.
+"""Boilerplate: stamps out Python projects from templates that build on one another.
 
 Built on Copier.
 """

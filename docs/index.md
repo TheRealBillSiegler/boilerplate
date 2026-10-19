@@ -1,11 +1,11 @@
 ---
-description: Boilerplate stamps out Python projects from templates that stack. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
+description: Boilerplate stamps out Python projects from templates that build on one another. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
 demo: true
 ---
 
 # Boilerplate
 
-**Boilerplate stamps out Python projects from templates that stack.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
+**Boilerplate stamps out Python projects from templates that build on one another.** Use its templates as they are, or put your team's standards on top of one instead of forking it. It builds on [Copier](https://copier.readthedocs.io/), a tool for rendering project templates, and you don't need to know Copier to use it.
 
 **An ethos made executable** — Start fast. Stay consistent. Reproduce anywhere.
 
