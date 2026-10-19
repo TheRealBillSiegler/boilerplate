@@ -148,3 +148,111 @@ class TestLeavesOtherMarkupAlone:
         )
 
         assert on_page_content(page) == page
+
+
+def _panzoom_box(*, full_screen: bool = True) -> str:
+    """Return the markup mkdocs-panzoom-plugin wraps around a diagram.
+
+    The shape matches the plugin's own ``create_panzoom_box``, with the icon
+    paths shortened.
+    """
+    icon = (
+        '<svg class="panzoom-icon" viewBox="0 0 512 512" '
+        'xmlns="http://www.w3.org/2000/svg"><path d="M0 0"></path></svg>'
+    )
+    full_screen_buttons = (
+        f'<button class="panzoom-max panzoom-button">{icon}</button>'
+        f'<button class="panzoom-min panzoom-button panzoom-hidden">{icon}</button>'
+        if full_screen
+        else ""
+    )
+    return (
+        '<div class="panzoom-box" data-key="alt" id="panzoom0">'
+        '<nav class="panzoom-nav">'
+        f'<button class="panzoom-info panzoom-button">{icon}</button>'
+        f'<button class="panzoom-reset panzoom-button">{icon}</button>'
+        f"{full_screen_buttons}</nav>"
+        '<div class="mermaid">graph</div></div>'
+    )
+
+
+def _button_labels(page_html: str) -> dict[str, str]:
+    """Return each panzoom button's aria-label, keyed by its action class."""
+    return dict(
+        re.findall(
+            r'<button class="panzoom-(\w+) [^>]*\baria-label="([^"]*)"', page_html
+        )
+    )
+
+
+class TestNamesPanzoomControls:
+    """Each diagram control is named for what it does and hides its icon."""
+
+    def test_names_each_button_by_its_action(self) -> None:
+        labelled = on_page_content(_panzoom_box())
+
+        assert _button_labels(labelled) == {
+            "info": "Show pan and zoom help",
+            "reset": "Reset zoom",
+            "max": "Enter full screen",
+            "min": "Exit full screen",
+        }
+
+    def test_names_only_the_buttons_the_page_renders(self) -> None:
+        labelled = on_page_content(_panzoom_box(full_screen=False))
+
+        assert sorted(_button_labels(labelled)) == ["info", "reset"]
+
+    def test_hides_every_icon_from_assistive_technology(self) -> None:
+        labelled = on_page_content(_panzoom_box())
+
+        icons = re.findall(r'<svg class="panzoom-icon"[^>]*>', labelled)
+
+        assert len(icons) == 4
+        assert all('aria-hidden="true"' in icon for icon in icons)
+        assert all('focusable="false"' in icon for icon in icons)
+
+    def test_names_the_controls_landmark(self) -> None:
+        labelled = on_page_content(_panzoom_box())
+
+        assert '<nav class="panzoom-nav" aria-label="Diagram controls">' in labelled
+
+    def test_names_a_landmark_with_extra_classes(self) -> None:
+        page = '<nav class="panzoom-nav panzoom-top-nav"></nav>'
+
+        assert on_page_content(page) == (
+            '<nav class="panzoom-nav panzoom-top-nav" aria-label="Diagram controls">'
+            "</nav>"
+        )
+
+    def test_names_each_diagram_on_a_page(self) -> None:
+        labelled = on_page_content(_panzoom_box() + _panzoom_box())
+
+        assert labelled.count('aria-label="Reset zoom"') == 2
+
+    def test_leaves_the_rest_of_the_markup_alone(self) -> None:
+        page = _panzoom_box()
+
+        labelled = on_page_content(page)
+
+        assert (
+            re.sub(r' aria-(label|hidden)="[^"]*"| focusable="false"', "", labelled)
+            == page
+        )
+
+    def test_is_idempotent(self) -> None:
+        once = on_page_content(_panzoom_box())
+
+        assert on_page_content(once) == once
+
+    def test_keeps_a_name_the_markup_already_has(self) -> None:
+        page = (
+            '<button class="panzoom-reset panzoom-button" aria-label="Mine"></button>'
+        )
+
+        assert on_page_content(page) == page
+
+    def test_ignores_panzoom_markup_shown_as_code(self) -> None:
+        page = '<pre><code>&lt;button class="panzoom-reset panzoom-button"&gt;</code></pre>'
+
+        assert on_page_content(page) == page
