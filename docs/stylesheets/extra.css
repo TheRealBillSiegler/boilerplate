@@ -75,6 +75,12 @@
   --bp-ink-light: #dfe3ea;          /* body text on slate */
   --bp-ink-lightest: #f3f5f9;       /* H1 on slate */
   --bp-muted-light: #aeb4c0;        /* secondary text on slate */
+  --bp-muted-dark: #6b6b6b;         /* code-comment grey: 4.89:1 on #f5f5f5, 5.33:1 on white */
+  --bp-search-hint: #666666;        /* search hint: 4.90:1 on its #ededed band */
+  --bp-line-gray: #6b7280;          /* diagram lifelines: 4.83:1 on white (3:1 needed) */
+  --bp-link-blue-ink: #1a6aa5;      /* diagram tag text: 5.00:1 on the accent tint */
+  --bp-code-red-slate: #ec7a6d;     /* slate numbers: 5.15:1 on #272a35 */
+  --bp-code-violet-slate: #a399e8;  /* slate constants and builtins: 5.64:1 on #272a35 */
   --bp-white: #ffffff;
   --bp-status-shipped: #2e8b57;
   --bp-status-shipped-slate: #4fd487;
@@ -100,6 +106,28 @@
   --md-accent-fg-color: var(--bp-link-blue);
   --md-accent-fg-color--transparent: #1c70ad1a;
   --md-typeset-a-color: var(--bp-link-blue);
+  /* Material points these five syntax tokens at --md-default-fg-color--light,
+     which renders #717171 on the #f5f5f5 code background: 4.48:1, just under
+     AA. Set them directly rather than darken every muted foreground. */
+  --md-code-hl-comment-color: var(--bp-muted-dark);
+  --md-code-hl-variable-color: var(--bp-muted-dark);
+  --md-code-hl-generic-color: var(--bp-muted-dark);
+  --md-code-hl-punctuation-color: var(--bp-muted-dark);
+  --md-code-hl-operator-color: var(--bp-muted-dark);
+  /* Sequence diagrams. Label text takes the accent, 4.59:1 on its own tint
+     (accent at 10% over white, #e8f0f7); a deeper step of the same blue gives
+     5.00:1. Material's lifeline default (black at 32%) is 2.24:1 on white,
+     under the 3:1 a graphic needs; this grey is 4.83:1. */
+  --md-mermaid-sequence-label-fg-color: var(--bp-link-blue-ink);
+  --md-mermaid-sequence-actor-line-color: var(--bp-line-gray);
+}
+
+/* Search panel hint ("Type to start searching"). Material paints it with
+   --md-default-fg-color--light (black at 54%) on a black-at-7% band over
+   white, 4.42:1. Slate already lifts that token, so only the light scheme
+   needs its own value. */
+[data-md-color-scheme="default"] div.md-search-result__meta {
+  color: var(--bp-search-hint);
 }
 
 /* Slate scheme (dark) — the sticker-art charcoal header, brand blue in full. */
@@ -122,6 +150,10 @@
      still needs lifting, and going lower would fail AA. */
   --md-default-fg-color--light: var(--bp-muted-light);
   --md-default-fg-color--lighter: var(--bp-muted-light);
+  /* Material's slate numbers (#e6695b, 4.45:1) and constants/builtins
+     (#9383e2, 4.48:1) sit just under AA on the #272a35 code background. */
+  --md-code-hl-number-color: var(--bp-code-red-slate);
+  --md-code-hl-constant-color: var(--bp-code-violet-slate);
 }
 
 /* Primary buttons: the literal brand blue with dark text, in both schemes.
