@@ -5,7 +5,7 @@
 This guide shows you how to:
 
 1. Scaffold your first project
-2. Follow the standard development workflow
+2. Run the dev loop
 
 This guide scaffolds your first project and runs its tests. Install Boilerplate first — [Setup options](install.md#setup-options) and [Verify installation](install.md#verify-installation) — and skim the [toolchain](environment/index.md#toolchain) it standardizes.
 
@@ -63,7 +63,9 @@ Boilerplate ships two first-party templates today — see [Choose a template](te
 
 ---
 
-## Development workflow
+## The dev loop
+
+The dev loop is the cycle you repeat inside a project; the [Development Environment guide](environment/index.md#the-dev-loop) covers it in full.
 
 1. **Enter the project directory**
 

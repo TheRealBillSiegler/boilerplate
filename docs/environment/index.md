@@ -1,6 +1,6 @@
 # Development environment
 
-Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the **dev loop**, the **Project Layout**, and their **Configuration**.
+Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the [**dev loop**](#the-dev-loop), the **Project Layout**, and their **Configuration**.
 
 ## Toolchain
 
@@ -34,7 +34,9 @@ Boilerplate fills each slot the dev loop uses with one preconfigured, overridabl
 
 **Version control.** Tracks your project's history, makes branching and experimentation safe, and syncs with remotes like GitHub. [Official docs](https://git-scm.com/doc)
 
-## Typical developer workflow
+## The dev loop
+
+The **dev loop** is the cycle you repeat inside a project — sync → edit → check → test → commit — on the tools the Development Environment provides. Here it is from a new or cloned project.
 
 ### 1. Start or clone a project
 
