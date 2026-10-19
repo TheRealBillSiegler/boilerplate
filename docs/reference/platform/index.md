@@ -43,7 +43,7 @@ flowchart TD
 | Tool landscape | Descriptive | What exists? | Survey, catalog |
 | Curated stack | Prescriptive | What do we use? | Stack list |
 | Golden path | Prescriptive | How do we work? | Workflow definition |
-| Development environment | Implementation | Where do we work? | Machine, project and editor setup |
+| Development environment | Implementation | What is our setup made of? | Installer, `pyproject.toml`, `.vscode/` |
 | Starter templates | Implementation | How do we start? | Project scaffolds |
 | Guardrails | Enforcement | How do we comply? | Automated policies |
 
