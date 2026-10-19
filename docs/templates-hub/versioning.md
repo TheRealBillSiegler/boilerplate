@@ -316,7 +316,7 @@ A migration test does three things:
 
 ## Terminology
 
-Template, Question, Copier, `copier.yml`, and `boilerplate.yml` follow the definitions in [design 01's glossary](../design/01-overview.md#glossary). A "template variable" above is a **Question**. Migration-specific terms used on this page:
+[Template](../design/01-overview.md#term-template), [Question](../design/01-overview.md#term-question), [Copier](../design/01-overview.md#term-copier), [`copier.yml`](../design/01-overview.md#term-copier-yml), and [`boilerplate.yml`](../design/01-overview.md#term-boilerplate-yml) follow the definitions in [design 01's glossary](../design/01-overview.md#glossary). A "template variable" above is a **Question**. Migration-specific terms used on this page:
 
 **Copier Migration**: An entry under `_migrations` in `copier.yml` — a command, gated by an optional `version` and `when` — that transforms a rendered project during `copier update`.
 
