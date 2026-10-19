@@ -419,7 +419,7 @@ The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate
 
 - **Kind of:** `trust:Substrate`
 - **Related:** `trust:TrustLevel`, `trust:FirstPartyGatingScaffolding`, `composition:LockFile`
-- **Defined in:** `src/boilerplate/common/exceptions.py` (`BP_*` codes), `src/boilerplate/models/boilerplate_lock.py` (lock `schema_version` validation), `src/boilerplate/repository/template_checksum.py` (computes the checksum the lock records; no verification against it found)
+- **Defined in:** `src/boilerplate/common/exceptions.py` (`BP_*` codes), `src/boilerplate/models/boilerplate_lock.py` (lock `schema_version` validation), `src/boilerplate/repository/template_checksum.py` (computes the checksum the lock records)
 - **See:** `docs/products/PROD-001.yaml` `enforcement_layers.product`
 
 <a id="term-preconfigured-substrate"></a>**preconfigured substrate** · `trust:PreconfiguredSubstrate`  
@@ -452,8 +452,8 @@ The convention that when a **PEP** defines the canonical way, first-party templa
 Binary classification for a template's origin: *trusted* or *untrusted*. Untrusted code is default-deny and requires explicit consent.
 
 - **Related:** `trust:TOFU`, `core:FirstPartyTemplates`, `customization:Task`, `composition:LockFile`
-- **Stored in:** the `trust_level` field of each source entry in `boilerplate-sources.yml` in the user's data directory (the implicit first-party source is `trusted`); each lock layer's optional free-form `trust_tier` is a separate field, reserved for richer tiers, that resolution ignores
-- **Defined in:** `src/boilerplate/models/lock_layer.py` (the reserved `trust_tier` field only; no code reads `trust_level`)
+- **Stored in:** the `trust_level` field of each source entry in `boilerplate-sources.yml` in the user's data directory (the implicit first-party source is `trusted`); each lock layer's optional free-form `trust_tier` is a separate field, reserved for richer tiers
+- **Defined in:** `src/boilerplate/models/lock_layer.py` (the `trust_tier` field)
 - **See:** design 03 §Trust and Verification Levels; design 09 §Catalog Source Configuration File
 
 <a id="term-tofu"></a>**TOFU** · `trust:TOFU`  
