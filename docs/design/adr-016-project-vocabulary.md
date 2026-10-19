@@ -8,12 +8,12 @@
 
 `CONTEXT.md` at the repository root is the domain glossary. The [design overview's glossary](01-overview.md#glossary) renders it, and `docs/agents/domain.md` tells the engineering skills to read it before they work in the code. Tenet 14 in `.claude/rules/docs.md` asks for one name per concept, and the glossary's _Avoid_ lists name retired synonyms. The vocabulary still drifts in four ways.
 
-- **Copies disagree.** The glossary's Workflow entry defines the everyday loop as sync → edit → check → test → commit; the Environment guide and the Quickstart each write out a different sequence.
+- **Copies disagree.** The glossary's dev loop entry defines the everyday loop as sync → edit → check → test → commit; the Environment guide and the Quickstart each write out a different sequence.
 - **One word names unrelated concepts.**
     - "Profile" names `profile.toml`, a user's default answers, and `EnvironmentProfile` (`boilerplate-env.yml`), the tool versions a project pins. The glossary calls the two "unrelated despite the shared word".
     - "Layer" names a composition layer and, in the **substrate** entry, an enforcement layer.
     - "Stack" names the development tools in the brand line, templates building on one another on the home page, and an application's dependencies in the Streamlit template's dashboard.
-    - "Workflow" names the everyday loop in the glossary and the general kind of a golden path in the reference model.
+    - "Workflow" names the general kind of a golden path in the glossary and the reference model, and a GitHub Actions workflow file in the CI guide (`docs/governance/ci.md`).
 - **A concept and its file are split in two entries, merged in one, or missing a side.** The glossary separates `EnvironmentProvisionRecord` from `.boilerplate/environment.yml` and the Answers File from `.copier-answers.<layer>.yml`; it merges the lock with `boilerplate.lock` in one entry; it gives `boilerplate.yml` an entry with no template-metadata concept beside it; and it defines Profile by its file.
 - **Relations are prose only.** A relation such as "the Toolchain is part of the Development Environment" exists as a sentence, so nothing shows the whole, and a relation to a renamed term goes unnoticed.
 
