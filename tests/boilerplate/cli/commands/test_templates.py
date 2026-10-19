@@ -82,6 +82,36 @@ extends: []
     assert "zephyr" in result.output
 
 
+def test_templates_list_wide_wraps_a_long_description_beside_the_path(
+    tmp_path: Path, typer_cli_runner: CliRunner
+):
+    """A long description still wraps whole when the wide format adds a Path column.
+
+    The seam is `list --format wide`, which expands the table and shares its
+    width between the Description and Path columns; the expected value is the
+    template's own description, whose last word only survives if that column
+    wraps rather than truncating with an ellipsis.
+    """
+    (tmp_path / "long").mkdir()
+    (tmp_path / "long" / "copier.yml").touch()
+    (tmp_path / "long" / "boilerplate.yml").write_text(
+        """
+schema_version: "1.0.0"
+name: "long"
+description: "A description far too long to fit beside the name and version columns, ending zephyr."
+version: "1.0.0"
+extends: []
+"""
+    )
+
+    result = typer_cli_runner.invoke(
+        app, ["list", "--templates-dir", str(tmp_path), "--format", "wide"]
+    )
+
+    assert "Path" in result.output
+    assert "zephyr" in result.output
+
+
 def test_templates_list_rejects_an_unknown_format(
     tmp_path: Path, typer_cli_runner: CliRunner
 ):
