@@ -7,7 +7,7 @@ This guide shows you how to:
 1. Scaffold your first project
 2. Follow the standard development workflow
 
-This guide scaffolds your first project and runs its tests. Install Boilerplate first — [Setup options](install.md#setup-options) and [Verify installation](install.md#verify-installation) — and skim the [stack](environment/index.md#the-stack) it standardizes.
+This guide scaffolds your first project and runs its tests. Install Boilerplate first — [Setup options](install.md#setup-options) and [Verify installation](install.md#verify-installation) — and skim the [toolchain](environment/index.md#toolchain) it standardizes.
 
 ---
 

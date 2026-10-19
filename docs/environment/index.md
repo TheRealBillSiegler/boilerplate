@@ -1,10 +1,10 @@
 # Development environment
 
-Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the stack's tools, the **dev loop**, the **Project Layout**, and their **Configuration**.
+Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the **dev loop**, the **Project Layout**, and their **Configuration**.
 
-## The stack
+## Toolchain
 
-Boilerplate fills each slot the dev loop uses with one preconfigured, overridable tool from its [curated stack](../reference/platform/index.md#the-curated-stack) rather than a menu, on your machine, in each project and in your editor — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot); the [landscape](../design/dev-environment-landscape.md) holds the full taxonomy.
+Boilerplate fills each slot the dev loop uses with one preconfigured, overridable tool, [picked from the tool landscape](../reference/platform/index.md#the-toolchain), rather than a menu, on your machine, in each project and in your editor — see [A whole environment, one pick per slot](../why.md#a-whole-environment-one-pick-per-slot); the [landscape](../design/dev-environment-landscape.md) holds the full taxonomy.
 
 ### ![uv Logo](../assets/uv.svg){ style="height: 1em; vertical-align: middle;" } uv
 
@@ -28,7 +28,7 @@ Boilerplate fills each slot the dev loop uses with one preconfigured, overridabl
 
 ### ![VS Code Logo](../assets/vscode.svg){ style="height: 1em; vertical-align: middle;"} VS Code
 
-**Editor.** Your workspace, pre-wired so the rest of the stack just works — format-on-save, live type hints, and test discovery out of the box. [Setup guide](vscode.md) [Official docs](https://code.visualstudio.com/docs)
+**Editor.** Your workspace, pre-wired so the rest of the toolchain just works — format-on-save, live type hints, and test discovery out of the box. [Setup guide](vscode.md) [Official docs](https://code.visualstudio.com/docs)
 
 ### ![Git Logo](../assets/git.svg){ style="height: 1em; vertical-align: middle;" } Git
 
@@ -115,7 +115,7 @@ A consistent project layout helps everyone understand the codebase at a glance �
 
 ### What boilerplate configures for you
 
-Generated projects arrive with the stack pre-wired. Beginners can ignore the specifics and just code; the exact configuration is here when you want it.
+Generated projects arrive with the toolchain pre-wired. Beginners can ignore the specifics and just code; the exact configuration is here when you want it.
 
 ??? note "The shipped configuration (click to expand)"
 
