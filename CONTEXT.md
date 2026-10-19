@@ -58,7 +58,7 @@ On-disk filesystem path holding the `EnvironmentProvisionRecord`. Use this name 
 Boilerplate-specific metadata file inside a template directory. Declares name, version, and dependencies. See design 02 §TemplateMeta.
 
 **Configuration**:  
-The settings that wire the **Curated stack**'s tools into a project — `pyproject.toml` and `.vscode/`. A part of the Development Environment; see the Development Environment guide. Distinct from Boilerplate's own runtime configuration (the `Settings` object — see design 01 §Runtime configuration (Settings)).
+The settings that wire the **Toolchain** into a project — `pyproject.toml` and `.vscode/`. A part of the Development Environment; see the Development Environment guide. Distinct from Boilerplate's own runtime configuration (the `Settings` object — see design 01 §Runtime configuration (Settings)).
 
 **`.copier-answers.<layer>.yml`**:  
 The per-layer answers file Copier writes; `<layer>` is the layer's invariant name (matches `LockLayer.name`). One file per composition layer.
@@ -72,13 +72,8 @@ Copier questionnaire file. Declares questions (variables) and tasks. Owned by Co
 **Copy back**:  
 The step of `update` and `add` that reproduces the staging worktree's result in the user's checkout as uncommitted changes: `git restore --source=<commit> --worktree -- :/` from the worktree's last per-layer commit. See design 06 §Staging worktree.
 
-**Curated stack**:  
-An element of the reference model, answering *what do we use?*: the subset of the **Tool landscape** Boilerplate commits to supporting, one pick per **slot**, chosen by **Curation** as a set. In prose, "the stack". See Developer platform architecture §The curated stack.  
-_Avoid_: dev stack, curated toolchain  
-_Carve-out_: the slogan "Less Yak. More Stack." also plays on templates stacking; outside it, a template **layers** on another.
-
 **Curation**:  
-Choosing the **Curated stack**'s picks from the **Tool landscape** as a set, each for how it works with the others, then configuring them together and maintaining them together. It joins the **Development Environment** and the **Starter templates**, which carry the same picks.
+Choosing the **Toolchain**'s picks from the **Tool landscape** as a set, each for how it works with the others, then configuring them together and maintaining them together. It joins the **Development Environment** and the **Starter templates**, which carry the same picks.
 
 **DAG / Dependency Graph**:  
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
@@ -88,7 +83,7 @@ The cycle you repeat inside a project — sync → edit → check → test → c
 _Avoid_: inner loop, developer workflow, development workflow
 
 **Development Environment**:  
-The setup a developer works in, on the machine, in the project and in the editor: the **Curated stack**'s tools, their **Configuration** (`pyproject.toml`, `.vscode/`), the **Project Layout**, and the **dev loop**. In the reference model it carries the Curated stack beside the **Starter templates**. Distinct from **Environment Provisioning**, the subsystem that installs it and pins its **Toolchain**.
+The setup a developer works in, on the machine, in the project and in the editor: the **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), the **Project Layout**, and the **dev loop**. In the reference model it carries the Toolchain beside the **Starter templates**. Distinct from **Environment Provisioning**, the subsystem that installs it and pins the Toolchain's versions.
 
 **enforced substrate**:  
 The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a `BP_*` code; there is no opt-out.
@@ -149,7 +144,7 @@ Out-of-scope content verdicts performed against generated projects after Boilerp
 The standard project structure — `src/`, `tests/`, and their conventions. A part of the **Development Environment**; see the Development Environment guide.
 
 **Reference model**:  
-The model of what Boilerplate is: **Curation** picks a **Curated stack** from the **Tool landscape**; the **Development Environment** and the **Starter templates** carry it; **golden paths** run on it; **Guardrails** check the work. Owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
+The model of what Boilerplate is: **Curation** picks the **Toolchain** from the **Tool landscape**; the **Development Environment** and the **Starter templates** carry it; **golden paths** run on it; **Guardrails** check the work. Owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
 
 **RenderEngine**:  
 The proper-noun class that orchestrates Copier across composition layers.
@@ -164,7 +159,7 @@ The conflict-detected update workflow Boilerplate provides over Copier's per-lay
 One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Each first-party template fills the slots its ecosystem's **dev loop** uses with one opinionated tool each; the template then fills slots *within* those slots (each tool's per-project configuration).
 
 **Starter templates**:  
-An element of the reference model, answering *how do we start?*: the **Templates**, each a **golden path** to a starting point that carries the **Curated stack**'s project and editor picks. Outside the reference model, say **Template**. See Developer platform architecture §Starter templates.
+An element of the reference model, answering *how do we start?*: the **Templates**, each a **golden path** to a starting point that carries the **Toolchain**'s project and editor picks. Outside the reference model, say **Template**. See Developer platform architecture §Starter templates.
 
 **substrate**:  
 A layer's enforcement mode — `enforced` (Boilerplate's own runtime gates and rejects on violation, with no opt-out) or `preconfigured` (defaults are shipped; user-runnable gating scaffolding executes the check in third-party venues; the user MAY opt out). Per-layer assignments live in PROD-001 `enforcement_layers`.
@@ -173,10 +168,12 @@ A layer's enforcement mode — `enforced` (Boilerplate's own runtime gates and r
 Trust-on-first-use — a security model where the first interaction with a remote source is trusted, and subsequent interactions are verified against the initial state.
 
 **Tool landscape**:  
-An element of the reference model, answering *what exists?*: the descriptive catalog of the tools, technologies and practices available in a domain, organized by **slot**; the **Curated stack** is chosen from it. Boilerplate keeps it as the Development Environment Landscape guide. See Developer platform architecture §The tool landscape.
+An element of the reference model, answering *what exists?*: the descriptive catalog of the tools, technologies and practices available in a domain, organized by **slot**; the **Toolchain** is curated from it. Boilerplate keeps it as the Development Environment Landscape guide. See Developer platform architecture §The tool landscape.
 
 **Toolchain**:  
-The **Curated stack**'s picks at the versions an **EnvironmentProfile** pins, installed and verified by **Environment Provisioning**. Not every pick is pinned: the editor and git are not. Unpinned, the same tools are "the stack". A part of the **Development Environment**, **not** a synonym for it.
+The development tools Boilerplate picks and sets up, one per **slot** (uv, Ruff, Pyright, pytest, …), chosen by **Curation** from the **Tool landscape**, whether or not their versions are pinned. **Environment Provisioning** pins them through an **EnvironmentProfile**; not every pick is pinned (the editor and git are not). An element of the reference model, answering *what do we use?*; see Developer platform architecture §The toolchain. A part of the **Development Environment**, **not** a synonym for it, and not an application's own framework stack.  
+_Avoid_: curated stack, dev stack, tech stack  
+_Carve-out_: the slogan "Less Yak. More Stack." puns on the toolchain handed to you and templates stacking; outside it, a template **layers** on another. The reference model page names "curated stack" once, as platform engineering's term.
 
 **Trust Level**:  
 Binary classification for a template's origin: *trusted* or *untrusted*. Untrusted code is default-deny and requires explicit consent. The lock's optional `trust_tier` field is a free-form string field reserved for future richer tiers. See design 03.

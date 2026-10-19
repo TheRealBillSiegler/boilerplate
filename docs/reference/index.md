@@ -8,7 +8,7 @@ See the [Boilerplate CLI reference](../cli.md) for every command, its options, a
 
 ## Platform
 
-See [Developer platform architecture](platform/index.md) for the reference model — tool landscape, curated stack, golden path, starter templates, and guardrails.
+See [Developer platform architecture](platform/index.md) for the reference model — tool landscape, toolchain, development environment, golden path, starter templates, and guardrails.
 
 ## Merging
 

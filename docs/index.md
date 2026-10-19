@@ -44,7 +44,7 @@ Already on uv? `uv init` gives you a package; Boilerplate gives you the judgment
 
     `uv.lock` pins the environment, so every machine resolves the same.
 
--   :material-tools:{ .lg .middle } **Curated stack**
+-   :material-tools:{ .lg .middle } **Toolchain**
 
     ---
 

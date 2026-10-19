@@ -3,23 +3,23 @@
 
 # Developer platform architecture
 
-This page is the reference model behind Boilerplate: curation picks a curated stack from a tool landscape, the development environment and the starter templates carry it, golden paths run on it, and guardrails check the work. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
+This page is the reference model behind Boilerplate: a toolchain picked from a tool landscape, one tool per slot, and carried by the development environment and the starter templates; golden paths run on it, and guardrails check the work. Each element has a single responsibility, from cataloging available tools to enforcing standards automatically.
 
-In platform-engineering terms, an internal developer platform (IDP) is the self-service layer an organization runs for its own developers — templates plus CI/CD, provisioning, deployment, and operations, usually behind a portal. Boilerplate is open-source tooling for the scaffolding-and-environment slice of that: the curated stack, starter templates, and dev-time guardrails, with the golden path pre-built — where most platform tools hand you the machinery and leave the path to you. Deployment and operations are out of scope.
+In platform-engineering terms, an internal developer platform (IDP) is the self-service layer an organization runs for its own developers — templates plus CI/CD, provisioning, deployment, and operations, usually behind a portal. Boilerplate is open-source tooling for the scaffolding-and-environment slice of that: the toolchain, starter templates, and dev-time guardrails, with the golden path pre-built — where most platform tools hand you the machinery and leave the path to you. Deployment and operations are out of scope.
 
 !!! note "Scope"
-    The reference implementation documented here is Boilerplate's own: Python-focused, with one curated stack. It is one worked example, not a general prescription for other contexts.
+    The reference implementation documented here is Boilerplate's own: Python-focused, with one toolchain. It is one worked example, not a general prescription for other contexts.
 
 ## The model
 
 ``` mermaid
 flowchart TD
     accTitle: Platform reference model overview
-    accDescr: Shows the Tool Landscape feeding a Developer Platform boundary that contains the Curated Stack, Development Environment, Golden Path, Starter Templates, and Guardrails, with the stack driving the environment, path, templates, and guardrails, the environment flowing into the path, and the environment, path and templates also flowing into guardrails.
+    accDescr: Shows the Tool Landscape feeding a Developer Platform boundary that contains the Toolchain, Development Environment, Golden Path, Starter Templates, and Guardrails, with the toolchain driving the environment, path, templates, and guardrails, the environment flowing into the path, and the environment, path and templates also flowing into guardrails.
     L["Tool Landscape\nDescriptive context"]
 
     subgraph Platform["Developer Platform"]
-        P["Curated Stack\nPrescriptive stack"]
+        P["Toolchain\nOne pick per slot"]
         E["Development Environment\nMachine, project, editor"]
         G["Golden Path\nPrescriptive workflow"]
         T["Starter Templates\nImplementation scaffolds"]
@@ -41,13 +41,13 @@ flowchart TD
 | Element | Type | Question | Artifact |
 | --- | --- | --- | --- |
 | Tool landscape | Descriptive | What exists? | Survey, catalog |
-| Curated stack | Prescriptive | What do we use? | Stack list |
+| Toolchain | Prescriptive | What do we use? | Toolchain list |
 | Golden path | Prescriptive | How do we work? | Workflow definition |
 | Development environment | Implementation | What is our setup made of? | Installer, `pyproject.toml`, `.vscode/` |
 | Starter templates | Implementation | How do we start? | Project scaffolds |
 | Guardrails | Enforcement | How do we comply? | Automated policies |
 
-The landscape describes available options; the stack and path prescribe specific choices; the environment and templates automate setup; guardrails automate verification.
+The landscape describes available options; the toolchain and path prescribe specific choices; the environment and templates automate setup; guardrails automate verification.
 
 ## The tool landscape
 
@@ -57,15 +57,15 @@ It sits outside the platform itself — it's the knowledge base platform decisio
 
 Boilerplate maintains this as [The Development Environment Landscape](../../design/dev-environment-landscape.md), a taxonomy covering language runtimes, dependency management, code quality, testing, and CI/CD tooling.
 
-Category names in the curated stack below are drawn from it.
+Category names in the toolchain below are drawn from it.
 
-## The curated stack
+## The toolchain
 
-The curated stack is the standardized technology stack: the subset of the landscape Boilerplate commits to supporting. It answers *what do we use?*
+The toolchain is the subset of the landscape Boilerplate commits to supporting, what platform engineering calls a curated stack. It answers *what do we use?*
 
 The [Environment guide](../../environment/index.md) documents how each pick is configured and used day to day.
 
-### Boilerplate reference implementation: Stack
+### Boilerplate reference implementation: Toolchain
 
 | Category | Standard | Rationale |
 | --- | --- | --- |
