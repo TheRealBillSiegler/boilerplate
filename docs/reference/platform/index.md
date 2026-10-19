@@ -91,7 +91,7 @@ For detailed configuration and usage, see:
 
 ## The golden path
 
-A golden path is a workflow whose decisions are already thought out for you ([glossary](../../design/01-overview.md#term-golden-path)). Golden paths nest: each starter template is a golden path to a starting point, and the dev loop is the golden path for the work that follows. The path below strings them together for a general Python project: a template's path to a starting point, the dev loop, then build and CI. Deploy and operate appear for context; they are outside Boilerplate's scope. The term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
+A golden path is a workflow whose decisions are already thought out for you ([glossary](../../design/01-overview.md#term-golden-path)). Golden paths nest: each starter template is a golden path to a starting point, and the dev loop is the golden path for the work that follows. The path below strings them together for a general Python project: a template's path to a starting point, the dev loop, then pull requests, CI and release. Deploy and operate appear for context; they are outside Boilerplate's scope. The term is Spotify's; Netflix calls the same idea the paved road. It answers *how do we work?*
 
 The path is not mandatory — developers may diverge when circumstances warrant — but it's the most-supported, lowest-friction route, and platform investment (documentation, templates, CI automation) centers on it.
 
@@ -100,29 +100,33 @@ The path is not mandatory — developers may diverge when circumstances warrant 
 ``` mermaid
 flowchart TD
     accTitle: Golden path from new project to production
-    accDescr: A linear flow in four groups. A template's path to a starting point holds Create Project and Initialize Environment. The dev loop holds Develop Features, Run Code Quality Checks and Run Tests. Build and CI holds Build Artifacts and CI Validation. Deploy and Operate and Monitor sit in a group marked outside Boilerplate's scope. Feedback arrows return lint, type, test and CI failures to Develop Features, deploy failures to CI Validation, and incidents to Develop Features.
-    subgraph template["A template's path to a starting point"]
-        A[Create Project] --> B[Initialize Environment]
+    accDescr: Four groups in order. Start: create the project, then set up its environment. Dev loop: red, write a failing test; green, make it pass; refactor; then run the checks and commit, and the next change starts the loop again. Pull request, CI and release: many commits are pushed as a pull request, CI builds and checks it, it merges, and many merges make a release. Outside Boilerplate's scope: deploy, then operate. The next change, or a CI failure, starts another turn of the dev loop.
+    subgraph start["Start"]
+        direction TB
+        A[Create the project] --> B[Set up the environment]
     end
     subgraph loop["Dev loop"]
-        C[Develop Features] --> D[Run Code Quality Checks]
-        D --> E[Run Tests]
+        direction TB
+        C["Red: write a failing test"]
+        D["Green: make it pass"]
+        E[Refactor]
+        F[Run the checks and commit]
+        C --> D --> E --> F
+        F -->|next change or CI failure| C
     end
-    subgraph build["Build and CI"]
-        F[Build Artifacts] --> G[CI Validation]
+    subgraph ship["Pull request, CI and release"]
+        direction TB
+        G[Push a pull request] --> H[CI builds and checks]
+        H --> I[Merge]
+        I -->|many merges| J[Release]
     end
     subgraph ops["Outside Boilerplate's scope"]
-        H[Deploy] --> I[Operate & Monitor]
+        direction TB
+        K[Deploy] --> L[Operate and monitor]
     end
-    B --> C
-    E --> F
-    G --> H
-
-    D -->|Lint/type errors| C
-    E -->|Test failures| C
-    G -->|CI failures| C
-    H -->|Deploy failures| G
-    I -->|Incidents| C
+    start --> loop
+    loop -->|many commits| ship
+    ship --> ops
 ```
 
 ### Tool engagement by stage
