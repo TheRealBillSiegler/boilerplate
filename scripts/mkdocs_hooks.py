@@ -69,8 +69,10 @@ class _TaskItemScanner(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.labels: list[tuple[int, str]] = []
         self._line_starts = [0]
-        for line in source.splitlines(keepends=True):
-            self._line_starts.append(self._line_starts[-1] + len(line))
+        # Split on "\n" alone: HTMLParser.getpos() counts lines that way, and
+        # str.splitlines() also breaks at form feeds and U+2028.
+        for line in source.split("\n")[:-1]:
+            self._line_starts.append(self._line_starts[-1] + len(line) + 1)
         # One entry per open <li>: its index among the task items, or None.
         self._open_items: list[int | None] = []
         self._insert_at: list[int | None] = []
