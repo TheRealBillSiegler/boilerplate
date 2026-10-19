@@ -61,7 +61,7 @@ Category names in the toolchain below are drawn from it.
 
 ## The toolchain
 
-The toolchain is the subset of the landscape Boilerplate commits to supporting, what platform engineering calls a curated stack. It answers *what do we use?*
+The toolchain is the subset of the landscape Boilerplate commits to supporting, sometimes called a curated stack. It answers *what do we use?*
 
 The [Environment guide](../../environment/index.md) documents how each pick is configured and used day to day.
 
