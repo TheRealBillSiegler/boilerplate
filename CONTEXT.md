@@ -1,6 +1,6 @@
 # Boilerplate — Domain Glossary
 
-The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time. Definitions name the design's concepts; `docs/status.md` records which are built. Each entry opens with an anchor, `<a id="term-…"></a>`: `term-` plus the term in lowercase, backticks dropped, and every run of other characters turned into `-`. Rename the id with the term, then fix the links the strict docs build reports.
+The project's domain vocabulary, one definition per term: templates, composition, and customization; the development environment a generated project ships with; and the mechanics that render, lock, and update a project over time. Definitions name the design's concepts; `docs/status.md` records which are built. Each entry opens with an anchor, `<a id="term-…"></a>`: `term-` plus the term in lowercase, backticks dropped, and every run of other characters turned into `-`, and leading and trailing `-` dropped. Rename the id with the term, then fix the links the strict docs build reports.
 
 ## Language
 
