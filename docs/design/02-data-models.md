@@ -579,7 +579,7 @@ Written to `.boilerplate/environment.yml` after successful provisioning. Records
 
 **Ownership boundary**: Boilerplate owns `.boilerplate/environment.yml` (profile provenance). Proto owns `.protolock` (tool versions and checksums). The `boilerplate env status` command reads both to report the full environment state.
 
-> **State, not audit**: `.boilerplate/environment.yml` is the single env-domain state file — a current-state projection holding the most recently applied state. `EnvironmentProvisionRecord` is overwritten in place on each successful `env apply`, not appended; the recovery story is simply "run `env apply` again". The env domain MUST NOT add a migrations-style append-only audit log: provisioning is idempotent and re-runnable, so it needs only the current-state record.
+> **State, not audit**: `.boilerplate/environment.yml` is the single env-domain state file — a current-state projection holding the most recently applied state. `EnvironmentProvisionRecord` is overwritten in place on each successful `env apply`, not appended; the recovery story is "run `env apply` again". The env domain MUST NOT add a migrations-style append-only audit log: provisioning is idempotent and re-runnable, so it needs only the current-state record.
 
 ---
 

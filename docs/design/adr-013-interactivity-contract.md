@@ -62,7 +62,7 @@ Verified against primary sources, July 2026.
 
 **Category peers get this wrong** — the proactive guard (Clause 1) is ahead of the category, not behind it:
 
-- Copier itself reacts to `EOFError` only and still hangs on stdin that is open but never fed ([copier-org/copier#2436](https://github.com/copier-org/copier/issues/2436)).
+- Copier itself reacts to `EOFError` only and still waits indefinitely on stdin that is open but never fed ([copier-org/copier#2436](https://github.com/copier-org/copier/issues/2436)).
 - cookiecutter has no EOF handling; a non-TTY prompt surfaces as a raw traceback.
 - Yeoman acknowledged the same gap in 2018 and closed the issue stale without a fix ([yeoman/generator#694](https://github.com/yeoman/generator/issues/694)).
 

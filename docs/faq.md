@@ -8,7 +8,7 @@ Nothing — see [Before you start](install.md#before-you-start) for what `uv` pr
 
 ### Do I need administrator rights?
 
-Only for the `winget` installs on Windows — see [Before you start](install.md#before-you-start).
+Only for the `winget` (Windows Package Manager) installs on Windows — see [Before you start](install.md#before-you-start).
 
 ### Is `-ExecutionPolicy Bypass` in the install command safe?
 

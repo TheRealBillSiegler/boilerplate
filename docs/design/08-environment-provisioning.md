@@ -238,7 +238,7 @@ Computes the `proto_lock_hash` from `.protolock` (if present), writes `.boilerpl
 
 ### Signal Handling
 
-Signal handling follows the [Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern). The advisory lock MUST be released on cleanup. An interrupted `env apply` leaves no provenance record; the recovery story is simply to run `env apply` again.
+Signal handling follows the [Atomic Staged Write Pattern](07-operational-quality.md#atomic-staged-write-pattern). The advisory lock MUST be released on cleanup. An interrupted `env apply` leaves no provenance record; the recovery story is to run `env apply` again.
 
 ---
 

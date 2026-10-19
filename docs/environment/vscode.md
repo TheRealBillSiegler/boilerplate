@@ -8,7 +8,7 @@ Boilerplate projects ship a `.vscode/` folder so the editor is ready the moment 
 └─ settings.json
 ```
 
-New to VS Code? After generating or cloning a project, you only need to do one thing: open the folder and accept the prompt to install the recommended extensions.
+New to VS Code? After generating or cloning a project, open the folder and accept the prompt to install the recommended extensions.
 
 ## Recommended extensions
 

@@ -92,7 +92,7 @@ The strict docs build (both the online config and the `DOCS_OFFLINE` release-bun
 
 ## Timeouts
 
-Every job sets `timeout-minutes` (5–45 by job). The GitHub default is 360, which would let a single hung job burn hours of runner time — on a 2× or 10× runner, a large slice of a month's included minutes.
+Every job sets `timeout-minutes` (5–45 by job). The GitHub default is 360, which would let a single job that stops responding use up hours of runner time — on a 2× or 10× runner, a large slice of a month's included minutes.
 
 ## The local check
 

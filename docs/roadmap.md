@@ -1,6 +1,6 @@
 # Build-out roadmap
 
-The [design specification suite](design/README.md) describes the target contract, [Implementation status](status.md) tracks what exists today, and this page sequences the path between them — phases ordered by dependency, not by design-document numbering, with effort labels that are scope-based (small / medium / large by blast radius and files touched), never clock time.
+The [design specification suite](design/README.md) describes the target contract, [Implementation status](status.md) tracks what exists today, and this page sequences the path between them — phases ordered by dependency, not by design-document numbering, with effort labels that are scope-based (small / medium / large by scope and files touched), never clock time.
 
 !!! info "How to read this page"
     Each phase lists what ships, why it sits where it does, and which design documents govern it. The [CI pipeline reference](governance/ci.md) describes the repository's own CI, and phase completion is recorded by releases — one minor version per completed phase — in the changelog. When a sequencing decision here no longer reflects reality, update this page in the same PR.
@@ -12,7 +12,7 @@ The [design specification suite](design/README.md) describes the target contract
 The design documents are well-factored, but two seams cross document boundaries and must be re-cut into the work:
 
 1. **Artifact fetching** ([design 06](design/06-project-lifecycle.md) Part 3) is lifecycle-document content but federation-track work. It belongs to Phase 4, and Phase 3 declares an interface dependency on it.
-2. **Per-operation invariants** in [design 07](design/07-operational-quality.md) ship *inside* the phase that introduces the operation needing them — they are **not** deferred hardening. The advisory lock attaches to every mutating operation. The intent journal attaches to **in-place** mutation, where a crash can strand partial state that the staging pattern cannot undo: it ships with Phase 3's update commit window, not with `new`, whose crash recovery is simply deleting the stale staging directory.
+2. **Per-operation invariants** in [design 07](design/07-operational-quality.md) ship *inside* the phase that introduces the operation needing them — they are **not** deferred hardening. The advisory lock attaches to every mutating operation. The intent journal attaches to **in-place** mutation, where a crash can strand partial state that the staging pattern cannot undo: it ships with Phase 3's update commit window, not with `new`, whose crash recovery is deleting the stale staging directory.
 
 ### Phase summary
 
@@ -116,7 +116,7 @@ Independent of the feature phases, sequenced against the go-public decision:
 
 - **Day-one distribution:** the bootstrap installer — `scripts/install.ps1` on Windows installs uv + boilerplate from git, needs no PyPI name.
 - **Cross-platform bootstrap:** a macOS/Linux equivalent of `install.ps1` (e.g. `install.sh`), so the bootstrap-first install is canonical on every platform.
-- **Publish pipeline (fallback / parallel, non-gating):** a GitHub Actions release pipeline — PyPI via OIDC trusted publisher, tag-driven — per INT-010 in the [intentions register](intentions/README.md); deferred until the PyPI distribution name (`boilerplate-cli`, adr-008) is final.
+- **Publish pipeline (fallback / parallel, non-gating):** a GitHub Actions release pipeline — PyPI via an OpenID Connect (OIDC) trusted publisher, tag-driven — per INT-010 in the [intentions register](intentions/README.md); deferred until the PyPI distribution name (`boilerplate-cli`, adr-008) is final.
 - **Template publishing:** deterministic per-template extraction (`git subtree split`) from the authoring monorepo, publishing the resulting repositories with tags kept in sync with each template's `boilerplate.yml` version — the canonical first-party distribution channel per [ADR-006](design/adr-006-template-distribution.md). The wheel-bundled seed cache is an optional, deferred item, built only on demonstrated demand.
 - **Version checkpoints:** wired to the release checklist in `RELEASING.md`. Proposal: `0.3.0` = Phase 0 complete, cut at go-public; one minor version per completed phase after that.
 - **Dormant `ci/` content:** the Azure Pipelines templates under `ci/` are first-party template substrate per PROD-001 — shipped product material, not this repository's own CI. Standing decision: relocate them into template material when the catalog work lands; never delete them, and exclude them from the repo's own CI concerns.

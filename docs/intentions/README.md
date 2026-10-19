@@ -4,7 +4,7 @@ Intentions decompose a Product into testable outcomes. Each Intention is defined
 
 ## Schema
 
-The IDD plugin (`grillergeek-plugins/idd-framework`) prescribes a thin Intention schema. See `intention-template.md` in the plugin's references for the canonical definition.
+The Intent-Driven Development (IDD) plugin (`grillergeek-plugins/idd-framework`) prescribes a thin Intention schema. See `intention-template.md` in the plugin's references for the canonical definition.
 
 ### IDD-prescribed core (required)
 
