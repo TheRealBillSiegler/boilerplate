@@ -150,6 +150,10 @@ extra_javascript:
   # docs/assets/mermaid.LICENSE from the upstream tag in the same change, and
   # re-derive the embedded libraries that NOTICE credits from that tag's lockfile.
   - assets/mermaid-theme.js
+  # Gives each horizontally scrolling table a tab stop and a name, because
+  # Material's script wraps the tables at view time (where no build hook can
+  # reach) and leaves them unfocusable. See the header of the file.
+  - assets/scroll-region.js
 
 # Runs on every build, the offline bundle's and each mike deploy; see the module docstring.
 hooks:
