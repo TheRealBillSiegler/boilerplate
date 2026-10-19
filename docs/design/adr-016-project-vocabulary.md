@@ -11,7 +11,7 @@
 - **Copies disagree.** The glossary's dev loop entry defines the everyday loop as sync → edit → check → test → commit; the Environment guide and the Quickstart each write out a different sequence.
 - **One word names unrelated concepts.**
     - "Profile" names `profile.toml`, a user's default answers, and `EnvironmentProfile` (`boilerplate-env.yml`), the tool versions a project pins. The glossary calls the two "unrelated despite the shared word".
-    - "Layer" names a composition layer and, in the **substrate** entry, an enforcement layer.
+    - "Layer" names a composition layer and, in the key `enforcement_layers` of PROD-001, an enforcement area.
     - "Stack" names the development tools in the brand line, templates building on one another on the home page, and an application's dependencies in the Streamlit template's dashboard.
     - "Workflow" names the general kind of a golden path in the glossary and the reference model, and a GitHub Actions workflow file in the CI guide (`docs/governance/ci.md`).
 - **A concept and its file are split in two entries, merged in one, or missing a side.** The glossary separates `EnvironmentProvisionRecord` from `.boilerplate/environment.yml` and the Answers File from `.copier-answers.<layer>.yml`; it merges the lock with `boilerplate.lock` in one entry; it gives `boilerplate.yml` an entry with no template-metadata concept beside it; and it defines Profile by its file.
@@ -87,7 +87,7 @@ The labeled lines of decision 2 are built to convert mechanically into this form
 
 1. **Placements.** Some concepts fit two modules, such as Guardrails in `model` or `trust`, and slot in `model` or as a term of the tool landscape. The maintainer confirms each placement the restructuring proposes.
 2. **An admitted tier.** Terminology standards allow a tolerated synonym between the preferred term and a deprecated one. Whether **Avoid** needs that middle tier, for an abbreviation for example, is open.
-3. **The enforcement layer.** The **substrate** entry uses "layer" for an enforcement layer. Whether that sense gets its own term, or the entry rewords it, is open.
+3. **The enforcement area.** The **substrate** entry says "area" where PROD-001 says "layer". Whether "area" needs its own term, and what to do about the `enforcement_layers` key in PROD-001, which still carries the word, is open.
 
 ## Verification (2026-10-18)
 
