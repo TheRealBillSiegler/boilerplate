@@ -1,4 +1,4 @@
-# Boilerplate
+# <img src="docs/assets/boilerplate.svg" width="40" alt=""> Boilerplate
 
 [![CI](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/TheRealBillSiegler/boilerplate/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
