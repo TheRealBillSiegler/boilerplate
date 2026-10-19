@@ -1,4 +1,5 @@
 ---
+title: Python projects from templates
 description: Boilerplate stamps out Python projects from templates that build on one another. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
 demo: true
 ---
