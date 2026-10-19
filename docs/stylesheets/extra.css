@@ -160,6 +160,17 @@
   color: var(--md-accent-bg-color);
 }
 
+/* Links in running text carry an underline in both schemes. Color alone is
+   not a cue: on slate the link blue against body text is 1.84:1, and the
+   accent equals the link color, so hover adds nothing either. Header
+   permalinks, buttons and the title link of a grid card are not running text
+   and keep their own styling; the nav and header sit outside .md-typeset. */
+.md-typeset :is(p, li, td, dd, blockquote, .admonition) a:not(.headerlink):not(.md-button):not(.grid.cards > ul > li > p:first-child a) {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
 /* Material's word-break: break-word splits identifiers mid-token in narrow
    table columns (e.g. `default_te` / `mplates_di` / `r`); keep them whole. */
 .md-typeset table:not([class]) code {
@@ -219,6 +230,19 @@
   margin-top: 0.5rem;
   font-size: 0.75rem;
   color: var(--md-default-fg-color--light);
+}
+
+/* Keyboard focus on the demo player. The player removes the terminal's
+   outline and shows its control bar only while the pointer moves, so a
+   keyboard user would tab onto an unmarked terminal and an invisible Pause
+   button. Draw the ring, and show the bar whenever focus is inside. */
+.md-typeset figure.demo .ap-term-text:focus-visible {
+  outline: 2px solid var(--bp-brand-blue);
+  outline-offset: -2px;
+}
+
+.md-typeset figure.demo .ap-wrapper:focus-within .ap-control-bar {
+  opacity: 1;
 }
 
 /* Implementation-status legend (docs/status.md) — colors that hold their
