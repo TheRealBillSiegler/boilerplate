@@ -4,8 +4,12 @@ How a change travels from your working tree to `develop`, what runs at each step
 
 ## The whole flow
 
+A change moves from local checks to a draft pull request, then to one billed run once the pull request is ready, through the `check` gate, and on to a push to `develop` that runs the workflow again.
+
 ```mermaid
 flowchart TD
+    accTitle: How a change travels from local development to develop
+    accDescr: Local development, where scripts/check.py mirrors the check job, leads to a draft pull request on which every job skips, and gh pr ready starts one billed run. In that run the changes job sends a docs-only change to skipped code jobs, a code change to the lint, shellcheck, typecheck, package, test and tests-go-red jobs, and a composition-path change to the scenarios job, while the docs build always runs and commit-lint runs on pull_request events only. All of these feed the check job, the single pass/fail signal, and once check is green and the PR is rebase merged, the push to develop re-runs the same workflow with the push matrix.
     dev["Local development<br>scripts/check.py mirrors the check job"] --> draft["Draft PR<br>every job skips: free iteration"]
     draft -- "gh pr ready" --> run
     subgraph run["One billed run per event"]

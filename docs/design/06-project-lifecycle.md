@@ -293,6 +293,8 @@ The diagram follows one `update` from the pre-flight check to the removal of the
 
 ```mermaid
 sequenceDiagram
+    accTitle: One update from pre-flight check to worktree removal
+    accDescr: Boilerplate runs the pre-flight, lock and marker rules on the user's checkout and adds a detached staging worktree with hooks off, which starts at the same commit. For each layer, ancestors first, Copier updates the layer in the worktree and Boilerplate commits it, then Boilerplate confirms the checkout is unchanged, pins the ref and writes the restore marker, copies back into the checkout, runs tasks, writes the lock, appends the record, and removes the marker, the ref and the worktree.
     participant B as Boilerplate
     participant U as Your checkout
     participant S as Staging worktree
