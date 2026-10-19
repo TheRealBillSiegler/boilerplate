@@ -33,6 +33,8 @@ When your output names a domain concept (an issue title, a refactor proposal, a 
 
 If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it).
 
+`CONTEXT.md` groups concepts in modules (`core`, `model`, `composition`, `customization`, `provisioning`, `trust`). Each entry has an identifier, `module:Name`, and the same labeled lines: **Kind of**, **Part of**, **Related**, **Not to be confused with**, **Stored in**, **Defined in**, **See**, **Avoid**, **Carve-out**, **Matches**. Check **Not to be confused with** before you use a term, add a new term in that shape, and keep the old anchor when you rename one. [ADR-016](../design/adr-016-project-vocabulary.md) records the format.
+
 ## Flag ADR conflicts
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
