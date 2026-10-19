@@ -22,7 +22,7 @@ Boilerplate has two surfaces:
 - **Managed development environment** — the toolchain each template's profile declares (for Python: `uv`, `ruff`, `pyright`, `pytest`, and VS Code workspace settings), installed and version-pinned via `boilerplate env apply`.
 - **CLI and template system** — `boilerplate new` scaffolds a project from a curated template; `boilerplate update` applies upstream template changes to existing projects safely; `boilerplate list` and `boilerplate compose` make the catalog navigable.
 
-**The slot model.** A development environment decomposes into recurring roles — **slots** — catalogued in [The Development Environment Landscape](dev-environment-landscape.md). Each first-party template declares, through its required profile, the slots its kind of project needs, with one opinionated, preconfigured tool per slot:
+**The slot model.** A development environment decomposes into recurring roles — [slots](#term-slot) — catalogued in [The Development Environment Landscape](dev-environment-landscape.md). Each first-party template declares, through its required profile, the slots its kind of project needs, with one opinionated, preconfigured tool per slot:
 
 - **Declared slots** — the slots its ecosystem's dev loop uses, plus any secondary toolchain.
 - **Slots within those slots** — the template pre-wires each tool's per-project configuration (rule sets, strictness, markers, workspace settings).
@@ -230,5 +230,8 @@ The runtime is configured by a `Settings` object loaded from environment variabl
 ## Glossary
 
 Core terms used throughout this document suite. For data model details see [02-data-models.md](02-data-models.md); for composition details see [04-composition-engine.md](04-composition-engine.md). Canonical definitions live in `CONTEXT.md` at the repository root.
+
+!!! note "Target-state vocabulary"
+    These definitions describe the design. [Implementation status](../status.md) records which parts exist today.
 
 --8<-- "CONTEXT.md:language"

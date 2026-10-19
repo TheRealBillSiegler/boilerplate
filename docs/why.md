@@ -33,7 +33,7 @@ Three opinions the tool executes rather than recommends:
 
 ## A whole environment, one pick per slot
 
-A development environment is a set of slots — shell, runtime and package manager, linter, type checker, test runner, editor — and most teams fill them by accretion. Boilerplate fills each slot with one opinionated, overridable pick, at three layers:
+A development environment is a set of [slots](design/01-overview.md#term-slot) — shell, runtime and package manager, linter, type checker, test runner, editor — and most teams fill them by accretion. Boilerplate fills each slot with one opinionated, overridable pick, at three layers:
 
 - **Machine** — the [installer](install.md) bootstraps the baseline itself: PowerShell 7 (installed first when missing), Git, VS Code with extensions, uv, and the boilerplate CLI. There is no prerequisites section that quietly assumes an hour of setup.
 - **Project** — every generated project arrives with a uv-managed, locked environment and Ruff, Pyright strict, and pytest configured in `pyproject.toml`; its example module and test pass those checks on the first run.

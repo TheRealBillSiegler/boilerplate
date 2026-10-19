@@ -1,6 +1,6 @@
 # Development environment
 
-Boilerplate projects include a complete, modern Python development environment. This section documents that **Development Environment** and its parts: the **Toolchain**, the [**dev loop**](#the-dev-loop), the **Project Layout**, and their **Configuration**.
+Boilerplate projects include a complete, modern Python development environment. This section documents that [Development Environment](../design/01-overview.md#term-development-environment) and its parts: the [Toolchain](#toolchain), the [**dev loop**](#the-dev-loop), the [Project Layout](#project-layout), and their [Configuration](#configuration).
 
 ## Toolchain
 
