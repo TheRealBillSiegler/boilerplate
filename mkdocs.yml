@@ -20,6 +20,8 @@ not_in_nav: |
   templates-hub/streamlit/deployment/containers/pushing-container-images.md
 
 validation:
+  omitted_files: warn
+  unrecognized_links: warn
   anchors: warn
 
 extra_css:
