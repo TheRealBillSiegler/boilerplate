@@ -83,7 +83,7 @@ The cycle you repeat inside a project — sync → edit → check → test → c
 _Avoid_: inner loop, developer workflow, development workflow
 
 **Development Environment**:  
-The setup a developer works in, on the machine, in the project and in the editor: the **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), the **Project Layout**, and the **dev loop**. In the reference model it carries the Toolchain beside the **Starter templates**. Distinct from **Environment Provisioning**, the subsystem that installs it and pins the Toolchain's versions.
+The setup a developer works in, on the machine, in the project and in the editor: the **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), the **Project Layout**, and the **dev loop**. In the reference model the **Toolchain** is a part of it, and the **Starter templates** sit beside it. Distinct from **Environment Provisioning**, the subsystem that installs it and pins the Toolchain's versions.
 
 **enforced substrate**:  
 The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a `BP_*` code; there is no opt-out.
@@ -144,7 +144,7 @@ Out-of-scope content verdicts performed against generated projects after Boilerp
 The standard project structure — `src/`, `tests/`, and their conventions. A part of the **Development Environment**; see the Development Environment guide.
 
 **Reference model**:  
-The model of what Boilerplate is: **Curation** picks the **Toolchain** from the **Tool landscape**; the **Development Environment** and the **Starter templates** carry it; **golden paths** run on it; **Guardrails** check the work. Owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
+The model of what Boilerplate is: **Curation** picks the **Toolchain** from the **Tool landscape**; the **Toolchain** is a part of the **Development Environment**, and the **Starter templates** carry it too; **golden paths** run on it; **Guardrails** check the work. Owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
 
 **RenderEngine**:  
 The proper-noun class that orchestrates Copier across composition layers.
