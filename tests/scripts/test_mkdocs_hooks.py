@@ -9,6 +9,7 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
 from mkdocs.config.defaults import MkDocsConfig
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -114,6 +115,16 @@ class TestLabelsTaskListCheckboxes:
 
         assert "disabled checked" in labelled
         assert _labels(labelled) == ["Done"]
+
+    @pytest.mark.parametrize("separator", ["\x0c", "\u2028"])
+    def test_counts_lines_by_newline_only(self, separator: str) -> None:
+        item = _task_item("Do it")
+        page = f"<pre>a{separator}b</pre>\n<ul>{item}</ul>"
+
+        labelled = on_page_content(page)
+
+        assert _labels(labelled) == ["Do it"]
+        assert '<label class="task-list-control">' in labelled
 
 
 class TestLeavesOtherMarkupAlone:
