@@ -25,7 +25,7 @@ A user's default answers for Template Questions, read from `profile.toml` and me
 _Avoid_: typed Profile model, org profile, config
 
 **Layer**:  
-One template rendered at a node of the composition graph, each with its own answers file; a derived Layer (also "derived template" in prose) `extends` another Template to add or override its files.  
+One template rendered at a node of the composition graph, each with its own answers file; a derived Layer (also "derived template" in prose) `extends` another Template to add or override its files. As a verb, a template *layers* on the template it `extends`; in plain prose, templates build on one another.  
 _Avoid_: plugin, overlay, mixin  
 _Carve-out_: "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.
 
@@ -58,7 +58,7 @@ On-disk filesystem path holding the `EnvironmentProvisionRecord`. Use this name 
 Boilerplate-specific metadata file inside a template directory. Declares name, version, and dependencies. See design 02 §TemplateMeta.
 
 **Configuration**:  
-The settings that wire a **Development Environment**'s toolchain — `pyproject.toml` and `.vscode/`. A part of the Development Environment; see the Development Environment guide. Distinct from Boilerplate's own runtime configuration (the `Settings` object — see design 01 §Runtime configuration (Settings)).
+The settings that wire the **Curated stack**'s tools into a project — `pyproject.toml` and `.vscode/`. A part of the Development Environment; see the Development Environment guide. Distinct from Boilerplate's own runtime configuration (the `Settings` object — see design 01 §Runtime configuration (Settings)).
 
 **`.copier-answers.<layer>.yml`**:  
 The per-layer answers file Copier writes; `<layer>` is the layer's invariant name (matches `LockLayer.name`). One file per composition layer.
@@ -73,14 +73,22 @@ Copier questionnaire file. Declares questions (variables) and tasks. Owned by Co
 The step of `update` and `add` that reproduces the staging worktree's result in the user's checkout as uncommitted changes: `git restore --source=<commit> --worktree -- :/` from the worktree's last per-layer commit. See design 06 §Staging worktree.
 
 **Curated stack**:  
-An element of the reference model, answering *what do we use?*: the subset of the **Tool landscape** Boilerplate commits to supporting, one pick per **slot**. See Developer platform architecture §The curated stack.  
-_Carve-out_: the verb "stack" (composing templates with `extends`) and "layer stack" (the layers so composed) are not this term.
+An element of the reference model, answering *what do we use?*: the subset of the **Tool landscape** Boilerplate commits to supporting, one pick per **slot**, chosen by **Curation** as a set. In prose, "the stack". See Developer platform architecture §The curated stack.  
+_Avoid_: dev stack, curated toolchain  
+_Carve-out_: the slogan "Less Yak. More Stack." also plays on templates stacking; outside it, a template **layers** on another.
+
+**Curation**:  
+Choosing the **Curated stack**'s picks from the **Tool landscape** as a set, each for how it works with the others, then configuring them together and maintaining them together. It joins the **Development Environment** and the **Starter templates**, which carry the same picks.
 
 **DAG / Dependency Graph**:  
 Directed Acyclic Graph of template specifiers, derived from `extends` chains.
 
+**dev loop**:  
+The cycle you repeat inside a project — sync → edit → check → test → commit — on the tools the **Development Environment** provides: the **golden path** for everyday work. A part of the Development Environment; see the Development Environment guide.  
+_Avoid_: inner loop, developer workflow, development workflow
+
 **Development Environment**:  
-The setup a developer works in — its **Toolchain**, its **Configuration** (`pyproject.toml`, `.vscode/`), **Project Layout**, and **Workflow**. What a generated project ships with. Distinct from **Environment Provisioning**, the subsystem that installs and pins it.
+The setup a developer works in, on the machine, in the project and in the editor: the **Curated stack**'s tools, their **Configuration** (`pyproject.toml`, `.vscode/`), the **Project Layout**, and the **dev loop**. In the reference model it carries the Curated stack beside the **Starter templates**. Distinct from **Environment Provisioning**, the subsystem that installs it and pins its **Toolchain**.
 
 **enforced substrate**:  
 The `enforced` value of **substrate**: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a `BP_*` code; there is no opt-out.
@@ -110,7 +118,7 @@ Templates Boilerplate publishes as their own git repositories, extracted from th
 See **first-party gating scaffolding**.
 
 **golden path**:  
-The supported, opinionated way to build one kind of project, from creating it through running it. Each template is one, and a project created from it starts on that path. Steps along the way can have golden paths of their own, such as Boilerplate's own workflow for creating, developing and updating a project, which the Quickstart walks through. An element of the reference model, answering *how do we work?*; see Developer platform architecture §The golden path.  
+A **workflow** whose decisions are already thought out for you: the supported, opinionated route through one job. Golden paths nest: each template is a golden path to a starting point, solving the plumbing so a project starts ready for work, and the **dev loop** is the golden path for the everyday work that follows. An element of the reference model, answering *how do we work?*; see Developer platform architecture §The golden path.  
 _Avoid_: paved road, paved path
 
 **Guardrails**:  
@@ -141,7 +149,7 @@ Out-of-scope content verdicts performed against generated projects after Boilerp
 The standard project structure — `src/`, `tests/`, and their conventions. A part of the **Development Environment**; see the Development Environment guide.
 
 **Reference model**:  
-The model of what Boilerplate is — a **Tool landscape** feeding a **Curated stack**, a **golden path**, **Starter templates** and **Guardrails** — owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
+The model of what Boilerplate is: **Curation** picks a **Curated stack** from the **Tool landscape**; the **Development Environment** and the **Starter templates** carry it; **golden paths** run on it; **Guardrails** check the work. Owned by Developer platform architecture. Every other statement of what Boilerplate is derives from it.
 
 **RenderEngine**:  
 The proper-noun class that orchestrates Copier across composition layers.
@@ -153,10 +161,10 @@ The file under the project's git directory, paired with the ref `refs/worktree/b
 The conflict-detected update workflow Boilerplate provides over Copier's per-layer merge: it runs in a staging worktree and pauses on conflict. See design 04 §Safe update for the implementation.
 
 **slot**:  
-One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Each first-party template fills the inner-loop slots of its ecosystem with one opinionated tool each; the template then fills slots *within* those slots (each tool's per-project configuration).
+One recurring role in a development environment (linter, type checker, test runner, …), per the Development Environment Landscape guide. Each first-party template fills the slots its ecosystem's **dev loop** uses with one opinionated tool each; the template then fills slots *within* those slots (each tool's per-project configuration).
 
 **Starter templates**:  
-An element of the reference model, answering *how do we start?*: the **Templates**, each one a **golden path** that encodes the **Curated stack**. Outside the reference model, say **Template**. See Developer platform architecture §Starter templates.
+An element of the reference model, answering *how do we start?*: the **Templates**, each a **golden path** to a starting point that carries the **Curated stack**'s project and editor picks. Outside the reference model, say **Template**. See Developer platform architecture §Starter templates.
 
 **substrate**:  
 A layer's enforcement mode — `enforced` (Boilerplate's own runtime gates and rejects on violation, with no opt-out) or `preconfigured` (defaults are shipped; user-runnable gating scaffolding executes the check in third-party venues; the user MAY opt out). Per-layer assignments live in PROD-001 `enforcement_layers`.
@@ -168,7 +176,7 @@ Trust-on-first-use — a security model where the first interaction with a remot
 An element of the reference model, answering *what exists?*: the descriptive catalog of the tools, technologies and practices available in a domain, organized by **slot**; the **Curated stack** is chosen from it. Boilerplate keeps it as the Development Environment Landscape guide. See Developer platform architecture §The tool landscape.
 
 **Toolchain**:  
-The tool *set* within a **Development Environment**: uv, ruff, pyright, pytest, VS Code, git — the **Curated stack**'s picks for the inner-loop **slots**. A part of the environment, **not** a synonym for it.
+The **Curated stack**'s picks at the versions an **EnvironmentProfile** pins, installed and verified by **Environment Provisioning**. Not every pick is pinned: the editor and git are not. Unpinned, the same tools are "the stack". A part of the **Development Environment**, **not** a synonym for it.
 
 **Trust Level**:  
 Binary classification for a template's origin: *trusted* or *untrusted*. Untrusted code is default-deny and requires explicit consent. The lock's optional `trust_tier` field is a free-form string field reserved for future richer tiers. See design 03.
@@ -182,8 +190,8 @@ The first generation of this design suite's on-disk contracts (`schema_version` 
 **WASM**:  
 WebAssembly — the plugin architecture used by proto for cross-platform tool installation.
 
-**Workflow**:  
-The everyday developer loop of a **golden path**, run within a **Development Environment** — sync → edit → check → test → commit. A part of the Development Environment; see the Development Environment guide.
+**workflow**:  
+The steps taken to get a job done. A **golden path** is a workflow whose decisions are already made. GitHub Actions workflow files keep their own name.
 <!-- --8<-- [end:language] -->
 
 ## Relationships
