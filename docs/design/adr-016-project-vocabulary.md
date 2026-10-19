@@ -8,7 +8,7 @@
 
 `CONTEXT.md` at the repository root is the domain glossary. The [design overview's glossary](01-overview.md#glossary) renders it, and `docs/agents/domain.md` tells the engineering skills to read it before they work in the code. Tenet 14 in `.claude/rules/docs.md` asks for one name per concept, and the glossary's _Avoid_ lists name retired synonyms. The vocabulary still drifts in four ways.
 
-- **Copies disagree.** The glossary's dev loop entry defines the everyday loop as sync → edit → check → test → commit; the Environment guide and the Quickstart each write out a different sequence.
+- **Copies disagree.** The sweep found the glossary's dev loop entry, the Environment guide and the Quickstart each writing out a different sequence for the same everyday loop.
 - **One word names unrelated concepts.**
     - "Profile" names `profile.toml`, a user's default answers, and `EnvironmentProfile` (`boilerplate-env.yml`), the tool versions a project pins. The glossary calls the two "unrelated despite the shared word".
     - "Layer" names a composition layer and, in the key `enforcement_layers` of PROD-001, an enforcement area.
