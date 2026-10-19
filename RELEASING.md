@@ -68,7 +68,7 @@ sequenceDiagram
     D-)W: push
     W-)G: tag vX.Y.Z (e.g. v0.4.0), publish the release
     par at the same time
-        W-)G: deploy the X.Y docs to gh-pages
+        W-)G: deploy vX.Y.Z's docs as version X.Y
     and
         W-)G: attach the offline docs zip
     and
