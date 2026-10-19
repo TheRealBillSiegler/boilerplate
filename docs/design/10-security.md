@@ -7,12 +7,12 @@
 
 This document specifies the cross-cutting security rules for Boilerplate. Security rules that are inseparable from local context live in their owning documents; this document does not restate them. Related specs:
 
-- **Trust model** (binary trusted/untrusted classification, task-execution consent gating): [03-template-system.md](03-template-system.md)
-- **Lock file integrity** (checksums, atomic writes): [02-data-models.md](02-data-models.md), [06-project-lifecycle.md](06-project-lifecycle.md)
-- **Operational invariants that gate security checks** (atomic-write pattern, concurrency control, retry policy): [07-operational-quality.md](07-operational-quality.md)
+- **Trust model** (binary trusted/untrusted classification, task-execution consent gating): [Template system and discovery](03-template-system.md)
+- **Lock file integrity** (checksums, atomic writes): [Data models](02-data-models.md), [Project lifecycle](06-project-lifecycle.md)
+- **Operational invariants that gate security checks** (atomic-write pattern, concurrency control, retry policy): [Operational quality](07-operational-quality.md)
 - **YAML parsing, input validation, privacy, threat model**: this document
 
-See [02-data-models.md](02-data-models.md) for exit codes. See [05-cli-reference.md](05-cli-reference.md) for CLI output conventions. See [09-settings-and-configuration.md](09-settings-and-configuration.md) for the operator-authored configuration files referenced below.
+See [Data models](02-data-models.md) for exit codes. See [CLI reference](05-cli-reference.md) for CLI output conventions. See [Settings and configuration files](09-settings-and-configuration.md) for the operator-authored configuration files referenced below.
 
 ---
 

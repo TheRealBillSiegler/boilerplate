@@ -4,7 +4,7 @@
 
 ## Context
 
-The security design ([10-security](10-security.md), [03-template-system](03-template-system.md)) specifies a default-deny posture: template tasks and Jinja2 extensions run only behind user consent (`--allow-tasks`/`--allow-extensions`), a package allowlist, an import blocklist, a `SandboxedEnvironment`, and a binary trust model. **None of that is implemented** — see [status.md](../status.md) (trust / sandbox / consent: "no code exists").
+The security design ([Security model](10-security.md), [Template system and discovery](03-template-system.md)) specifies a default-deny posture: template tasks and Jinja2 extensions run only behind user consent (`--allow-tasks`/`--allow-extensions`), a package allowlist, an import blocklist, a `SandboxedEnvironment`, and a binary trust model. **None of that is implemented** — see [Implementation status](../status.md) (trust / sandbox / consent: "no code exists").
 
 ## Decision
 
@@ -24,12 +24,12 @@ The posture keys on the template's source, not the destination, so `new` and `ad
 ## Consequences
 
 - Rendering a template that declares tasks or extensions executes them as arbitrary local code with no gate. Acceptable **only while sources are local and deliberately chosen** — bundled first-party templates or user-supplied directories.
-- **This MUST be tightened before** remote/Git sources, a catalog with third-party entries, or community templates ship. That work is the trust model in [10-security](10-security.md) and will get its own ADR when built.
+- **This MUST be tightened before** remote/Git sources, a catalog with third-party entries, or community templates ship. That work is the trust model in [Security model](10-security.md) and will get its own ADR when built.
 - The design docs describe the *target* (default-deny); this ADR is the honest record of the *current* posture and the divergence.
 
 ## Expiry
 
-This ADR records a **temporary** posture, not the target. It expires when the trust / consent / sandbox model ([10-security](10-security.md)) is implemented — which MUST happen before any remote, catalog, or community template source ships. A new ADR will then record default-deny as the current posture and supersede this one.
+This ADR records a **temporary** posture, not the target. It expires when the trust / consent / sandbox model ([Security model](10-security.md)) is implemented — which MUST happen before any remote, catalog, or community template source ships. A new ADR will then record default-deny as the current posture and supersede this one.
 
 ## Verification (2026-08-15)
 

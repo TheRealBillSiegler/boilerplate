@@ -99,7 +99,7 @@ The following flags govern execution of untrusted template content and are accep
 
 **`--ci` behavior**: Designed for CI/CD pipelines where no human is present. `--ci` desugars to `--non-interactive --yes`: every question takes its default or forced answer, and task execution resolves under the truth table's `--yes` column, so trusted sources execute and untrusted sources skip with a warning. To execute tasks from an untrusted source in CI, pass `--ci --allow-tasks`, which resolves under the `--allow-tasks --yes` column (execute for both trust states).
 
-**Environment variable equivalents**: `BOILERPLATE_CI` mirrors `--ci`; `BOILERPLATE_NON_INTERACTIVE` mirrors `new`'s `--non-interactive` (see below). Each is a tool-scoped opt-in following the `PIP_NO_INPUT` convention: the value is trimmed of surrounding whitespace, then enabled when the trimmed value is non-empty and not `0` or `false` (case-insensitive) — an explicit `0`/`false`, and empty or whitespace-only, all behave as unset. An explicit CLI flag always wins; the env var can only turn a behavior on, never veto a flag that is present. Both compose with the non-TTY guard (see `new` command below) exactly as the flags do. The generic `CI` environment variable is never inspected — see [adr-013-interactivity-contract.md](adr-013-interactivity-contract.md).
+**Environment variable equivalents**: `BOILERPLATE_CI` mirrors `--ci`; `BOILERPLATE_NON_INTERACTIVE` mirrors `new`'s `--non-interactive` (see below). Each is a tool-scoped opt-in following the `PIP_NO_INPUT` convention: the value is trimmed of surrounding whitespace, then enabled when the trimmed value is non-empty and not `0` or `false` (case-insensitive) — an explicit `0`/`false`, and empty or whitespace-only, all behave as unset. An explicit CLI flag always wins; the env var can only turn a behavior on, never veto a flag that is present. Both compose with the non-TTY guard (see `new` command below) exactly as the flags do. The generic `CI` environment variable is never inspected — see [ADR-013](adr-013-interactivity-contract.md).
 
 **`--color` modes**: `auto` uses TTY detection and `NO_COLOR`. `always` forces color on (useful when piping to `less -R`). `never` forces color off. Follows the convention established by git, cargo, and ripgrep.
 
@@ -303,7 +303,7 @@ Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `
 
 **`--non-interactive` environment variable equivalent**: `BOILERPLATE_NON_INTERACTIVE` mirrors this flag with OR semantics — see the environment variable equivalents note in [Global Options](#global-options).
 
-**Behavior**: See [06-project-lifecycle.md](06-project-lifecycle.md) for the full creation pipeline. Task execution follows the trust-level rules in the Global Options truth table above and the full safety model in [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety).
+**Behavior**: See [Project lifecycle](06-project-lifecycle.md) for the full creation pipeline. Task execution follows the trust-level rules in the Global Options truth table above and the full safety model in [03-template-system.md §Task Execution Safety](03-template-system.md#task-execution-safety).
 
 **Key behavioral contracts**:
 
@@ -324,7 +324,7 @@ Short flags are reserved for options typed at a prompt, such as `-f` and `-n`. `
 
 **Usage**: `boilerplate update [options]`
 
-Update an existing project to a newer template version. The walk runs in a temporary git worktree of the project and lands in the working tree as uncommitted changes, which is what plain Copier leaves ([06-project-lifecycle.md §Staging worktree](06-project-lifecycle.md#staging-worktree)). See [06-project-lifecycle.md](06-project-lifecycle.md) for the full update workflow.
+Update an existing project to a newer template version. The walk runs in a temporary git worktree of the project and lands in the working tree as uncommitted changes, which is what plain Copier leaves ([06-project-lifecycle.md §Staging worktree](06-project-lifecycle.md#staging-worktree)). See [Project lifecycle](06-project-lifecycle.md) for the full update workflow.
 
 > **Prerequisite**: The project directory MUST be a git repository. The `update` command requires git access to each layer's template source so that Copier can perform per-layer three-way merge, and uses git for the staging worktree. The working tree MUST have no uncommitted changes, untracked files included, which is Copier's own rule, and a project with submodules (`.gitmodules`) is refused. Projects created without `--git-init` that were never placed under git version control cannot be updated. Run `git init && git add -A && git commit -m 'Initial project'` first.
 
@@ -580,7 +580,7 @@ Show the dependency graph and execution sequence for a template.
 2   streamlit      1.0.0     /path/to/streamlit
 ```
 
-When a diamond dependency pattern is detected (a node reachable via two or more paths), affected nodes are annotated with a `[diamond]` indicator noting which parent's files take precedence (see [04-composition-engine.md](04-composition-engine.md) for the precedence rules).
+When a diamond dependency pattern is detected (a node reachable via two or more paths), affected nodes are annotated with a `[diamond]` indicator noting which parent's files take precedence (see [Composition engine](04-composition-engine.md) for the precedence rules).
 
 **`--tree` mode**: Hierarchical view of the dependency structure:
 
@@ -619,9 +619,9 @@ Validate that a template directory is well-formed and its references are resolva
 | `V04` | `name` matches `^[a-zA-Z0-9_\-]+$` | error | Name format validation |
 | `V05` | `version` is valid PEP 440 | error | Version format validation |
 | `V06` | `extends` references resolvable | warning | Checks against catalog (warns if catalog unavailable) |
-| `V07` | `copier.yml` loadable by Copier | error | Parsing is delegated to Copier's own config loader per [03-template-system.md](03-template-system.md#yaml-parsing-rules); Copier-native constructs such as the `!include` tag and multi-document files are valid. Loading reads configuration only — `_tasks`/`_migrations` are never executed. |
+| `V07` | `copier.yml` loadable by Copier | error | Parsing is delegated to Copier's own config loader per [Template system and discovery](03-template-system.md#yaml-parsing-rules); Copier-native constructs such as the `!include` tag and multi-document files are valid. Loading reads configuration only — `_tasks`/`_migrations` are never executed. |
 | `V08` | No duplicate keys in YAML files | error | YAML spec compliance. For `copier.yml` the check is structural (node-level scan, no tag construction), so Copier-native tags cannot break it. |
-| `V09` | No custom YAML tags | error | Security constraint, scoped to `boilerplate.yml`; `copier.yml` parsing is delegated to Copier per [03-template-system.md](03-template-system.md#yaml-parsing-rules). |
+| `V09` | No custom YAML tags | error | Security constraint, scoped to `boilerplate.yml`; `copier.yml` parsing is delegated to Copier per [Template system and discovery](03-template-system.md#yaml-parsing-rules). |
 | `V10` | `.gitmodules` maps `extends` parents | error | Only runs when `.gitmodules` is present: each `extends` parent maps to a submodule path and submodules are initialized. |
 | `V11` | Version constraints satisfiable | error | Version constraints across the resolved `extends` chain are mutually satisfiable. Only runs when `extends` dependencies are resolvable. |
 | `V12` | Composition merge conflicts | error | When the validated template has `extends` dependencies and those dependencies are resolvable from configured sources, `validate` MUST run the full Resolver → Composer pipeline and report any `MergeConflictError` as a validation error. This ensures composition issues are caught at authoring time, not at `boilerplate new` time. |
@@ -879,7 +879,7 @@ The `<profile-spec>` argument used by `env apply` follows the same `name` or `na
 
 To recover from a failed or partial provisioning, re-run `boilerplate env apply`; provisioning is idempotent and converges to the profile's declared tool set.
 
-For background on environment profiles as a concept, see [01-overview.md](01-overview.md) (Environment Profiles).
+For background on environment profiles as a concept, see [Product overview](01-overview.md) (Environment Profiles).
 
 ### `env apply`
 
@@ -1224,7 +1224,7 @@ All CLI commands MUST handle `BoilerplateError` subclasses by:
 1. Printing a human-readable error message to stderr
 2. Exiting with the appropriate exit code per [02-data-models.md §Error Hierarchy](02-data-models.md#error-hierarchy)
 
-Each exception type maps to one or more stable `BP_*` error codes defined in [07-operational-quality.md](07-operational-quality.md). The exception hierarchy is the implementation mechanism; the `BP_*` codes are the stable public contract surfaced to the user. Unrecognized exceptions outside the `BoilerplateError` hierarchy MUST exit with code `1` (`FAILURE`).
+Each exception type maps to one or more stable `BP_*` error codes defined in [Operational quality](07-operational-quality.md). The exception hierarchy is the implementation mechanism; the `BP_*` codes are the stable public contract surfaced to the user. Unrecognized exceptions outside the `BoilerplateError` hierarchy MUST exit with code `1` (`FAILURE`).
 
 Errors MUST NOT leak internal stack traces to the user by default. When `--verbose` is active, additional context MAY be shown.
 
@@ -1232,7 +1232,7 @@ Errors MUST NOT leak internal stack traces to the user by default. When `--verbo
 
 ## Exit Code Reference
 
-Exit codes are defined in [02-data-models.md](02-data-models.md). Scripts SHOULD treat exit code 4 (`ACTION_REQUIRED`) as distinct from failure — it means user intervention is needed (e.g., merge conflict resolution).
+Exit codes are defined in [Data models](02-data-models.md). Scripts SHOULD treat exit code 4 (`ACTION_REQUIRED`) as distinct from failure — it means user intervention is needed (e.g., merge conflict resolution).
 
 ---
 

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The user-authored runtime configuration surface: the `Settings` object, a per-user profile (`profile.toml`), and the `boilerplate-sources.yml` catalog-source file — the YAML and environment-variable inputs the operator owns, separate from the domain schemas in [02-data-models.md](02-data-models.md).
+The user-authored runtime configuration surface: the `Settings` object, a per-user profile (`profile.toml`), and the `boilerplate-sources.yml` catalog-source file — the YAML and environment-variable inputs the operator owns, separate from the domain schemas in [Data models](02-data-models.md).
 
-See [01-overview.md](01-overview.md) for the glossary. See [10-security.md](10-security.md) for the security constraints that apply to the configuration files specified here (YAML tag rejection, path traversal validation).
+See [Product overview](01-overview.md) for the glossary. See [Security model](10-security.md) for the security constraints that apply to the configuration files specified here (YAML tag rejection, path traversal validation).
 
 ---
 

@@ -4,7 +4,7 @@
 
 This document specifies the structure of Boilerplate templates, the `boilerplate.yml` metadata schema, how Copier is configured, how templates are discovered, classified, ranked, and presented to the user, and how the catalog is built from one or more federated sources. Templates are structured so Copier can render them natively; `boilerplate.yml` adds only what Copier doesn't provide — composition, versioning, and dependency metadata. Catalog discovery extends "orchestrate, don't replace" to the template ecosystem — Boilerplate federates sources without owning them.
 
-See [02-data-models.md](02-data-models.md) for entity definitions (TemplateMeta, TemplateInfo, TemplateCatalog, CatalogEntry, etc.).
+See [Data models](02-data-models.md) for entity definitions (TemplateMeta, TemplateInfo, TemplateCatalog, CatalogEntry, etc.).
 
 ---
 
@@ -25,7 +25,7 @@ Additional files and directories are permitted. Copier renders files according t
 
 Boilerplate MUST verify, after staging, that all rendered file paths are contained within the staging root. Absolute output paths and `..` components that resolve outside the staging root MUST be rejected with a clear error. Symlinks in rendered output that point outside the staging directory MUST be rejected with a clear error. Templates containing absolute output paths MUST be rejected at validate time.
 
-**Symlinks in template source directories**: Template source directories MAY contain symlinks. During per-layer rendering (see [04-composition-engine.md](04-composition-engine.md)), symlinks within a template's tree MUST be resolved (copied as regular files) rather than preserved when the source is materialized for Copier. This ensures consistent output across platforms regardless of symlink support. Symlinks pointing outside the template directory MUST be rejected during `boilerplate validate`.
+**Symlinks in template source directories**: Template source directories MAY contain symlinks. During per-layer rendering (see [Composition engine](04-composition-engine.md)), symlinks within a template's tree MUST be resolved (copied as regular files) rather than preserved when the source is materialized for Copier. This ensures consistent output across platforms regardless of symlink support. Symlinks pointing outside the template directory MUST be rejected during `boilerplate validate`.
 
 ### Required files
 
@@ -59,7 +59,7 @@ Each entry in `extends` is a template reference (`name` or `name@version`). See 
 
 > **Version Ranges**: The current `extends` syntax supports exact version pins (`name@1.0.0`) and unversioned references (`name`). Version range specifiers (e.g., `name@>=1.0,<2.0`) are reserved for a future release.
 
-Order matters: in the `extends` list, later-declared entries take file precedence over earlier entries when conflicts occur. The composition execution order is determined by topological sort of the dependency graph; within the sort, declaration order in `extends` determines edge priority and therefore file precedence when diamond dependencies exist. See [04-composition-engine.md](04-composition-engine.md) for the full precedence rules.
+Order matters: in the `extends` list, later-declared entries take file precedence over earlier entries when conflicts occur. The composition execution order is determined by topological sort of the dependency graph; within the sort, declaration order in `extends` determines edge priority and therefore file precedence when diamond dependencies exist. See [Composition engine](04-composition-engine.md) for the full precedence rules.
 
 ### `post_create_message`
 
@@ -130,7 +130,7 @@ extends:
 
 ## Copier Configuration
 
-The Copier configuration file (`copier.yml`) declares the information that the composition engine and Copier need to render a template. Boilerplate treats this file as Copier-owned; the composition engine merges it across layers using the strategies defined in [04-composition-engine.md](04-composition-engine.md).
+The Copier configuration file (`copier.yml`) declares the information that the composition engine and Copier need to render a template. Boilerplate treats this file as Copier-owned; the composition engine merges it across layers using the strategies defined in [Composition engine](04-composition-engine.md).
 
 ### Configuration Concepts
 
@@ -240,7 +240,7 @@ _tasks:
   - ["python", "_scripts/post_generation.py"]
 ```
 
-**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the layer's scoped view already hands every ancestor's question to every render of the layer ([ADR-015](adr-015-idiomatic-artifacts.md#decision)); `boilerplate validate` warns on an unchanged redeclaration ([05 §`validate`](05-cli-reference.md#validate), check `V17`). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [04-composition-engine.md](04-composition-engine.md)).
+**Overriding a question in a derived template:** A derived template's `copier.yml` declares its own questions and MAY declare a parent question to override or extend it; it MUST NOT declare a parent question unchanged, because the layer's scoped view already hands every ancestor's question to every render of the layer ([ADR-015](adr-015-idiomatic-artifacts.md#decision)); `boilerplate validate` warns on an unchanged redeclaration ([05 §`validate`](05-cli-reference.md#validate), check `V17`). When layers are merged, the derived template's value overrides the base for scalar and dict types (see merge strategy in [Composition engine](04-composition-engine.md)).
 
 ```yaml
 # streamlit/copier.yml — overrides the default for 'dependencies'
@@ -356,7 +356,7 @@ Validation is idempotent and read-only: it MUST NOT modify the template director
 
 #### Template Testing
 
-The `boilerplate test` command provides automated regression testing for templates. See [05-cli-reference.md](05-cli-reference.md) for the full CLI specification (flags, output formats, exit codes). A template test consists of a **fixture**: pre-seeded answers and an expected rendered output snapshot.
+The `boilerplate test` command provides automated regression testing for templates. See [CLI reference](05-cli-reference.md) for the full CLI specification (flags, output formats, exit codes). A template test consists of a **fixture**: pre-seeded answers and an expected rendered output snapshot.
 
 **Fixture layout**: Place fixtures in a `tests/` subdirectory within the template:
 
@@ -447,7 +447,7 @@ Trust is **binary**: a template is either **trusted** or **untrusted**. Trust re
 | **trusted** | Came from a trusted source — a first-party `git` source (the published per-template repositories, [ADR-006](adr-006-template-distribution.md)), or a `git` source with `trust_level: trusted` explicitly configured | Source configuration |
 | **untrusted** | Default for any source not configured as trusted, including local filesystem and `archive` templates | Implicit |
 
-The binary model is the current enforcement surface. The richer multi-tier taxonomy (Official / Verified / Community / Local) is **reserved for Phase 4 (remote / third-party sources)**. The lock's `trust_tier` field is an OPTIONAL free-form string field so Phase 4 can reintroduce richer tiers without a schema change; its absence MUST NOT fail resolution (see the lock provenance and integrity rule in [10-security.md](10-security.md)). Source URL and commit-or-checksum remain mandatory regardless of trust.
+The binary model is the current enforcement surface. The richer multi-tier taxonomy (Official / Verified / Community / Local) is **reserved for Phase 4 (remote / third-party sources)**. The lock's `trust_tier` field is an OPTIONAL free-form string field so Phase 4 can reintroduce richer tiers without a schema change; its absence MUST NOT fail resolution (see the lock provenance and integrity rule in [Security model](10-security.md)). Source URL and commit-or-checksum remain mandatory regardless of trust.
 
 **Invariants**:
 
@@ -551,13 +551,13 @@ The source type enum is extensible. Additional types (e.g., `http`, `github`, `o
 
 ### CatalogSource
 
-See [02-data-models.md](02-data-models.md) for the full `CatalogSource` schema. Key fields: `name`, `type`, `location`, `priority`, `trust_level`, `expected_commit` (optional — when set, the initial Git clone is validated against this commit hash; see [TOFU warning](#git-source)). Authentication is delegated to Git's credential helper system (see [§Authentication](#authentication)); a per-source `credentials` field is reserved for Phase 4 (remote / third-party sources).
+See [Data models](02-data-models.md) for the full `CatalogSource` schema. Key fields: `name`, `type`, `location`, `priority`, `trust_level`, `expected_commit` (optional — when set, the initial Git clone is validated against this commit hash; see [TOFU warning](#git-source)). Authentication is delegated to Git's credential helper system (see [§Authentication](#authentication)); a per-source `credentials` field is reserved for Phase 4 (remote / third-party sources).
 
 Priority determines conflict resolution: lower number = higher priority. If two sources share the same `priority` value, the one registered first (earlier in the configuration list) takes precedence.
 
 ### CatalogEntry
 
-See [02-data-models.md](02-data-models.md) for the full `CatalogEntry` schema. A `CatalogEntry` is the catalog's record for one template from one source, including classification, trust level, lifecycle state, and dependency information.
+See [Data models](02-data-models.md) for the full `CatalogEntry` schema. A `CatalogEntry` is the catalog's record for one template from one source, including classification, trust level, lifecycle state, and dependency information.
 
 ### Discovery Algorithm (DirectoryTemplateRepository)
 
@@ -596,13 +596,13 @@ The catalog is built by iterating directories in resolution order (see above), l
 
 Environment profile discovery follows the same directory scan pattern as template discovery (see [Discovery Algorithm](#discovery-algorithm-directorytemplaterepository) above). Where template discovery looks for `boilerplate.yml`, profile discovery looks for `boilerplate-env.yml`:
 
-- A directory containing `boilerplate-env.yml` is a **profile source**. The `DirectoryProfileRepository` scans configured directories for immediate subdirectories containing `boilerplate-env.yml`, parses each into an `EnvironmentProfile` record (see [02-data-models.md](02-data-models.md) for the `ProfileCatalog` schema), and registers them in the `ProfileCatalog`.
+- A directory containing `boilerplate-env.yml` is a **profile source**. The `DirectoryProfileRepository` scans configured directories for immediate subdirectories containing `boilerplate-env.yml`, parses each into an `EnvironmentProfile` record (see [Data models](02-data-models.md) for the `ProfileCatalog` schema), and registers them in the `ProfileCatalog`.
 - **Registration policy**: The same first-wins deduplication policy applies. Per profile name, the first registered entry wins across repositories. Within a single directory source, the highest-versioned record is kept (identical to template behavior).
 - **Versioned subdirectories**: The `{name}@{version}/` naming convention is supported for profiles, enabling multiple profile versions to coexist in a single directory source.
 - **Search order**: Profile directories are searched in the same order as template directories: `--templates-dir` (CLI override) → `default_templates_dir` → `extra_template_dirs` → bundled profiles.
 - **Validation**: Each discovered `boilerplate-env.yml` MUST be parsed and validated. Invalid files are skipped with a warning log.
 
-See [02-data-models.md](02-data-models.md) for `ProfileCatalog` operations and [08-environment-provisioning.md](08-environment-provisioning.md) for profile resolution and activation.
+See [Data models](02-data-models.md) for `ProfileCatalog` operations and [Environment provisioning](08-environment-provisioning.md) for profile resolution and activation.
 
 ---
 
@@ -762,7 +762,7 @@ A Streamlit data application template that **extends** `project`. Overrides depe
 
 ### `boilerplate list`
 
-The `list` command is the primary interface for template discovery. Its full specification — arguments, options, output formats, ranking, and behavior — is in [05-cli-reference.md](05-cli-reference.md).
+The `list` command is the primary interface for template discovery. Its full specification — arguments, options, output formats, ranking, and behavior — is in [CLI reference](05-cli-reference.md).
 
 This section documents the result-ordering and template classification logic that the `list` command depends on.
 
@@ -780,7 +780,7 @@ List and search results MUST use a plain deterministic ordering: **source priori
 
 ## Selection and Handoff to Project Creation
 
-When the user selects a template (via `boilerplate new`), the discovery system resolves the template reference to a `TemplateSpecifier` (see [02-data-models.md](02-data-models.md)) and passes it to the project creation workflow (see [06-project-lifecycle.md](06-project-lifecycle.md)). If the user specified a version constraint rather than an exact version, the catalog resolves it to the highest matching version before constructing the specifier.
+When the user selects a template (via `boilerplate new`), the discovery system resolves the template reference to a `TemplateSpecifier` (see [Data models](02-data-models.md)) and passes it to the project creation workflow (see [Project lifecycle](06-project-lifecycle.md)). If the user specified a version constraint rather than an exact version, the catalog resolves it to the highest matching version before constructing the specifier.
 
 ---
 

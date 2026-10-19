@@ -54,14 +54,14 @@ Project creation takes a template reference, resolves its full dependency graph,
 
 ### Step 1: Template Resolution
 
-Resolve the template reference via the catalog and traverse the `extends` chain to build the full dependency graph. See [04-composition-engine.md](04-composition-engine.md) for the resolution algorithm and graph validation.
+Resolve the template reference via the catalog and traverse the `extends` chain to build the full dependency graph. See [Composition engine](04-composition-engine.md) for the resolution algorithm and graph validation.
 
-**Version constraint resolution**: Template references resolve to either the latest version (unversioned `"name"`) or an exact version (`"name@version"`). See the Resolver's template lookup behavior described in [04-composition-engine.md](04-composition-engine.md).
+**Version constraint resolution**: Template references resolve to either the latest version (unversioned `"name"`) or an exact version (`"name@version"`). See the Resolver's template lookup behavior described in [Composition engine](04-composition-engine.md).
 
 ### Step 2: Composition
 
 - Extract `copier.yml` configuration from each template in topological order
-- Merge configurations using the `CopierConfigMerger` (see [04-composition-engine.md](04-composition-engine.md))
+- Merge configurations using the `CopierConfigMerger` (see [Composition engine](04-composition-engine.md))
 - Produce an immutable `CompositionArtifact`
 
 ### Step 3: Atomic Staged Write
@@ -89,14 +89,14 @@ On retry, the staging directory and its intent journal MUST be completely remove
 
 ### Step 4: Lock File Generation
 
-After a successful commit, write `boilerplate.lock` to the project root. See [02-data-models.md](02-data-models.md) for the full `BoilerplateLock` schema and invariants.
+After a successful commit, write `boilerplate.lock` to the project root. See [Data models](02-data-models.md) for the full `BoilerplateLock` schema and invariants.
 
-The lock file records the following per layer: `name`, `version`, `source`, `commit` (git SHA or null), and `checksum` (SHA-256 of template source directory content). It also records `schema_version`, `boilerplate_version`, `copier_version`, `root_template`, `copier_answers_file_hashes` (the per-layer answers-file hashes), and timestamps. See [02-data-models.md](02-data-models.md) for the full `BoilerplateLock` schema.
+The lock file records the following per layer: `name`, `version`, `source`, `commit` (git SHA or null), and `checksum` (SHA-256 of template source directory content). It also records `schema_version`, `boilerplate_version`, `copier_version`, `root_template`, `copier_answers_file_hashes` (the per-layer answers-file hashes), and timestamps. See [Data models](02-data-models.md) for the full `BoilerplateLock` schema.
 
 **Key concepts**:
 
 - `checksum` fields use `"sha256:{hex}"` prefix format (forward-compatible with future algorithms). The per-layer `copier_answers_file_hashes` values use bare hex (always SHA-256 by definition).
-- Checksums are computed over all files in the template source directory content (excluding `.git/`, `__pycache__/`, `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `node_modules/`), sorted lexicographically by relative path, concatenating path and content. This list is fixed and MUST NOT depend on `.gitignore`. Template authors MAY declare additional exclusions via `checksum_excludes` in `boilerplate.yml` (see [02-data-models.md](02-data-models.md)). See [02-data-models.md](02-data-models.md) for the authoritative checksum computation specification.
+- Checksums are computed over all files in the template source directory content (excluding `.git/`, `__pycache__/`, `.mypy_cache/`, `.pytest_cache/`, `.ruff_cache/`, `node_modules/`), sorted lexicographically by relative path, concatenating path and content. This list is fixed and MUST NOT depend on `.gitignore`. Template authors MAY declare additional exclusions via `checksum_excludes` in `boilerplate.yml` (see [Data models](02-data-models.md)). See [Data models](02-data-models.md) for the authoritative checksum computation specification.
 - Each layer MAY include optional `bundle_uri` and `bundle_checksum` fields. These are air-gap / enterprise restoration fields, populated by external catalog infrastructure (not Boilerplate itself) and not part of the core provenance contract. The `wheel_bundle` source type and its `source_bundle` / `subdirectory` lock fields are deferred with the seed cache they support ([ADR-006](adr-006-template-distribution.md)); layers sourced from the published first-party repositories record `null` for both.
 
 ### Lock File Recovery
@@ -119,7 +119,7 @@ A lock whose `schema_version` major exceeds the major the running tool supports 
 
 After the lock file is written:
 1. Append the initial `MigrationRecord` to `.boilerplate/migrations.yml` with `status: created` (the audit log's first entry; `id: "1"`, `from_version: null`, `to_version: <root template specifier>`, `classification: null`). The file is created with this record as its only entry — no separate "empty initialization" step. The `created` record is the project-creation provenance entry required by [§01 Safety-first operations](01-overview.md#safety-first-operations).
-2. Initialize a git repository if `--git-init` is specified (see [05-cli-reference.md](05-cli-reference.md))
+2. Initialize a git repository if `--git-init` is specified (see [CLI reference](05-cli-reference.md))
 
 ### Acceptance Criteria
 
@@ -135,7 +135,7 @@ After the lock file is written:
 
 ### Performance Contracts
 
-See [07-operational-quality.md](07-operational-quality.md) for all performance targets.
+See [Operational quality](07-operational-quality.md) for all performance targets.
 
 ---
 
@@ -145,7 +145,7 @@ See [07-operational-quality.md](07-operational-quality.md) for all performance t
 
 Project update takes an existing Boilerplate project (with `boilerplate.lock`), resolves the new target template version, computes what changed, applies a three-way merge to preserve local modifications, writes a new lock file, and appends a migration record.
 
-**Safety model**: Update computes a plan, displays it to the user, and prompts for confirmation (`Proceed? [y/N]`) before applying. `--dry-run` prints the plan and exits without prompting. `--yes` skips the prompt and applies immediately. See [05-cli-reference.md](05-cli-reference.md) for the full CLI contract.
+**Safety model**: Update computes a plan, displays it to the user, and prompts for confirmation (`Proceed? [y/N]`) before applying. `--dry-run` prints the plan and exits without prompting. `--yes` skips the prompt and applies immediately. See [CLI reference](05-cli-reference.md) for the full CLI contract.
 
 ### Pre-Flight Check
 
@@ -239,7 +239,7 @@ When `--dry-run` is active, print the UpdatePlan and exit without prompting or m
 **Structural changes to the `extends` chain**: When a template update adds or removes parent templates (changes to the `extends` list), the UpdatePlan MUST detect and report this:
 
 - **Added dependency**: A layer the root's target version reaches through `extends` that was not in the previous composition. The UpdatePlan MUST list it as an `ADDED` layer, and its lock entry records `joined_via: extends`. It has no merge base, so Boilerplate MUST render it as a copy that writes only paths not already present, with a skip pattern matching every path (`skip_if_exists=["*"]`): Copier checks `skip_if_exists` before `overwrite` (`Worker._solve_render_conflict` tests `match_skip` before `overwrite`, read at Copier 9.18.1), and the Worker's patterns join the template's in `Worker.all_skip_if_exists`. A descendant's file therefore keeps its precedence as at compose, where a rendering with `overwrite` would replace it and the descendant's step would then see that as a user change. The update MUST report each colliding path it left.
-- **Removed dependency**: A layer that joined through `extends` (`LockLayer.joined_via`, [02 §BoilerplateLock](02-data-models.md#boilerplatelock)) and that the root's target version no longer reaches. The UpdatePlan MUST list it as a `REMOVED` layer. Boilerplate drops the layer from the managed layer set and lock; it does NOT infer file provenance and does NOT auto-delete the removed layer's files. Cleanup of a removed layer's artifacts is the responsibility of a Copier `_migrations` script in the template that removed the dependency. When no such migration is provided, the removed layer's files are left in place (now unmanaged) and the user is WARNED: the warning names the removed layer and points to the migration as the cleanup mechanism. See [adr-007-update-model.md](adr-007-update-model.md). The rule never applies to a layer that joined through `add`: the root's target does not govern it, so it stays in the lock and in the walk until it is removed on purpose. That holds when a later root target reaches the layer through `extends`: it keeps `joined_via: add`, is not reported as `ADDED`, and the `extends` constraint still bounds the version it walks to.
+- **Removed dependency**: A layer that joined through `extends` (`LockLayer.joined_via`, [02 §BoilerplateLock](02-data-models.md#boilerplatelock)) and that the root's target version no longer reaches. The UpdatePlan MUST list it as a `REMOVED` layer. Boilerplate drops the layer from the managed layer set and lock; it does NOT infer file provenance and does NOT auto-delete the removed layer's files. Cleanup of a removed layer's artifacts is the responsibility of a Copier `_migrations` script in the template that removed the dependency. When no such migration is provided, the removed layer's files are left in place (now unmanaged) and the user is WARNED: the warning names the removed layer and points to the migration as the cleanup mechanism. See [ADR-007](adr-007-update-model.md). The rule never applies to a layer that joined through `add`: the root's target does not govern it, so it stays in the lock and in the walk until it is removed on purpose. That holds when a later root target reaches the layer through `extends`: it keeps `joined_via: add`, is not reported as `ADDED`, and the `extends` constraint still bounds the version it walks to.
 - **Classification**: Any structural change to the `extends` chain (addition or removal of layers) MUST be classified as at least `MINOR`, regardless of version bumps within existing layers.
 
 ### Step 4: Three-Way Merge
@@ -408,7 +408,7 @@ On successful update:
 
 `.boilerplate/migrations.yml` is an append-only YAML file. Each entry records one finished operation.
 
-Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, `timestamp` (ISO 8601 UTC), `status` (full enumeration in [02 — Data Models](02-data-models.md): `success`, `failed`, `conflict`, `adopted`, `created`), `error`, and `classification` (`PATCH`/`MINOR`/`MAJOR`). See [02-data-models.md](02-data-models.md) for the full schema.
+Each `MigrationRecord` tracks: `id` (sequential), `from_version`, `to_version`, `timestamp` (ISO 8601 UTC), `status` (full enumeration in [02 — Data Models](02-data-models.md): `success`, `failed`, `conflict`, `adopted`, `created`), `error`, and `classification` (`PATCH`/`MINOR`/`MAJOR`). See [Data models](02-data-models.md) for the full schema.
 
 **Invariants** (the status values are specified in [§02 MigrationRecord](02-data-models.md#migrationrecord); the project-specific timing below is owned here):
 
@@ -470,7 +470,7 @@ Implementations MUST NOT abort an `update` operation solely because `migrations.
 
 ### Performance Contracts
 
-See [07-operational-quality.md](07-operational-quality.md) for all performance targets.
+See [Operational quality](07-operational-quality.md) for all performance targets.
 
 ---
 
@@ -596,9 +596,9 @@ When the resolved template has no `boilerplate.yml`, it is a Copier-only templat
 
 ### Performance Contracts
 
-See [07-operational-quality.md](07-operational-quality.md) for all performance targets.
+See [Operational quality](07-operational-quality.md) for all performance targets.
 
-**Cross-reference**: See [05-cli-reference.md](05-cli-reference.md) for the full `adopt` CLI specification.
+**Cross-reference**: See [CLI reference](05-cli-reference.md) for the full `adopt` CLI specification.
 
 ---
 
@@ -643,7 +643,7 @@ Ejection is a delete, not a staged write: there is no staging directory, no inte
 | `--dry-run` | Removal list printed, nothing removed, exit `0` |
 | Filesystem/permission failure during removal | `BP_FILESYSTEM_PERMISSION`, exit `1` |
 
-**Cross-reference**: See [05-cli-reference.md](05-cli-reference.md) for the full `eject` CLI specification.
+**Cross-reference**: See [CLI reference](05-cli-reference.md) for the full `eject` CLI specification.
 
 ---
 
@@ -659,4 +659,4 @@ For remote templates (not local directories), the system MUST:
 
 **Caching**: Templates fetched from remote repositories MUST be cached by their `checksum`. Subsequent operations with the same checksum MUST use the cached artifact without re-fetching.
 
-**Retry policy**: See [07-operational-quality.md](07-operational-quality.md) for the full retry specification.
+**Retry policy**: See [Operational quality](07-operational-quality.md) for the full retry specification.

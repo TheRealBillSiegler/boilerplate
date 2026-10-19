@@ -2,7 +2,7 @@
 
 **Status**: Accepted
 
-> **Scope note.** This ADR **commits** the PROD-001 item `first_party_template_distribution` — the `update` spine depends on it. For what exists in code today, see [status.md](../status.md).
+> **Scope note.** This ADR **commits** the PROD-001 item `first_party_template_distribution` — the `update` spine depends on it. For what exists in code today, see [Implementation status](../status.md).
 
 ## Context
 

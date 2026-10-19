@@ -323,7 +323,7 @@ The RenderEngine asks the questions of the full merged schema (no underscore-pre
 - If interactive mode is enabled, the user is prompted for all questions from the full merged schema in a single interactive session. Conditional visibility (`when` expressions) is evaluated during prompting. If non-interactive, defaults and pre-seeded answers are used.
 - Each layer's Copier `Worker` invocation then receives as pre-seeded answers the resolved answers to its scoped view's questions; subsequent layers do NOT re-prompt for previously-answered questions.
 - **Tasks** are deferred: the accumulated list, in topological order, runs once after the last layer renders (see [Task Execution Order](#task-execution-order)).
-- **Overwrite**: The `overwrite` flag is passed from the `ExecutionContext`. When rendering into an empty staging directory (the standard creation path), `overwrite` does not trigger conflicts because no files pre-exist. When `--force` is active, files are overwritten freely, including any a layer lists in its own `_skip_if_exists` ([Per-Layer Render Loop](#per-layer-render-loop)). The "full-file replacement" overlay semantics described in [06-project-lifecycle.md](06-project-lifecycle.md) are achieved naturally by per-layer rendering in topological order: later layers' files replace earlier layers' files at the same path.
+- **Overwrite**: The `overwrite` flag is passed from the `ExecutionContext`. When rendering into an empty staging directory (the standard creation path), `overwrite` does not trigger conflicts because no files pre-exist. When `--force` is active, files are overwritten freely, including any a layer lists in its own `_skip_if_exists` ([Per-Layer Render Loop](#per-layer-render-loop)). The "full-file replacement" overlay semantics described in [Project lifecycle](06-project-lifecycle.md) are achieved naturally by per-layer rendering in topological order: later layers' files replace earlier layers' files at the same path.
 
 **Composition is file-level, not content-level.** When two layers contribute a file at the same path, the later layer's file completely replaces the earlier layer's. There is no line-by-line or AST-level merge of file contents across layers. Template authors building layered compositions should structure templates to avoid file conflicts — for example, by organizing layer-specific content into separate files, by designating a single layer as the owner of a shared file, or by using post-render `_tasks` to merge content programmatically when the format supports it.
 
@@ -475,7 +475,7 @@ flowchart LR
 
 **Tasks run once, after the walk.** The walk MUST skip tasks in every render Copier makes during a layer's update; Copier otherwise runs the layer's own `_tasks` in its old-copy temporary directory, in place and in its new-copy temporary directory ([ADR-015 §Verification (2026-10-06)](adr-015-idiomatic-artifacts.md#verification-2026-10-06)). After the last layer's update completes, including the rerun that finishes an update paused on a conflict, the walk MUST run once, against the finished project, the merged task list of every layer the lock lists, in lock order, the way compose runs the merged list of all its layers ([Task Execution Order](#task-execution-order); [ADR-014](adr-014-deferred-task-execution.md)); `--no-tasks` skips that run. Skipping tasks leaves a layer's `_migrations` running in that layer's own update ([ADR-007](adr-007-update-model.md)). The run goes through the same `Worker` subclass, at the target versions with each layer's recorded answers after its update, under Copier's `update` operation, so a task's `when:` sees `_copier_operation == "update"` and a template MAY guard a creation-only task. `_copier_operation` comes from Copier's private `_operation` ContextVar (`copier._main._operation`, read at Copier 9.18.1), which only `run_copy`, `run_recopy` and `run_update` set (through the `as_operation` decorator; `Worker._execute_tasks` reads it), so the post-walk run MUST set that ContextVar to `"update"` around the task run through the shim, and [ADR-002](adr-002-copier-internals-shim.md#decision) lists it among the audited internals. If a task fails after the files are copied back, a terminal offers to keep the files or undo the run. Keeping the files, whether the terminal user chooses it or `--non-interactive` does, MUST write the lock, append a `failed` record, name the failed task and how to rerun it, and exit with `1`; undoing the run, as [06 §Undo](06-project-lifecycle.md#undo) defines it, appends no record. `add` handles a failed task the same way ([06 §Adding a layer](06-project-lifecycle.md#adding-a-layer)) (`FAILURE`, [ADR-004](adr-004-exit-code-taxonomy.md)); exit `4` stays the conflict pause.
 
-See [06-project-lifecycle.md](06-project-lifecycle.md) for the full update workflow, including Copier version management and non-git source fallback.
+See [Project lifecycle](06-project-lifecycle.md) for the full update workflow, including Copier version management and non-git source fallback.
 
 ---
 
@@ -491,7 +491,7 @@ The `CompositionArtifact` supports several inspection operations for the CLI `co
 | `layers` | Per-layer question values (contributions only, not cumulative) |
 | `states` | Per-layer cumulative state (requires `include_states=true` at compose time) |
 | `deltas` | Per-layer delta from previous state (requires `include_deltas=true`) |
-| `stats` | Aggregate statistics (see `CompositionStats` in [02-data-models.md](02-data-models.md)) |
+| `stats` | Aggregate statistics (see `CompositionStats` in [Data models](02-data-models.md)) |
 
 **Question provenance**: When `--questions` mode is active, each question in the output SHOULD include a `source` field indicating which template layer originally declared it and whether it was overridden by a later layer. This enables template authors to trace question origins and identify unintentional overrides.
 
@@ -526,7 +526,7 @@ Both YAML and JSON export formats are supported. When `--output <dir>` is specif
 
 ## Error Reference
 
-Composition-related errors use the `BP_RESOLVE_*`, `BP_GRAPH_*`, `BP_RENDER_*`, and `BP_LOCK_*` code families. See [07-operational-quality.md](07-operational-quality.md) for the authoritative error code registry and [02-data-models.md §Error Hierarchy](02-data-models.md#error-hierarchy) for the exception class hierarchy.
+Composition-related errors use the `BP_RESOLVE_*`, `BP_GRAPH_*`, `BP_RENDER_*`, and `BP_LOCK_*` code families. See [Operational quality](07-operational-quality.md) for the authoritative error code registry and [02-data-models.md §Error Hierarchy](02-data-models.md#error-hierarchy) for the exception class hierarchy.
 
 ---
 

@@ -41,13 +41,13 @@ name = "text-highlighter"
 
 The resulting image will be:
 
-```bash
+```text
 text-highlighter:local
 ```
 
 Upon successful completion, you'll see:
 
-```bash
+```text
 ✅ Docker image built successfully: text-highlighter:local
 ℹ️  To run your container locally:
    docker run -p 8501:8501 text-highlighter:local
