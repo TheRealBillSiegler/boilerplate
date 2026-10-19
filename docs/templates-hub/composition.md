@@ -33,7 +33,7 @@ Rules:
 |------|---------|
 | Base template | A template that does not declare parents, e.g., `project`. |
 | Derived template | A template that declares one or more parents via `extends`, e.g., `streamlit`. |
-| Layer | One template's contribution at a node of the dependency graph: name@version plus its path; see [Glossary](../design/01-overview.md#glossary). |
+| Layer | One template's contribution at a node of the dependency graph: name@version plus its path; see the [glossary entry](../design/01-overview.md#term-layer). |
 | Layer order | The order the layers apply (dependencies first, target last). |
 | Dependency graph | Nodes, edges, and the layer order describing template dependencies. |
 | Merged configuration | The merged configuration after all layers; a questions-only view is also available. |

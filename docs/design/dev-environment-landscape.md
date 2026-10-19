@@ -1,6 +1,6 @@
 # The Development Environment Landscape
 
-The reference taxonomy of what a Python development environment comprises. Boilerplate's design vocabulary calls each recurring role in this taxonomy a **slot** (see the [glossary](01-overview.md#glossary)). This document catalogues the landscape; the [§How Boilerplate maps onto the landscape](#how-boilerplate-maps-onto-the-landscape) section records which slots Boilerplate opines on.
+The reference taxonomy of what a Python development environment comprises. Boilerplate's design vocabulary calls each recurring role in this taxonomy a [slot](01-overview.md#term-slot). This document catalogues the landscape; the [§How Boilerplate maps onto the landscape](#how-boilerplate-maps-onto-the-landscape) section records which slots Boilerplate opines on.
 
 > **Provenance.** Transcribed from the project author's *Python Development Environment* mind map, committed alongside this document as the [XMind source](../assets/python-development-environment.xmind). This transcription is the repo-canonical text form. Category definitions are the author's; example tools are illustrative, not exhaustive, and not endorsements.
 
@@ -99,7 +99,7 @@ Interactive platforms and hosted environments for learning Python, prototyping, 
 
 ## How Boilerplate maps onto the landscape
 
-Each first-party template fills the slots its ecosystem's **dev loop** uses — the roles a developer exercises on every pass through it — with one opinionated, preconfigured pick each, declared through the profile the template requires. The Python picks:
+Each first-party template fills the slots its ecosystem's [dev loop](01-overview.md#term-dev-loop) uses — the roles a developer exercises on every pass through it — with one opinionated, preconfigured pick each, declared through the profile the template requires. The Python picks:
 
 | Slot | Pick |
 | --- | --- |
@@ -112,7 +112,7 @@ Each first-party template fills the slots its ecosystem's **dev loop** uses — 
 
 Two rules give the mapping its shape:
 
-- **Templates declare their slots and fill them.** A template's required profile names the tool per slot, including any secondary toolchain its kind of project needs (the `streamlit` template needs Docker and Bash; on Windows, WSL2); the environment installs and verifies what the profile declares; the template pre-wires each tool's per-project configuration — Ruff's rule set, Pyright's strictness, pytest's options, the `.vscode/` workspace settings — and scaffolds adjacent slots such as CI/CD and documentation generation as [gating scaffolding](01-overview.md#glossary) the user opts into.
+- **Templates declare their slots and fill them.** A template's required profile names the tool per slot, including any secondary toolchain its kind of project needs (the `streamlit` template needs Docker and Bash; on Windows, WSL2); the environment installs and verifies what the profile declares; the template pre-wires each tool's per-project configuration — Ruff's rule set, Pyright's strictness, pytest's options, the `.vscode/` workspace settings — and scaffolds adjacent slots such as CI/CD and documentation generation as [gating scaffolding](01-overview.md#term-first-party-gating-scaffolding) the user opts into.
 - **Slots no first-party template requires are out of scope by design.** The remaining landscape (profiling, serverless, IaC, PaaS, data tooling, …) is a scope boundary: "should Boilerplate also do X?" is answered by whether some first-party template's kind of project needs X on its golden path. Containerization enters through the `streamlit` template's required profile.
 
 The development environment built from these picks is itself a first-class, managed surface — installation, verification, update, and drift detection across its lifecycle — per [01-overview.md §Environment lifecycle is managed](01-overview.md#environment-lifecycle-is-managed) and the provisioning design in [§08](08-environment-provisioning.md) / [ADR-009](adr-009-environment-provider-protocol.md).
