@@ -170,19 +170,28 @@ _PANZOOM_START_TAG = re.compile(
 )
 
 
+# A name by reference (aria-labelledby) is as good as aria-label under WCAG 4.1.2,
+# so either one means the control already has a name. The lookbehind keeps a
+# lookalike such as data-aria-label from counting.
+_HAS_NAME = re.compile(r"(?<=\s)aria-label(?:ledby)?=")
+_HAS_ARIA_HIDDEN = re.compile(r"(?<=\s)aria-hidden=")
+
+
 def _name_panzoom_start_tag(match: re.Match[str]) -> str:
     """Return a panzoom start tag with its accessible name or icon hiding added."""
     start_tag = match.group(0)
     tag = match.group("tag")
     first_class = match.group("classes").split()[0]
     attributes = ""
-    if tag == "svg" and "aria-hidden" not in start_tag:
+    if tag == "svg" and not _HAS_ARIA_HIDDEN.search(start_tag):
         attributes = ' aria-hidden="true" focusable="false"'
-    elif tag == "button" and "aria-label" not in start_tag:
+    elif tag == "button" and not _HAS_NAME.search(start_tag):
         name = _PANZOOM_BUTTON_NAMES.get(first_class)
         attributes = f' aria-label="{name}"' if name else ""
     elif (
-        tag == "nav" and first_class == "panzoom-nav" and "aria-label" not in start_tag
+        tag == "nav"
+        and first_class == "panzoom-nav"
+        and not _HAS_NAME.search(start_tag)
     ):
         attributes = f' aria-label="{_PANZOOM_NAV_NAME}"'
     return start_tag[:-1] + attributes + ">"

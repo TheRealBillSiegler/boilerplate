@@ -264,6 +264,34 @@ class TestNamesPanzoomControls:
 
         assert on_page_content(page) == page
 
+    def test_keeps_a_name_given_by_reference(self) -> None:
+        page = (
+            '<button class="panzoom-reset panzoom-button" '
+            'aria-labelledby="heading"></button>'
+        )
+
+        assert on_page_content(page) == page
+
+    @pytest.mark.parametrize(
+        ("page", "added"),
+        [
+            (
+                '<button class="panzoom-reset panzoom-button" data-aria-label="x">',
+                ' aria-label="Reset zoom"',
+            ),
+            (
+                '<nav class="panzoom-nav" data-aria-label="x">',
+                ' aria-label="Diagram controls"',
+            ),
+            (
+                '<svg class="panzoom-icon" data-aria-hidden="x">',
+                ' aria-hidden="true" focusable="false"',
+            ),
+        ],
+    )
+    def test_ignores_a_lookalike_attribute(self, page: str, added: str) -> None:
+        assert on_page_content(page) == page[:-1] + added + ">"
+
     def test_ignores_panzoom_markup_shown_as_code(self) -> None:
         page = '<pre><code>&lt;button class="panzoom-reset panzoom-button"&gt;</code></pre>'
 
