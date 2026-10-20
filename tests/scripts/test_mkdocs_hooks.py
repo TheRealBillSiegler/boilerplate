@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from mkdocs.config.defaults import MkDocsConfig
+from mkdocs_panzoom_plugin.panzoom_box import create_panzoom_box
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 from mkdocs_hooks import on_page_content, on_post_build, on_post_page
@@ -153,27 +154,32 @@ class TestLeavesOtherMarkupAlone:
 def _panzoom_box(*, full_screen: bool = True) -> str:
     """Return the markup mkdocs-panzoom-plugin wraps around a diagram.
 
-    The shape matches the plugin's own ``create_panzoom_box``, with the icon
-    paths shortened.
+    The plugin's own ``create_panzoom_box`` builds it, so an upgrade that
+    changes the markup changes what these tests exercise. The plugin leaves a
+    backslash-one placeholder where the diagram goes; a mermaid block fills it.
     """
-    icon = (
-        '<svg class="panzoom-icon" viewBox="0 0 512 512" '
-        'xmlns="http://www.w3.org/2000/svg"><path d="M0 0"></path></svg>'
+    box = create_panzoom_box(
+        {"key": "alt", "full_screen": full_screen, "hint_location": "bottom"}, 0
     )
-    full_screen_buttons = (
-        f'<button class="panzoom-max panzoom-button">{icon}</button>'
-        f'<button class="panzoom-min panzoom-button panzoom-hidden">{icon}</button>'
-        if full_screen
-        else ""
-    )
-    return (
-        '<div class="panzoom-box" data-key="alt" id="panzoom0">'
-        '<nav class="panzoom-nav">'
-        f'<button class="panzoom-info panzoom-button">{icon}</button>'
-        f'<button class="panzoom-reset panzoom-button">{icon}</button>'
-        f"{full_screen_buttons}</nav>"
-        '<div class="mermaid">graph</div></div>'
-    )
+    return box.replace("\\1", '<div class="mermaid">graph</div>')
+
+
+def _unlabelled_panzoom_controls(page_html: str) -> list[str]:
+    """Return the start tag of each panzoom control that has no accessible name.
+
+    A ``<button>`` or ``<nav>`` needs ``aria-label`` or ``aria-labelledby``; an
+    ``<svg>`` icon needs ``aria-hidden``. A control class the plugin adds later
+    and the hook does not know shows up here.
+    """
+    controls = re.findall(r"<(?:button|nav|svg)\b[^>]*>", page_html)
+    return [
+        tag
+        for tag in controls
+        if not re.search(
+            r"\baria-hidden=" if tag.startswith("<svg") else r"\baria-label(?:ledby)?=",
+            tag,
+        )
+    ]
 
 
 def _button_labels(page_html: str) -> dict[str, str]:
@@ -211,6 +217,12 @@ class TestNamesPanzoomControls:
         assert len(icons) == 4
         assert all('aria-hidden="true"' in icon for icon in icons)
         assert all('focusable="false"' in icon for icon in icons)
+
+    def test_leaves_no_control_the_plugin_renders_unnamed(self) -> None:
+        labelled = on_page_content(_panzoom_box())
+
+        assert len(re.findall(r"<(?:button|nav|svg)\b", labelled)) == 9
+        assert _unlabelled_panzoom_controls(labelled) == []
 
     def test_names_the_controls_landmark(self) -> None:
         labelled = on_page_content(_panzoom_box())
