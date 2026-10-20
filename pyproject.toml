@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "boilerplate"
 version = "0.3.0"
-description = "Stamps out Python projects from templates that build on one another."
+description = "Pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects."
 authors = [{ name = "Boilerplate Contributors" }]
 readme = "README.md"
 keywords = ["cli", "copier", "python", "scaffolding", "project-template", "templates", "uv", "ruff", "pyright", "pytest"]

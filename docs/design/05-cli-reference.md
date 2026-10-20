@@ -139,7 +139,7 @@ Usage: boilerplate [OPTIONS] COMMAND [ARGS]
 
   Less yak. More stack.
 
-  Stamps out Python projects from templates that build on one another.
+  Pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects.
 
   Get started:
     boilerplate list                    Browse available templates

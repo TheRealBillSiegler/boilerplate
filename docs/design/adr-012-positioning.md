@@ -1,6 +1,6 @@
 # ADR-012: Positioning relative to Copier
 
-**Status**: Accepted
+**Status**: Accepted; amended 2026-10-20 (one pitch on every surface)
 
 > **Scope note.** This is a documentation-framing decision, not an architecture one. It governs how public-facing docs (README first screen, docs home, the [Why Boilerplate?](../why.md) page) frame Boilerplate's relationship to Copier, and records the evidence that framing rests on. It does not change any behavioral contract.
 >
@@ -25,19 +25,19 @@ Primary-source research (2026-07) resolved how to weigh these:
 
 ## Decision
 
-Position Boilerplate as **the composition layer for Copier — foundation framing, not replacement framing** (the pixi/hatch pattern):
+Position Boilerplate as **a Python development environment paired with templates that build on one another, with Copier as their foundation — foundation framing, not replacement framing** (the pixi/hatch pattern):
 
 - **Name Copier in the first paragraph as the foundation.** State the gap in one sentence: Copier applies multiple *independent* templates by hand; Boilerplate lets template authors *declare* composition, giving consumers one command, one merged question set, and deterministic precedence when layers overlap.
 - **Cite the documented gap, respectfully.** The README and the [Why Boilerplate?](../why.md) page may link Copier's own multi-template documentation and #934 — engaging prior art head-on, in the incumbent-as-foundation tone. No benchmarks, no feature-table combat.
 - **Scope the compatibility claim to what ships.** Current-state docs say: templates remain standard Copier templates; composition metadata lives in a separate `boilerplate.yml`; `copier.yml` is never modified; a template becomes a layer by adding that one file. The stronger claim — vanilla Copier templates consumable with no added metadata — is not current behavior (the catalog requires `boilerplate.yml`) and MUST NOT appear in current-state docs unless that changes.
-- **Split the two pitches by surface.** The README (arriving Copier-ecosystem audience) leads with the narrow, verifiable composition pitch; the docs home keeps the broad opinionated-system pitch and brand voice. Extended "why not plain Copier?" prose lives on the [Why Boilerplate?](../why.md) docs page, not in the README.
+- **One pitch on every surface.** The README, the docs home, the package description and the CLI's help line lead with the same role line: a Python development environment, one tool for each job, paired with templates that build on one another. Copier stays the named foundation in the README's first paragraph. Extended "why not plain Copier?" prose lives on the [Why Boilerplate?](../why.md) docs page, not in the README.
 
 ## Options considered
 
 - **Foundation framing, first-screen gap statement (chosen)** — matches the norm for built-on-incumbent tools, preempts the predictable "just use `-a`" objection with the upstream's own words, and costs one paragraph.
 - **Replacement framing (uv/ruff pattern)** — rejected: Boilerplate has no speed or drop-in-parity story against Copier, and it *depends* on Copier; attack framing would be both false and self-undermining.
 - **Not naming Copier at all** — rejected: six of seven comparable tools name the incumbent, and Boilerplate's entire early audience consists of Copier users who will raise the comparison themselves if the docs don't.
-- **Leading everywhere with the broad system pitch** — rejected for the README (the concrete gap is what the arriving audience can verify today), retained for the docs home where the fuller story has room.
+- **Splitting the pitches by surface** (the narrow composition pitch in the README, the broad system pitch on the docs home) — chosen at first, then replaced on 2026-10-20: the model of what Boilerplate is gives the development environment the same weight as the templates, and one role line on every surface keeps the front door and the docs from describing two different products. The verifiability argument no longer decides the lead: the environment half is as checkable as the composition half (the installer and the configured picks ship), and Copier stays named as the foundation in the README's first paragraph.
 
 ## Consequences
 

@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/TheRealBillSiegler/boilerplate)](LICENSE)
 
 <!-- --8<-- [start:opening] -->
-**Boilerplate stamps out Python projects from templates that build on one another.** Use its templates as they are, or put your own standards on top of one instead of forking it. It renders each template with [Copier](https://copier.readthedocs.io/), a tool for project templates, and you don't need to know Copier to use it.
+**Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects.** Use its templates as they are, or put your own standards on top of one instead of forking it. It renders each template with [Copier](https://copier.readthedocs.io/), a tool for project templates, and you don't need to know Copier to use it.
 
 Boilerplate takes care of the setup chores around writing code, the kind developers call yak shaving: a working toolchain and a configured project. You start at the work.
 

@@ -1,6 +1,7 @@
-"""Boilerplate: stamps out Python projects from templates that build on one another.
+"""Boilerplate: a Python development environment paired with layered templates.
 
-Built on Copier.
+Boilerplate pairs a Python development environment, one tool for each job, with
+templates that build on one another to stamp out projects. Built on Copier.
 """
 
 from importlib.metadata import PackageNotFoundError

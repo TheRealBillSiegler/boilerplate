@@ -1,5 +1,5 @@
 site_name: "Boilerplate"
-site_description: "Boilerplate stamps out Python projects from templates that build on one another. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work."
+site_description: "Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work."
 # Required by mike (versioned deploys) and the docs version selector.
 site_url: "https://therealbillsiegler.github.io/boilerplate/"
 repo_url: "https://github.com/TheRealBillSiegler/boilerplate"
@@ -189,7 +189,7 @@ plugins:
   # site_url, which mike rewrites per deployed version.
   - llmstxt:
       markdown_description: >-
-        Boilerplate stamps out Python projects from templates that build on one another. Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option.
+        Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option.
         These pages describe the tool at its current version. The status page
         maps what is implemented; the design section describes the target
         state, not what exists.
