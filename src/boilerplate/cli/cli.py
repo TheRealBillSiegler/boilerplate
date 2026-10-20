@@ -147,7 +147,7 @@ app = typer.Typer(
     name="boilerplate",
     cls=BoilerplateGroup,
     help=(
-        "Stamps out Python projects from templates that build on one another."
+        "Pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects."
         "\n\nGet started:\n\n"
         "    boilerplate list\n"
         "    boilerplate new project my-app\n"
