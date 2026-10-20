@@ -12,7 +12,9 @@
  * `aria-label`: a table that fits would add a tab stop and a landmark that do
  * nothing. Whether it overflows depends on the window width, so a
  * ResizeObserver on the wrapper and its table re-checks it. The name is the
- * table's caption, else the nearest preceding heading, else "Table".
+ * table's caption, else the nearest preceding heading, else "Table". Regions
+ * share a page, so a second table under the same heading is "Heading, table 2"
+ * and so on; a caption always wins and is never suffixed.
  *
  * The site may later move to Zensical. Port this file if it has no equivalent.
  */
@@ -21,11 +23,8 @@
 
   var observer = null;
 
-  function nameOf(wrap) {
-    var caption = wrap.querySelector("caption");
-    if (caption && caption.textContent.trim()) {
-      return caption.textContent.trim();
-    }
+  // The nearest heading before the wrap, else "Table".
+  function headingNameOf(wrap) {
     var name = "Table";
     var headings = document.querySelectorAll(
       "[data-md-component=content] :is(h1, h2, h3, h4, h5, h6)"
@@ -42,6 +41,25 @@
       name = heading.textContent.trim() || name;
     }
     return name;
+  }
+
+  function nameOf(wrap) {
+    var caption = wrap.querySelector("caption");
+    if (caption && caption.textContent.trim()) {
+      return caption.textContent.trim();
+    }
+    var name = headingNameOf(wrap);
+    // N is this table's place among the uncaptioned tables that share the
+    // heading name. Counting every such table, not only those that overflow
+    // now, keeps a name stable however the observer orders its updates.
+    var n = 1;
+    var wraps = document.querySelectorAll(".md-typeset__scrollwrap");
+    for (var i = 0; i < wraps.length && wraps[i] !== wrap; i++) {
+      if (!wraps[i].querySelector("caption") && headingNameOf(wraps[i]) === name) {
+        n++;
+      }
+    }
+    return n > 1 ? name + ", table " + n : name;
   }
 
   function update(wrap) {
