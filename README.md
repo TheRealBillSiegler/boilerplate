@@ -19,21 +19,19 @@ Each pick is the most modern and lightweight option for its job: uv for installi
 
 ## Install
 
-You don't need Python first: uv installs it. Boilerplate installs from Git, not PyPI: `pip install boilerplate` gets an unrelated project that owns the name.
-
-On Windows 11, the installer sets up a Python development environment. It installs Git and VS Code unless they're already there, then VS Code's recommended extensions, uv (through Astral's own installer) and the Boilerplate CLI. When it installs VS Code, it also adds a desktop icon, Explorer context-menu entries, file associations and VS Code's PATH entry. It runs from the stock Windows PowerShell and adds PowerShell 7 first if needed. [Read the script](https://github.com/TheRealBillSiegler/boilerplate/blob/main/scripts/install.ps1), then run it:
+You don't need Python first: uv installs it. On Windows 11, the installer sets up your machine. Starting from the stock Windows PowerShell, it adds PowerShell 7 if needed, then installs VS Code and the recommended VS Code extensions, Git, uv (through Astral's own installer) and the Boilerplate CLI, skipping VS Code and Git when they're already there. A new VS Code install also gets a desktop icon, Explorer context-menu entries, file associations and a PATH entry. Only the winget installs need admin rights, and `-ExecutionPolicy Bypass` applies only to the installer's own PowerShell processes and leaves your machine's policy alone. [Read the script](https://github.com/TheRealBillSiegler/boilerplate/blob/main/scripts/install.ps1), then run it:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/main/scripts/install.ps1 | iex"
 ```
 
-`-ExecutionPolicy Bypass` applies only to the installer's own PowerShell processes and leaves your machine's policy alone. Only the winget installs need admin rights.
-
-On macOS, Linux and Windows 10, [Install](docs/install.md) walks through the setup by hand; its macOS and Linux steps are still being verified. With [Git](https://git-scm.com/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) already installed, the CLI is one command:
+On any system with [Git](https://git-scm.com/) and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, the CLI is one command:
 
 ```bash
 uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@main
 ```
+
+Don't use `pip install boilerplate`: that name belongs to an unrelated project. To set up macOS, Linux or Windows 10 by hand, follow [Install](docs/install.md); its macOS and Linux steps are still being verified.
 
 ## Start a project
 
