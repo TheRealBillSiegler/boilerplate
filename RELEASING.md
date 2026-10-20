@@ -30,7 +30,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 - [ ] When the dist name changes, update `get_version("...")` in
       `src/boilerplate/__init__.py` to match the new dist name — otherwise `__version__`
       reports `Unknown`
-- [ ] `description`, `license`, `classifiers` (incl. a License + Development Status), and a
+- [ ] `description`, `license` (an SPDX expression), `license-files`, `classifiers` (incl. a Development Status; no `License ::` classifier, which PEP 639 deprecates beside an expression), and a
       `[project.urls]` table are complete
 - [ ] OIDC trusted publisher configured against the **final** PyPI project name (do not
       configure until the name is final)
