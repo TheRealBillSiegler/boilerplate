@@ -79,4 +79,4 @@ See [Reporting bugs and requesting features](docs/governance/contributing.md#rep
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE).
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE), except contributions to the files under `src/boilerplate/templates/`, which are licensed under the [MIT No Attribution License](src/boilerplate/templates/LICENSE) (MIT-0).

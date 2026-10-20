@@ -1,7 +1,12 @@
 Boilerplate
 Copyright 2026 Bill Siegler
 
-This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+This product is licensed under the Apache License, Version 2.0 (see LICENSE),
+except the files under src/boilerplate/templates/, which are licensed under
+the MIT No Attribution License (MIT-0; see src/boilerplate/templates/LICENSE).
+A project rendered from those templates owes no attribution or notice for
+them. The project template's .gitignore is adapted from GitHub's
+Python.gitignore (https://github.com/github/gitignore), CC0 1.0 Universal.
 
 Boilerplate's runtime dependencies are declared in pyproject.toml and are
 distributed separately, each under its own license. No third-party source code
