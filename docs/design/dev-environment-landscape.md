@@ -107,6 +107,7 @@ Each first-party template fills the slots its ecosystem's [dev loop](01-overview
 | Linters + Code Formatters | Ruff |
 | Type Checkers | Pyright |
 | Testing Frameworks (core, mocking, coverage) | pytest, pytest-mock, pytest-cov |
+| Build Tools | uv_build, with hatchling as the override ([ADR-017](adr-017-build-backend.md)) |
 | IDEs & Editors | VS Code |
 | Version Control Systems | Git |
 
