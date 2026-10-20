@@ -69,7 +69,7 @@ See the [command table](#cli-specified-vs-implemented) below for the specified-v
 
 ### 06 — Project lifecycle :material-progress-clock:{ .status-partial } Partial
 
-- :material-progress-clock:{ .status-partial } **Partial:** Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the shipped flag names and prompting semantics diverge from design 05's Answer Presets contract). It ends by writing `boilerplate.lock` (`composition/rendering/creation_lock.py`).
+- :material-progress-clock:{ .status-partial } **Partial:** Project creation (`new`) — resolves, composes, and renders with `--dry-run`, `--force`, `--non-interactive`, `--no-tasks`, `--data`/`--data-file`, `--format json` (the flag names match design 05's Answer Presets contract except the missing `-d` short flag; `new` rejects `_`-prefixed keys in `--data-file` where the design warns and skips them, and `update` and `add` take no `--data` or `--data-file` yet). It ends by writing `boilerplate.lock` (`composition/rendering/creation_lock.py`).
 - :material-progress-clock:{ .status-partial } **Partial:** Lock-file generation (`boilerplate.lock`) — `new` writes it after a successful render: each layer's name, version, source, commit (null for a bundled folder), checksum, and a hash of each answers file. No command reads it yet
 - :material-progress-clock:{ .status-partial } **Partial:** Project update and layer add — the per-layer update and add engines are implemented (`composition/updating/`, `composition/adding/`) and driven only by tests; the `update` and `add` commands are planned
 
