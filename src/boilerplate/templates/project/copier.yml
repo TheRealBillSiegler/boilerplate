@@ -114,8 +114,8 @@ build_backend:
   help: "Build backend that turns the project into a wheel and an sdist"
   default: uv_build
   choices:
-    "uv_build: uv's own backend, for pure-Python code with a static version": uv_build
-    "hatchling: build hooks, plugins, a version from git tags, or a custom file layout": hatchling
+    - uv_build
+    - hatchling
 
 package_index_url:
   type: str
