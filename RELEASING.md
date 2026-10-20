@@ -54,6 +54,8 @@ Releases are cut from `develop`. release-please keeps one release PR open there,
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
+    accTitle: Release sequence
+    accDescr: Pull requests merge into develop and gather in the release PR. The maintainer approves the release PR's CI and merges it, which tags and publishes the release. Then three jobs run at the same time: the docs deploy, the offline docs zip is attached, and main fast-forwards to the tag.
     actor M as Maintainer
     participant D as develop
     participant W as Release workflow
