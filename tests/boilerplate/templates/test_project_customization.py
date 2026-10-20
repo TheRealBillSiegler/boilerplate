@@ -6,6 +6,7 @@ import subprocess
 import tomllib
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -107,6 +108,57 @@ class TestPackageIndexUrl:
         dest = _render_project(tmp_path)
         pyproject = (dest / "pyproject.toml").read_text()
         assert "[[tool.uv.index]]" not in pyproject
+
+
+class TestBuildBackend:
+    """The project renders the `[build-system]` table its `build_backend` answer names.
+
+    Seam: the `build_backend` question, through a forced answer. `uv_build` is
+    the default and needs no `[tool.hatch]` table; `hatchling` renders the
+    wheel's package selection beside it. Dropping a branch of the template's
+    conditional breaks this.
+    """
+
+    def test_uv_build_is_the_default(self, tmp_path: Path):
+        pyproject = _rendered_pyproject(tmp_path)
+        assert pyproject["build-system"] == {
+            "requires": ["uv_build>=0.13,<0.14"],
+            "build-backend": "uv_build",
+        }
+        assert "hatch" not in pyproject.get("tool", {})
+
+    def test_hatchling_renders_its_requirement_and_wheel_packages(self, tmp_path: Path):
+        pyproject = _rendered_pyproject(
+            tmp_path, context_data={"build_backend": "hatchling"}
+        )
+        assert pyproject["build-system"] == {
+            "requires": ["hatchling>=1.27"],
+            "build-backend": "hatchling.build",
+        }
+        package = pyproject["project"]["name"].replace("-", "_")
+        assert pyproject["tool"]["hatch"]["build"]["targets"]["wheel"] == {
+            "packages": [f"src/{package}"]
+        }
+
+    def test_an_unknown_backend_is_refused(self, tmp_path: Path):
+        with pytest.raises(ValueError, match="Invalid choice for 'build_backend'"):
+            _render_project(tmp_path, context_data={"build_backend": "setuptools"})
+
+    @pytest.mark.parametrize("backend", ["uv_build", "hatchling"])
+    def test_the_choice_is_recorded_in_the_answers_file(
+        self, tmp_path: Path, backend: str
+    ):
+        dest = _render_project(tmp_path, context_data={"build_backend": backend})
+        answers = (dest / ".copier-answers.project.yml").read_text(encoding="utf-8")
+        assert f"build_backend: {backend}" in answers
+
+
+def _rendered_pyproject(
+    tmp_path: Path, context_data: dict[str, object] | None = None
+) -> dict[str, Any]:
+    """Render the project and parse the `pyproject.toml` it writes."""
+    dest = _render_project(tmp_path, context_data=context_data)
+    return tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 class TestVSCodeSettings:

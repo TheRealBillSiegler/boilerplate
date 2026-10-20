@@ -173,6 +173,7 @@ _QUESTIONS: Final[tuple[_Question, ...]] = (
     _Question("sample module", None),
     _Question("first and last name", "Bill Siegler"),
     _Question("email address", "bill@example.com"),
+    _Question("Build backend", None),
     _Question("Package index URL", None),
 )
 

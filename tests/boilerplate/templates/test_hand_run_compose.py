@@ -147,6 +147,7 @@ class TestByHandAnswersFilesRecordOnlyTheLayersOwnQuestions:
         ) == {
             "author_email",
             "author_name",
+            "build_backend",
             "dev_dependencies",
             "description",
             "package_index_url",

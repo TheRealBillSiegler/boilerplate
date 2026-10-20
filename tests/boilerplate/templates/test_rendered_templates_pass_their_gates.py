@@ -161,3 +161,17 @@ class TestRenderedPyprojectMeetsThePackagingSpecification:
         assert "license" not in project or isinstance(project["license"], str), (
             f"license must be an SPDX expression string (PEP 639), got {project['license']!r}"
         )
+
+    @pytest.mark.parametrize("backend", ["uv_build", "hatchling"])
+    def test_validate_pyproject_accepts_each_build_backend(
+        self, backend: str, tmp_path: Path
+    ) -> None:
+        dest = render(
+            "project",
+            tmp_path,
+            context_data={"build_backend": backend},
+            skip_tasks=True,
+        )
+        pyproject = tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))
+        api.Validator()(pyproject)
+        assert backend in pyproject["build-system"]["build-backend"]

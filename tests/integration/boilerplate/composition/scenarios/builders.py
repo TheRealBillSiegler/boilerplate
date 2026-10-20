@@ -68,6 +68,7 @@ PROJECT_QUESTIONS = frozenset(
         "sample_module",
         "author_name",
         "author_email",
+        "build_backend",
         "package_index_url",
     }
 )

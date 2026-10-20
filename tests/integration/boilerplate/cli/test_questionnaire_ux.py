@@ -279,6 +279,7 @@ class TestTemplateCompositionBehavior:
                 "dev_dependencies": [],
                 "author_name": "Test User",
                 "author_email": "test@example.com",
+                "build_backend": "uv_build",
                 "package_index_url": "",
                 "container_registry": "ghcr.io",
                 "sample_module": False,

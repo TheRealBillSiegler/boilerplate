@@ -210,6 +210,34 @@ class TestDockerfileIndex:
         assert '--default-index "$INDEX"' in dockerfile
 
 
+class TestDockerfileUvTag:
+    """The image's uv minor is the minor the project's `uv_build` range names.
+
+    Seam: the streamlit render's `Dockerfile` and `pyproject.toml`. A uv older
+    than the range's floor fetches `uv-build` from the package index, which
+    fails offline with a cold cache, so the two move together. The test
+    catches drift between the two values, not a minor both have left behind.
+    """
+
+    def test_tag_minor_equals_the_uv_build_range_minor(self, tmp_path: Path):
+        dest = render("streamlit", tmp_path)
+        tag = re.search(
+            r"ghcr\.io/astral-sh/uv:(\d+\.\d+)\s",
+            (dest / "Dockerfile").read_text(encoding="utf-8"),
+        )
+        pyproject = tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))
+        (requirement,) = pyproject["build-system"]["requires"]
+        cap = re.fullmatch(r"uv_build>=(\d+\.\d+),<(\d+)\.(\d+)", requirement)
+        assert tag, "the Dockerfile pins uv to a minor tag"
+        assert cap, f"the default range names a uv minor: {requirement!r}"
+        floor, cap_major, cap_minor = cap.groups()
+        assert tag.group(1) == floor
+        assert (int(cap_major), int(cap_minor)) == (
+            int(floor.split(".")[0]),
+            int(floor.split(".")[1]) + 1,
+        )
+
+
 class TestSampleModule:
     def test_sample_module_is_off_by_default(self, tmp_path: Path):
         dest = render("streamlit", tmp_path)
