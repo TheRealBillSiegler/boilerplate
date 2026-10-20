@@ -1138,7 +1138,7 @@ author_name: "Platform Team"
 - A key that is not a string, or is empty, fails fast
 - Answer presets MUST be pure data (YAML maps). No Jinja2 expressions, no executable content.
 
-**The template's answers file is a preset**: `new` takes one template, and that template's `.copier-answers.<template>.yml` records its own and every ancestor's answers ([ADR-015](adr-015-idiomatic-artifacts.md) point 4), so when the template ships the answers-file stub ([04 §Render Behavior](04-composition-engine.md#render-behavior)), the root template's file (the template named on `new`, not any layer's file) that a finished `new` leaves in the project is a complete preset. Answers to questions marked `secret: true` are the exception: Copier does not record them, so supply them with `--data`.
+**The template's answers file is a preset**: `new` takes one template, and that template's `.copier-answers.<template>.yml` records its own and every ancestor's answers ([ADR-015](adr-015-idiomatic-artifacts.md) point 4), so when the template ships the answers-file stub ([04 §Render Behavior](04-composition-engine.md#render-behavior)), the root template's file (the template named on `new`, not any layer's file) that a finished `new` leaves in the project is a complete preset. Answers to questions marked `secret: true` are the exception: Copier does not record them, so supply them again as [10 §Privacy](10-security.md#privacy) describes.
 
 ### Interactive Prompting Contract
 
