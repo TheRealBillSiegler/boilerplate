@@ -65,4 +65,4 @@ Stuck? Start with [Help](docs/help.md), then open an [issue](https://github.com/
 
 ## License
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE); the templates' files are [MIT-0](src/boilerplate/templates/LICENSE), so the projects they render owe no attribution.

@@ -10,8 +10,8 @@ authors = [{ name = "Boilerplate Contributors" }]
 readme = "README.md"
 keywords = ["cli", "copier", "python", "scaffolding", "project-template", "templates", "uv", "ruff", "pyright", "pytest"]
 requires-python = ">=3.12"
-license = "Apache-2.0"
-license-files = ["LICENSE", "NOTICE"]
+license = "Apache-2.0 AND MIT-0"
+license-files = ["LICENSE", "NOTICE", "src/boilerplate/templates/LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
