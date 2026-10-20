@@ -222,20 +222,17 @@ class TestDockerfileUvTag:
     def test_tag_minor_equals_the_uv_build_range_minor(self, tmp_path: Path):
         dest = render("streamlit", tmp_path)
         tag = re.search(
-            r"ghcr\.io/astral-sh/uv:(\d+\.\d+)\s",
+            r"ghcr\.io/astral-sh/uv:(\d+)\.(\d+)\s",
             (dest / "Dockerfile").read_text(encoding="utf-8"),
         )
         pyproject = tomllib.loads((dest / "pyproject.toml").read_text(encoding="utf-8"))
         (requirement,) = pyproject["build-system"]["requires"]
-        cap = re.fullmatch(r"uv_build>=(\d+\.\d+),<(\d+)\.(\d+)", requirement)
+        cap = re.fullmatch(r"uv_build>=(\d+)\.(\d+),<(\d+)\.(\d+)", requirement)
         assert tag, "the Dockerfile pins uv to a minor tag"
         assert cap, f"the default range names a uv minor: {requirement!r}"
-        floor, cap_major, cap_minor = cap.groups()
-        assert tag.group(1) == floor
-        assert (int(cap_major), int(cap_minor)) == (
-            int(floor.split(".")[0]),
-            int(floor.split(".")[1]) + 1,
-        )
+        floor_major, floor_minor, cap_major, cap_minor = map(int, cap.groups())
+        assert tuple(map(int, tag.groups())) == (floor_major, floor_minor)
+        assert (cap_major, cap_minor) == (floor_major, floor_minor + 1)
 
 
 class TestSampleModule:
