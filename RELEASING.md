@@ -33,6 +33,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
       reports `Unknown`
 - [ ] `description`, `license` (an SPDX expression), `license-files`, `classifiers` (incl. a Development Status; no `License ::` classifier, which PEP 639 deprecates beside an expression), and a
       `[project.urls]` table are complete
+- [ ] `[build-system]` requires `uv_build>=0.Y,<0.(Y+1)` for the current uv minor: raise both bounds by hand when uv ships a new minor, because Dependabot is not relied on to raise them. A uv newer than the cap still builds with its bundled backend but warns on every build and install, and each release tag freezes its cap, so installs of older tags warn under a newer uv; that is the cost of uv's recommended upper bound. A uv older than the floor fetches `uv-build` from the index without a warning.
 - [ ] OIDC trusted publisher configured against the **final** PyPI project name (do not
       configure until the name is final)
 
