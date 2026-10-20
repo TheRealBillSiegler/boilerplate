@@ -46,7 +46,9 @@ description: Org house style on top of the general-purpose template.
 extends: [project]
 ```
 
-Point boilerplate at its parent directory with `--templates-dir` (or set the `BOILERPLATE_EXTRA_TEMPLATE_DIRS` environment variable — a JSON list of paths, e.g. `BOILERPLATE_EXTRA_TEMPLATE_DIRS='["C:/my/templates"]'`, in the environment or a `.env` file in the working directory; a bare path string is rejected) and run `boilerplate new org-project`. The option adds to the search path rather than replacing it, so bundled templates like `project` stay resolvable for `extends`.
+The folder also needs a `copier.yml`; template discovery skips a folder that lacks either file.
+
+Point boilerplate at its parent directory with `--templates-dir` (or set the `BOILERPLATE_EXTRA_TEMPLATE_DIRS` environment variable — a JSON list of paths, e.g. `BOILERPLATE_EXTRA_TEMPLATE_DIRS='["C:/my/templates"]'`, in the environment or a `.env` file in the working directory; a bare path string is rejected) and run `boilerplate new org-project`. The option adds to the search path rather than replacing it, so bundled templates like `project` stay resolvable for `extends`. Your layer applies when you create a project; carrying later changes from `project` into projects you've already made is planned.
 
 ## Your own script (behavior)
 
