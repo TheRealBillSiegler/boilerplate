@@ -22,6 +22,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 - [ ] CI green on the OS matrix (ubuntu / macos / windows × 3.12 / 3.13)
 - [ ] `uv run pytest` passes from the repo root; `uv run ruff check --no-fix .` clean; pyright strict clean
+- [ ] The `project` template's `uv_build` range (`pyproject.toml.jinja`) and the `streamlit` Dockerfile's `ghcr.io/astral-sh/uv` tag name the current uv minor, and `docs/templates-hub/project.md` quotes the range. A test pins the range and the tag to each other, not to the latest uv, and does not read the docs page, so compare the minor with the newest uv release and move all three in one change
 
 ## Packaging metadata (before the first PyPI publish/tag)
 

@@ -62,6 +62,21 @@ Add dependencies with `uv add <pkg>` (see [Add a dependency](../environment/inde
 
 `module.py` and its test are a starting point, not scaffolding you must keep. Answer `sample_module` with no to render without them: `boilerplate new project ./my-app --data sample_module=false`. `tests/<package>/test_import.py` renders in their place, so `uv run pytest` still has a test to run. A template that extends `project` can set the default to off in its own `copier.yml`.
 
+## Choose a build backend
+
+The build backend turns the project into a wheel and an sdist. The `build_backend` question sets the `[build-system]` table in `pyproject.toml`: `uv_build` by default, `hatchling` when you answer it that way: `boilerplate new project ./my-app --data build_backend=hatchling`.
+
+| Pick | Choose it when | Renders |
+| --- | --- | --- |
+| `uv_build` (default) | The code is pure Python with a static version and one `src/<package>`, and uv is your toolchain | `requires = ["uv_build>=0.13,<0.14"]` and nothing else |
+| `hatchling` | You need build hooks, plugins, a version from git tags (`hatch-vcs`), or a custom file layout | `requires = ["hatchling>=1.27"]` and a `[tool.hatch.build.targets.wheel]` table |
+
+The `uv_build` range names the current uv minor, and the [Streamlit template](streamlit/index.md)'s Dockerfile installs the same minor, so uv runs its bundled backend and fetches nothing from a package index. A newer uv still builds, with a warning on each `uv sync` until you raise the cap. An older uv fetches `uv-build` from your default index, so a private `package_index_url` must mirror it.
+
+`uv_build` builds from static metadata and ships a git-ignored file that sits inside the package directory. If you need a dynamic version or generated files in the package tree, pick `hatchling`.
+
+Compiled code (Rust through maturin, C or C++ through scikit-build-core) is a hand edit: replace the `[build-system]` table, then follow uv's [extension module guide](https://docs.astral.sh/uv/concepts/projects/init/#projects-with-extension-modules). The template scaffolds no `Cargo.toml` or `CMakeLists.txt`. [ADR-017](../design/adr-017-build-backend.md) compares nine backends and holds the reasoning behind these two.
+
 ## Where next
 
 Need a Streamlit UI on top of this? See the [Streamlit template](streamlit/index.md). Building your own template? Start with [Template authoring](authoring.md). Return to the [Templates Hub](index.md).
