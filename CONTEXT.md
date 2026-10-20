@@ -351,10 +351,10 @@ A user's default answers for Template Questions, read from `profile.toml` and me
 - **Avoid:** typed Profile model, org profile, config
 
 <a id="term-answer-preset"></a>**Answer Preset** · `customization:AnswerPreset`  
-A set of answers applied to a render declaratively, as a YAML file — for CI/CD use.
+A YAML file of answers passed with `--data-file` to `new`, `update` or `add`, which forces those answers for one run — for CI/CD use or to repeat a project.
 
 - **Related:** `core:Question`
-- **Not to be confused with:** `customization:Profile` (a user's standing defaults in `profile.toml`, not a file passed to one render), `composition:AnswersFile` (Copier's per-layer record of answers already given, not an input to a render)
+- **Not to be confused with:** `customization:Profile` (a user's standing defaults in `profile.toml`, not a file passed to one render), `composition:AnswersFile` (Copier's per-layer record of answers already given; the template's answers file from a finished `new` can be passed as a preset)
 - **Defined in:** `src/boilerplate/cli/commands/new.py` (loads a YAML mapping of answers from `--data-file`)
 - **See:** design 05 §Answer Presets; design 10 §Answer Preset Safety
 
