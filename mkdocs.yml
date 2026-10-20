@@ -189,7 +189,7 @@ plugins:
   # site_url, which mike rewrites per deployed version.
   - llmstxt:
       markdown_description: >-
-        Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option.
+        Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. Each pick is the most modern and lightweight option for its job.
         These pages describe the tool at its current version. The status page
         maps what is implemented; the design section describes the target
         state, not what exists.

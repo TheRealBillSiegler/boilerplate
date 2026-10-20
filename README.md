@@ -8,7 +8,7 @@
 
 Boilerplate takes care of the setup chores around writing code, the kind developers call yak shaving: a working toolchain and a configured project. You start at the work.
 
-Its templates are curated: one recommended tool per job, each chosen as the most modern and lightweight option. The general-purpose Python template sets up uv, Ruff, Pyright in strict mode, pytest and VS Code, and configures them in `pyproject.toml` and `.vscode/`.
+Each pick is the most modern and lightweight option for its job: uv for installing Python and managing dependencies, Ruff for linting and formatting, Pyright in strict mode for type checking, pytest for testing and VS Code as the editor. The templates configure them in `pyproject.toml` and `.vscode/`, so the editor and the command line format code the same way.
 
 **Less yak. More stack.**
 <!-- --8<-- [end:opening] -->
