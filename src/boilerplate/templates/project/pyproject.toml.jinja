@@ -1,6 +1,11 @@
 [build-system]
-requires = ["hatchling"]
+{%- if build_backend == "uv_build" %}
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
+{%- elif build_backend == "hatchling" %}
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+{%- endif %}
 
 [project]
 name = "{{ project_slug }}"
@@ -34,9 +39,11 @@ url = "{{ package_index_url }}"
 default = true
 {% endif %}
 
+{% if build_backend == "hatchling" -%}
 [tool.hatch.build.targets.wheel]
 packages = ["src/{{ package_name }}"]
 
+{% endif -%}
 [tool.coverage.run]
 source = ["{{ package_name }}"]
 

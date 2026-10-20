@@ -109,10 +109,43 @@ author_email:
     Leave out double quotes, backslashes and line breaks.
     {%- endif -%}
 
+build_backend:
+  type: str
+  help: "Build backend that turns the project into a wheel and an sdist"
+  default: uv_build
+  choices:
+    "uv_build: uv's own backend, for pure-Python code with a static version": uv_build
+    "hatchling: build hooks, plugins, a version from git tags, or a custom file layout": hatchling
+
 package_index_url:
   type: str
   help: "Package index URL for the project's default uv index (leave empty for public PyPI; no index block is emitted)"
   default: ""
+
+# A project rendered before `build_backend` existed has no such answer, and
+# `copier update --defaults` would give it the question's default and move it
+# from hatchling to uv_build. The migration records the backend that project
+# was built with; it leaves a recorded answer alone. No `version` gate: bundled
+# layers share the repository's tag stream, so a version gate would skip a
+# project rendered at the tag that precedes this change, and the key check
+# makes the migration a no-op once the answer exists.
+_migrations:
+  - when: "{{ _stage == 'before' }}"
+    command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import pathlib
+        import sys
+
+        answers = pathlib.Path(sys.argv[1])
+        if answers.exists():
+            text = answers.read_bytes()
+            if b"\nbuild_backend:" not in b"\n" + text:
+                answers.write_bytes(
+                    text.rstrip(b"\r\n") + b"\nbuild_backend: hatchling\n"
+                )
+      - "{{ _copier_conf.answers_file }}"
 
 # Creation-only: the script deletes its own `_scripts` folder once it has run,
 # Copier treats that deletion as intentional and never restores the file, and
