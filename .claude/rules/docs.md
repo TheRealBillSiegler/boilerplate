@@ -42,3 +42,34 @@ At every zoom level — site map, section order, page, paragraph — the reader 
 ## The whole — parts in relation
 
 17. **Show how the parts connect.** Boilerplate's picks are chosen to work together, so a page that presents a part names what it connects to — the configuration it shares, the part that reads it, the step that depends on it — and an override names what it gives up. Show each connection through its concrete object (one `[tool.ruff]` table that both the editor and `uv run ruff` read) and link the page that owns it (tenet 15), never through a word for it: "synergy", "holistic", "seamless" and "compounding" are named virtues, banned under tenet 11.
+
+## The diagram — one question at a glance
+
+18. **A diagram answers one question at a glance.** Use one only where tenet 9 calls for one, and pick the type that matches the content's shape: a sequence diagram for handoffs between actors over time, a flowchart for steps and branches, a state diagram for a lifecycle. The sentence that introduces it states the question and its boundary. Keep the participants few (the bar has four) and name them in words the reader already uses, label every arrow with a short active verb phrase, and draw repetition and concurrency with the type's own constructs (`loop`, `par`, one back-edge) instead of copied arrows. A placeholder gets one concrete example, decoration that repeats information is off (on a sequence diagram, `mirrorActors: false` draws each participant once), and `accTitle` and `accDescr` say in words what the diagram shows. Judge the diagram as it renders on the docs site and on GitHub, not its source: Mermaid can reorder flowchart nodes that the source orders. The bar is the release diagram, which answers what happens from the first merge after a release to `main` moving to the new tag:
+
+    ```mermaid
+    %%{init: {"sequence": {"mirrorActors": false}}}%%
+    sequenceDiagram
+        accTitle: Release sequence
+        accDescr: Pull requests merge into develop and gather in the release PR. The maintainer approves the release PR's CI and merges it, which tags and publishes the release. Then three jobs run at the same time: the docs deploy, the offline docs zip is attached, and main fast-forwards to the tag.
+        actor M as Maintainer
+        participant D as develop
+        participant W as Release workflow
+        participant G as GitHub
+        loop for each PR, as many as needed
+            M-)D: merge a PR
+            D-)W: push
+            W-)G: add it to the release PR
+        end
+        M-)G: approve the release PR's CI
+        M-)D: merge the release PR
+        D-)W: push
+        W-)G: tag vX.Y.Z (e.g. v0.4.0), publish the release
+        par at the same time
+            W-)G: deploy vX.Y.Z's docs as version X.Y
+        and
+            W-)G: attach the offline docs zip
+        and
+            W-)G: fast-forward main to vX.Y.Z
+        end
+    ```
