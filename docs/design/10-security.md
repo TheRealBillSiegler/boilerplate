@@ -143,7 +143,7 @@ All user-provided inputs -- CLI arguments, interactive prompts, and file-based i
 - Logs, error messages, and diagnostic output MUST NOT contain secrets, passwords, API tokens, or PII.
 - Personal data MUST be redacted before emission to any output channel (terminal, log file, structured log event).
 
-Answers to questions marked `secret: true` (Copier's secret question flag) MUST NOT reach any file Boilerplate writes. Copier leaves them out of each `.copier-answers.<layer>.yml`, which is why that file is safe to pass to `--data-file` as an answer preset; a secret answer is supplied again with `--data` on the next run.
+Answers to questions marked `secret: true` (Copier's secret question flag) MUST NOT reach any file Boilerplate writes. Copier leaves them out of each `.copier-answers.<layer>.yml`, which is why that file is safe to pass to `--data-file` as an answer preset; a secret answer is supplied again on the next run through `--data` from an environment variable, or through a `--data-file` kept outside version control; a literal on the command line lands in shell history.
 
 See also [§07 Redaction](07-operational-quality.md#redaction) for the systematic log redaction mechanism and [§07 Structured Logging](07-operational-quality.md#structured-logging) for required log fields and privacy invariants.
 

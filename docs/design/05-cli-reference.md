@@ -283,17 +283,17 @@ The selection prompt MUST NOT make network calls. It operates only on locally ca
 
 Trust flags (`--allow-extensions`, `--allow-tasks`, `--allow-untrusted`): see [Trust Flags](#trust-flags).
 
-**`--data` and `--data-file`**: The only channel for answers on a single invocation. Both name Copier's own forced-answers flags (`--data`/`-d` and `--data-file`), so the names and the short flag carry over unchanged for anyone already familiar with Copier. Precedence, the YAML format and the handling of `_`-prefixed keys are in [Answer Presets](#answer-presets).
+**`--data` and `--data-file`**: The flags that supply answers on a single invocation. Both name Copier's own forced-answers flags (`--data`/`-d` and `--data-file`), so the names and the short flag carry over unchanged for anyone already familiar with Copier. Copier's `-a` and `-s` mean `--answers-file` and `--skip`, so Boilerplate defines neither. Precedence, the YAML format and the handling of `_`-prefixed keys are in [Answer Presets](#answer-presets).
 
 `--no-tasks` is the canonical flag name. `--skip-tasks` is accepted as an alias for compatibility but is not displayed in help text.
 
-Short flags are reserved for options typed at a prompt, such as `-f`, `-n` and `-d` (`--data`, as in Copier). `--non-interactive` and `--no-tasks` are scripted, safety-relevant switches and have no short form; `-n` means dry run here as it does in Copier, make and rsync.
+Short flags are reserved for options typed at a prompt, such as `-f` and `-n`, and for Copier's own `-d`. `--non-interactive` and `--no-tasks` are scripted, safety-relevant switches and have no short form; `-n` means dry run here as it does in Copier, make and rsync.
 
 **`--dry-run` vs `--render-to`**: `--dry-run` shows the composition plan and the list of files that would be created without producing any output. To render files for inspection without committing a managed project, use `--render-to <dir>`.
 
 **`--git-init` rationale**: Git initialization is the default because `boilerplate update` requires a Git repository.
 
-**Reusing a finished run's answers**: the template's `.copier-answers.<layer>.yml` that `new` leaves in the project is a complete [answer preset](#answer-presets), secret answers excepted. Pass it to `--data-file`.
+**Reusing a finished run's answers**: when the template ships the answers-file stub ([04 §Render Behavior](04-composition-engine.md#render-behavior)), the root template's `.copier-answers.<template>.yml` that `new` leaves in the project (the template named on `new`, not any layer's file) is a complete [answer preset](#answer-presets), secret answers excepted. Pass it to `--data-file`.
 
 **`--force` and `--non-interactive` are independent concerns.** `--non-interactive` means "use defaults for all questions." `--force` means "overwrite a non-empty destination." Neither implies the other: CI may need `--non-interactive` without `--force` (fail if the destination is non-empty), and a retry may need `--force` while still prompting interactively.
 
@@ -419,7 +419,7 @@ Add one template layer to a project Boilerplate already manages, the way a by-ha
 | Option | Short | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `--dry-run` | `-n` | flag | `false` | Show the add plan and exit without prompting or applying. Default: `false`. |
-| `--data` | `-d` | key=value | — | Forced answer for one question (repeatable). Never prompted for. Precedence on collision: `--data` > `--data-file` > the recorded answer of an ancestor layer > template default. See [Answer Presets](#answer-presets). |
+| `--data` | `-d` | key=value | — | Forced answer for one question (repeatable). Never prompted for. Precedence on collision: `--data` > `--data-file` > an ancestor layer's recorded answer > template default. See [Answer Presets](#answer-presets). |
 | `--data-file` | — | path | null | YAML file mapping question name to forced answer, read as UTF-8: an [answer preset](#answer-presets). `--data` wins on a key collision. |
 | `--yes` | `-y` | flag | `false` | Skip confirmation prompt; apply immediately. Default: `false`. |
 | `--non-interactive` | — | flag | `false` | Use defaults for the layer's questions without prompting. Default: `false`. |
@@ -1079,7 +1079,7 @@ After completing an operation, the CLI MUST print contextual next steps. Guidanc
 1. **Default**: Always `cd {destination}`. `uv sync` follows it only when the template's setup tasks were skipped (`--no-tasks`); otherwise the tasks already installed dependencies and Next steps lists only what is left to do.
 2. **Profile-derived**: If the template declares `requires_profile`, include `boilerplate env apply`.
 3. **Template-declared** (printed after `new` only, per [03 §post_create_message](03-template-system.md#post_create_message)): `post_create_message` from `boilerplate.yml`, accumulated from all layers in topological order, labeled "From the template author:".
-4. **`Tip:` block**: Hint that the template's answers file is a ready-made answer preset for CI reproducibility (suppressed when `--data-file` or `--ci` was used).
+4. **`Tip:` block**: Hint that the template's answers file is a ready-made answer preset for CI reproducibility. Printed only when the root template's `.copier-answers.<template>.yml` exists in the destination, and suppressed when `--data-file` or `--ci` was used.
 
 Template-declared guidance is informational only — MUST NOT execute automatically.
 
@@ -1096,7 +1096,7 @@ From the template author:
   uvicorn src.main:app --reload
 
 Tip: Reuse these answers in CI:
-  boilerplate new fastapi my-project --data-file my-project/.copier-answers.fastapi.yml --non-interactive
+  boilerplate new fastapi my-other-project --data-file my-project/.copier-answers.fastapi.yml --non-interactive
 ```
 
 **After `add`**: Show the layer added and the changed files list, then "Next steps:" (`git diff`, review, commit). The result is uncommitted. When the layer runs no tasks, or `--no-tasks` is active, Next steps also lists `uv sync`.
@@ -1116,7 +1116,7 @@ An **answer preset** is a YAML file, passed to `--data-file`, that supplies answ
 
 Both flags feed Copier's `data` channel: a forced answer is never prompted for.
 
-**Precedence**: `--data` > `--data-file` > profile pre-fills (`new`) or the recorded answer (`update`, `add`) > template default. Prefer `--data-file` for structured, multi-field, or cross-platform scenarios; use `--data` for simple scalar overrides.
+**Precedence**: `--data` > `--data-file` > profile pre-fills (`new`), the recorded answer (`update`) or an ancestor layer's recorded answer (`add`) > template default. Prefer `--data-file` for structured, multi-field, or cross-platform scenarios; use `--data` for simple scalar overrides.
 
 **Answer preset format**:
 
@@ -1133,12 +1133,12 @@ author_name: "Platform Team"
 **Behavior**:
 
 - If `--data-file` or `--data` is provided without `--non-interactive`, the user is prompted for questions NOT supplied (partial answers)
-- If `--data-file` or `--data` is provided WITH `--non-interactive`, questions not supplied use their declared defaults
-- `--data-file` skips underscore-prefixed keys (Copier directives) with a warning, so a Copier answers file is accepted as a preset; an underscore-prefixed key in `--data` is an error
+- If `--data-file` or `--data` is provided WITH `--non-interactive`, questions not supplied take the next source in the precedence order (a profile pre-fill on `new`, or the recorded answer on `update` and `add`, then the declared default); a question with none of these stops the run with `BP_INPUT_ANSWERS_MISSING`
+- `--data-file` skips underscore-prefixed keys (Copier directives) with a one-line warning that names the skipped keys, so a Copier answers file is accepted as a preset; an underscore-prefixed key in `--data` is an error
 - A key that is not a string, or is empty, fails fast
 - Answer presets MUST be pure data (YAML maps). No Jinja2 expressions, no executable content.
 
-**The template's answers file is a preset**: `new` takes one template, and that template's `.copier-answers.<layer>.yml` records its own and every ancestor's answers ([ADR-015](adr-015-idiomatic-artifacts.md) point 4), so the file a finished `new` leaves in the project is a complete preset. Answers to questions marked `secret: true` are the exception: Copier does not record them, so supply them with `--data`.
+**The template's answers file is a preset**: `new` takes one template, and that template's `.copier-answers.<template>.yml` records its own and every ancestor's answers ([ADR-015](adr-015-idiomatic-artifacts.md) point 4), so when the template ships the answers-file stub ([04 §Render Behavior](04-composition-engine.md#render-behavior)), the root template's file (the template named on `new`, not any layer's file) that a finished `new` leaves in the project is a complete preset. Answers to questions marked `secret: true` are the exception: Copier does not record them, so supply them with `--data`.
 
 ### Interactive Prompting Contract
 
@@ -1149,10 +1149,10 @@ Boilerplate delegates prompting to Copier, but composition means the user faces 
 1. **One pass**: The user answers all questions once, on the first layer. Subsequent layers reuse answers silently.
 2. **No surprises**: The merged questionnaire is the union of all layers' questions. The user sees one flat list, not a per-layer interrogation.
 3. **Validation is immediate**: If a question declares `choices`, Copier validates the answer before moving to the next question. Invalid input is re-prompted.
-4. **Partial answers merge cleanly**: When `--data-file` provides some values and the mode is interactive, only unanswered questions are prompted. Answered questions are shown as a summary before prompting begins:
+4. **Partial answers merge cleanly**: When `--data-file` or `--data` provides some values and the mode is interactive, only unanswered questions are prompted. Answered questions are shown as a summary before prompting begins:
 
 ```text
-Using answers from answers.yml:
+Using supplied answers:
   project_name: "my-service"
   author_name: "Platform Team"
 

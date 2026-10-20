@@ -500,7 +500,7 @@ These defaults ensure that filesystem templates appear in `list` output and part
 
 Boilerplate MUST record the SHA-256 hex digest of each layer's `.copier-answers.<layer>.yml` file contents in the `copier_answers_file_hashes` mapping of `boilerplate.lock` (key = template name, value = digest). This per-layer mapping captures the literal answers-file contents and is the sole answers-integrity mechanism that `lock verify` uses. Each first-party template's `copier.yml` declares its own answers file via Copier's `_answers_file:` directive (see [04-composition-engine.md §Render Behavior](04-composition-engine.md#render-behavior)). Boilerplate MUST NOT write or mutate any `.copier-answers.<layer>.yml`; those files are read-only from Boilerplate's perspective and are written exclusively by Copier. On update, if any layer's hash does not match, Boilerplate MUST warn the user that answer state for that layer may have been externally modified.
 
-Copier leaves questions marked with `secret: true` out of every answers file, so the file is a complete answer preset except for those answers (see [§10 Privacy](10-security.md#privacy) for details).
+For reusing an answers file as an answer preset, see [05 §Answer Presets](05-cli-reference.md#answer-presets).
 
 ---
 
