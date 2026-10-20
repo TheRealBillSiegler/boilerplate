@@ -39,22 +39,14 @@ Don't use `pip install boilerplate`: that name belongs to an unrelated project. 
 boilerplate new project my-app
 ```
 
-`project` is the template's name. After a few questions, Boilerplate creates `my-app/` with its tools configured. `boilerplate list` shows the other templates, such as one for Streamlit apps.
-
-To put your own standards on top, write a template of your own whose `boilerplate.yml` says `extends: [project]` and holds only your additions, then point Boilerplate at the folder that contains it:
-
-```bash
-boilerplate new custom-project my-app --templates-dir ./my-templates
-```
-
-Your template applies when you create a project; carrying later changes from `project` into projects you've already made is planned.
+`project` is the template's name. After a few questions, Boilerplate creates `my-app/` with its tools configured. `boilerplate list` shows every template, including one for Streamlit apps.
 
 ## Learn more
 
 - [Documentation](https://therealbillsiegler.github.io/boilerplate/): guides and reference
 - [Quickstart](docs/quickstart.md): create and run your first project
 - [Why Boilerplate?](docs/why.md): the problem it solves and how its tools were chosen
-- [Customization](docs/customization.md): put your own settings and templates on top
+- [Customization](docs/customization.md): put your own standards on top of a template
 - [Status](docs/status.md): what works today and what's planned, before 1.0
 
 ## Help and contributing
