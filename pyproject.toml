@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.27"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
 
 [project]
 name = "boilerplate"
@@ -82,13 +82,12 @@ mutation = [
 [project.scripts]
 boilerplate = "boilerplate.cli:app"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/boilerplate"]
-
-[tool.hatch.build.targets.sdist]
-# Hatchling's sdist default packs every tracked file (docs, tests, repo CI,
-# agent config). Restrict the source distribution to what installing needs.
-only-include = ["src", "README.md", "LICENSE", "NOTICE", "CHANGELOG.md"]
+[tool.uv.build-backend]
+# The module defaults (src/boilerplate) already match this layout. The sdist carries the
+# package, README.md, the license files and pyproject.toml; add the changelog, and keep
+# local scratch files out of the package, because uv_build does not read .gitignore.
+source-include = ["CHANGELOG.md"]
+source-exclude = [".env", "*.log", ".coverage*", ".ipynb_checkpoints", ".hypothesis"]
 
 [tool.coverage.run]
 source = ["src"]
