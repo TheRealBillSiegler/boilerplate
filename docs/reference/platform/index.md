@@ -70,7 +70,7 @@ The [Environment guide](../../environment/index.md) documents how each pick is c
 | **Linters & code formatters** | ruff | Combines linting and formatting in one tool, replaces flake8/black/isort, minimal config |
 | **Type checkers** | pyright (strict mode) | Native VS Code integration via Pylance; strict mode catches more than default mode |
 | **Testing frameworks** | pytest + pytest-cov | Fixture-based testing with a large plugin ecosystem; coverage via `pytest --cov` |
-| **Build tools** | uv build (hatchling backend) | Standards-compliant (PEP 517/660), pure-Python backend |
+| **Build tools** | uv build (`uv_build` backend; `hatchling` as the override) | Standards-compliant (PEP 517/660/639); `uv_build` is uv's own backend for pure-Python code, `hatchling` covers build hooks and a version from git tags |
 | **Version control** | Git | Branching and merging underpin template composition and CI workflows |
 | **CI/CD** | GitHub Actions (recommended) | Boilerplate's own gate runs on it |
 | **Documentation generators** | MkDocs Material | Markdown-native authoring, built-in navigation and search |

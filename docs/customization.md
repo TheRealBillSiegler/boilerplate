@@ -30,6 +30,7 @@ container_registry = "myregistry.azurecr.io"
 | --- | --- | --- |
 | `package_index_url` | `project` and everything extending it | emits a default `[[tool.uv.index]]` block in the generated `pyproject.toml` (empty = public PyPI, no block) |
 | `sample_module` | `project` and everything extending it | renders `module.py` and its test (default on; off renders `test_import.py` instead; a layer that extends `project` can default it off) |
+| `build_backend` | `project` and everything extending it | build backend in the generated `pyproject.toml`: `uv_build` (default) or `hatchling`, which also renders the `[tool.hatch]` wheel table — see [Choose a build backend](templates-hub/project.md#choose-a-build-backend) |
 | `container_registry` | `streamlit` | registry used by the generated `push-container.sh`; authentication is chosen by registry hostname — see [Pushing container images](templates-hub/streamlit/deployment/containers/pushing-container-images.md) |
 | `author_name` / `author_email` | `project` and everything extending it | project metadata |
 
