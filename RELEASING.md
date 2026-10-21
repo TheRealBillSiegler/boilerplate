@@ -20,7 +20,7 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 ## Quality
 
-- [ ] CI green on the OS matrix (ubuntu / macos / windows × 3.12 / 3.13)
+- [ ] CI green on the latest `develop` push (every OS on 3.14 plus Linux on 3.12 and 3.13 while the repository is private; every OS on every version once public); the release PR itself runs Linux only
 - [ ] `uv run pytest` passes from the repo root; `uv run ruff check --no-fix .` clean; pyright strict clean
 - [ ] The `project` template's `uv_build` range (`pyproject.toml.jinja`) and the `streamlit` Dockerfile's `ghcr.io/astral-sh/uv` tag name the current uv minor, and `docs/templates-hub/project.md` quotes the range. A test pins the range and the tag to each other, not to the latest uv, and does not read the docs page, so compare the minor with the newest uv release and move all three in one change
 
@@ -42,7 +42,8 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 - [ ] The release-please PR is open with the right next version — under SemVer `0.x`,
       breaking → minor and feat → patch (per `release-please-config.json`)
-- [ ] The release-please PR moves every install pin to the new tag: the `extra-files` in `release-please-config.json` (the installer and the install commands in the versioned docs; the README names `main`, which holds the latest release)
+- [ ] The release-please PR updates every `extra-files` entry in `release-please-config.json`: the installer and the install commands in the versioned docs pin the new tag, and `uv.lock` records the new version (the README names `main`, which holds the latest release)
+- [ ] The release PR's diff touches `uv.lock`. When the entry's JSONPath matches nothing, release-please leaves the file unchanged with only a warning in the workflow log
 - [ ] The generated `CHANGELOG.md` entry is accurate. To change its wording, edit the release PR's description, which becomes the GitHub release notes, and `CHANGELOG.md` on the release branch, both right before merging: release-please's next run after a merge into `develop` can replace them.
 - [ ] Every release-notes entry is true at the new tag and describes a change since the previous release. Drop an entry about something no release shipped, such as a feature added and changed again between the same two tags.
 - [ ] `.release-please-manifest.json` baseline version is correct
