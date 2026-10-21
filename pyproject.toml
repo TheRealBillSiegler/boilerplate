@@ -235,9 +235,9 @@ executionEnvironments = [
 name = "cz_customize"
 # The stock allowed_prefixes list (Merge, Revert, "Pull request", fixup!,
 # squash!, amend!) lets a commit subject starting with any of those bypass
-# schema_pattern entirely. This repo's branch rules allow only rebase
-# merges, so no merge/fixup/squash/amend commit should ever reach develop
-# unchecked; leaving the list empty means every commit is checked.
+# schema_pattern entirely. Pull requests squash-merge, so only the PR
+# title reaches develop, but the branch's commits are held to the same
+# rules; leaving the list empty means none of them skips the check.
 allowed_prefixes = []
 
 [tool.commitizen.customize]
