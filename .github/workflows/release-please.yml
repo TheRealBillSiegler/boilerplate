@@ -34,9 +34,12 @@ jobs:
     name: Tag and GitHub release
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # The action's README also lists issues: write. Pull requests: write
+    # already covers a PR's labels and comments and creating labels, so
+    # neither job takes it.
     permissions:
       contents: write # create the tag and the GitHub release
-      pull-requests: write # label the merged release PR as tagged
+      pull-requests: write # label the merged release PR as tagged and comment on it
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -55,7 +58,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     # Rebuilding the PR reads every commit since the last release, about one
-    # API request each, so the first rebuild after v0.3.0 is slow.
+    # API request each, against GITHUB_TOKEN's 1,000 an hour (RELEASING.md).
     timeout-minutes: 30
     permissions:
       contents: write # push the release PR's branch
