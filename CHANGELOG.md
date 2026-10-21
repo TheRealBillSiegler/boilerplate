@@ -4,6 +4,58 @@ All notable changes to this project will be documented in this file.
 
 From 0.4.0 on, [release-please](https://github.com/googleapis/release-please) writes each entry from [Conventional Commits](https://www.conventionalcommits.org/), breaking changes first, then Features, Bug Fixes and Performance Improvements; the 0.3.0 entry predates it and follows [Keep a Changelog](https://keepachangelog.com/). This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0](https://github.com/TheRealBillSiegler/boilerplate/compare/v0.3.0...v0.4.0) (2026-10-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **new:** `boilerplate new` into a directory that already holds files or folders, hidden ones included, now exits 3 unless `--force` is passed. It used to prompt per conflicting file, fail with `BP_RENDER_PROMPT_FAILED` (exit 1) without a console, or let a later layer replace your file with exit 0. Pass `--force` to overwrite, or render into an empty directory.
+* **new:** `-n` now means `--dry-run`, and `--yes`/`-y` is rejected as an unknown option. Scripts that used `-n` or `--yes` to skip prompts must pass `--non-interactive`.
+* **cli:** `--ci` and `BOILERPLATE_CI=1` now run the template's post-creation tasks. Add `--no-tasks` to keep skipping them.
+* **cli:** The `boilerplate version` command and the `-V` option are gone. Run `boilerplate --version`, which prints the same `boilerplate X.Y.Z` line. `boilerplate version --format json` has no replacement.
+* **list:** `boilerplate list` with no templates now exits 0 instead of failing, and its JSON output no longer has an `error` key.
+* **new:** A malformed `name@version` in a template's `extends` now exits 3 with `BP_INPUT_SPECIFIER_INVALID` instead of exiting 1 with `BP_RESOLVE_DEP_NOT_FOUND`.
+
+### Features
+
+* **new:** `boilerplate new` writes `boilerplate.lock` to the new project, recording each layer, its version and how it joined the project. Commit it with the rest of the project.
+* **new:** A project made from several layers asks each question once, then renders each layer with only the answers it declares.
+* **new:** `new` requires a destination when it cannot prompt for one.
+* **project template:** Added a `build_backend` choice, `uv_build` (default) or `hatchling`.
+* **project template:** Added `pyright` to the dev dependencies.
+* **project template:** `sample_module` is now optional. Turning it off renders an import test in place of the sample test, and the README quick start adjusts.
+* **project template:** Container scripts honor the answers given at render time.
+* **streamlit template:** The sample app is now a stack-at-a-glance demo in place of the greeter. The streamlit layer turns the sample module off, requires `pydantic>=2` and renders its own line-ending rules.
+* **templates:** Template files are licensed under MIT-0.
+* **cli:** Top-level help opens with a banner, grouped by what you are doing. `--quiet` hides the banner.
+* **cli:** `--ci` and `--verbose` can be combined.
+* **cli:** `--color always` overrides `NO_COLOR`; `--color never` and `NO_COLOR` render bare text.
+
+### Bug Fixes
+
+* **new:** A layer's own `skip_if_exists` no longer applies in a composed render, so a later layer no longer skips files an earlier layer wrote.
+* **new:** `boilerplate.yml` versions are reported for plain-folder templates.
+* **new:** Post-creation tasks run only when Copier copies, and the `uv sync` hint appears under Next steps only when tasks are skipped.
+* **new:** The render announcement appears only when nothing is asked first.
+* **cli:** Unknown `--color` and `--format` values are rejected.
+* **cli:** Text you supply appears in messages as typed.
+* **cli:** `Error:` prefixes the `graph` option-conflict, `validate` not-a-directory and settings-load messages, the remediation line is labeled `Fix:`, and it goes to stderr under `--quiet`.
+* **cli:** `--force` help says it overwrites a non-empty destination.
+* **list:** Descriptions in the table wrap instead of being truncated.
+* **install:** The installer starts under Windows PowerShell 5.1, installs the CLI release it ships with (including after the PowerShell 7 relaunch), and stops when winget is missing and a tool is not installed.
+* **install:** Installer narration matches between `install.ps1` and `setup-wsl-env.sh`, and its output no longer includes emoji.
+* **project template:** Names that make no importable Python package, and answers containing quotes, backslashes or line breaks that would break `pyproject.toml`, are refused.
+* **project template:** `pyproject.toml` no longer declares a license named "None".
+* **project template:** Rendered projects stay LF on every platform, `uv.lock` is committed rather than ignored, dependency lists render without blank lines, coverage reports the rendered package, docstring summaries start on the opening line, and the scaffolded READMEs name ruff's fixing flag.
+* **project template:** The venv keeps its managed Python interpreter at runtime, and container scripts read the image name with POSIX awk.
+* **streamlit template:** The smoke test is collectible and finite, and the project owns it. `launch.json` uses forward slashes.
+* **docs:** Corrected claims about `--dry-run`, `validate` exit codes, `extends` pins and generated-project CI.
+* **docs:** The 404 page recovery links resolve under versioned docs.
+
+### Performance Improvements
+
+* **docs:** Mermaid loads only on pages with diagrams.
+
 ## [0.3.0] - 2026-09-04
 
 ### Added

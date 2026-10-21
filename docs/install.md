@@ -28,7 +28,7 @@ Set up Boilerplate and its Python development environment on Windows, macOS, or 
         <!-- x-release-please-start-version -->
 
         ```powershell
-        powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
+        powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.4.0/scripts/install.ps1 | iex"
         ```
 
         <!-- x-release-please-end -->
@@ -38,7 +38,7 @@ Set up Boilerplate and its Python development environment on Windows, macOS, or 
         - Installs **Git** and **Visual Studio Code** using `winget`, skipping either one that is already installed. Without `winget`, it continues when the `code` and `git` commands are already on PATH, and stops with an error at the first one that is not.  
         - Installs [the recommended set](environment/vscode.md#recommended-extensions) of VS Code extensions.
         - Installs **uv**, which will install Python and manage the virtual environment.  
-        - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0`. <!-- x-release-please-version -->
+        - Installs the **boilerplate** CLI using `uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.4.0`. <!-- x-release-please-version -->
 
         !!! tip "No manual PATH edits needed"
             The script refreshes PATH for this terminal so you can use `uv` and `boilerplate` immediately.
@@ -108,7 +108,7 @@ Set up Boilerplate and its Python development environment on Windows, macOS, or 
             <!-- x-release-please-start-version -->
 
             ```powershell
-            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
+            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.4.0
             ```
 
             <!-- x-release-please-end -->
@@ -156,7 +156,7 @@ Set up Boilerplate and its Python development environment on Windows, macOS, or 
             <!-- x-release-please-start-version -->
 
             ```bash
-            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
+            uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.4.0
             ```
 
             <!-- x-release-please-end -->
