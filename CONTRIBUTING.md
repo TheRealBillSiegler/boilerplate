@@ -57,7 +57,7 @@ All code must pass ruff and pyright cleanly before submission. `uv run python sc
 
 `develop` is the integration branch: all feature and fix branches are cut from it and merged back into it. It is the default branch for day-to-day work.
 
-`main` is release-only. It advances exclusively via a maintainer's manual merge from `develop` when cutting a release — there is no automated promotion. See [RELEASING.md](RELEASING.md) for the full release checklist.
+`main` is release-only. It moves only when a release is cut: merging the release PR on `develop` tags the release, and a workflow fast-forwards `main` to that tag. See [RELEASING.md](RELEASING.md) for the full release checklist.
 
 Cutting a branch from `main` instead of `develop` is incorrect and will cause your work to diverge from the integration line.
 
