@@ -11,13 +11,9 @@ exclude_docs: |
   agents/
 
 # Built and linkable, but deliberately outside the nav: the intentions register
-# is reached from the design corpus, and the container pages are a sequential
-# journey entered via their section index.
+# is reached from the design corpus.
 not_in_nav: |
   intentions/README.md
-  templates-hub/streamlit/deployment/containers/building-container-images.md
-  templates-hub/streamlit/deployment/containers/environment-setup.md
-  templates-hub/streamlit/deployment/containers/pushing-container-images.md
 
 validation:
   omitted_files: warn
@@ -242,7 +238,11 @@ nav:
     - Project template: templates-hub/project.md
     - Streamlit template:
       - templates-hub/streamlit/index.md
-      - Container deployment: templates-hub/streamlit/deployment/containers/index.md
+      - Container deployment:
+        - templates-hub/streamlit/deployment/containers/index.md
+        - Environment setup: templates-hub/streamlit/deployment/containers/environment-setup.md
+        - Building container images: templates-hub/streamlit/deployment/containers/building-container-images.md
+        - Pushing container images: templates-hub/streamlit/deployment/containers/pushing-container-images.md
     - Template Authoring: templates-hub/authoring.md
     - Template Composition: templates-hub/composition.md
     - Plain Copier: templates-hub/plain-copier.md
