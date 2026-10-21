@@ -1,0 +1,99 @@
+# Moves main to a release tag: a fast-forward, never forced.
+#
+# The release workflow (release-please.yml) calls this once it tags a release.
+# Dispatch it by hand on develop to retry a move that failed
+# (`gh workflow run main-fast-forward.yml --ref develop -f tag=vX.Y.Z`); the
+# `release` environment accepts runs on develop only. main's ruleset lets only
+# the release GitHub App past its pull-request rule, so the push uses a
+# short-lived token from that App (see RELEASING.md, One-time setup).
+name: Move main to a release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to move main to (e.g. v0.4.0)"
+        required: true
+        type: string
+    secrets:
+      # Required, so a call that leaves the key out fails at once. It checks
+      # only that the key is passed, not that it holds a value; the job checks
+      # that. A dispatched run reads the key from the environment directly.
+      RELEASE_APP_PRIVATE_KEY:
+        required: true
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to move main to (e.g. v0.4.0)"
+        required: true
+        type: string
+
+# The push uses the App's token, so GITHUB_TOKEN gets nothing.
+permissions: {}
+
+jobs:
+  fast-forward:
+    name: Fast-forward main to the tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The App's key is a secret of this environment, and only develop may
+    # deploy to it, so no workflow running on another branch can read the key.
+    environment: release
+    env:
+      # A runtime shell variable, never script source (avoids GitHub Actions
+      # script injection, CWE-94 / CWE-78).
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate release tag shape
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "Unexpected release tag: $TAG" >&2; exit 1; }
+      # An empty client ID or key (a renamed or deleted environment setting)
+      # would otherwise fail inside the token step with a less direct error.
+      - name: Check the App credentials are set
+        env:
+          CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+        run: |
+          [[ -n "$CLIENT_ID" ]] \
+            || { echo "RELEASE_APP_CLIENT_ID is empty; see RELEASING.md, One-time setup" >&2; exit 1; }
+          [[ -n "$PRIVATE_KEY" ]] \
+            || { echo "RELEASE_APP_PRIVATE_KEY is empty; see RELEASING.md, One-time setup" >&2; exit 1; }
+      # The installation token is scoped to this repository, expires within an
+      # hour and is revoked when the job ends. It needs workflows access
+      # because the commits main gains can change .github/workflows.
+      - id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0 # the tag and main's history, for the fast-forward
+          persist-credentials: false # only the push step holds the token
+      # release-please tags the release commit on develop, so this passes on
+      # every release. A retry dispatched with a mistyped tag, or a tag cut
+      # anywhere else, would move main to a commit that skipped develop's
+      # pull-request gate; the tag ruleset blocks moving tags, not creating them.
+      - name: Check the tag is on develop
+        run: |
+          git merge-base --is-ancestor "refs/tags/${TAG}^{commit}" HEAD \
+            || { echo "$TAG is not on develop; main moves only to a release on develop" >&2; exit 1; }
+      # The tag ruleset has no creation rule, so a hand-made vX.Y.Z tag on
+      # develop passes the check above. Only a published release moves main.
+      - name: Check the tag has a published release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" == false ]] \
+            || { echo "$TAG has no published release; main moves only to a release" >&2; exit 1; }
+      - name: Fast-forward main to the tag
+        # No --force: the push is refused if main holds a commit the tag lacks.
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh auth setup-git
+          git push origin "refs/tags/${TAG}^{commit}:refs/heads/main"

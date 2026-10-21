@@ -1,5 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "commit-search-depth": 2000,
+  "last-release-sha": "269d074ae7da0ebbb727051d0b9fdeb5dca4ea37",
   "packages": {
     ".": {
       "release-type": "python",
@@ -22,7 +24,8 @@
       "extra-files": [
         { "type": "generic", "path": "scripts/install.ps1" },
         { "type": "generic", "path": "docs/index.md" },
-        { "type": "generic", "path": "docs/install.md" }
+        { "type": "generic", "path": "docs/install.md" },
+        { "type": "toml", "path": "uv.lock", "jsonpath": "$.package[?(@.name.value=='boilerplate')].version" }
       ]
     }
   }

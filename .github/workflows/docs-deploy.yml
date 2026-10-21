@@ -1,0 +1,118 @@
+# Deploys one release's versioned docs to the gh-pages branch.
+#
+# The release workflow (release-please.yml) calls this once it tags a release;
+# dispatch it by hand to redeploy a release's docs
+# (`gh workflow run docs-deploy.yml -f tag=vX.Y.Z`). mike builds the site at
+# the tag and commits it under MAJOR.MINOR, so patch releases redeploy the
+# same MAJOR.MINOR. Only the newest release also moves the `latest` alias, the
+# site root and the root 404 page; an older one leaves them where they are.
+# GitHub Pages serves the branch once Pages is turned on for the repository
+# (see RELEASING.md).
+name: Docs deploy
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to deploy the docs for (e.g. v0.4.0)"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to deploy the docs for (e.g. v0.4.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write # push the gh-pages branch
+
+jobs:
+  deploy:
+    name: Deploy versioned docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One deploy at a time: each one commits onto gh-pages.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    env:
+      # A runtime shell variable, never script source (avoids GitHub Actions
+      # script injection, CWE-94 / CWE-78).
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Validate release tag shape
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "Unexpected release tag: $TAG" >&2; exit 1; }
+          version="${TAG#v}"
+          echo "DOCS_VERSION=${version%.*}" >> "$GITHUB_ENV"
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ inputs.tag }} # build the docs at the released tag
+          fetch-depth: 0 # mike commits onto gh-pages, so it needs that branch
+          persist-credentials: false # only the final push step holds a credential
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      - run: uv sync --frozen
+      - name: Set the identity for mike's commits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Check where this release's docs belong
+        id: where
+        # Each MAJOR.MINOR holds the docs of its newest patch release, and only
+        # the newest release overall moves latest. A hand-run redeploy of an
+        # older tag must neither overwrite a newer patch's docs nor move latest
+        # back.
+        run: |
+          line_newest="$(git tag --list "v${DOCS_VERSION}.*" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+          if [[ "$TAG" != "$line_newest" ]]; then
+            echo "$line_newest is the newest $DOCS_VERSION release; deploy its docs instead of $TAG's." >&2
+            exit 1
+          fi
+          newest="$(git tag --list 'v[0-9]*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+          if [[ "$TAG" == "$newest" ]]; then
+            echo "newest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "newest=false" >> "$GITHUB_OUTPUT"
+            echo "$TAG is older than $newest, so latest stays where it is."
+          fi
+      - name: Deploy this version
+        env:
+          IS_NEWEST: ${{ steps.where.outputs.newest }}
+        run: |
+          if [[ "$IS_NEWEST" == true ]]; then
+            uv run --frozen mike deploy --update-aliases "$DOCS_VERSION" latest
+          else
+            uv run --frozen mike deploy "$DOCS_VERSION"
+          fi
+      - name: Make latest the site root (first release only)
+        if: steps.where.outputs.newest == 'true'
+        # mike deploy never writes the branch root. set-default writes the
+        # root redirect, and once it exists later releases leave it alone.
+        run: |
+          if ! git cat-file -e gh-pages:index.html 2>/dev/null; then
+            uv run --frozen mike set-default latest
+          fi
+      - name: Publish the root 404 page
+        if: steps.where.outputs.newest == 'true'
+        # GitHub Pages serves one site-wide 404.html from the branch root. The
+        # copy links assets under the version it came from, so every release
+        # refreshes it.
+        run: |
+          git worktree add "$RUNNER_TEMP/gh-pages" gh-pages
+          cp "$RUNNER_TEMP/gh-pages/$DOCS_VERSION/404.html" "$RUNNER_TEMP/gh-pages/404.html"
+          git -C "$RUNNER_TEMP/gh-pages" add 404.html
+          if git -C "$RUNNER_TEMP/gh-pages" diff --cached --quiet; then
+            echo "The root 404 page is already current."
+          else
+            git -C "$RUNNER_TEMP/gh-pages" commit -m "chore: sync root 404 page"
+          fi
+      - name: Push gh-pages
+        # The one step that holds a credential. mike built the local gh-pages
+        # on top of the remote one, so this push is a fast-forward.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          git push origin gh-pages

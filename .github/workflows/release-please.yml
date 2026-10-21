@@ -1,26 +1,112 @@
-name: release-please
+name: Release
 
-# Maintains a release PR (version bump + CHANGELOG) from conventional commits,
-# and cuts the GitHub release + tag on merge. Config + manifest are auto-detected
-# at the repo root (release-please-config.json, .release-please-manifest.json).
+# The release pipeline. Merging the release PR starts each release.
 #
-# NOTE: target branch is `main`. If releases are cut from `develop` instead,
-# change `branches:` below to match.
+# release-please keeps one release PR open against develop and updates it as
+# work merges: the next version, worked out from conventional commits, and
+# its CHANGELOG entry. Merging that PR pushes to develop. On that push,
+# release-please tags the release and publishes it, and the jobs after it
+# deploy the versioned docs, attach the offline docs bundle and move main to
+# the new tag. RELEASING.md lists each step and the one-time setup.
+#
+# `on.push.branches` decides when this workflow runs; `target-branch` decides
+# which branch release-please reads, opens its PR against and tags. They are
+# separate settings, so both name develop. Config and manifest are found at
+# the repo root (release-please-config.json, .release-please-manifest.json).
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
 
-permissions:
-  contents: write
-  pull-requests: write
+# Deny by default: each job grants itself only what it needs.
+permissions: {}
+
+# One run at a time, and a running release is never cancelled. A queued run
+# that a newer push supersedes is cancelled; the newer run covers its commits.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release-please:
+  release:
+    # Tagging runs in its own job, before the release PR is rebuilt, so a
+    # failure while rebuilding the PR cannot stop the jobs after a release.
+    name: Tag and GitHub release
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The action's README also lists issues: write. Pull requests: write
+    # already covers a PR's labels and comments and creating labels, so
+    # neither job takes it.
+    permissions:
+      contents: write # create the tag and the GitHub release
+      pull-requests: write # label the merged release PR as tagged and comment on it
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       # Pinned to a full commit SHA (supply-chain hardening / zero-trust posture).
       # Bumped via reviewed Dependabot PRs (.github/dependabot.yml).
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: develop
+          skip-github-pull-request: true
+
+  release-pr:
+    name: Release PR
+    needs: release
+    runs-on: ubuntu-latest
+    # Rebuilding the PR reads every commit since the last release, about one
+    # API request each, against GITHUB_TOKEN's 1,000 an hour (RELEASING.md).
+    timeout-minutes: 30
+    permissions:
+      contents: write # push the release PR's branch
+      pull-requests: write # open and update the release PR
+    steps:
+      # The job's own short-lived GITHUB_TOKEN opens the release PR, so GitHub
+      # holds that PR's CI runs until someone approves them. The release App
+      # could open it instead and skip that approval, but only by holding
+      # pull-request access it otherwise never needs.
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: develop
+          skip-github-release: true
+
+  docs:
+    name: Versioned docs
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    permissions:
+      contents: write # push the gh-pages branch
+    uses: ./.github/workflows/docs-deploy.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
+
+  offline-docs:
+    name: Offline docs bundle
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    permissions:
+      contents: write # upload the bundle as a release asset
+    uses: ./.github/workflows/docs-offline-bundle.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
+
+  main:
+    name: Move main to the release
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    # The push uses the release App's token, so GITHUB_TOKEN gets nothing.
+    permissions: {}
+    uses: ./.github/workflows/main-fast-forward.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
+    # A called workflow gets only the secrets its caller passes, environment
+    # secrets included; an unpassed one is an empty string. Naming the key is
+    # enough although it exists only in the release environment: the called
+    # job sets that environment and receives the environment's value. Naming
+    # it, not `inherit`, hands the called workflow nothing else.
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

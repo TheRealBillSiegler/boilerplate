@@ -2,8 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
+From 0.4.0 on, [release-please](https://github.com/googleapis/release-please) writes each entry from [Conventional Commits](https://www.conventionalcommits.org/), breaking changes first, then Features, Bug Fixes and Performance Improvements; the 0.3.0 entry predates it and follows [Keep a Changelog](https://keepachangelog.com/). This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.3.0] - 2026-09-04
 
