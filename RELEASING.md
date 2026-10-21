@@ -98,7 +98,9 @@ The three jobs are independent, so one failing leaves the others to finish. Reru
 - `gh workflow run docs-offline-bundle.yml -f tag=vX.Y.Z`
 - `gh workflow run main-fast-forward.yml --ref develop -f tag=vX.Y.Z`, on `develop`, the only branch the `release` environment accepts
 
-Until the first release after `0.3.0`, every rebuild of the release PR reads all the commits back to `v0.3.0`, nearly 1,000, at about one API request each, against the workflow token's limit of 1,000 requests an hour per repository. A second rebuild within the hour can fail on that limit; the failure changes nothing, and a later run catches up. `release-please-config.json` sets `commit-search-depth` to 2000 so that the first read reaches `v0.3.0`, past release-please's default of 500. Both costs end with that first release, so cut it early, and remove `commit-search-depth` once it is tagged.
+Each rebuild of the release PR reads every commit since the last release, at about one API request per commit, against the workflow token's limit of 1,000 requests an hour per repository. `release-please-config.json` sets `commit-search-depth` to 2000, past release-please's default of 500: a read that reaches its depth before the last release stops there, and the version and changelog leave out every older commit with only a warning in the log.
+
+The nearly 1,000 commits between `v0.3.0` and `0.4.0` would cost about that limit on every rebuild, so for that one release the config also sets `last-release-sha` to the commit before the newest feature, and the read stops there. The breaking changes before that commit fall outside the read, so a `Release-As: 0.4.0` footer on the commit that sets `last-release-sha` fixes the version, and the release PR's notes are written by hand. Once `v0.4.0` is tagged, every read stops at that release first, and `last-release-sha` comes out of the config.
 
 Milestone versions such as `1.0.0` are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
 
