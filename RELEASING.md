@@ -52,6 +52,8 @@ irreversible-once-public). A **Quality** failure blocks a *credible* release. An
 
 Releases are cut from `develop`. release-please keeps one release PR open there, titled `chore(develop): release X.Y.Z`, and rebuilds it after every merge. `0.3.0`'s tag and GitHub release were both created by hand at the public cutover, before release-please started watching this repository; everything below describes the automated flow from the next release on.
 
+The diagram shows what happens from the first merge after a release to `main` moving to the new tag:
+
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
@@ -86,7 +88,7 @@ sequenceDiagram
 
 The merge starts the Release workflow (`.github/workflows/release-please.yml`). release-please tags `vX.Y.Z` and publishes the GitHub release with the changelog entry, and three jobs then run side by side:
 
-- The versioned docs deploy to the `gh-pages` branch (`docs-deploy.yml`): `mike deploy --update-aliases X.Y latest`, one docs version per MAJOR.MINOR, so patch releases redeploy the same `X.Y`. The first release also runs `mike set-default latest` to write the root redirect, which `mike deploy` never writes, and every release copies its `404.html` to the branch root, where GitHub Pages serves its one site-wide 404 page. Pages serves the branch once it is turned on, at the visibility flip: a Pages site is public even while the repository is private.
+- The versioned docs deploy to the `gh-pages` branch (`docs-deploy.yml`): `mike deploy --update-aliases X.Y latest`, one docs version per MAJOR.MINOR, so patch releases redeploy the same `X.Y`. The first release also runs `mike set-default latest` to write the root redirect, which `mike deploy` never writes, and the newest release copies its `404.html` to the branch root, where GitHub Pages serves its one site-wide 404 page. Pages serves the branch once it is turned on, at the visibility flip: a Pages site is public even while the repository is private.
 - The offline-docs bundle is built at the tag and attached to the release as an optional download (`docs-offline-bundle.yml`).
 - `main` fast-forwards to the tag (`main-fast-forward.yml`), pushed with the release App's token (see [One-time setup](#one-time-setup)). The push is never forced, so it fails if `main` holds a commit the tag lacks.
 
@@ -107,7 +109,6 @@ Milestone versions such as `1.0.0` are never chosen mechanically — the pre-maj
 At 1.0, delete `bump-minor-pre-major` and `bump-patch-for-minor-pre-major` from `release-please-config.json` (dead config above 1.0). From then on a single `feat!:` cuts a major with **no deprecation window** — ship the deprecating minor first.
 
 Dependency licenses: all **direct** dependencies are permissive, so distributing boilerplate's own code under Apache-2.0, and its template files under MIT-0, is fine. The vendored third-party works are the Mermaid bundle (MIT) with the libraries it embeds, the asciinema player (Apache-2.0), the IBM Plex Sans and JetBrains Mono fonts (OFL-1.1) and the logos of the tools the docs describe, all credited in `NOTICE`. The docs site and the offline docs bundle serve them — self-hosted deliberately, so using them triggers no third-party fetch — and nothing ships inside the Python package. (Raw Unicode emoji in docs prose still render via Material's twemoji CDN images; icon shortcodes don't. The docs tenets already prefer shortcodes.) The compliance posture is **unmodified redistribution**: the vendored file is byte-for-byte what the Mermaid project publishes (enforced by a `.gitattributes` `binary` entry — line-ending conversion would silently break the claim), upstream's LICENSE is copied verbatim from the pinned tag to `docs/assets/mermaid.LICENSE`, and the license banners inside the file stay intact — never re-minify or post-process it, since those banners are part of the embedded components' attribution (the other embedded components' license texts ship in `docs/assets/licenses/`, listed in `NOTICE`). The bundle does embed an EPL-2.0 component (elkjs); redistributing it unmodified with upstream's source pointer is the same posture Mermaid itself and every CDN takes, and the EPL does not reach boilerplate's own code. Upgrading Mermaid means replacing the vendored file byte-for-byte with upstream's published build and re-copying the LICENSE from the new tag, then re-deriving the embedded libraries and license texts that `NOTICE` credits from the new tag's `pnpm-lock.yaml` and the banners in the new file. There is no recurring automated license-scan gate, by design. The **transitive** tree is not all-permissive — `jinja2-ansible-filters` (GPL-3.0, via copier) and `text-unidecode` (Artistic, via python-slugify) — which is acceptable while dependencies are installed separately from PyPI, but must be revisited before ever shipping a bundled/frozen artifact (PyInstaller and similar). Re-check (`uvx pip-licenses`) when the dependency tree changes.
-
 
 ### One-time setup
 
