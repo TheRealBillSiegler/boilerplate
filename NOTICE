@@ -192,6 +192,11 @@ The documentation shows third-party logos to identify the tools it describes:
   Holger Krekel and others, redistributed byte-for-byte. License text:
   docs/assets/licenses/pytest.LICENSE.
 
+  docs/assets/pyright.png — the Pyright logo, docs/img/PyrightSmall.png from
+  Pyright (https://github.com/microsoft/pyright), MIT License, Copyright (c)
+  Microsoft Corporation, redistributed byte-for-byte. License text:
+  docs/assets/licenses/pyright.LICENSE.
+
   docs/assets/uv.svg — the uv logo, docs/assets/logo-letter.svg from uv
   (https://github.com/astral-sh/uv), redistributed byte-for-byte under the
   Apache License, Version 2.0 (uv is licensed MIT or Apache-2.0); its text is
