@@ -36,7 +36,7 @@ Follow the [Pull request process](https://github.com/TheRealBillSiegler/boilerpl
 
 When you open the pull request:
 
-- Write each commit as a conventional commit (`type: description`) — the required `check` job validates every commit in the PR against [conventional-commit types](./ci.md#commit-messages).
+- Write each commit as a conventional commit (`type: description`) — the required `check` job validates every commit in the PR against [conventional-commit types](./ci.md#commit-messages). Pull requests squash-merge, so the PR title becomes the commit on `develop`: write it the same way, and the required `PR title` check validates it.
 - Explain the changes.
 - Reference any related issues.
 

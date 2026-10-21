@@ -243,9 +243,9 @@ jobs:
   commit-lint:
     name: Lint commit messages
     # PR-only: a push event has no PR range to lint. No `needs`, so it carries
-    # its own draft term, like `docs`. Rebase merges land every commit on
-    # develop and release-please parses each one, so every commit in the PR is
-    # checked.
+    # its own draft term, like `docs`. PRs squash-merge, so only the title
+    # lands on develop (pr-title.yml checks it); this holds the branch's
+    # commits, which reviewers read, to the same rules.
     if: github.event_name == 'pull_request' && !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -9,5 +9,5 @@
 ## Checklist
 
 - [ ] Local check passes (`uv run python scripts/check.py`)
-- [ ] Commit messages follow [conventional commits](https://www.conventionalcommits.org/)
+- [ ] The PR title and commit messages follow [conventional commits](https://www.conventionalcommits.org/); the title becomes the squash commit's subject
 - [ ] Documentation updated (if applicable)

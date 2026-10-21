@@ -172,7 +172,9 @@ Use conventional commits:
 - Present tense, imperative mood: "add feature" not "added feature".
 - First line at most 72 characters (type, scope and description together).
 - Include issue references in commit messages when applicable.
-- A commit-range lint (`scripts/commit_lint.py`, run by CI's required `check` job and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request.
+- Pull requests squash-merge, so the PR title becomes the subject of the one commit that lands on `develop`, and that subject is what release-please reads. Write the title to these rules; the required `PR title` check (`.github/workflows/pr-title.yml`, running `scripts/commit_lint.py --message`) enforces them. One PR lands as one changelog entry, so a PR holds one concern.
+- Write the squash commit's body at merge time (`gh pr merge --squash --subject "<title>" --body-file <file>`), not from the PR description: plain text saying what changed and why, with no headings, checklists or signature. Trailers (`BREAKING CHANGE:`, `Release-As:`, `Co-Authored-By:`) go in its last paragraph, the only one git and release-please read them from.
+- A commit-range lint (`scripts/commit_lint.py`, run by CI's required `check` job and by `scripts/check.py`) enforces the type set and the 72-character limit on every commit in a pull request, so the branch history a reviewer reads follows the same rules.
 - Reword the subject `git revert` generates to `revert: <description>`; the lint rejects `Revert "..."`, merge commits and `fixup!`/`squash!`/`amend!` commits.
 - The "In the changelog" column above is `release-please-config.json`'s `changelog-sections`; that file decides visibility, this table mirrors it.
 - Mark a commit `!` (or add a `BREAKING CHANGE:` footer) when it is breaking per [Versioning § What qualifies as breaking](docs/governance/versioning.md#what-qualifies-as-breaking). Breaking is measured against the last release tag, not the parent commit. A `!`/`BREAKING CHANGE:` commit surfaces in the changelog regardless of type.

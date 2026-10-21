@@ -292,6 +292,35 @@ class TestMain:
         assert "develop.." not in err
 
 
+class TestMessage:
+    """`--message` checks one message, such as a PR title, instead of a range."""
+
+    def test_a_conforming_message_passes(self) -> None:
+        """AGENTS.md's Commits format: `<type>[optional scope]: <description>`."""
+        assert commit_lint.main(["--message", "feat(cli): add a flag"]) == 0
+
+    def test_a_message_without_a_type_fails(self) -> None:
+        """A title with no conventional type would land a typeless subject."""
+        assert commit_lint.main(["--message", "Add a flag"]) != 0
+
+    @pytest.mark.parametrize(("length", "passes"), [(72, True), (73, False)])
+    def test_the_72_character_limit_is_inclusive(
+        self, length: int, passes: bool
+    ) -> None:
+        """AGENTS.md caps the first line at 72 characters: 72 passes, 73 is refused."""
+        title = "feat: ".ljust(length, "x")
+
+        assert (commit_lint.main(["--message", title]) == 0) is passes
+
+    @pytest.mark.parametrize("flag", ["--base", "--head"])
+    def test_a_message_and_a_range_flag_are_refused_together(self, flag: str) -> None:
+        """One message and a range are two targets; argparse exits 2 on usage errors."""
+        with pytest.raises(SystemExit) as exc:
+            commit_lint.main(["--message", "feat: x", flag, "HEAD"])
+
+        assert exc.value.code == 2
+
+
 class TestAllowedPrefixes:
     """This repo's `allowed_prefixes` override in `pyproject.toml`.
 

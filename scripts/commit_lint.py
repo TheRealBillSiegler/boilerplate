@@ -17,8 +17,14 @@ name: the current branch's own upstream is used only when it already points at
 that branch, since otherwise it is the branch's own pushed copy, not something
 to diff against. Pass ``--base`` to override.
 
+Pull requests squash-merge, so a PR's title becomes the subject of the one
+commit that lands on ``develop``. ``--message`` checks a single message, such
+as that title, against the same rules; ``.github/workflows/pr-title.yml``
+runs it on every title change.
+
 Usage:
     uv run python scripts/commit_lint.py [--base REF] [--head REF]
+    uv run python scripts/commit_lint.py --message TEXT
 """
 
 from __future__ import annotations
@@ -227,7 +233,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         argv: The arguments to parse, or None to read `sys.argv`.
 
     Returns:
-        The parsed arguments: `base` and `head`.
+        The parsed arguments: `base`, `head` and `message`.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -237,23 +243,32 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
             "remote-tracking ref)."
         ),
     )
+    parser.add_argument("--head", help="Git ref for the range's head (default: HEAD).")
     parser.add_argument(
-        "--head", default="HEAD", help="Git ref for the range's head (default: HEAD)."
+        "--message",
+        help="Check this one message, such as a PR title, instead of a range.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.message is not None and (args.base is not None or args.head is not None):
+        parser.error("--message checks one message; it takes no --base or --head")
+    if args.head is None:
+        args.head = "HEAD"
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Resolve the commit range and run `cz check` over it.
+    """Run `cz check` over the commit range, or over one `--message`.
 
     Args:
         argv: The arguments to parse, or None to read `sys.argv`.
 
     Returns:
         The process exit code: `cz check`'s own code, or 2 when the range
-        cannot be resolved.
+        cannot be resolved or the arguments conflict.
     """
     args = _parse_args(argv)
+    if args.message is not None:
+        return _cz_check(["--message", args.message])
     try:
         base = resolve_base(args.base, head=args.head)
     except NoUpstreamError as exc:
@@ -274,12 +289,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     print(f"Linting commits in {rev_range}", flush=True)
+    return _cz_check(["--rev-range", rev_range])
+
+
+def _cz_check(target: Sequence[str]) -> int:
+    """Run `cz check` on a target with this repository's length limit.
+
+    Args:
+        target: The `cz check` arguments that name what to check, e.g.
+            ``["--rev-range", "a..b"]`` or ``["--message", "feat: x"]``.
+
+    Returns:
+        `cz check`'s exit code.
+    """
     result = subprocess.run(
         [
             "cz",
             "check",
-            "--rev-range",
-            rev_range,
+            *target,
             "--message-length-limit",
             str(_MESSAGE_LENGTH_LIMIT),
         ],
