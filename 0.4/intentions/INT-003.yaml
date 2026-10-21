@@ -1,0 +1,47 @@
+intention:
+  id: "INT-003"
+  product: "PROD-001"
+  statement: >
+    Users can safely update existing projects when upstream templates
+    change, with conflict detection and rollback.
+  rationale: >
+    Projects are not write-once artifacts. Templates evolve, and users need
+    to pull upstream improvements without losing local customizations. Without
+    safe updates, users face a choice between staying current and preserving
+    their changes — a false dilemma that erodes trust. Conflict detection
+    and rollback ensure users never end up in a broken state.
+  priority: "high"
+  dependencies:
+    - "INT-001"  # Must be able to scaffold before updating
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can update a previously scaffolded project to a newer template
+    version. Conflicts between upstream changes and local modifications are
+    detected and surfaced for resolution. Failed or unwanted updates can be
+    rolled back to the prior state. The update operation is atomic — no
+    partial state on failure. Template lifecycle stages (Active, Deprecated,
+    Sunset) are respected with structured migration guidance. Automation
+    gates with a risk-confidence-scope decision matrix govern what can be
+    auto-applied versus what requires human review. Safe update is per-layer:
+    Boilerplate invokes `copier update -a .copier-answers.<layer>.yml` per
+    layer in topological order. Boilerplate does not implement its own
+    merge; Copier's per-layer three-way merge is the only merge.
+
+  acceptance_criteria:
+    # Security (distributed from PROD-001 security posture)
+    - "Provenance is re-verified on update; trust tier cannot be silently downgraded"
+    - "Atomic rollback leaves no elevated-permission artifacts on disk"
+    - "Lock file integrity is verified before the update is applied (integration with INT-011)"
+    # Safe update
+    - "Update applies layers in topological order"
+    - "Boilerplate source contains no in-house merge implementation; the only merge invoked is `copier update`"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Initial project scaffolding (see INT-001)"
+    - "Automatic unattended updates without user confirmation (governed by automation gates)"
+    - "Lock file integrity verification as standalone command (see INT-011)"
+    - "Format-aware or inline-section merge of any kind. Conflicts within a layer are resolved by Copier's three-way merge; conflict markers surfaced to the user."

@@ -1,0 +1,4760 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.">
+      
+      
+      
+        <link rel="canonical" href="https://therealbillsiegler.github.io/boilerplate/0.4/design/08-environment-provisioning/">
+      
+      
+        <link rel="prev" href="../07-operational-quality/">
+      
+      
+        <link rel="next" href="../09-settings-and-configuration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/boilerplate.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Environment Provisioning - Boilerplate</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  
+
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/panzoom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#environment-provisioning" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Boilerplate" class="md-header__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Boilerplate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Environment Provisioning
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../templates-hub/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Templates
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../environment/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contribute
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Boilerplate" class="md-nav__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    Boilerplate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Boilerplate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/streamlit/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streamlit template
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Streamlit template
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/streamlit/deployment/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/plain-copier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Copier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning and Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/migration-guide-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guide Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../environment/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/vscode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/merging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-data-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-template-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-composition-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-project-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-operational-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-profile-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1: Profile Resolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Profile Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolution Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-version-merging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool Version Merging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packages-field-merging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        packages Field Merging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allowed_proto_plugins-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        allowed_proto_plugins Enforcement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-prototools-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2: .prototools Generation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: .prototools Generation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generation Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ownership-and-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership and Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-proto-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Proto Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3: Proto Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proto-binary-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proto Binary Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protoworker-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ProtoWorker Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protolock-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .protolock Relationship
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-35-package-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3.5: Package Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3.5: Package Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platform-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavior-during-env-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior During env apply
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-status-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        env status Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-provisioning-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 4: Provisioning Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 4: Provisioning Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1 — Resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-plan-and-confirm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2 — Plan and Confirm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-prototools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3 — Generate .prototools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-proto-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4 — Proto Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-record-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5 — Record Write
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#signal-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signal Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-5-boilerplateenvironmentyml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 5: .boilerplate/environment.yml Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 5: .boilerplate/environment.yml Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-6-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 6: Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-7-platform-specific-behaviors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 7: Platform-Specific Behaviors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-8-env-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 8: env status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 8: env status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#boilerplate-env-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        boilerplate env status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-9-error-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 9: Error Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-10-profile-lifecycle-drift-and-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 10: Profile Lifecycle, Drift, and Compatibility
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 10: Profile Lifecycle, Drift, and Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#profile-lifecycle-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile Lifecycle Phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drift
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-profile-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template-Profile Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Acceptance Criteria">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-settings-and-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings & Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-environment-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Environment Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-build-vs-adopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Build vs Adopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-copier-internals-shim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Copier Internals Shim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-permissive-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Permissive Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-exit-code-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Exit Code Taxonomy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-005-integrity-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Integrity Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-006-template-distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006 Template Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-007-update-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-007 Update Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-008-distribution-name/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-008 Distribution Name
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-009-environment-provider-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-009 Environment Provider Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-010-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-011-structured-overlay-merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 Structured Overlay Merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-012-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 Positioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-013-interactivity-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013 Interactivity Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-014-deferred-task-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 Deferred Task Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-015-idiomatic-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 Idiomatic Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-016-project-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 Project Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-017-build-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/notices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#state-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-profile-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1: Profile Resolution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Profile Resolution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolution-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolution Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-version-merging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool Version Merging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packages-field-merging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        packages Field Merging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#allowed_proto_plugins-enforcement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        allowed_proto_plugins Enforcement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-prototools-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2: .prototools Generation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: .prototools Generation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generation Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ownership-and-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ownership and Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-proto-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Proto Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3: Proto Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proto-binary-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proto Binary Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protoworker-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ProtoWorker Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protolock-relationship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .protolock Relationship
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-35-package-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3.5: Package Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3.5: Package Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#purpose_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#platform-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#behavior-during-env-apply" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Behavior During env apply
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-status-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        env status Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-provisioning-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 4: Provisioning Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 4: Provisioning Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1 — Resolve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-plan-and-confirm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2 — Plan and Confirm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-prototools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3 — Generate .prototools
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-proto-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4 — Proto Install
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-record-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5 — Record Write
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#signal-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signal Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-5-boilerplateenvironmentyml-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 5: .boilerplate/environment.yml Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 5: .boilerplate/environment.yml Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-6-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 6: Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-7-platform-specific-behaviors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 7: Platform-Specific Behaviors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-8-env-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 8: env status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 8: env status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#boilerplate-env-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        boilerplate env status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-9-error-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 9: Error Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-10-profile-lifecycle-drift-and-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 10: Profile Lifecycle, Drift, and Compatibility
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 10: Profile Lifecycle, Drift, and Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#profile-lifecycle-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile Lifecycle Phases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#drift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drift
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-profile-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template-Profile Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Acceptance Criteria">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Design
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../01-overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Specifications
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="../../status/">the Status page</a> for what's built project-wide.</p>
+    </div>
+  
+  
+                  
+
+
+  
+  
+
+
+<h1 id="environment-provisioning">Environment Provisioning</h1>
+<h2 id="purpose">Purpose</h2>
+<p><code>boilerplate env apply</code> and <code>boilerplate env status</code>: resolving the <code>EnvironmentProfile</code> <code>extends</code> chain, merging tool versions and packages across profile layers, generating <code>.prototools</code> in proto's native format, invoking proto for tool installation, and writing the <code>.boilerplate/environment.yml</code> provenance record.</p>
+<hr />
+<h2 id="state-files">State Files</h2>
+<p>A Boilerplate-managed environment contains the following state files after a successful <code>env apply</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Owner</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.prototools</code></td>
+<td>Boilerplate (generated) / proto (runtime)</td>
+<td>Declares resolved tool versions for proto; generated by Boilerplate from the merged profile</td>
+</tr>
+<tr>
+<td><code>.protolock</code></td>
+<td>proto</td>
+<td>Records exact resolved tool versions and checksums; written by proto after install</td>
+</tr>
+<tr>
+<td><code>.boilerplate/environment.yml</code></td>
+<td>Boilerplate</td>
+<td>Records which profile was applied, the resolved <code>extends</code> chain, and a hash of <code>.protolock</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Ownership invariants</strong>:
+- Boilerplate MUST NOT write to <code>.protolock</code>. That file is owned by proto.
+- External tools MUST NOT write to <code>.boilerplate/environment.yml</code>. That file is owned by Boilerplate.
+- <code>.boilerplate/environment.yml</code> MUST only be written after a fully successful provisioning operation. It MUST never reflect a partial state.
+- <code>boilerplate-env.yml</code> is the declarative input owned by the profile author. Boilerplate reads it; it MUST NOT be modified during provisioning.</p>
+<hr />
+<h2 id="part-1-profile-resolution">Part 1: Profile Resolution</h2>
+<h3 id="purpose_1">Purpose</h3>
+<p>Profile resolution transforms the root <code>EnvironmentProfile</code> and its <code>extends</code> chain into a flat, ordered list of profiles and a single merged tool version map ready for <code>.prototools</code> generation.</p>
+<h3 id="resolution-algorithm">Resolution Algorithm</h3>
+<p>Resolution takes the root profile specifier and a catalog as inputs, and produces a flat, ordered list of profiles (base-first, derived-last) as output. The algorithm performs a depth-first traversal of the <code>extends</code> chain, resolving each profile from the catalog.</p>
+<p><strong>Inputs</strong>: Root profile specifier, profile catalog.</p>
+<p><strong>Output</strong>: Ordered profile chain (base-first, derived-last; root profile always last).</p>
+<p><strong>Invariants</strong>:</p>
+<ul>
+<li><strong>Cycle detection</strong>: A cycle in the <code>extends</code> chain MUST be detected and reported as <code>BP_ENV_EXTENDS_CYCLE</code> with the full cycle path (e.g., <code>base -&gt; python -&gt; base</code>).</li>
+<li><strong>Diamond deduplication</strong>: A profile reachable via multiple paths is included once, at the position first encountered during traversal.</li>
+<li><strong>Missing profiles</strong>: If the root profile cannot be found, fail with <code>BP_ENV_PROFILE_NOT_FOUND</code>. If a parent in the <code>extends</code> chain cannot be found, fail with <code>BP_ENV_EXTENDS_NOT_FOUND</code>.</li>
+<li><strong>Determinism</strong>: Given the same profile definitions, the resolved chain MUST always be identical. Traversal order is determined by the <code>extends</code> declaration order in each profile. This parallels the template composition tie-breaking rule in <a href="../04-composition-engine/">§04 Composition Engine</a>.</li>
+</ul>
+<h3 id="tool-version-merging">Tool Version Merging</h3>
+<p>After the profile chain is resolved, tool versions are merged across all layers using a <strong>last-writer-wins</strong> policy: the chain is walked base-first, and each profile's tool declarations overwrite earlier values for the same tool name. The most-derived profile (last in topological order) wins for any given tool.</p>
+<p>This is simpler than template composition's four named merge strategies (see <a href="../04-composition-engine/">§04</a>) because tool versions are simple scalars, not the complex nested structures that template configurations contain.</p>
+<p>The result is a flat <code>{tool_name: version_string}</code> map covering every tool declared in any profile in the chain.</p>
+<h3 id="packages-field-merging"><code>packages</code> Field Merging</h3>
+<p>After tool version merging, the <code>packages</code> field (map of platform key to list of <code>PackageRequirement</code>) is merged across the extends chain:</p>
+<ul>
+<li>For each platform key, <code>PackageRequirement</code> lists are <strong>accumulated</strong> in topological order (base first, derived last).</li>
+<li>When multiple profiles declare the same package (by <code>name</code>) for the same platform, the <strong>last-writer-wins</strong>: the most-derived profile's version constraint replaces earlier entries for that package name.</li>
+<li>The result is a flat <code>{platform: [PackageRequirement, ...]}</code> map. Platform keys not present in a profile are inherited unchanged from ancestor profiles.</li>
+<li>Tools with version constraints (e.g., <code>&gt;=3.10</code>) that cannot be resolved to a single exact version MUST cause <code>BP_ENV_VERSION_UNRESOLVABLE</code>. Constraint-only entries are not valid for <code>.prototools</code> generation. Implementations SHOULD emit a descriptive error: <code>"Profile '{name}' declares tool '{tool}' with version constraint '{constraint}' which cannot be resolved to an exact version. Declare an exact version for provisioning."</code></li>
+</ul>
+<h3 id="allowed_proto_plugins-enforcement"><code>allowed_proto_plugins</code> Enforcement</h3>
+<p>After tool version merging, the combined allowlist is computed by intersecting all non-empty <code>allowed_proto_plugins</code> lists across the chain.</p>
+<p><strong>Enforcement rules</strong>:
+- An empty <code>allowed_proto_plugins</code> list on a profile means <strong>no restriction from that layer</strong> — not "block all tools."
+- If ALL profiles in the chain have an empty <code>allowed_proto_plugins</code> (the default), the combined allowlist is empty, meaning <strong>no restriction applies</strong> and all resolved tools are permitted.
+- If ANY profile in the chain declares a non-empty <code>allowed_proto_plugins</code>, the combined allowlist is the <strong>intersection</strong> of all non-empty lists across the chain. This ensures that a base profile's allowlist acts as a ceiling — derived profiles can only narrow the set, never expand it.
+- After computing the combined allowlist: for each tool in the resolved tool map, if the combined allowlist is non-empty and the tool name does NOT appear in the combined allowlist, raise <code>BP_ENV_PLUGIN_NOT_ALLOWED</code>.
+- Error message MUST identify the disallowed tool, the requesting profile, and the restricting profile: <code>"Tool '{tool}' is not in the allowed_proto_plugins intersection. Requested by profile '{requesting_profile}'. Not present in allowlist defined by profile '{restricting_profile}'. Contact the platform team to update the base allowlist."</code></p>
+<blockquote>
+<p><strong>Note (non-normative):</strong> intersection is a ceiling, not a floor — derived profiles can only narrow the allowlist, never expand it (expansion would be privilege escalation through profile composition). A tool absent from the base allowlist requires the platform team to update the base profile.</p>
+<p><strong>Trust model scope</strong>: Environment profiles do not use the template trust gate (trusted/untrusted) because the security surface differs. Template tasks execute arbitrary shell commands gated by trust. Proto plugins execute in a WASM sandbox with constrained host access. The <code>allowed_proto_plugins</code> intersection mechanism is the security control for profiles — it provides an equivalent ceiling guarantee (base profiles restrict derived profiles) without requiring task-trust classification.</p>
+</blockquote>
+<hr />
+<h2 id="part-2-prototools-generation">Part 2: <code>.prototools</code> Generation</h2>
+<p>Boilerplate generates proto's native configuration file (<code>.prototools</code>) from the merged tool version map. The generated file is written to the project root.</p>
+<h3 id="generation-rules">Generation Rules</h3>
+<ul>
+<li>Only tools with resolved exact versions are included. Unresolvable versions MUST have already caused <code>BP_ENV_VERSION_UNRESOLVABLE</code> during the merge step.</li>
+<li>Tool entries MUST be sorted lexicographically by name for deterministic output and clean diffs.</li>
+<li>Path values MUST use forward slashes on all platforms for cross-platform compatibility.</li>
+</ul>
+<h3 id="ownership-and-versioning">Ownership and Versioning</h3>
+<ul>
+<li><code>.prototools</code> is a <strong>generated output</strong> owned by Boilerplate in the provisioning context; <code>boilerplate-env.yml</code> is the <strong>declarative input</strong>.</li>
+<li><code>.prototools</code> MAY be committed to version control as a development convenience -- proto reads it at runtime to determine which tool versions to activate.</li>
+<li>The output is reproducible: re-running <code>boilerplate env apply</code> with the same profile produces an identical <code>.prototools</code>.</li>
+<li>Entries added manually to <code>.prototools</code> outside of Boilerplate are not tracked and will be overwritten on the next <code>env apply</code>.</li>
+</ul>
+<hr />
+<h2 id="part-3-proto-integration">Part 3: Proto Integration</h2>
+<h3 id="proto-binary-discovery">Proto Binary Discovery</h3>
+<ul>
+<li>proto MUST be discoverable via <code>PATH</code>.</li>
+<li><code>boilerplate doctor</code> MUST verify proto is installed and emit an actionable message if not found.</li>
+<li>If proto is not found during <code>env apply</code>, the operation MUST fail immediately with <code>BP_ENV_PROTO_NOT_FOUND</code> before any staging or I/O occurs.</li>
+</ul>
+<h3 id="protoworker-interface">ProtoWorker Interface</h3>
+<p>The ProtoWorker abstracts proto's CLI behind a stable contract owned by Boilerplate. Implementations MUST isolate all proto invocations behind this interface so that proto version upgrades require changes only in the worker implementation.</p>
+<p><strong><code>install_tool(tool_name, version, timeout)</code> → <code>InstallResult</code></strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tool_name</code></td>
+<td>string</td>
+<td>Tool identifier (e.g., <code>python</code>, <code>node</code>)</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>string</td>
+<td>Exact version to install</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>integer</td>
+<td>Maximum seconds for this installation</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>InstallResult</code></strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td>boolean</td>
+<td>Whether installation completed</td>
+</tr>
+<tr>
+<td><code>tool_name</code></td>
+<td>string</td>
+<td>The tool that was installed</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>string</td>
+<td>The exact version installed</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>string or null</td>
+<td>Error message on failure</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>trigger_proto_lockfile()</code> → path</strong></p>
+<p>Invokes proto's native lockfile generation (proto writes <code>.protolock</code>; Boilerplate does NOT) and returns the path to the resulting file. The method exists so the worker can report the lockfile path to caller code that needs to compute <code>proto_lock_hash</code> for the EnvironmentProvisionRecord. The worker MUST NOT itself write or modify <code>.protolock</code>.</p>
+<p><strong>Behavioral contracts</strong>:</p>
+<ul>
+<li>The worker MUST NOT modify <code>.prototools</code> — that file is generated by Boilerplate and consumed by proto.</li>
+<li>If <code>install_tool</code> fails, the error message MUST identify the specific tool and version.</li>
+<li>Proto availability MUST be verified before any installation attempt; if proto is not found, fail with <code>BP_ENV_PROTO_NOT_FOUND</code>.</li>
+</ul>
+<h3 id="invocation">Invocation</h3>
+<p>Boilerplate invokes proto to install the resolved tools. All resolved tools MUST be installed before the commit phase proceeds. Implementations SHOULD invoke proto per-tool for granular error attribution. Bulk invocation MAY be used when per-tool invocation is impractical, but the error message MUST still identify the specific tool and version that failed.</p>
+<h3 id="timeout">Timeout</h3>
+<p>Proto installation is subject to a configurable timeout, independent of the rendering timeout. Proto installation is network-bound (downloading tool binaries), so the timeout must accommodate cold-cache downloads of large toolchains.</p>
+<h3 id="failure-handling">Failure Handling</h3>
+<ul>
+<li>If any proto install invocation fails, the provisioning MUST fail with <code>BP_ENV_APPLY_FAILED</code>.</li>
+<li>The proto error output MUST be included in the structured log.</li>
+<li>The human-readable error message MUST identify the specific tool and version that failed.</li>
+</ul>
+<h3 id="protolock-relationship"><code>.protolock</code> Relationship</h3>
+<p>proto writes <code>.protolock</code> to the project root after successful installation, recording exact tool versions, checksums, and platform metadata.</p>
+<p><strong>Ownership boundaries</strong>:
+- Boilerplate MUST NOT write, modify, or delete <code>.protolock</code>. It is owned by proto.
+- Boilerplate reads <code>.protolock</code> after a successful install to compute the <code>proto_lock_hash</code> field for <code>.boilerplate/environment.yml</code>.
+- If proto did not write <code>.protolock</code>, <code>proto_lock_hash</code> is <code>null</code>.
+- <code>boilerplate env status</code> reads both <code>.boilerplate/environment.yml</code> and <code>.protolock</code> to report the current environment state.</p>
+<hr />
+<h2 id="part-35-package-requirements">Part 3.5: Package Requirements</h2>
+<h3 id="purpose_2">Purpose</h3>
+<p>After profile resolution and tool version merging, the merged <code>packages</code> map is evaluated for the current platform. This section specifies how declared <code>PackageRequirement</code> entries are handled during <code>env apply</code> and related commands.</p>
+<h3 id="platform-detection">Platform Detection</h3>
+<p>Boilerplate detects the current platform (Windows, WSL2, Linux, macOS) and evaluates only packages declared for that platform. Packages for other platforms are silently ignored.</p>
+<h3 id="behavior-during-env-apply">Behavior During <code>env apply</code></h3>
+<p>A declared package installs when the <code>system-package</code> provider kind covers it, under the trust gate ADR-009 §Trust specifies (<a href="../adr-009-environment-provider-protocol/">ADR-009</a>); Boilerplate MUST NOT invoke a package manager outside that gate, because an ungated install would violate the "orchestrate, don't replace" principle and introduce privilege escalation and safety concerns.</p>
+<p>For a package with no covering provider, requirements stay <strong>advisory, not automatically installed</strong>. Boilerplate <strong>validates</strong> that the package is present on the system by checking for binaries on PATH or querying the platform's package manager. Missing packages produce a WARNING with the recommended install command. Success is silent.</p>
+<h3 id="pipeline-integration">Pipeline Integration</h3>
+<ul>
+<li><strong>Plan display</strong>: When packages are declared for the current platform, the provisioning plan MUST include a <code>Package requirements:</code> section listing each package with the provider that installs it, or the command to install it by hand when no provider covers it. This gives the user visibility before confirming.</li>
+<li><strong>Post-install check</strong>: Covered packages install with the tools in step 4; a failed covered install raises <code>BP_ENV_APPLY_FAILED</code>, the same as a failed tool install: no record is written, and rerunning recovers. Uncovered packages are still checked after the installs and before the provenance record is written, and a missing one only warns. Warnings are appended to the success-path output and also surface via <code>env status</code>.</li>
+</ul>
+<h3 id="env-status-integration"><code>env status</code> Integration</h3>
+<p>The <code>env status</code> command SHOULD check package availability for the current platform and report missing packages as warnings, using the same detection logic described above.</p>
+<hr />
+<h2 id="part-4-provisioning-pipeline">Part 4: Provisioning Pipeline</h2>
+<p><code>boilerplate env apply</code> runs a single linear flow under an advisory lock. The provenance record (<code>.boilerplate/environment.yml</code>) is written only after a fully successful install, so it never reflects a partial state. If a step fails, the lock is released and the user re-runs <code>env apply</code>; because <code>.prototools</code> generation and proto install are idempotent, re-running converges to the resolved state.</p>
+<h3 id="flow">Flow</h3>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. Resolve       →  Load profile, resolve extends chain, merge tool versions, enforce allowlist
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. Plan/Confirm  →  Diff current vs. resolved; prompt for confirmation
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. Generate      →  Acquire advisory lock; write .prototools via staged write
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>4. Proto Install →  Invoke proto install for all resolved tools; install covered packages through their provider
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>5. Record Write  →  Write .boilerplate/environment.yml; release lock
+</code></pre></div>
+<h3 id="1-resolve">1 — Resolve</h3>
+<p>Loads the target profile, resolves the <code>extends</code> chain (see §Profile Resolution), merges tool versions (last-writer-wins), and enforces the plugin allowlist. Produces a resolved tool map and ordered profile chain.</p>
+<p>Failures at this step (<code>BP_ENV_PROFILE_NOT_FOUND</code>, <code>BP_ENV_EXTENDS_CYCLE</code>, <code>BP_ENV_EXTENDS_NOT_FOUND</code>, <code>BP_ENV_VERSION_UNRESOLVABLE</code>, <code>BP_ENV_PLUGIN_NOT_ALLOWED</code>) are validation errors — no files are modified.</p>
+<h3 id="2-plan-and-confirm">2 — Plan and Confirm</h3>
+<p>Computes the diff between the current environment state (from <code>.boilerplate/environment.yml</code>, if present) and the resolved tool map. Displays a provisioning plan showing installs, upgrades, and unchanged tools.</p>
+<p><strong>Behavioral rules</strong>:
+- No differences: report "already up to date" and exit with no changes.
+- <code>--dry-run</code>: display the plan and exit without writing.
+- <code>--format json</code> without <code>--yes</code> or <code>--dry-run</code>: fail (JSON mode requires explicit intent to prevent interactive prompts in automation).
+- <code>--yes</code> or <code>--ci</code>: proceed without prompting.
+- Otherwise: prompt for confirmation (default: No).
+- Major version boundary crossings MUST be annotated with a warning.</p>
+<h3 id="3-generate-prototools">3 — Generate <code>.prototools</code></h3>
+<p>Acquires the advisory lock per <a href="../07-operational-quality/#concurrency-control">07-operational-quality.md §Concurrency Control</a>, then writes the resolved <code>.prototools</code> to the project root using the staged write (temp file + rename) from the <a href="../07-operational-quality/#atomic-staged-write-pattern">Atomic Staged Write Pattern</a>. All subsequent steps occur under the lock.</p>
+<h3 id="4-proto-install">4 — Proto Install</h3>
+<p>Invokes proto to install each resolved tool, subject to the timeout defined in §Proto Integration. It also installs covered packages through their provider (see §Part 3.5), with the same failure rule. Progress is reported when running interactively.</p>
+<p><strong>If any installation fails, tool or covered package</strong>: the lock is released and <code>BP_ENV_APPLY_FAILED</code> is raised with the failing tool or package name, version, and installer output. The provenance record is not written; re-running <code>env apply</code> is the recovery path.</p>
+<h3 id="5-record-write">5 — Record Write</h3>
+<p>Computes the <code>proto_lock_hash</code> from <code>.protolock</code> (if present), writes <code>.boilerplate/environment.yml</code> atomically (see §<code>.boilerplate/environment.yml</code> Schema), and releases the advisory lock. Emits a completion summary (profile, tools installed, duration) in both human-readable and JSON output formats.</p>
+<h3 id="signal-handling">Signal Handling</h3>
+<p>Signal handling follows the <a href="../07-operational-quality/#atomic-staged-write-pattern">Atomic Staged Write Pattern</a>. The advisory lock MUST be released on cleanup. An interrupted <code>env apply</code> leaves no provenance record; the recovery story is to run <code>env apply</code> again.</p>
+<hr />
+<h2 id="part-5-boilerplateenvironmentyml-schema">Part 5: <code>.boilerplate/environment.yml</code> Schema</h2>
+<p>The <code>.boilerplate/environment.yml</code> schema is defined in <a href="../02-data-models/">02-data-models.md §EnvironmentProvisionRecord</a>. The <code>.boilerplate/</code> directory is created if it does not exist. Key write invariants:</p>
+<h3 id="example">Example</h3>
+<div class="language-yaml highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;boilerplate/environment@1&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">boilerplate_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.3.0&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">profile_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python-dev</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">profile_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.2.0&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">extends_chain</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">base@1.0.0</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python-dev@1.2.0</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nt">applied_at</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-03-20T14:30:00Z&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nt">tools</span><span class="p">:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;20.11.0&quot;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="nt">python</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.12.2&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nt">proto_lock_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a3f1c9b2d8e4f7a1c3e5b7d9f2a4c6e8b0d2f4a6c8e0b2d4f6a8c0e2b4d6f8a0&quot;</span>
+</code></pre></div>
+<h3 id="write-invariants">Write Invariants</h3>
+<ul>
+<li>The file MUST be written atomically (temp file + rename).</li>
+<li>The file MUST only be written after proto has successfully installed all tools (step 4 of the provisioning flow).</li>
+<li>Keys MUST be sorted deterministically for clean diffs.</li>
+<li>The <code>tools</code> map keys MUST be sorted lexicographically.</li>
+</ul>
+<h3 id="schema-versioning">Schema Versioning</h3>
+<p>The <code>schema_version</code> field enables forward-compatible evolution. Boilerplate MUST parse any <code>environment.yml</code> sharing the same major version (<code>boilerplate/environment@1</code>). Minor version bumps add optional fields; major bumps may change semantics. When Boilerplate encounters a file with an unrecognized major version, it MUST warn and treat the file as absent rather than failing hard — the environment may still be usable even if the record cannot be interpreted.</p>
+<hr />
+<h2 id="part-6-concurrency">Part 6: Concurrency</h2>
+<p>Environment provisioning follows the shared concurrency control pattern. See <a href="../07-operational-quality/#concurrency-control">07-operational-quality.md §Concurrency Control</a>. The lock is acquired when <code>.prototools</code> is generated and released after the provenance record is written (or on failure). Network filesystem caveats apply (see <a href="../07-operational-quality/#platform-portability">07-operational-quality.md §Platform Portability</a>).</p>
+<hr />
+<h2 id="part-7-platform-specific-behaviors">Part 7: Platform-Specific Behaviors</h2>
+<p>General platform portability rules are in <a href="../07-operational-quality/#platform-portability">07-operational-quality.md §Platform Portability</a>. This section covers environment-provisioning-specific platform details.</p>
+<ul>
+<li><strong>Windows</strong>: where file rename is not atomic, the staged write uses a copy-verify-replace pattern. Tool names in <code>.prototools</code> MUST be lowercase for case-insensitive filesystem compatibility.</li>
+<li><strong>WSL2</strong>: <code>boilerplate doctor</code> MUST detect Windows-hosted proto and warn about path mapping issues. Recommend installing proto natively within WSL2.</li>
+<li><strong>All platforms</strong>: proto MUST be on PATH.</li>
+</ul>
+<hr />
+<h2 id="part-8-env-status">Part 8: <code>env status</code></h2>
+<h3 id="boilerplate-env-status"><code>boilerplate env status</code></h3>
+<p>Reports the current environment state by reading <code>.boilerplate/environment.yml</code> and <code>.protolock</code>. Shows the applied profile, tools, and whether the protolock hash is consistent. Warns if no environment record exists or if the protolock hash has drifted since the last apply.</p>
+<hr />
+<h2 id="part-9-error-reference">Part 9: Error Reference</h2>
+<p>Environment provisioning uses the <code>BP_ENV_*</code> error code family, plus <code>BP_CONCURRENCY_CONTENTION</code> and <code>BP_FILESYSTEM_*</code> for infrastructure failures. See <a href="../07-operational-quality/#phase-prefixes">07-operational-quality.md §Phase Prefixes</a> for the phase registry and <a href="../07-operational-quality/#error-message-format">07-operational-quality.md §Error Message Format</a> for the standard message format.</p>
+<hr />
+<h2 id="part-10-profile-lifecycle-drift-and-compatibility">Part 10: Profile Lifecycle, Drift, and Compatibility</h2>
+<h3 id="profile-lifecycle-phases">Profile Lifecycle Phases</h3>
+<p>A profile passes through several phases during its useful life. Each phase produces a distinct artifact and has distinct failure modes:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Trigger</th>
+<th>Primary output</th>
+<th>Typical failures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authoring</td>
+<td>Author edits <code>boilerplate-env.yml</code></td>
+<td>Profile draft</td>
+<td>Schema validation failure; unsatisfiable <code>extends</code> chain</td>
+</tr>
+<tr>
+<td>Publication</td>
+<td>Catalog ingest assigns immutable version</td>
+<td>Published profile</td>
+<td>Duplicate version; missing required sections</td>
+</tr>
+<tr>
+<td>Installation</td>
+<td><code>boilerplate env apply</code></td>
+<td><code>.prototools</code>, <code>.protolock</code> (proto), <code>.boilerplate/environment.yml</code></td>
+<td><code>BP_ENV_PROFILE_NOT_FOUND</code>, <code>BP_ENV_PLUGIN_NOT_ALLOWED</code>, proto install failure</td>
+</tr>
+<tr>
+<td>Update</td>
+<td><code>boilerplate env apply</code> against a newer profile version</td>
+<td>Updated state + refreshed <code>.boilerplate/environment.yml</code></td>
+<td>Breaking change; lock conflict</td>
+</tr>
+<tr>
+<td>Removal</td>
+<td>(Future scope) Tool removal via proto</td>
+<td>Cleanup record</td>
+<td>Out of scope</td>
+</tr>
+</tbody>
+</table>
+<p>Phase events feed structured logging (per §07 Phase Vocabulary, where the relevant phase is <code>env_apply</code>).</p>
+<h3 id="drift">Drift</h3>
+<p>After a profile is applied, the live environment can diverge from the recorded state — for example, a tool version drifts from <code>.protolock</code>, the recomputed <code>.protolock</code> hash no longer matches <code>EnvironmentProvisionRecord.proto_lock_hash</code>, a declared tool is missing, the cached profile version differs from the catalog, or the host OS/arch differs from provision time. <code>boilerplate env status</code> reports such drift as warnings. The remediation in every case is to re-run <code>boilerplate env apply</code>.</p>
+<h3 id="template-profile-compatibility">Template-Profile Compatibility</h3>
+<p>When a template declares <code>requires_profile</code>, applying or updating it verifies compatibility with the project's environment state: the required profile resolves in the catalog, the project's resolved profile name and version satisfy the template's range, and the tools the template depends on are present in the resolved profile chain. These checks are owned by the resolve/composition path (<a href="../04-composition-engine/">§04 Composition Engine</a>) at <code>new</code> and <code>update</code> time. On read-only commands a mismatch is a warning surfaced via <code>env status</code>, not a hard failure.</p>
+<hr />
+<h2 id="acceptance-criteria">Acceptance Criteria</h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Valid single-profile apply</td>
+<td><code>.prototools</code> written, proto succeeds, <code>environment.yml</code> written, exit 0</td>
+</tr>
+<tr>
+<td>Profile with <code>extends</code> chain</td>
+<td>Chain resolved base-first, versions merged (last-writer-wins), exit 0</td>
+</tr>
+<tr>
+<td>Profile not found</td>
+<td><code>BP_ENV_PROFILE_NOT_FOUND</code>, no files modified, exit 3</td>
+</tr>
+<tr>
+<td>Cycle in <code>extends</code> chain</td>
+<td><code>BP_ENV_EXTENDS_CYCLE</code> with full cycle path, exit 3</td>
+</tr>
+<tr>
+<td>Tool not in <code>allowed_proto_plugins</code></td>
+<td><code>BP_ENV_PLUGIN_NOT_ALLOWED</code>, no files modified, exit 3</td>
+</tr>
+<tr>
+<td><code>proto install</code> fails</td>
+<td><code>BP_ENV_APPLY_FAILED</code>, <code>environment.yml</code> not written, exit 1</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Plan displayed, no files modified, exit 0</td>
+</tr>
+<tr>
+<td>No changes detected</td>
+<td>"Environment is already up to date.", exit 0</td>
+</tr>
+<tr>
+<td>Interrupted <code>env apply</code></td>
+<td>No provenance record written; re-running <code>env apply</code> completes provisioning</td>
+</tr>
+<tr>
+<td>proto not installed</td>
+<td><code>BP_ENV_PROTO_NOT_FOUND</code>, immediate exit 3 before any I/O</td>
+</tr>
+<tr>
+<td>Concurrent <code>env apply</code></td>
+<td>Second invocation fails with <code>BP_CONCURRENCY_CONTENTION</code> after timeout</td>
+</tr>
+</tbody>
+</table>
+<h3 id="performance-contracts">Performance Contracts</h3>
+<p>See <a href="../07-operational-quality/">§07 Operational Quality</a> for all performance targets. Environment provisioning is I/O and network intensive; the dominant cost is proto downloading tool binaries. Boilerplate's own orchestration overhead (profile resolution, diff computation, <code>.prototools</code> generation) MUST be negligible relative to proto install time.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../07-operational-quality/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Operational Quality">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Operational Quality
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../09-settings-and-configuration/" class="md-footer__link md-footer__link--next" aria-label="Next: Settings &amp; Configuration">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Settings & Configuration
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.indexes", "navigation.footer", "navigation.top", "navigation.path", "content.code.copy", "content.code.select", "content.tabs.link", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/mermaid-theme.js"></script>
+      
+        <script src="../../assets/scroll-region.js"></script>
+      
+        <script src="../../assets/javascripts/panzoom.min.js"></script>
+      
+        <script src="../../assets/javascripts/zoompan.js"></script>
+      
+    
+  
+
+  </body>
+</html>

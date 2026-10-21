@@ -1,0 +1,344 @@
+/*
+ * Boilerplate docs — brand palette, self-hosted type, and contrast overrides.
+ *
+ * The brand is the sticker art: near-black charcoal, the sky-blue braces logo
+ * (#40B4E5 — the only color in docs/assets/boilerplate.svg), bold white type.
+ * `theme.palette` sets `primary: custom` / `accent: custom` on both the light
+ * and slate entries in mkdocs.yml; the two halves below are what those defer
+ * to (see the mkdocs-material customization reference: both halves are
+ * required or the built-in palette silently wins).
+ *
+ * Contrast is computed against each background the color lands on, for both
+ * schemes; every text pair clears WCAG AA (4.5:1) for normal text. Brand blue
+ * #40B4E5 itself is too light to pass AA as text on white, so the light
+ * scheme's link/accent color is a darker sky blue (#1c70ad, 5.29:1 on white
+ * and 4.85:1 on the #f5f5f5 inline-code background) instead — the literal
+ * brand blue stays reserved for the primary button and the slate scheme,
+ * where the dark page background gives it room.
+ */
+
+/* Self-hosted type — vendored from the @fontsource packages (docs/assets/
+   fonts/, licenses alongside; see NOTICE), so the site never fetches Google
+   Fonts at view time and the offline bundle keeps working from file://.
+   theme.font: false in mkdocs.yml stops Material from doing that itself. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/ibm-plex-sans-latin-400-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+}
+
+:root {
+  --md-text-font: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --md-code-font: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* Brand palette, declared once. Every rule below takes its color from one of
+   these tokens (or from a Material variable set from them), so a palette
+   change is one edit here. Names say what the color is, not where it goes;
+   the scheme blocks decide where. */
+:root {
+  --bp-brand-blue: #40b4e5;         /* the sticker-art sky blue; AA only on dark */
+  --bp-brand-blue-hover: #2a9fd2;   /* one step darker, for hover/focus fills */
+  --bp-link-blue: #1c70ad;          /* link-safe blue: AA as text on white and on code */
+  --bp-charcoal: #1f2124;           /* the sticker-art near-black */
+  --bp-charcoal-light: #2b2f34;
+  --bp-charcoal-dark: #121416;
+  --bp-header-slate: #282c33;       /* slate header, lifted off the page surface */
+  --bp-header-slate-light: #363b43;
+  --bp-ink-dark: #0f1a26;           /* dark text on brand blue */
+  --bp-ink-light: #dfe3ea;          /* body text on slate */
+  --bp-ink-lightest: #f3f5f9;       /* H1 on slate */
+  --bp-muted-light: #aeb4c0;        /* secondary text on slate */
+  --bp-muted-dark: #6b6b6b;         /* code-comment grey: 4.89:1 on #f5f5f5, 5.33:1 on white */
+  --bp-search-hint: #666666;        /* search hint: 4.90:1 on its #ededed band */
+  --bp-line-gray: #6b7280;          /* diagram lifelines: 4.83:1 on white (3:1 needed) */
+  --bp-link-blue-ink: #1a6aa5;      /* diagram tag text: 5.00:1 on the accent tint */
+  --bp-code-red-slate: #ec7a6d;     /* slate numbers: 5.15:1 on #272a35 */
+  --bp-code-violet-slate: #a399e8;  /* slate constants and builtins: 5.64:1 on #272a35 */
+  --bp-white: #ffffff;
+  --bp-status-shipped: #2e8b57;
+  --bp-status-shipped-slate: #4fd487;
+  --bp-status-partial: #b8860b;
+  --bp-status-partial-slate: #e2c25f;
+}
+
+/* Light scheme (Material's "default" scheme). Material's own palette rule
+   sets --md-typeset-a-color on the actual <body> element (selector
+   `:root,[data-md-color-scheme="default"]`, and that attribute lives on
+   body, not html) — a value set directly on an element always wins over one
+   only inherited from :root, regardless of stylesheet order. Matching that
+   selector here, instead of plain :root, is what lets the override apply. */
+:root,
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--bp-charcoal);
+  --md-primary-fg-color--light: var(--bp-charcoal-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal-dark);
+  --md-primary-bg-color: var(--bp-white);
+  /* Darker sky blue: passes WCAG AA as text on white (5.29:1) and on the
+     #f5f5f5 inline-code background (4.85:1), unlike the literal brand blue
+     (#40b4e5 on white is 2.37:1 — fails). */
+  --md-accent-fg-color: var(--bp-link-blue);
+  --md-accent-fg-color--transparent: #1c70ad1a;
+  --md-typeset-a-color: var(--bp-link-blue);
+  /* Material points these five syntax tokens at --md-default-fg-color--light,
+     which renders #717171 on the #f5f5f5 code background: 4.48:1, just under
+     AA. Set them directly rather than darken every muted foreground. */
+  --md-code-hl-comment-color: var(--bp-muted-dark);
+  --md-code-hl-variable-color: var(--bp-muted-dark);
+  --md-code-hl-generic-color: var(--bp-muted-dark);
+  --md-code-hl-punctuation-color: var(--bp-muted-dark);
+  --md-code-hl-operator-color: var(--bp-muted-dark);
+  /* Sequence diagrams. Label text takes the accent, 4.59:1 on its own tint
+     (accent at 10% over white, #e8f0f7); a deeper step of the same blue gives
+     5.00:1. Material's lifeline default (black at 32%) is 2.24:1 on white,
+     under the 3:1 a graphic needs; this grey is 4.83:1. */
+  --md-mermaid-sequence-label-fg-color: var(--bp-link-blue-ink);
+  --md-mermaid-sequence-actor-line-color: var(--bp-line-gray);
+}
+
+/* Search panel hint ("Type to start searching"). Material paints it with
+   --md-default-fg-color--light (black at 54%) on a black-at-7% band over
+   white, 4.42:1. Slate already lifts that token, so only the light scheme
+   needs its own value. */
+[data-md-color-scheme="default"] div.md-search-result__meta {
+  color: var(--bp-search-hint);
+}
+
+/* Slate scheme (dark) — the sticker-art charcoal header, brand blue in full. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--bp-charcoal);
+  --md-primary-fg-color--light: var(--bp-charcoal-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal-dark);
+  --md-accent-fg-color: var(--bp-brand-blue);
+  --md-accent-fg-color--transparent: #40b4e51a;
+  --md-typeset-a-color: var(--bp-brand-blue);
+  /* Text color Material puts on top of --md-accent-fg-color (hovered/focused
+     buttons, selected search hits). Left at Material's white default, white
+     on brand blue is 2.37:1 — fails WCAG AA; this dark navy clears 7.42:1. */
+  --md-accent-bg-color: var(--bp-ink-dark);
+  --md-accent-bg-color--light: #0f1a26cc;
+  /* Lift body text from Material's default toward AA-comfortable on slate. */
+  --md-typeset-color: var(--bp-ink-light);
+  /* Raise the muted/secondary foreground so it clears WCAG AA (>= ~5:1).
+     Both tiers intentionally share the same value on slate — the lighter tier
+     still needs lifting, and going lower would fail AA. */
+  --md-default-fg-color--light: var(--bp-muted-light);
+  --md-default-fg-color--lighter: var(--bp-muted-light);
+  /* Material's slate numbers (#e6695b, 4.45:1) and constants/builtins
+     (#9383e2, 4.48:1) sit just under AA on the #272a35 code background. */
+  --md-code-hl-number-color: var(--bp-code-red-slate);
+  --md-code-hl-constant-color: var(--bp-code-violet-slate);
+}
+
+/* Primary buttons: the literal brand blue with dark text, in both schemes.
+   A charcoal (--md-primary-fg-color) button — Material's stock
+   .md-button--primary — would vanish against the slate background, and the
+   light scheme's link-safe accent (#1c70ad) is too dark to pass AA with dark
+   text (3.32:1); #40b4e5 with #0f1a26 text clears AA at 7.42:1 in both. */
+.md-typeset .md-button--primary {
+  background-color: var(--bp-brand-blue);
+  border-color: var(--bp-brand-blue);
+  color: var(--bp-ink-dark);
+}
+
+/* Secondary buttons (.md-button without --primary) inherit their outline
+   and text from --md-primary-fg-color unchanged. On slate that variable ends
+   up as the lighter header charcoal (#282c33 — the header-legibility block
+   below wins the cascade over the #1f2124 set above) against a page
+   background Material derives from the same hue (~#1e2129) — 1.15:1,
+   effectively invisible. Repoint the slate case at the brand blue instead
+   (6.8:1 against that background, well past the 3:1 a border/large-text UI
+   component needs). Light scheme is unaffected: charcoal-on-white already
+   clears AA there. */
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary) {
+  color: var(--md-accent-fg-color);
+}
+
+/* Hover and focus for both buttons, both schemes. Material's stock hover paints the
+   accent pair, which in slate equals the primary button's rest colors (no feedback)
+   and, on the outline button, turns the label the same blue as the fill. */
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background-color: var(--bp-brand-blue-hover);
+  border-color: var(--bp-brand-blue-hover);
+  color: var(--bp-ink-dark); /* 5.84:1 */
+}
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):hover,
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary):focus {
+  color: var(--md-accent-bg-color);
+}
+
+/* Links in running text carry an underline in both schemes. Color alone is
+   not a cue: on slate the link blue against body text is 1.84:1, and the
+   accent equals the link color, so hover adds nothing either. Header
+   permalinks, buttons and the title link of a grid card are not running text
+   and keep their own styling; the nav and header sit outside .md-typeset. */
+.md-typeset :is(p, li, td, dd, blockquote, .admonition) a:not(.headerlink):not(.md-button):not(.grid.cards > ul > li > p:first-child a) {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
+/* Material's word-break: break-word splits identifiers mid-token in narrow
+   table columns (e.g. `default_te` / `mplates_di` / `r`); keep them whole. */
+.md-typeset table:not([class]) code {
+  word-break: normal;
+}
+
+/* Header legibility. Two problems with a charcoal header: (1) Material paints
+   the slate page at #1e2129, within a few values of the #1f2124 header, so in
+   the dark scheme the header, tab bar, and page merge into one surface; (2) at
+   desktop widths Material draws the idle search field as a 26% black overlay
+   on the header — a visible well on stock indigo, invisible on near-black.
+   In slate the header steps up to a lighter charcoal and the tab bar takes a
+   hairline, so the chrome reads as chrome; in both schemes the search field
+   gets a light-on-dark surface with a hairline ring. Material's active-search
+   rule (white field, dropdown) has higher specificity and still wins. */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--bp-header-slate);
+  --md-primary-fg-color--light: var(--bp-header-slate-light);
+  --md-primary-fg-color--dark: var(--bp-charcoal);
+}
+
+.md-tabs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media screen and (min-width: 60em) {
+  .md-search__form {
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  .md-search__form:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* Home-page scripted demo. Material sets figure { width: fit-content }, and
+   #demo-cast is an empty div until the player mounts into it, so without an
+   explicit width the figure collapses to whatever narrow size the player
+   happens to pick first — asciinema-player's fit: "width" then has no real
+   container to fit against. Fill the content column instead (capped below by
+   #demo-cast's own max-width), matching the <video width="1000"> this
+   replaced. */
+.md-typeset figure.demo {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.md-typeset figure.demo #demo-cast {
+  max-width: 1000px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.md-typeset figure.demo figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Keyboard focus on the demo player. The player removes the terminal's
+   outline and shows its control bar only while the pointer moves, so a
+   keyboard user would tab onto an unmarked terminal and an invisible Pause
+   button. Draw the ring, and show the bar whenever focus is inside. */
+.md-typeset figure.demo .ap-term-text:focus-visible {
+  outline: 2px solid var(--bp-brand-blue);
+  outline-offset: -2px;
+}
+
+.md-typeset figure.demo .ap-wrapper:focus-within .ap-control-bar {
+  opacity: 1;
+}
+
+/* Implementation-status legend (docs/status.md) — colors that hold their
+   meaning (shipped/in-progress/design-only) in both schemes. */
+.md-typeset .status-shipped {
+  color: var(--bp-status-shipped);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .status-shipped {
+  color: var(--bp-status-shipped-slate);
+}
+
+.md-typeset .status-partial {
+  color: var(--bp-status-partial);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .status-partial {
+  color: var(--bp-status-partial-slate);
+}
+
+.md-typeset .status-design {
+  color: var(--md-default-fg-color--light);
+}
+
+/* Brand marks (docs/assets/boilerplate_less_yak.svg,
+   boilerplate_found_reproducibility.svg) render their wordmark in white,
+   fixed regardless of scheme — they are sticker art for a dark surface, not
+   a page background. Give them one, so they read in both schemes. */
+.md-typeset .brand-mark {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--bp-charcoal);
+  border-radius: 8px;
+}
+
+.md-typeset .brand-mark img {
+  margin: 0;
+}
+
+/* Page H1: Material defaults to the de-emphasised --light grey in both
+   schemes, so titles look washed out. Promote to full foreground + heavier
+   weight so a title reads as a title; slate gets a brighter white than its
+   body text. */
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+  font-weight: 700;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: var(--bp-ink-lightest);
+}
+
+/* Short brand rule under the H1 — a brand mark, not stock Material. */
+.md-typeset h1::after {
+  content: "";
+  display: block;
+  width: 54px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: var(--md-accent-fg-color);
+}
+

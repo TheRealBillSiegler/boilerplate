@@ -1,0 +1,4548 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.">
+      
+      
+      
+        <link rel="canonical" href="https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/">
+      
+      
+        <link rel="prev" href="../06-project-lifecycle/">
+      
+      
+        <link rel="next" href="../08-environment-provisioning/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/boilerplate.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Operational Quality - Boilerplate</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  
+
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/panzoom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#operational-quality" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Boilerplate" class="md-header__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Boilerplate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Operational Quality
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../templates-hub/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Templates
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../environment/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contribute
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Boilerplate" class="md-nav__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    Boilerplate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Boilerplate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/streamlit/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streamlit template
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Streamlit template
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/streamlit/deployment/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/plain-copier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Copier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning and Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/migration-guide-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guide Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../environment/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/vscode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/merging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-data-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-template-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-composition-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-project-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Codes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-prefixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Prefixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-code-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Code Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Message Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structured-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structured Logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structured Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logging-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-log-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Log Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subprocess-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess Correlation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Contracts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Timeouts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atomic-staged-write-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Staged Write Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Atomic Staged Write Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platform-portability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Portability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Platform Portability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-limits-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path Limits (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesystem-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem Differences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-filesystems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Filesystems
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wsl2-cross-filesystem-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WSL2 Cross-Filesystem Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Code Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-environment-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-settings-and-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings & Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-environment-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Environment Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-build-vs-adopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Build vs Adopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-copier-internals-shim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Copier Internals Shim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-permissive-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Permissive Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-exit-code-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Exit Code Taxonomy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-005-integrity-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Integrity Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-006-template-distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006 Template Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-007-update-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-007 Update Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-008-distribution-name/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-008 Distribution Name
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-009-environment-provider-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-009 Environment Provider Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-010-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-011-structured-overlay-merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 Structured Overlay Merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-012-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 Positioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-013-interactivity-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013 Interactivity Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-014-deferred-task-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 Deferred Task Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-015-idiomatic-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 Idiomatic Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-016-project-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 Project Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-017-build-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/notices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Codes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Codes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Namespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-prefixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Prefixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-code-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Code Registry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-message-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Message Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-attribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Attribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structured-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structured Logging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Structured Logging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logging-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-log-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Log Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subprocess-correlation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess Correlation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging Invariants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Contracts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retry Policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Timeouts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atomic-staged-write-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Staged Write Pattern
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Atomic Staged Write Pattern">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platform-portability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Portability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Platform Portability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-limits-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path Limits (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filesystem-differences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem Differences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-filesystems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Filesystems
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wsl2-cross-filesystem-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WSL2 Cross-Filesystem Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables (Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-code-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit Code Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Design
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../01-overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Specifications
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="../../status/">the Status page</a> for what's built project-wide.</p>
+    </div>
+  
+  
+                  
+
+
+  
+  
+
+
+<h1 id="operational-quality">Operational Quality</h1>
+<h2 id="purpose">Purpose</h2>
+<p>Cross-cutting operational quality controls that apply to every feature slice: stable error codes, error attribution, structured logging, performance contracts, retry policy, the Atomic Staged Write Pattern, concurrency control, and platform portability. The security model itself lives in <a href="../10-security/">Security model</a>.</p>
+<hr />
+<h2 id="error-codes">Error Codes</h2>
+<h3 id="design-principles">Design Principles</h3>
+<ol>
+<li>Error codes MUST be stable once published — <strong>from 1.0</strong>. During <code>0.x</code> (pre-release; see <a href="../../governance/versioning/">Versioning &amp; Compatibility</a>) codes MAY still change as the surface settles, and the rename to the <code>BP_{PHASE}_{DESCRIPTOR}</code> scheme is pre-1.0 hygiene, not a frozen contract. From 1.0, a published code MUST NOT change its meaning.</li>
+<li>Each code MUST map to exactly one root cause.</li>
+<li>Each code MUST carry: phase, severity, retryable flag, and remediation guidance.</li>
+<li>Codes MUST NOT leak sensitive internal details.</li>
+</ol>
+<h3 id="code-namespace">Code Namespace</h3>
+<p>All error codes use the prefix <code>BP_</code> followed by the phase and a short descriptor:</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>BP_{PHASE}_{DESCRIPTOR}
+</code></pre></div>
+<h3 id="phase-prefixes">Phase Prefixes</h3>
+<table>
+<thead>
+<tr>
+<th>Phase prefix</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BP_RESOLVE_</code></td>
+<td>Template resolution and dependency traversal</td>
+</tr>
+<tr>
+<td><code>BP_VERSION_</code></td>
+<td>Version parsing and constraint evaluation</td>
+</tr>
+<tr>
+<td><code>BP_GRAPH_</code></td>
+<td>Dependency graph building and validation</td>
+</tr>
+<tr>
+<td><code>BP_LOCK_</code></td>
+<td>Lock file reading, writing, and validation</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_</code></td>
+<td>Template rendering and staging</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_</code></td>
+<td>User input validation</td>
+</tr>
+<tr>
+<td><code>BP_CONFIG_</code></td>
+<td>Configuration loading</td>
+</tr>
+<tr>
+<td><code>BP_FETCH_</code></td>
+<td>Remote template fetching (network, authentication)</td>
+</tr>
+<tr>
+<td><code>BP_GIT_</code></td>
+<td>Git binary availability and Git command failures</td>
+</tr>
+<tr>
+<td><code>BP_ENV_</code></td>
+<td>Environment provisioning (<code>env apply</code> command group)</td>
+</tr>
+<tr>
+<td><code>BP_CONCURRENCY_</code></td>
+<td>Operation-level concurrency control: advisory-lock acquisition and mutex contention. Distinct from <code>BP_LOCK_</code>, which is content-level operations on the lock file artifact.</td>
+</tr>
+<tr>
+<td><code>BP_FILESYSTEM_</code></td>
+<td>Local filesystem failures (permission denial, path-length limits) raised by Boilerplate's I/O routines independent of pipeline stage. Example: <code>BP_FILESYSTEM_PERMISSION</code>.</td>
+</tr>
+<tr>
+<td><code>BP_BUNDLE_</code></td>
+<td>Integrity verification for archive and wheel-bundle template sources (archive extraction failures, checksum mismatches). Example: <code>BP_BUNDLE_CHECKSUM_FAILED</code>. The prefix covers all non-Git archive-based sources.</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_</code></td>
+<td>The update walk and adding a layer: drift between the lock and the answers files, an incomplete answers file, a resume whose targets differ from the paused update's, a resolved source that diverges from the lock (<code>BP_UPDATE_SOURCE_DIVERGED</code>, <a href="../10-security/#verification-pipeline">10 §Verification Pipeline</a>), staging preconditions, and a task that fails after the copy back. Example: <code>BP_UPDATE_LAYER_DRIFT</code>.</td>
+</tr>
+<tr>
+<td><code>BP_COPIER_</code></td>
+<td>Copier-engine compatibility failures (version mismatch, unsupported Copier feature). Example: <code>BP_COPIER_COMPAT_FAILED</code>.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Mapping to pipeline stages</strong>: Error code phases are orthogonal to the operational pipeline stages defined in <a href="../06-project-lifecycle/">Project lifecycle</a>. The creation pipeline stages (Resolve → Compose → Render → Lock → Init) may trigger errors from multiple phases: the Resolve stage may produce <code>BP_RESOLVE_*</code>, <code>BP_VERSION_*</code>, or <code>BP_GRAPH_*</code> errors; the Render stage may produce <code>BP_RENDER_*</code> or <code>BP_GIT_*</code> errors; the Lock stage may produce <code>BP_LOCK_*</code> errors. Error code phases group errors by their root cause domain, not by the pipeline stage in which they occur.</p>
+</blockquote>
+<h3 id="error-code-registry">Error Code Registry</h3>
+<p>When new error conditions are identified during implementation, they MUST be added to the relevant design document before being implemented. Each phase prefix has a set of error codes following the principles above. Registered codes and representative examples illustrating the pattern:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Severity</th>
+<th>Retryable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BP_RESOLVE_TEMPLATE_NOT_FOUND</code></td>
+<td>error</td>
+<td>no</td>
+<td>Template reference cannot be found in the catalog</td>
+</tr>
+<tr>
+<td><code>BP_RESOLVE_DEP_NOT_FOUND</code></td>
+<td>error</td>
+<td>no</td>
+<td>A template referenced in <code>extends</code> cannot be found in the catalog. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_RESOLVE_MERGE_CONFLICT</code></td>
+<td>error</td>
+<td>no</td>
+<td>Two layers declare incompatible values for the same configuration key. Exit code 1. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_RESOLVE_METADATA_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td>Template metadata (<code>boilerplate.yml</code>) is malformed, missing required fields, or inconsistent. Exit code 3. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_RESOLVE_VERSION_CONFLICT</code></td>
+<td>error</td>
+<td>no</td>
+<td>Diamond dependency at incompatible versions. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_RESOLVE_PROFILE_MISSING</code></td>
+<td>error</td>
+<td>no</td>
+<td>Template's <code>requires_profile</code> is not satisfied: the named profile is absent from the project's environment state, or its version does not satisfy the profile-version constraint. Exit code 3. Attribution: User / Template Author</td>
+</tr>
+<tr>
+<td><code>BP_VERSION_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td>A version string is not PEP 440 compliant. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_GRAPH_CYCLE</code></td>
+<td>error</td>
+<td>no</td>
+<td>The template dependency graph contains a cycle. Exit code 1. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_LOCK_READ_FAILED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>boilerplate.lock</code> cannot be read as a lock file: unparseable YAML, a truncated write or a body that does not match the schema. Boilerplate does not repair it; the message gives the recreate remediation (<a href="../06-project-lifecycle/#lock-file-recovery">06 §Lock File Recovery</a>). Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_LOCK_SCHEMA_UNSUPPORTED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Lock file's <code>schema_version</code> major exceeds the major supported by the running tool (the project was created by a newer Boilerplate). Fail closed; do not read or mutate. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_STAGING_FAILED</code></td>
+<td>error</td>
+<td>yes</td>
+<td>Rendering failed during staging; staging was cleaned up</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_UNSAFE_EXTENSION</code></td>
+<td>error</td>
+<td>no</td>
+<td>A Jinja2 extension is not on the allowed list. Attribution: User / Template Author</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_DEST_NOT_EMPTY</code></td>
+<td>error</td>
+<td>no</td>
+<td>The render destination exists and is non-empty, and <code>--force</code> was not provided. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_PROMPT_FAILED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Copier's prompt machinery failed because the environment cannot host interactive prompts. Exit code 1. Attribution: System</td>
+</tr>
+<tr>
+<td><code>BP_RENDER_USER_CANCELLED</code></td>
+<td>error</td>
+<td>no</td>
+<td>The user cancelled an interactive prompt (e.g. Ctrl+C). Exit code 130. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_SPECIFIER_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td>A template specifier (<code>name@version</code>) fails name or version validation. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_FORCE_REQUIRED</code></td>
+<td>error</td>
+<td>no</td>
+<td>A multi-layer render in non-interactive mode requires <code>--force</code>. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_ANSWERS_MISSING</code></td>
+<td>error</td>
+<td>no</td>
+<td>Non-interactive render cannot proceed: required questions have no default and no supplied answer. Exit code 3. Attribution: User / Template Author</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_ANSWER_REJECTED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> cannot proceed: a recorded answer fails the target view's question type, choices or validator (a retyped question or a tightened validator). The check runs inside the layer's step, after its migrations and Copier's re-read of the answers file, so a migration that repairs the answer clears it first; the message names the layer, the question and the recorded value (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a>). A value for the question supplied by <code>--data</code> or <code>--data-file</code> replaces the recorded answer, so the check applies only to a recorded answer nothing replaces; the message names the remediation <code>--data &lt;question&gt;=&lt;value&gt;</code>. In a terminal, the question's prompt shows why the answer is rejected and asks for a valid one. Exit code 3. Attribution: User / Template Author</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_TTY_REQUIRED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Interactive render requested but stdin is not a TTY, so prompts can never be answered. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_DEST_REQUIRED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Non-interactive render names no destination; the current directory is never assumed. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_INPUT_DATA_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>--data</code>/<code>--data-file</code> input fails validation: a malformed or empty <code>--data</code> key, an underscore-prefixed (Copier-reserved) <code>--data</code> key (the same key in a <code>--data-file</code> is skipped with a warning), an unreadable or non-UTF-8 <code>--data-file</code>, invalid YAML, a non-mapping document, or a non-string YAML key. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_TASK_FAILED</code></td>
+<td>error</td>
+<td>no</td>
+<td>A task failed after the update's files were copied back. Under <code>--non-interactive</code> the update keeps the files, writes the lock, and names the failed task and how to rerun it (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a>). Exit code 1. Attribution: Template Author</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_ANSWERS_INCOMPLETE</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> found, before any layer ran, a question of a layer's scoped view at the recorded versions that is neither secret nor hidden (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a> defines hidden) that neither the layer's own answers file nor its declaring layer's file records, so the walk has no answer to fill the old copy with. The message lists the layer and the keys and the remediation: undo the hand-run update that trimmed the file, with <code>git revert</code> of the commit that holds it, then run <code>boilerplate update</code> again (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a>); <code>doctor</code> reports a trimmed file and any key no layer records. Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_LAYER_DRIFT</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> found, before any layer ran and with no pending <code>conflict</code> record to resume, a layer and one of its ancestors that both disagree with <code>boilerplate.lock</code>. The message names each layer's <code>_commit</code> and the lock's version, and the remediation: undo the hand-run updates with <code>git revert</code> of the commits that hold them, then run <code>update</code> again (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_TARGET_MISMATCH</code></td>
+<td>error</td>
+<td>no</td>
+<td>An explicit <code>--target-version</code> differs from the targets the pending <code>conflict</code> record names. The message tells the user to set the partial update aside first, with <code>git revert</code> of the commit that holds it, and run <code>update</code> again (<a href="../04-composition-engine/#safe-update">04 §Safe Update</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_LAYER_UNKNOWN</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> was given a target (<code>--target-version &lt;layer&gt;@&lt;version&gt;</code>) for a layer the project's <code>boilerplate.lock</code> does not list. Nothing is staged. The message names the unknown layers, and the remediation lists the project's layers (<a href="../06-project-lifecycle/#step-2-resolve-target">06 §Step 2</a>; <a href="../05-cli-reference/#update">05 §update</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_TARGET_EXCLUDED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> was given an explicit <code>--target-version &lt;layer&gt;@&lt;version&gt;</code> that the <code>extends</code> constraint of another layer in the project's <code>boilerplate.lock</code> excludes. Nothing is staged. The message names the layer, the requested version and the constraining layer (<a href="../06-project-lifecycle/#step-2-resolve-target">06 §Step 2</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_CONFLICT_PAUSED</code></td>
+<td>error</td>
+<td>no</td>
+<td>A layer's update left merge conflicts, so <code>update</code> stopped the walk. The layers finished so far are in the working tree with Copier's conflict markers, no lock is written, and a <code>conflict</code> record is appended. The message lists each conflicted file path and its originating layer, and the remediation: resolve the conflicts and commit, then run <code>boilerplate update</code> again, or set the partial update aside (<a href="../06-project-lifecycle/#setting-a-partial-update-aside">06 §Setting a partial update aside</a>). Exit code 4. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_DOWNGRADE_REJECTED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> found, before any layer changed, a target older than the version a layer's answers file records in <code>_commit</code>, or a recorded <code>_commit</code> that yields no version. There is no override; the message names the layer, its recorded version and the target (<a href="../06-project-lifecycle/#step-2-resolve-target">06 §Step 2: Resolve Target</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_PROJECT_NOT_READY</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> or <code>add</code> found that the project is not a git repository root with at least one commit, or that its working tree has uncommitted changes, untracked files included (Copier's own rule: <code>git status --porcelain</code> is not empty). The staging worktree is not created (<a href="../06-project-lifecycle/#pre-flight-check">06 §Pre-Flight Check</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_PATH_OBSTRUCTED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Before the copy back, a path the walk added already exists in the checkout as a file or directory git ignores. The checkout is unchanged; the message names each path (<a href="../06-project-lifecycle/#staging-worktree">06 §Staging worktree</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_INTERRUPTED</code></td>
+<td>error</td>
+<td>no</td>
+<td>The restore marker shows that an earlier <code>update</code> or <code>add</code> was cut off while restoring its result into the working tree, and the rerun cannot finish it: the marker's operation differs from the command, HEAD is not the run's starting commit, the working tree differs from the run's result (a file at a path the run adds counts, even one git ignores), or a conflict had paused the run, or the marker file does not parse. The message says the run was cut off while restoring its result into the working tree, names the run's targets, and gives the remediation to set the partial update aside (<a href="../06-project-lifecycle/#setting-a-partial-update-aside">06 §Setting a partial update aside</a>) and then run the command again; for a different operation it names the command to rerun (<a href="../06-project-lifecycle/#interrupted-copy-back">06 §Interrupted copy back</a>, rules 3 and 4 and the unparseable-marker stop). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_COPY_BACK_FAILED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Copying the staging worktree back into the checkout failed partway. The copy back is undone (<a href="../06-project-lifecycle/#undo">06 §Undo</a>), the staging worktree is kept and the message names its path so the walk's result is not lost, and the restore marker and its ref are removed. No migration record is appended (<a href="../06-project-lifecycle/#staging-worktree">06 §Staging worktree</a>). Exit code 1. Attribution: System</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_PROJECT_NOT_MANAGED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>add</code> found no <code>boilerplate.lock</code> in the project. Nothing is staged, and the message itself says to use <code>boilerplate adopt</code> (<a href="../05-cli-reference/#add">05 §add</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_LAYER_ALREADY_ADDED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>add</code> named a template the project's lock already lists. The message itself says to use <code>boilerplate update</code> (<a href="../05-cli-reference/#add">05 §add</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_ANCESTORS_MISSING</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>add</code> found that a template the new layer <code>extends</code>, directly or transitively, is not in the lock. The message names each missing layer, and the remediation is <code>boilerplate add &lt;ancestor&gt;</code> first (<a href="../05-cli-reference/#add">05 §add</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_ANCESTOR_VERSION_MISMATCH</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>add</code> found an ancestor whose recorded version fails the new layer's <code>extends</code> constraint. The message names the ancestor, its recorded version and the constraint, and the remediation is <code>boilerplate update</code> first (<a href="../05-cli-reference/#add">05 §add</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_SUBMODULES_UNSUPPORTED</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>update</code> or <code>add</code> found a <code>.gitmodules</code> file in the project. The staging worktree is not created, and the message names the submodule paths (<a href="../06-project-lifecycle/#pre-flight-check">06 §Pre-Flight Check</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_UPDATE_CHECKOUT_CHANGED</code></td>
+<td>error</td>
+<td>no</td>
+<td>The user's checkout changed after the staging worktree was created, so the copy back would overwrite work. The worktree is discarded and nothing is written (<a href="../06-project-lifecycle/#staging-worktree">06 §Staging worktree</a>). Exit code 3. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_CONFIG_DIR_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td>A required directory path is missing, not a directory, or otherwise invalid. Exit code 2. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_CONFIG_PROFILE_INVALID</code></td>
+<td>error</td>
+<td>no</td>
+<td><code>profile.toml</code> exists but is not valid TOML, or a reserved section is not a table. Exit code 1. Attribution: User</td>
+</tr>
+<tr>
+<td><code>BP_CONCURRENCY_CONTENTION</code></td>
+<td>error</td>
+<td>yes</td>
+<td>Another Boilerplate process may be operating on the same project</td>
+</tr>
+<tr>
+<td><code>BP_FETCH_NETWORK_FAILED</code></td>
+<td>error</td>
+<td>yes</td>
+<td>Network error when fetching a remote template source</td>
+</tr>
+<tr>
+<td><code>BP_GIT_AUTH_FAILED</code></td>
+<td>error</td>
+<td>no</td>
+<td>Git authentication failed. Attribution: Git</td>
+</tr>
+<tr>
+<td><code>BP_ENV_APPLY_FAILED</code></td>
+<td>error</td>
+<td>yes</td>
+<td>Environment provisioning failed. Attribution: Boilerplate / proto</td>
+</tr>
+<tr>
+<td><code>BP_FILESYSTEM_PERMISSION</code></td>
+<td>error</td>
+<td>no</td>
+<td>Insufficient filesystem permissions. Attribution: System</td>
+</tr>
+</tbody>
+</table>
+<p>Each error code carries severity, retryable flag, a human-readable description, remediation guidance, and attribution. The registry grows as new failure modes are identified, but published codes are immutable from 1.0 (see Design Principle 1). Domain-specific codes are documented in their owning specification (e.g., <code>BP_ENV_*</code> in <a href="../08-environment-provisioning/">§08 Environment Provisioning</a>).</p>
+<h3 id="error-message-format">Error Message Format</h3>
+<p>Every error emitted to the user MUST include the following components, presented in inverted pyramid order (most actionable first):</p>
+<ol>
+<li><strong>Error description</strong>: A concise, human-readable <code>Error: ...</code> line with the <code>BP_*</code> code as a bracketed suffix</li>
+<li><strong>Reason</strong>: The root cause or context (indented below)</li>
+<li><strong>Fix</strong>: A concrete, actionable remediation step (indented, labeled "Fix:")</li>
+<li><strong>Code</strong>: The stable <code>BP_*</code> code (shown as suffix on the Error line)</li>
+<li><strong>Attribution</strong>: Which component owns the failure — shown only in <code>--verbose</code> mode</li>
+<li><strong>Exit code</strong>: Shown only in <code>--verbose</code> mode</li>
+</ol>
+<p><strong>For interactive (TTY) output</strong>, error messages MUST use the inverted pyramid pattern — lead with the human-readable description, promote the fix, demote metadata:</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Error: Render failed while processing template &quot;streamlit-app&quot;.   [BP_RENDER_TEMPLATE_FAILURE]
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  Missing include file _base/project/copier.yml.
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  Fix: git submodule update --init --recursive
+</code></pre></div>
+<p><strong>For verbose mode</strong> (<code>--verbose</code>), the full diagnostic format is shown:</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Error: Render failed while processing template &quot;streamlit-app&quot;.   [BP_RENDER_TEMPLATE_FAILURE]
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  Missing include file _base/project/copier.yml.
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  Fix: git submodule update --init --recursive
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  Attribution: YAML
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  Exit code: 1
+</code></pre></div>
+<p><strong>For JSON output</strong> (<code>--format json</code>), all fields are included in the JSON error object.</p>
+<p><strong>Multi-step remediation</strong>. When the fix requires more than one action, the <code>Fix:</code> line MAY expand into a multi-line block introduced by <code>→</code> arrows:</p>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Error: Template not found in catalog: pyhton-web   [BP_RESOLVE_TEMPLATE_NOT_FOUND]
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  Searched catalogs: official, community.
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  Did you mean &#39;python-web&#39; (92% match)?
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  Fix:
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    → boilerplate catalog sync
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    → boilerplate new python-web
+</code></pre></div>
+<p>Each arrow is a discrete remediation step. The arrow prefix is reserved for remediation-step lines; other guidance uses normal indentation.</p>
+<h3 id="error-attribution">Error Attribution</h3>
+<table>
+<thead>
+<tr>
+<th>Attribution</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Boilerplate</code></td>
+<td>The failure is in Boilerplate's own logic</td>
+</tr>
+<tr>
+<td><code>Copier</code></td>
+<td>Copier reported a rendering or task error</td>
+</tr>
+<tr>
+<td><code>Git</code></td>
+<td>A git operation failed</td>
+</tr>
+<tr>
+<td><code>YAML</code></td>
+<td>YAML parsing or include resolution failed</td>
+</tr>
+<tr>
+<td><code>User</code></td>
+<td>The error is due to invalid user input</td>
+</tr>
+<tr>
+<td><code>Network</code></td>
+<td>A remote operation failed due to connectivity</td>
+</tr>
+<tr>
+<td><code>System</code></td>
+<td>A required system dependency is missing or misconfigured</td>
+</tr>
+<tr>
+<td><code>proto</code></td>
+<td>The proto toolchain manager reported an error</td>
+</tr>
+<tr>
+<td><code>Template Author</code></td>
+<td>The error is due to a defect in template configuration</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Attribution decision rules for boundary cases</strong>:</p>
+<ul>
+<li>Copier fails due to invalid Jinja2 in a template → <strong>Template Author</strong> (the template has a syntax error)</li>
+<li>Copier fails due to an internal bug → <strong>Copier</strong> (Boilerplate has no control over Copier internals)</li>
+<li>Git authentication fails → <strong>User</strong> if credentials are misconfigured; <strong>Network</strong> if the server is unreachable</li>
+<li>Template declares an invalid <code>_min_copier_version</code> → <strong>Template Author</strong> (the template metadata is wrong)</li>
+<li>Lock file checksum mismatch → <strong>System</strong> (disk corruption or external modification)</li>
+</ul>
+<p>When multiple parties are involved, attribute to the <strong>root cause</strong> — the party whose action or configuration caused the failure, not the component that reported it.</p>
+<hr />
+<h2 id="structured-logging">Structured Logging</h2>
+<h3 id="logging-levels">Logging Levels</h3>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ERROR</code></td>
+<td>Operation failed; user action required</td>
+</tr>
+<tr>
+<td><code>WARNING</code></td>
+<td>Non-fatal issue the user should know about</td>
+</tr>
+<tr>
+<td><code>INFO</code></td>
+<td>Normal progress and completion events</td>
+</tr>
+<tr>
+<td><code>DEBUG</code></td>
+<td>Detailed diagnostic information (enabled by <code>--verbose</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="required-log-fields">Required Log Fields</h3>
+<p>Every structured log event MUST include: the operation phase, the specific operation, the template being processed (if applicable), a correlation ID (<code>request_id</code>), success/failure status, duration, and the <code>BP_*</code> error code on failure.</p>
+<p>Task execution events MUST additionally include the command executed, the source template, execution order, exit code, and duration. Task stdout and stderr MUST be captured and logged at DEBUG level to enable post-incident investigation of what tasks ran and which template authored them.</p>
+<p><strong>Privacy invariants</strong>:
+- Logs MUST NOT contain secrets, passwords, API tokens, or PII
+- Personal data MUST be redacted before emission
+- Only structural identifiers (template names, versions, paths) are permitted</p>
+<h3 id="redaction">Redaction</h3>
+<p>Log redaction MUST be systematic rather than per-log-statement. A centralized redaction mechanism MUST scrub sensitive patterns (credentials, tokens, URL userinfo) from all log output, including captured subprocess output, before emission. Sensitive values MUST use a type that refuses to serialize to string representations, preventing accidental leakage.</p>
+<h3 id="log-output">Log Output</h3>
+<p><strong>Terminal</strong>: When stderr is a TTY and <code>NO_COLOR</code> is not set, use rich-formatted output with colors and structured layout. Non-TTY stderr receives a single JSON object per log event.</p>
+<p><strong>Structured output</strong>: All machine-readable log output is emitted as JSON to stderr. Logging is stderr-only by design — no file-based logging, rotation, or external aggregation. Consumers that need persistence may redirect stderr.</p>
+<p><strong>Correlation ID passthrough</strong>: When <code>BOILERPLATE_REQUEST_ID</code> is set in the environment, its value MUST be used as the correlation ID for all log entries in that invocation, overriding any auto-generated ID. This enables parent service correlation in pipeline and orchestration contexts.</p>
+<h3 id="subprocess-correlation">Subprocess Correlation</h3>
+<p>The per-invocation <code>request_id</code> MUST be propagated to all subprocesses as the environment variable <code>BOILERPLATE_REQUEST_ID</code>. When <code>BOILERPLATE_REQUEST_ID</code> is already set in the environment (e.g., by a parent orchestration process), Boilerplate MUST use the provided value rather than generating a new one. This enables correlation with parent process traces and distributed tracing systems. While external tools (Copier, Git, proto) do not consume this variable, it enables:</p>
+<ul>
+<li>Correlation of Boilerplate's structured logs with subprocess output captured at DEBUG level</li>
+<li>External log aggregation systems to group all activity from a single Boilerplate invocation</li>
+</ul>
+<p>All subprocess stdout and stderr MUST be captured and logged at DEBUG level with the <code>request_id</code> and <code>phase</code> fields attached.</p>
+<h3 id="phase-vocabulary">Phase Vocabulary</h3>
+<p>The <code>phase</code> log field uses a closed enum aligned with the operation pipeline: <code>resolve</code>, <code>fetch</code>, <code>render</code>, <code>update</code>, <code>lock</code>, <code>catalog</code>, <code>env_apply</code>, plus <code>internal</code> for events outside any pipeline phase (bootstrap, configuration loading, third-party library records). Implementations MUST NOT emit <code>phase</code> values outside this set without first extending the enum here. This pipeline-phase vocabulary is distinct from the error-code phase prefixes defined above.</p>
+<h3 id="logging-invariants">Logging Invariants</h3>
+<ul>
+<li>There MUST be exactly one terminal log event per high-level request (success or failure). Step-level events MAY occur en route, but the terminal event is the canonical record.</li>
+<li>Every terminal log event with <code>success: false</code> MUST carry a <code>BP_*</code> <code>error_code</code> field. No anonymous failures.</li>
+<li><code>duration_ms</code> MUST appear only on the terminal log event, never on step events.</li>
+</ul>
+<hr />
+<h2 id="performance-contracts">Performance Contracts</h2>
+<p><strong>Invariants</strong>:</p>
+<ul>
+<li>DX commands (status, validate, shell completions) MUST complete within 500ms on a developer machine with a local catalog of up to 200 templates.</li>
+<li>Long-running operations MUST show progress feedback.</li>
+<li>Algorithmic complexity MUST be linear in the size of the template graph.</li>
+</ul>
+<h3 id="retry-policy">Retry Policy</h3>
+<p>Only errors marked <code>retryable: true</code> in the error code registry MAY be retried. Non-retryable errors (validation failures, not-found, cycles, conflicts) MUST fail immediately.</p>
+<p>Retryable errors use exponential backoff with jitter. Between retry attempts, the staging directory MUST be completely removed and recreated to prevent corrupted results from partial output.</p>
+<p><strong>Default parameters</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base delay</td>
+<td>1 second</td>
+<td>Initial delay before first retry</td>
+</tr>
+<tr>
+<td>Maximum delay</td>
+<td>30 seconds</td>
+<td>Cap on exponential growth</td>
+</tr>
+<tr>
+<td>Maximum attempts</td>
+<td>3</td>
+<td>Total attempts including the initial try</td>
+</tr>
+<tr>
+<td>Jitter</td>
+<td>Full jitter</td>
+<td>Random value between 0 and the computed delay (<code>delay = random(0, min(max_delay, base * 2^attempt))</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>These defaults apply to all retryable operations (network fetches, transient subprocess failures). Individual operations MAY override <code>max_attempts</code> via configuration but MUST NOT disable jitter.</p>
+<p><strong>Transient vs. deterministic classification</strong>: Rendering failures (<code>BP_RENDER_TEMPLATE_FAILURE</code>) are retryable only for transient causes (subprocess timeout, OOM kill). Deterministic failures (Jinja2 syntax errors, missing variables) MUST fail immediately. Implementations MUST classify the error before deciding retryability.</p>
+<h3 id="network-timeouts">Network Timeouts</h3>
+<p>All network operations MUST enforce a configurable timeout to prevent an operation from waiting indefinitely on unresponsive servers. Network timeouts and rendering timeouts are independent and independently configurable.</p>
+<hr />
+<h2 id="security-model">Security Model</h2>
+<p>The full security model lives in <a href="../10-security/">Security model</a>. Operational invariants that gate the security checks (atomic-write pattern, concurrency control, retry policy, redaction mechanism, structured logging) remain in this document; the security rules cite them where needed.</p>
+<hr />
+<h2 id="atomic-staged-write-pattern">Atomic Staged Write Pattern</h2>
+<p>Both project creation (<a href="../06-project-lifecycle/">§06</a>) and environment provisioning (<a href="../08-environment-provisioning/">§08</a>) follow the same staged-write-with-intent-journal pattern. This section defines the shared invariants; each feature documents its specific file names, phase values, and recovery procedures.</p>
+<p><strong>Core invariant</strong>: All destructive operations follow a stage → validate → commit sequence. Work is performed in an isolated staging directory. An intent journal tracks the current phase for crash recovery. On success, staged output is atomically moved into place and the journal is deleted. On failure or interruption, the staging directory is cleaned up and the project directory is left in its pre-operation state. For <code>update</code> and <code>add</code> the commit step is the copy back, which is not atomic: a copy back that fails is undone (<a href="../06-project-lifecycle/#undo">06 §Undo</a>), and one cut off midway is finished or set aside as the restore marker directs (<a href="../06-project-lifecycle/#interrupted-copy-back">06 §Interrupted copy back</a>).</p>
+<p><strong>Stale cleanup</strong>: Before creating a new staging directory, stale staging directories (older than 1 hour; see <a href="../06-project-lifecycle/">Project lifecycle</a>) from previous interrupted operations are detected and cleaned up. For <code>update</code> and <code>add</code>, whose staging directory holds a git worktree (<a href="../06-project-lifecycle/#staging-worktree">06 §Staging worktree</a>), the cleanup removes only worktrees Boilerplate created, identified by the journal and the owner check, and then runs <code>git worktree prune</code> in the project the journal's <code>destination</code> names, which drops the registration of a worktree whose folder is gone. A staging folder is stale only when it is older than the window and no running operation holds the exclusive lock each operation takes on its journal for the operation's lifetime: age alone would remove an update that is waiting at a prompt. <code>git worktree prune</code> runs only in this cleanup, never when an operation removes its own worktree, so the user's own worktree registrations are left alone.</p>
+<p><strong>Intent journal invariants</strong>:</p>
+<ul>
+<li>Written atomically and updated before each phase transition.</li>
+<li>Deleted on successful completion.</li>
+<li>If present but unparseable after a crash: left for user inspection without automated recovery.</li>
+</ul>
+<p><strong>Restore marker</strong>: For <code>update</code> and <code>add</code>, the state of a copy back cut off midway is kept in a restore marker in the project's git directory, not in the staging folder and not in the intent journal, so it outlives the stale cleanup. It is written and rewritten with the single-file invocation below (<a href="../06-project-lifecycle/#interrupted-copy-back">06 §Interrupted copy back</a>).</p>
+<p><strong>Signal handling</strong>: Process termination signals MUST trigger the same cleanup as a failure. Untrappable signals are handled by stale cleanup and journal recovery on the next invocation.</p>
+<p><strong>Retry behavior</strong>: On retry, the previous attempt's staging directory and intent journal are cleaned up before creating a new staging directory.</p>
+<p><strong>Single-file invocation</strong>: When the staged unit is a single append-only file rather than a directory tree, the same stage → validate → commit principle applies via tmp-then-rename: read existing content, construct the updated content in memory, write to a sibling temporary file (<code>&lt;filename&gt;.tmp.{random_suffix}</code>) in the same directory, then atomically rename it to the target name. This prevents a crash during write from leaving a truncated file. Used by <code>.boilerplate/migrations.yml</code> and similar single-file audit logs.</p>
+<h3 id="concurrency-control">Concurrency Control</h3>
+<p>Boilerplate does not support concurrent mutating operations on the same target. Before any mutating operation, Boilerplate MUST acquire a platform-native advisory file lock (POSIX <code>fcntl</code>/<code>flock</code>; Windows <code>LockFileEx</code>) with a configurable timeout (default: 60 seconds, <code>BOILERPLATE_LOCK_TIMEOUT</code>). If the lock cannot be acquired, fail with <code>BP_CONCURRENCY_CONTENTION</code>. The lock is held for the duration of the operation and MUST be released when the operation completes or the holding process exits (the OS releases advisory file locks on process termination). On POSIX, ownership means the lock file's UID matches the effective UID. On Windows, ACL-based ownership applies.</p>
+<hr />
+<h2 id="platform-portability">Platform Portability</h2>
+<p>Cross-cutting platform constraints that apply across all Boilerplate operations.</p>
+<h3 id="path-limits-windows">Path Limits (Windows)</h3>
+<p>Boilerplate MUST fail fast before rendering if any rendered file path would exceed the Windows path limit and long paths are not enabled. <code>boilerplate doctor</code> MUST check this setting.</p>
+<h3 id="filesystem-differences">Filesystem Differences</h3>
+<ul>
+<li>Line endings: first-party templates carry a <code>.gitattributes</code> with <code>* text=auto eol=lf</code>, and third-party templates should (<a href="../03-template-system/#template-authoring-constraints">03 §Template Authoring Constraints</a>). <code>boilerplate doctor</code> SHOULD validate that the file is present and declares it.</li>
+<li>Git submodule paths can be problematic on NTFS. Submodule initialization failures MUST produce clear errors with remediation (see <a href="../06-project-lifecycle/">Project lifecycle</a>).</li>
+</ul>
+<h3 id="network-filesystems">Network Filesystems</h3>
+<p>Advisory file locking is unreliable on network filesystems. <code>boilerplate doctor</code> MUST detect network filesystems and warn. Staging directories SHOULD be created on local storage when possible.</p>
+<h3 id="wsl2-cross-filesystem-access">WSL2 Cross-Filesystem Access</h3>
+<p>Accessing Windows filesystems from WSL2 incurs significant I/O overhead. Template sources and project directories on the native WSL2 filesystem perform significantly better.</p>
+<h3 id="environment-variables-windows">Environment Variables (Windows)</h3>
+<p>Windows treats environment variables as case-insensitive. This cannot be enforced for <code>BOILERPLATE_</code>-prefixed variables on Windows.</p>
+<hr />
+<h2 id="exit-code-reference">Exit Code Reference</h2>
+<p>Exit codes are defined in <a href="../02-data-models/">Data models</a>. An implementer MUST use those codes exactly -- no custom codes beyond those defined in §02.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../06-project-lifecycle/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Project Lifecycle">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Project Lifecycle
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../08-environment-provisioning/" class="md-footer__link md-footer__link--next" aria-label="Next: Environment Provisioning">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Environment Provisioning
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.indexes", "navigation.footer", "navigation.top", "navigation.path", "content.code.copy", "content.code.select", "content.tabs.link", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/mermaid-theme.js"></script>
+      
+        <script src="../../assets/scroll-region.js"></script>
+      
+        <script src="../../assets/javascripts/panzoom.min.js"></script>
+      
+        <script src="../../assets/javascripts/zoompan.js"></script>
+      
+    
+  
+
+  </body>
+</html>

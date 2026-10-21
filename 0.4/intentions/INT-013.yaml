@@ -1,0 +1,47 @@
+intention:
+  id: "INT-013"
+  product: "PROD-001"
+  statement: >
+    Users can adopt existing, unmanaged projects into Boilerplate
+    management by connecting them to a template and generating a lock file.
+  rationale: >
+    Most Python teams already have projects. If Boilerplate only serves
+    greenfield scaffolding, it cannot solve environment drift and
+    configuration sprawl for the vast majority of its target audience.
+    Adoption bridges the gap between "start fresh" and "bring what you
+    have" — enabling existing projects to benefit from template updates,
+    lock file verification, and reproducibility guarantees without
+    re-scaffolding from scratch.
+  priority: "high"
+  dependencies:
+    - "INT-001"   # Must understand scaffolding and lock file model
+    - "INT-011"   # Lock file generation and verification
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Users can run an adopt command against an existing, unmanaged project —
+    one with Copier answers files but no boilerplate.lock, typically a plain
+    `copier copy` project. Adopt is metadata-only: it reads the existing
+    `.copier-answers.*`, resolves the referenced template (and its extends
+    chain), and synthesizes a boilerplate.lock plus an `adopted`
+    MigrationRecord — without rendering, diffing, or prompting. The existing
+    project files are accepted as ground truth. From that point forward the
+    project participates in safe update (INT-003) and lock verification
+    (INT-011) exactly as a scaffolded project.
+
+  acceptance_criteria:
+    - "Adopt operates on an unmanaged project: it has a Copier answers file (per-layer `.copier-answers.<layer>.yml` or the legacy singular `.copier-answers.yml`) and lacks a `boilerplate.lock`"
+    - "Adopt is metadata-only: it does NOT render the template, run tasks, perform git operations, prompt, or write/mutate any `.copier-answers.*` file"
+    - "Adopt synthesizes a `boilerplate.lock` and a single `adopted` MigrationRecord from the existing answers file(s)"
+    - "Adopt resolves the referenced template and, when it is boilerplate-enabled, its extends chain; a Copier-only template (no boilerplate.yml) adopts as a minimal single-layer lock"
+    - "An adopted project is accepted by `boilerplate update` and `lock verify` on identical inputs as a scaffolded project"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Rendering, diffing, or reconciling the project against the template: verification is `lock verify` (INT-011) and reconciliation is `update` (INT-003)"
+    - "Inferring Copier answers from project files (e.g., pyproject.toml); adopt reads the existing answers file"
+    - "A pre-render trust-tier gate (adopt executes nothing, so there is nothing to gate)"
+    - "Bulk adoption of multiple projects in one command"
+    - "Migrating between different templates (adopt targets one template)"

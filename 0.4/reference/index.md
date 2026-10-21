@@ -1,0 +1,19 @@
+# Reference
+
+The lookup shelf: the command reference, the reference model, the merge rules, and generated API documentation.
+
+## Commands
+
+See the [Boilerplate CLI reference](https://therealbillsiegler.github.io/boilerplate/0.4/cli/index.md) for every command, its options, and exit codes.
+
+## Platform
+
+See [Developer platform architecture](https://therealbillsiegler.github.io/boilerplate/0.4/reference/platform/index.md) for the reference model — tool landscape, toolchain, development environment, golden path, starter templates, and guardrails.
+
+## Merging
+
+See [Merging and precedence rules](https://therealbillsiegler.github.io/boilerplate/0.4/reference/merging/index.md) for how configuration values combine across template layers.
+
+## API reference
+
+See the [API reference](https://therealbillsiegler.github.io/boilerplate/0.4/reference/api/index.md) for generated documentation of the public API of the `boilerplate`, `boilerplate.cli`, `boilerplate.composition`, `boilerplate.repository`, and `boilerplate.models` packages.

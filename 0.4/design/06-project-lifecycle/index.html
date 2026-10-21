@@ -1,0 +1,5468 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.">
+      
+      
+      
+        <link rel="canonical" href="https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/">
+      
+      
+        <link rel="prev" href="../05-cli-reference/">
+      
+      
+        <link rel="next" href="../07-operational-quality/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/boilerplate.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Project Lifecycle - Boilerplate</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  
+
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/panzoom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#project-lifecycle" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Boilerplate" class="md-header__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Boilerplate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Project Lifecycle
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../templates-hub/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Templates
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../environment/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contribute
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Boilerplate" class="md-nav__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    Boilerplate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Boilerplate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/streamlit/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streamlit template
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Streamlit template
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/streamlit/deployment/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/plain-copier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Copier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning and Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/migration-guide-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guide Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../environment/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/vscode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/merging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-data-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-template-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-composition-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-state-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project State Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project State Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-project-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1: Project Creation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Project Creation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creation Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-template-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Template Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-atomic-staged-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Atomic Staged Write
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staging-cleanup-on-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staging cleanup on retry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-lock-file-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Lock File Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lock-file-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lock File Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lock-file-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lock File Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-project-state-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Project State Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-project-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2: Project Update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: Project Update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-flight-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-Flight Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-load-current-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Load Current State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-resolve-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Resolve Target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-build-updateplan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Build UpdatePlan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-three-way-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Three-Way Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copier-version-management-for-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copier version management for update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-repository-unavailability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source repository unavailability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staging-worktree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staging worktree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Staging worktree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#undo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Undo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-behavior-and-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge behavior and ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-failure-and-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Failure and conflict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interrupted-copy-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interrupted copy back
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interrupted copy back">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-a-partial-update-aside" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting a partial update aside
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-post-update-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Post-Update State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Records
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corruption-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Corruption recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.4: Adding a layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.4: Adding a layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preconditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preconditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choices-inside-a-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choices inside a layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-25-project-adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.5: Project Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.5: Project Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preconditions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preconditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is NOT Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copier-only-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copier-Only Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-26-project-ejection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.6: Project Ejection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.6: Project Ejection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-kept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Kept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idempotency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idempotency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-and-locking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency and Locking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-recovery-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No Recovery Needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-artifact-fetching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Artifact Fetching
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-operational-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-environment-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-settings-and-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings & Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-environment-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Environment Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-build-vs-adopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Build vs Adopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-copier-internals-shim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Copier Internals Shim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-permissive-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Permissive Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-exit-code-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Exit Code Taxonomy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-005-integrity-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Integrity Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-006-template-distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006 Template Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-007-update-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-007 Update Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-008-distribution-name/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-008 Distribution Name
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-009-environment-provider-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-009 Environment Provider Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-010-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-011-structured-overlay-merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 Structured Overlay Merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-012-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 Positioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-013-interactivity-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013 Interactivity Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-014-deferred-task-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 Deferred Task Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-015-idiomatic-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 Idiomatic Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-016-project-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 Project Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-017-build-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/notices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-state-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project State Files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project State Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-project-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1: Project Creation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Project Creation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creation Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-template-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Template Resolution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-atomic-staged-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Atomic Staged Write
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staging-cleanup-on-retry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staging cleanup on retry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-lock-file-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Lock File Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lock-file-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lock File Recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lock-file-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lock File Versioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-project-state-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Project State Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-project-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2: Project Update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2: Project Update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-flight-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-Flight Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-load-current-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Load Current State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-resolve-target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Resolve Target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-build-updateplan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Build UpdatePlan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-three-way-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Three-Way Merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copier-version-management-for-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copier version management for update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#source-repository-unavailability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Source repository unavailability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staging-worktree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Staging worktree
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Staging worktree">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#undo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Undo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-behavior-and-ordering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge behavior and ordering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-failure-and-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Failure and conflict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interrupted-copy-back" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interrupted copy back
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interrupted copy back">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setting-a-partial-update-aside" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting a partial update aside
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-post-update-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Post-Update State
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Records
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#corruption-recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Corruption recovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.4: Adding a layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.4: Adding a layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preconditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preconditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choices-inside-a-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choices inside a layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-25-project-adoption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.5: Project Adoption
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.5: Project Adoption">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preconditions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preconditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adoption-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adoption Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-not-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is NOT Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#copier-only-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copier-Only Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-contracts_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Contracts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-26-project-ejection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2.6: Project Ejection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 2.6: Project Ejection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-is-kept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Is Kept
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#idempotency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Idempotency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-and-locking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency and Locking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-recovery-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No Recovery Needed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acceptance-criteria_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acceptance Criteria
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-artifact-fetching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Artifact Fetching
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Design
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../01-overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Specifications
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="../../status/">the Status page</a> for what's built project-wide.</p>
+    </div>
+  
+  
+                  
+
+
+  
+  
+
+
+<h1 id="project-lifecycle">Project Lifecycle</h1>
+<h2 id="purpose">Purpose</h2>
+<p>This document specifies the lifecycle of a Boilerplate-managed project: creation, update, layer addition, adoption, and ejection — covering workflows, lock file management, staging, and migration records.</p>
+<hr />
+<h2 id="project-state-files">Project State Files</h2>
+<p>A Boilerplate-managed project contains the following state files after creation:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Owner</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>boilerplate.lock</code></td>
+<td>Boilerplate</td>
+<td>Records exact versions, commit hashes, and checksums of all template layers used</td>
+</tr>
+<tr>
+<td><code>.copier-answers.&lt;layer&gt;.yml</code></td>
+<td>Copier</td>
+<td>One file per template layer; records answers collected during interactive prompting for that layer. Each first-party template declares its file via <code>_answers_file:</code> (see <a href="../04-composition-engine/#render-behavior">04-composition-engine.md §Render Behavior</a>).</td>
+</tr>
+<tr>
+<td><code>.boilerplate/migrations.yml</code></td>
+<td>Boilerplate</td>
+<td>Append-only audit log of all update operations (project domain)</td>
+</tr>
+</tbody>
+</table>
+<p>Environment-domain state files (<code>.boilerplate/environment.yml</code>) are documented in <a href="../08-environment-provisioning/#state-files">§08 State Files</a>.</p>
+<p><strong>Ownership invariants</strong>:
+- Boilerplate MUST NOT write to any <code>.copier-answers.&lt;layer&gt;.yml</code> file (one per template layer). Those files are owned by Copier.
+- External tools MUST NOT write to <code>boilerplate.lock</code>. That file is owned by Boilerplate.
+- <code>boilerplate.lock</code> MUST only be written after a fully successful operation (creation or update). It MUST never reflect a partial state.</p>
+<hr />
+<h3 id="concurrency">Concurrency</h3>
+<p>The universal advisory-lock rule and timeout default are defined in <a href="../07-operational-quality/#concurrency-control">07-operational-quality.md §Concurrency Control</a>. It applies to every mutating Boilerplate operation: <code>new</code>, <code>update</code>, <code>add</code>, <code>adopt</code>, <code>eject</code>, <code>env apply</code>. Project-domain specifics:</p>
+<ul>
+<li><strong>Lock target (existing project)</strong>: a <code>boilerplate-operation.lock</code> file in the project's git directory, at the path <code>git rev-parse --git-path boilerplate-operation.lock</code> prints, so each worktree of the project has its own lock. The target is not <code>boilerplate.lock</code> for two reasons: Boilerplate writes that file by replacing it with a renamed file, which Windows refuses on a file the operation holds open, and a lock file inside the working tree would dirty the tree and fail the clean-tree check. A project that is not a git repository uses the <code>new</code> target below.</li>
+<li><strong>Lock target (<code>new</code>)</strong>: a <code>.boilerplate-lock-{destination_name}</code> file created in the destination's parent directory. The file is created if absent and removed after the <code>new</code> operation completes.</li>
+</ul>
+<p><strong>Network filesystem detection</strong>: <code>boilerplate doctor</code> MUST detect and warn when the project directory or staging root resides on a network filesystem (advisory file locking is unreliable there; see <a href="../07-operational-quality/#network-filesystems">§07 Network Filesystems</a>).</p>
+<hr />
+<h2 id="part-1-project-creation">Part 1: Project Creation</h2>
+<h3 id="overview">Overview</h3>
+<p>Project creation takes a template reference, resolves its full dependency graph, composes a merged configuration, renders each template layer atomically into a destination directory, and writes <code>boilerplate.lock</code>.</p>
+<h3 id="creation-pipeline">Creation Pipeline</h3>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>1. Resolve   →  Dependency graph from boilerplate.yml extends chains
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>2. Compose   →  Merge configurations from all layers
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>3. Render    →  Atomic: stage → copy → verify → commit
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>4. Lock      →  Write boilerplate.lock after successful commit
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>5. Init      →  Append initial MigrationRecord to .boilerplate/migrations.yml (status: created)
+</code></pre></div>
+<h3 id="step-1-template-resolution">Step 1: Template Resolution</h3>
+<p>Resolve the template reference via the catalog and traverse the <code>extends</code> chain to build the full dependency graph. See <a href="../04-composition-engine/">Composition engine</a> for the resolution algorithm and graph validation.</p>
+<p><strong>Version constraint resolution</strong>: Template references resolve to either the latest version (unversioned <code>"name"</code>) or an exact version (<code>"name@version"</code>). See the Resolver's template lookup behavior described in <a href="../04-composition-engine/">Composition engine</a>.</p>
+<h3 id="step-2-composition">Step 2: Composition</h3>
+<ul>
+<li>Extract <code>copier.yml</code> configuration from each template in topological order</li>
+<li>Merge configurations using the <code>CopierConfigMerger</code> (see <a href="../04-composition-engine/">Composition engine</a>)</li>
+<li>Produce an immutable <code>CompositionArtifact</code></li>
+</ul>
+<h3 id="step-3-atomic-staged-write">Step 3: Atomic Staged Write</h3>
+<p>This step follows the <a href="../07-operational-quality/#atomic-staged-write-pattern">Atomic Staged Write Pattern</a>. Project-creation specifics:</p>
+<ul>
+<li><strong>Intent journal name</strong>: <code>.boilerplate-commit-intent.json</code>, written in the staging directory.</li>
+<li><strong>Phase enum</strong>: <code>staging</code>, <code>committing</code>, <code>locking</code> (recovery rules in <a href="../02-data-models/#intentjournal">§02 IntentJournal</a>).</li>
+<li><strong>Stale-staging window</strong>: 1 hour, owner-checked (POSIX UID match; Windows ACL full-control check).</li>
+<li><strong>Recovery rule</strong>: on failure or signal, delete staging and leave destination untouched.</li>
+</ul>
+<p>Project-specific invariants beyond the shared pattern:</p>
+<ul>
+<li>Git submodules MUST be initialized recursively before YAML parsing. Failure aborts with <code>BP_RENDER_SUBMODULE_FAILED</code>.</li>
+<li>Layers are rendered in topological order (dependencies first). Later layers completely override earlier layers for files at the same path (no content merging).</li>
+<li>Answers are collected once on the first layer; subsequent layers reuse them. Tasks run on the final layer only.</li>
+<li>After tasks execute, path safety validation MUST re-run on staging contents (closes the TOCTOU window for malicious tasks). This applies to both standard rendering and <code>--render-to</code>.</li>
+<li>The commit phase moves staging to destination. With <code>--force</code>, the existing destination is backed up first. On Windows, directory rename is not atomic — best-effort crash safety only.</li>
+</ul>
+<h3 id="staging-cleanup-on-retry">Staging cleanup on retry</h3>
+<p>On retry, the staging directory and its intent journal MUST be completely removed and recreated before the next attempt. Retrying into a staging directory with partial output could produce corrupted results.</p>
+<p><strong>File overlay semantics</strong>: File overlay follows the composition engine's full-file replacement rule. See <a href="../04-composition-engine/#managing-shared-files-across-layers">04-composition-engine.md §Managing Shared Files Across Layers</a>. Layers are rendered in topological order; later layers completely replace earlier layers' files at the same path.</p>
+<h3 id="step-4-lock-file-generation">Step 4: Lock File Generation</h3>
+<p>After a successful commit, write <code>boilerplate.lock</code> to the project root. See <a href="../02-data-models/">Data models</a> for the full <code>BoilerplateLock</code> schema and invariants.</p>
+<p>The lock file records the following per layer: <code>name</code>, <code>version</code>, <code>source</code>, <code>commit</code> (git SHA or null), and <code>checksum</code> (SHA-256 of template source directory content). It also records <code>schema_version</code>, <code>boilerplate_version</code>, <code>copier_version</code>, <code>root_template</code>, <code>copier_answers_file_hashes</code> (the per-layer answers-file hashes), and timestamps. See <a href="../02-data-models/">Data models</a> for the full <code>BoilerplateLock</code> schema.</p>
+<p><strong>Key concepts</strong>:</p>
+<ul>
+<li><code>checksum</code> fields use <code>"sha256:{hex}"</code> prefix format (forward-compatible with future algorithms). The per-layer <code>copier_answers_file_hashes</code> values use bare hex (always SHA-256 by definition).</li>
+<li>Checksums are computed over all files in the template source directory content (excluding <code>.git/</code>, <code>__pycache__/</code>, <code>.mypy_cache/</code>, <code>.pytest_cache/</code>, <code>.ruff_cache/</code>, <code>node_modules/</code>), sorted lexicographically by relative path, concatenating path and content. This list is fixed and MUST NOT depend on <code>.gitignore</code>. Template authors MAY declare additional exclusions via <code>checksum_excludes</code> in <code>boilerplate.yml</code> (see <a href="../02-data-models/">Data models</a>). See <a href="../02-data-models/">Data models</a> for the authoritative checksum computation specification.</li>
+<li>Each layer MAY include optional <code>bundle_uri</code> and <code>bundle_checksum</code> fields. These are air-gap / enterprise restoration fields, populated by external catalog infrastructure (not Boilerplate itself) and not part of the core provenance contract. The <code>wheel_bundle</code> source type and its <code>source_bundle</code> / <code>subdirectory</code> lock fields are deferred with the seed cache they support (<a href="../adr-006-template-distribution/">ADR-006</a>); layers sourced from the published first-party repositories record <code>null</code> for both.</li>
+</ul>
+<h3 id="lock-file-recovery">Lock File Recovery</h3>
+<p>If <code>boilerplate.lock</code> is corrupted (unparseable YAML, truncated write, invalid schema version), Boilerplate MUST:</p>
+<ol>
+<li>Fail with <code>BP_LOCK_READ_FAILED</code> and remediation guidance: <code>"Lock file is corrupted. To recreate: delete boilerplate.lock and run 'boilerplate new &lt;template&gt; . --force' to regenerate from the current project state."</code></li>
+<li>NOT attempt automatic repair — the lock file records provenance data (commit hashes, checksums) that cannot be reconstructed from the project alone.</li>
+<li>The <code>status</code> command MUST report lock file corruption as a top-level diagnostic.</li>
+</ol>
+<blockquote>
+<p><strong>Prevention</strong>: Lock files MUST be written atomically (temp file + rename) so interrupted writes cannot leave a partial file.</p>
+</blockquote>
+<h3 id="lock-file-versioning">Lock File Versioning</h3>
+<p>The <code>schema_version</code> field (<code>"boilerplate/lock@1"</code>) enables forward-compatible evolution. Boilerplate MUST parse any lock file whose schema version shares the same major version (e.g., <code>boilerplate/lock@1</code> through <code>boilerplate/lock@1.x</code>). Minor version bumps add optional fields; major bumps may change semantics.</p>
+<p>A lock whose <code>schema_version</code> major exceeds the major the running tool supports MUST be refused (fail closed). The tool MUST NOT read from or mutate a lock from a newer schema generation; on encountering one it MUST fail closed with a clear error (<code>BP_LOCK_SCHEMA_UNSUPPORTED</code>): "This project was created with a newer version of Boilerplate. Please upgrade." It MUST NOT silently ignore the version mismatch or attempt to partially parse the newer schema. This guards every lock-reading operation (<code>update</code>, <code>status</code>, <code>lock verify</code>).</p>
+<h3 id="step-5-project-state-initialization">Step 5: Project State Initialization</h3>
+<p>After the lock file is written:
+1. Append the initial <code>MigrationRecord</code> to <code>.boilerplate/migrations.yml</code> with <code>status: created</code> (the audit log's first entry; <code>id: "1"</code>, <code>from_version: null</code>, <code>to_version: &lt;root template specifier&gt;</code>, <code>classification: null</code>). The file is created with this record as its only entry — no separate "empty initialization" step. The <code>created</code> record is the project-creation provenance entry required by <a href="../01-overview/#safety-first-operations">§01 Safety-first operations</a>.
+2. Initialize a git repository if <code>--git-init</code> is specified (see <a href="../05-cli-reference/">CLI reference</a>)</p>
+<h3 id="acceptance-criteria">Acceptance Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Valid single template</td>
+<td>Template rendered, <code>boilerplate.lock</code> written, exit <code>0</code></td>
+</tr>
+<tr>
+<td>Valid composed template</td>
+<td>All layers rendered in order, lock includes all layers, exit <code>0</code></td>
+</tr>
+<tr>
+<td>Template not found</td>
+<td><code>DependencyNotFoundError</code>, no output written, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Circular dependency</td>
+<td><code>DependencyCycleError</code> with full cycle path, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Non-empty destination without <code>--force</code></td>
+<td><code>DestinationNotEmptyError</code>, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Rendering fails mid-stream</td>
+<td>Staging deleted, destination untouched, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Same inputs repeated with <code>--force</code></td>
+<td>Bit-identical output (idempotent), exit <code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="performance-contracts">Performance Contracts</h3>
+<p>See <a href="../07-operational-quality/">Operational quality</a> for all performance targets.</p>
+<hr />
+<h2 id="part-2-project-update">Part 2: Project Update</h2>
+<h3 id="overview_1">Overview</h3>
+<p>Project update takes an existing Boilerplate project (with <code>boilerplate.lock</code>), resolves the new target template version, computes what changed, applies a three-way merge to preserve local modifications, writes a new lock file, and appends a migration record.</p>
+<p><strong>Safety model</strong>: Update computes a plan, displays it to the user, and prompts for confirmation (<code>Proceed? [y/N]</code>) before applying. <code>--dry-run</code> prints the plan and exits without prompting. <code>--yes</code> skips the prompt and applies immediately. See <a href="../05-cli-reference/">CLI reference</a> for the full CLI contract.</p>
+<h3 id="pre-flight-check">Pre-Flight Check</h3>
+<p>Before starting the update pipeline, Boilerplate MUST run these checks in order:</p>
+<ol>
+<li>The project is a git repository root with at least one commit.</li>
+<li>Take the operation lock (<a href="../07-operational-quality/#concurrency-control">07 §Concurrency Control</a>). Every check below runs inside the lock, so no second Boilerplate operation interleaves with a check.</li>
+<li>Run the <a href="#interrupted-copy-back">restore-marker rules</a>. A cut-off run's marker is finished (and the command then ends), discarded or reported before anything reads the working tree, which that run may have left dirty. When the ref <code>refs/worktree/boilerplate/restore</code> exists and the marker does not, a crash fell between the two steps of the copy back's bracketing; remove the ref (<code>git update-ref -d</code>) and continue.</li>
+<li>The project has no uncommitted changes, untracked files included. This is Copier's own rule: Copier refuses to update a project whose <code>git status --porcelain</code> is not empty.</li>
+<li>The project has no submodules (a <code>.gitmodules</code> file). Otherwise Boilerplate MUST stop with <code>BP_UPDATE_SUBMODULES_UNSUPPORTED</code> and exit code <code>3</code>, naming the submodule paths, because git's worktree documentation says multiple checkouts of a superproject are not recommended (<a href="https://git-scm.com/docs/git-worktree">git-worktree</a>).</li>
+</ol>
+<p>When check 1 or check 4 fails, Boilerplate MUST fail immediately with <code>BP_UPDATE_PROJECT_NOT_READY</code> and exit code <code>3</code>. Check 1 reports <code>"Not a git repository root with at least one commit."</code> and check 4 reports <code>"Working tree has uncommitted changes. Commit them, or run 'git reset' and then 'git stash --include-untracked', before running boilerplate update."</code> <code>update</code> has no override; the tree is clean, or the update does not start.</p>
+<h3 id="update-pipeline">Update Pipeline</h3>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. Load     →  Read boilerplate.lock + each layer&#39;s .copier-answers.&lt;layer&gt;.yml
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. Resolve  →  Resolve each layer&#39;s target version
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. Plan     →  Compute UpdatePlan (diff old vs new)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. Apply    →  Walk the layers in a staging worktree, then copy the result back (after user confirmation)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. Lock     →  Write new boilerplate.lock
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>6. Record   →  Append migration record to .boilerplate/migrations.yml
+</code></pre></div>
+<h3 id="step-1-load-current-state">Step 1: Load Current State</h3>
+<ul>
+<li>Read <code>boilerplate.lock</code> to determine the current template versions, dependency graph, and per-layer answers-file hashes.</li>
+<li>Read each layer's <code>.copier-answers.&lt;layer&gt;.yml</code> to retrieve the answers used for the current project state. Each layer's answers file records the answers to its own and its ancestors' questions, the questions of its <a href="../04-composition-engine/#scoped-view">scoped view</a>; the walk passes each layer's <code>copier update</code> invocation the data <a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a> specifies.</li>
+<li>For each layer, compute the SHA-256 hash of the raw <code>.copier-answers.&lt;layer&gt;.yml</code> file contents and compare against the corresponding entry in <code>copier_answers_file_hashes</code> in <code>boilerplate.lock</code>. If any layer's hash differs, emit a WARNING: <code>"Answer state for layer '{layer}' may have been externally modified since the last Boilerplate operation. The update will use the current .copier-answers.{layer}.yml contents."</code>. The update proceeds despite the mismatch — the warning is informational, not blocking.</li>
+<li>If any required answers file is missing or corrupted, fail with a clear error before proceeding.</li>
+<li>Before any layer runs, three more checks, each stopping the update with its own error listed in the outcomes table below, look for layer drift, an incomplete answers file and, on a resume, targets that differ from the pending <code>conflict</code> record's (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>).</li>
+</ul>
+<h3 id="step-2-resolve-target">Step 2: Resolve Target</h3>
+<ul>
+<li>Each layer the lock lists resolves its own target version, using the same deterministic rules as project creation. Default: the latest available version of that layer that the <code>extends</code> constraints of the lock's layers allow.</li>
+<li>Support explicit target versions: <code>--target-version &lt;version&gt;</code> names the root template's target, and <code>--target-version &lt;layer&gt;@&lt;version&gt;</code>, repeatable, names the target of the layer called <code>&lt;layer&gt;</code> in the lock.</li>
+<li>A target that names a layer the lock does not list MUST stop <code>update</code> before anything is staged with <code>BP_UPDATE_LAYER_UNKNOWN</code>, naming each unknown layer and listing the project's layers.</li>
+<li>An explicit <code>&lt;layer&gt;@&lt;version&gt;</code> that the <code>extends</code> constraint of another layer in the lock excludes MUST stop <code>update</code> before anything is staged with <code>BP_UPDATE_TARGET_EXCLUDED</code>, naming the layer, the requested version and the constraining layer.</li>
+<li>Downgrades MUST be rejected, with no flag to override. Before the walk starts, <code>update</code> MUST compare each layer's target version with the version that layer's answers file records in <code>_commit</code>, parsed the way Copier parses it, with Copier's own <code>Template.version</code> (a <code>git describe</code> string such as <code>v2.0.0-3-gabc1234</code> reads as a post-release of <code>2.0.0</code>, which sorts after <code>2.0.0</code>). When any target is older, <code>update</code> MUST stop before any layer changes with <code>BP_UPDATE_DOWNGRADE_REJECTED</code>, naming the layer, its recorded version and the target. The same rule applies when a recorded <code>_commit</code> yields no version. The way back from an applied update is reverting the commit that recorded it.</li>
+</ul>
+<h3 id="step-3-build-updateplan">Step 3: Build UpdatePlan</h3>
+<p>The <code>UpdatePlan</code> summarizes what will change if the update is applied.</p>
+<p><strong>UpdatePlan fields</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current_root</code></td>
+<td>Current root template specifier</td>
+</tr>
+<tr>
+<td><code>target_root</code></td>
+<td>Target root template specifier</td>
+</tr>
+<tr>
+<td><code>layer_changes</code></td>
+<td>List of per-layer version changes</td>
+</tr>
+<tr>
+<td><code>classification</code></td>
+<td>Overall change classification: <code>PATCH</code>, <code>MINOR</code>, or <code>MAJOR</code></td>
+</tr>
+<tr>
+<td><code>migrations_required</code></td>
+<td>List of required migration actions (if any)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Classification rules</strong> (highest wins):
+- Any layer MAJOR bump → overall <code>MAJOR</code>
+- Any layer MINOR bump (no MAJOR) → overall <code>MINOR</code>
+- All PATCH bumps → overall <code>PATCH</code></p>
+<p><strong>Per-classification safety guarantees</strong>. Each classification carries a contract that template authors MUST honor and that update tooling relies on:</p>
+<table>
+<thead>
+<tr>
+<th>Classification</th>
+<th>Guarantees</th>
+<th>Migration required?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PATCH</code></td>
+<td>No removed files (except transient cache artifacts); no question name changes (defaults MAY adjust); lock differences limited to version + checksum bumps</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>MINOR</code></td>
+<td>Existing file semantics preserved; new files additive (conflict only if user created a colliding file); new questions appended with defaults; existing answer values retained</td>
+<td>No (unless <code>compatibility.breaking: true</code> flagged on the target version, which forces classification escalation to MAJOR for planning purposes)</td>
+</tr>
+<tr>
+<td><code>MAJOR</code></td>
+<td>Potential breaking changes: removed files, renamed questions, relocated paths, replaced dependencies</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Migration trigger conditions</strong>. The <code>migrations_required</code> list MUST be non-empty when ANY of the following hold for the target version:</p>
+<ul>
+<li>MAJOR version increment (across any layer).</li>
+<li>Target template metadata declares <code>compatibility.breaking: true</code>.</li>
+<li>A previously-required question is removed from the merged composition.</li>
+<li>A structural file relocation alters expected import paths.</li>
+<li>The <code>extends</code> chain replaces a dependency with one that is not API-compatible (e.g., <code>python-base</code> → <code>python-core</code>).</li>
+</ul>
+<p>Optional (advisory) migrations MAY be offered when files are soft-deprecated or configuration keys are superseded; these do NOT block update execution.</p>
+<p><strong>Pre-release version handling</strong>. Pre-release identifiers (<code>1.0a1</code>, <code>1.0rc1</code>, etc.) are lower precedence than final releases of the same release version, per <a href="../02-data-models/#version">§02 Version</a> PEP 440 ordering. Update target resolution skips pre-release versions by default; the user MUST pass <code>--allow-prerelease</code> to opt in. A transition from pre-release to its corresponding final release (e.g., <code>1.0a1</code> → <code>1.0</code>) is classified as <code>PATCH</code> for planning purposes if all release-version segments are unchanged; otherwise it is classified per the standard rules.</p>
+<p><strong>Example UpdatePlan output</strong>:
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Update plan for my-app:
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  project    0.1.0 → 0.2.0  (MINOR)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  streamlit  0.1.0 → 0.1.1  (PATCH)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Overall classification: MINOR
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Migrations required: none
+</code></pre></div></p>
+<p>When <code>--dry-run</code> is active, print the UpdatePlan and exit without prompting or modifying the project.</p>
+<p><strong>Structural changes to the <code>extends</code> chain</strong>: When a template update adds or removes parent templates (changes to the <code>extends</code> list), the UpdatePlan MUST detect and report this:</p>
+<ul>
+<li><strong>Added dependency</strong>: A layer the root's target version reaches through <code>extends</code> that was not in the previous composition. The UpdatePlan MUST list it as an <code>ADDED</code> layer, and its lock entry records <code>joined_via: extends</code>. It has no merge base, so Boilerplate MUST render it as a copy that writes only paths not already present, with a skip pattern matching every path (<code>skip_if_exists=["*"]</code>): Copier checks <code>skip_if_exists</code> before <code>overwrite</code> (<code>Worker._solve_render_conflict</code> tests <code>match_skip</code> before <code>overwrite</code>, read at Copier 9.18.1), and the Worker's patterns join the template's in <code>Worker.all_skip_if_exists</code>. A descendant's file therefore keeps its precedence as at compose, where a rendering with <code>overwrite</code> would replace it and the descendant's step would then see that as a user change. The update MUST report each colliding path it left.</li>
+<li><strong>Removed dependency</strong>: A layer that joined through <code>extends</code> (<code>LockLayer.joined_via</code>, <a href="../02-data-models/#boilerplatelock">02 §BoilerplateLock</a>) and that the root's target version no longer reaches. The UpdatePlan MUST list it as a <code>REMOVED</code> layer. Boilerplate drops the layer from the managed layer set and lock; it does NOT infer file provenance and does NOT auto-delete the removed layer's files. Cleanup of a removed layer's artifacts is the responsibility of a Copier <code>_migrations</code> script in the template that removed the dependency. When no such migration is provided, the removed layer's files are left in place (now unmanaged) and the user is WARNED: the warning names the removed layer and points to the migration as the cleanup mechanism. See <a href="../adr-007-update-model/">ADR-007</a>. The rule never applies to a layer that joined through <code>add</code>: the root's target does not govern it, so it stays in the lock and in the walk until it is removed on purpose. That holds when a later root target reaches the layer through <code>extends</code>: it keeps <code>joined_via: add</code>, is not reported as <code>ADDED</code>, and the <code>extends</code> constraint still bounds the version it walks to.</li>
+<li><strong>Classification</strong>: Any structural change to the <code>extends</code> chain (addition or removal of layers) MUST be classified as at least <code>MINOR</code>, regardless of version bumps within existing layers.</li>
+</ul>
+<h3 id="step-4-three-way-merge">Step 4: Three-Way Merge</h3>
+<p>Three-way merge semantics preserve local modifications while incorporating template changes. <strong>Boilerplate does NOT implement its own three-way merge.</strong> All merging is performed by Copier's per-template <code>update</code> mechanism; Boilerplate orchestrates the per-layer invocations and owns the staging worktree around them.</p>
+<blockquote>
+<p><strong>Why per-layer Copier <code>update</code>?</strong> Copier enforces a "1 template = 1 Git repository" rule, so the documented mechanism for multi-template projects is one <code>copier update -a &lt;answers-file&gt;</code> invocation per template. Boilerplate MUST NOT reimplement three-way merge — Copier already provides three-way semantics per layer via that template's own Git history; Boilerplate only orchestrates the per-layer invocations.</p>
+</blockquote>
+<p><strong>Merge inputs (per layer, owned by Copier)</strong>:
+- <strong>Base</strong>: The layer's old copy, rendered under its scoped view at the versions it was last rendered against: the layer's own <code>_commit</code> for its own template and <code>boilerplate.lock</code>'s versions for its ancestors (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>).
+- <strong>Theirs</strong>: The layer's template content at the target version (the new commit).
+- <strong>Ours</strong>: The current project files (potentially modified by the user since last render).</p>
+<p><strong>Safe update</strong>:</p>
+<ul>
+<li>
+<p><strong>Single-layer projects</strong> (no <code>extends</code>): Run the one layer's update through the same <code>Worker</code> subclass; its scoped view is the layer's own schema. Boilerplate writes <code>boilerplate.lock</code> afterward.</p>
+</li>
+<li>
+<p><strong>Multi-layer compositions</strong> (templates with <code>extends</code>): Boilerplate orchestrates per-layer updates by running Copier's <code>update</code> per layer in lock order (<code>copier update -a .copier-answers.&lt;layer&gt;.yml --vcs-ref=&lt;target&gt;</code> is the operation), each through the layer's scoped view (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>). Each layer's three-way merge is performed by Copier against that layer's own Git source — the published first-party repository, or an org-local clone or mirror of it (<a href="../adr-006-template-distribution/">ADR-006</a>). Layer-level success/failure is each layer's own atomic-from-Copier operation; Boilerplate stages the walk in a git worktree and brings the result back as uncommitted changes (see <a href="#staging-worktree">Staging worktree</a> and <a href="#step-5-failure-and-conflict">Step 5</a>).</p>
+</li>
+</ul>
+<p>The per-layer answers files (<code>.copier-answers.&lt;layer&gt;.yml</code>) record the answers each layer's update starts from, written at creation time per the <a href="../04-composition-engine/#render-behavior"><code>_answers_file:</code> contract</a>. <a href="../04-composition-engine/#safe-update">Design 04 §Safe Update</a> owns where each answer in a layer's step comes from, how the step prompts and checks recorded answers, how <code>--data</code> and <code>--data-file</code> replace a rejected one, and when the walk runs tasks.</p>
+<p><strong>Non-git template sources</strong>: If any locked template layer's source is a non-git source type (<code>filesystem</code> without a <code>.git/</code> directory, or <code>archive</code>), it has no commit for Copier to diff against — Copier has no three-way <em>or</em> two-way fallback for it (<a href="../adr-015-idiomatic-artifacts/#verification-2026-07-28">ADR-015 §Verification</a>). Boilerplate surfaces this:</p>
+<ol>
+<li>Warn the user prominently before proceeding: <code>"Template source '{name}' is a non-git source; skipping it — 'copier recopy' is the manual refresh for this layer."</code></li>
+<li>Skip the layer; the walk continues with the remaining git-backed layers.</li>
+<li>Log the skip at WARN level with the source type and template specifier.</li>
+</ol>
+<p>The refusal Boilerplate is working around here is Copier's existing behavior; the skip-and-continue walk above is Boilerplate's orchestration policy around it.</p>
+<h3 id="copier-version-management-for-update">Copier version management for update</h3>
+<p><code>boilerplate.lock</code> records the Copier version the project was last rendered or updated with (<code>copier_version</code>). <code>boilerplate update</code> runs with the installed Copier. When the installed Copier version differs from the recorded one, <code>boilerplate update</code> MUST emit a warning naming both versions, then proceed. The new lock records the Copier version this update ran with.</p>
+<h3 id="source-repository-unavailability">Source repository unavailability</h3>
+<p>If the template source repository referenced in the lock file has been deleted, relocated, or had its history rewritten (force-push removing the locked commit), Copier cannot reach the locked commit needed for its per-layer three-way merge. Boilerplate's role is detection and surfacing the override path:</p>
+<ol>
+<li>Raise <code>BP_LOCK_SOURCE_UNAVAILABLE</code> (not <code>BP_LOCK_READ_FAILED</code>) with remediation guidance.</li>
+<li>The <code>update</code> command MUST support a <code>--template-source &lt;path-or-url&gt;</code> override that allows the user to point Copier at an alternative source (e.g., a fork, mirror, or local copy) so its per-layer three-way merge can resolve the locked commit.</li>
+<li>If no alternative source is available, that layer's update cannot proceed — Copier has no built-in two-way fallback (<a href="../adr-015-idiomatic-artifacts/#verification-2026-07-28">ADR-015 §Verification</a>). Boilerplate skips the layer with a prominent warning and continues the walk with the remaining layers; <code>copier recopy</code> is the manual refresh once the source is restored.</li>
+</ol>
+<p>Template source repositories SHOULD be treated as critical infrastructure. The lock file records the source URL and commit hash per layer, but does not embed the template content itself — source availability is required for updates.</p>
+<h3 id="staging-worktree">Staging worktree</h3>
+<p><code>update</code> runs the walk in a detached git worktree of the project, so the user's checkout changes only when the update has finished or paused on a conflict. <code>add</code> uses the same staging (<a href="#adding-a-layer">Part 2.4</a>).</p>
+<p>The <strong>copy back</strong> is the step that reproduces the walk's result in the user's checkout. It is <code>git restore --source=&lt;commit&gt; --worktree -- :/</code> run in the checkout, where <code>&lt;commit&gt;</code> is the staging worktree's last per-layer commit. git(1) says <code>git restore</code> "is about restoring files in the working tree from either the index or another commit. This command does not update your branch", so the copy back moves neither HEAD nor the branch and leaves the uncommitted changes plain Copier leaves. git-restore adds: "If a path is tracked but does not exist in the restore source, it will be removed to match the source", so files the walk deleted are removed along with the ones it added or modified (<a href="https://git-scm.com/docs/git-restore">git-restore</a>).</p>
+<p>The diagram follows one <code>update</code> from the pre-flight check to the removal of the worktree. The <a href="#interrupted-copy-back">restore marker</a> and its ref bracket the copy back, so a run cut off inside it leaves state in git. On a conflict, the run skips the tasks and the lock and appends a <code>conflict</code> record.</p>
+<div class="panzoom-box" data-key="alt" id="panzoom0" oncontextmenu="return false;">
+    
+    <nav class="panzoom-nav" aria-label="Diagram controls">
+    <button class="panzoom-info panzoom-button" aria-label="Show pan and zoom help">
+    <svg class="panzoom-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"></path>
+    </svg>
+</button><button class="panzoom-reset panzoom-button" aria-label="Reset zoom">
+    <svg class="panzoom-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"></path>
+    </svg>
+</button><button class="panzoom-max panzoom-button" aria-label="Enter full screen">
+    <svg class="panzoom-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"></path>
+    </svg>
+</button><button class="panzoom-min panzoom-button panzoom-hidden" aria-label="Exit full screen">
+    <svg class="panzoom-icon" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 320c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0z"></path>
+    </svg>
+</button>
+    </nav>
+    <pre class="mermaid"><code>sequenceDiagram
+    accTitle: One update from pre-flight check to worktree removal
+    accDescr: Boilerplate runs the pre-flight, lock and marker rules on the user's checkout and adds a detached staging worktree with hooks off, which starts at the same commit. For each layer, ancestors first, Copier updates the layer in the worktree and Boilerplate commits it, then Boilerplate confirms the checkout is unchanged, pins the ref and writes the restore marker, copies back into the checkout, runs tasks, writes the lock, appends the record, and removes the marker, the ref and the worktree.
+    participant B as Boilerplate
+    participant U as Your checkout
+    participant S as Staging worktree
+    participant R as Repository and git dir
+    participant C as Copier
+    B-&gt;&gt;U: Pre-flight, lock, marker rules
+    B-&gt;&gt;R: worktree add --detach, hooks off
+    R--&gt;&gt;S: Detached at the starting commit
+    loop Each layer, ancestors first
+        B-&gt;&gt;C: copier update in the worktree
+        C-&gt;&gt;S: Merge the layer
+        B-&gt;&gt;R: Plumbing commit of the layer
+    end
+    B-&gt;&gt;U: Checkout unchanged, no obstruction
+    B-&gt;&gt;R: Pin the ref, write restore marker
+    B-&gt;&gt;U: Copy back
+    B-&gt;&gt;U: Run tasks
+    B-&gt;&gt;U: Write lock
+    B-&gt;&gt;U: Append record
+    B-&gt;&gt;R: Remove marker and ref
+    B-&gt;&gt;R: Remove the worktree</code></pre> 
+    <div class="panzoom-info-box panzoom-info-box-bottom panzoom-hidden">
+Hold "Alt" / "Option" to enable pan &amp; zoom
+</div>
+</div>
+<ol>
+<li><strong>Create.</strong> After the <a href="#pre-flight-check">pre-flight check</a> and the user's confirmation, Boilerplate MUST create a detached worktree of the project at its current commit (<code>git -c core.hooksPath=&lt;null device&gt; worktree add --detach</code>) in the system temp directory, inside a uniquely named folder, created owner-only (<a href="../10-security/#file-permissions">10 §File Permissions</a>), whose own name is the project folder's name. Copier exposes the destination folder's name as <code>_folder_name</code>, and templates use it as a default, so the staged render matches a render in the user's folder.<ul>
+<li>The worktree shares the repository's config, so line-ending, filter and LFS settings match the user's checkout.</li>
+<li>A detached HEAD adds no branch to the repository.</li>
+<li><code>git worktree add</code> runs the repository's <code>post-checkout</code> hook (observed with git 2.55), so Boilerplate MUST create the worktree with hooks disabled, as Copier runs its own git commands where a hook would interfere (<code>-c core.hooksPath=&lt;null device&gt;</code>, as <code>Worker._apply_update</code> does, read at Copier 9.18.1). The null device is <code>os.devnull</code>.</li>
+<li>Boilerplate MUST commit in the worktree with git's plumbing (<code>git write-tree</code>, <code>git commit-tree</code>, <code>git update-ref</code>), so the user's hooks do not run.</li>
+</ul>
+</li>
+<li><strong>Walk.</strong> Boilerplate MUST run the walk (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>) in the worktree, ancestors first, and commit after each layer. Copier refuses to update a project with uncommitted changes, so the commit is what lets Copier update the next layer.</li>
+<li><strong>Fail.</strong> Any error, a cancelled prompt or a rejected answer MUST remove the worktree. The user's checkout never changed, and no lock is written.</li>
+<li><strong>Succeed.</strong> Before copying back, Boilerplate MUST verify that the user's checkout is still at the starting commit with no changes; if not, it MUST discard the worktree and stop with <code>BP_UPDATE_CHECKOUT_CHANGED</code> and exit code <code>3</code>. It MUST likewise stop with <code>BP_UPDATE_PATH_OBSTRUCTED</code>, before any file changes, when a path the walk added already exists in the checkout as a file or directory git ignores, naming each path, because the restore would overwrite that file or delete that directory without warning. Before the copy back changes a file, it MUST pin the copy back's source commit with the ref <code>refs/worktree/boilerplate/restore</code> and then write the restore marker (<a href="#interrupted-copy-back">Interrupted copy back</a>). If the copy back fails partway, Boilerplate MUST undo it (<a href="#undo">Undo</a>), keep the staging worktree, remove the marker and the ref, and stop with <code>BP_UPDATE_COPY_BACK_FAILED</code>, naming the worktree's path, so the walk's result is not lost; it appends no record, because the undo returns the checkout to its pre-update state. Otherwise the copy back leaves the uncommitted changes plain Copier leaves, and Boilerplate runs the tasks, writes the lock, appends the record, removes the marker and the ref, and removes the worktree. Because the copy back restores from a commit, files the walk added and files it deleted both apply; a copy of the worktree's files cannot carry a deletion, such as one Copier's <code>_remove_old_files</code> makes (the <code>_remove_old_files</code> call in <code>Worker._apply_update</code>, read at Copier 9.18.1).</li>
+<li><strong>Conflict.</strong> When a layer's update returns conflicts (Copier inserts standard <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> / <code>=======</code> / <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> markers in affected text files), Boilerplate MUST stop the walk, copy back the layers finished so far together with the paused layer's changes and Copier's conflict markers, and write no lock. The paused layer is not committed in the worktree, so after the restore the copy back also applies the worktree's remaining working-tree changes (files the paused layer added or modified are written and files it deleted are removed, as <code>git status --porcelain=v1 -z</code> lists them) and replays its unmerged index entries: Copier records each conflicted file as index stages 1, 2 and 3 (the <code>if conflicted:</code> block of <code>Worker._apply_update</code>, read at Copier 9.18.1), which the copy back reads with <code>git ls-files --stage</code> in the worktree and writes with <code>git update-index --index-info</code> in the checkout, after a line that drops the path's stage 0 as Copier does. The worktree shares the checkout's object store, so the staged blobs resolve in both. The conflicted files then show as unmerged and <code>git commit</code> refuses them, as with plain Copier. The restore marker of this copy back has <code>kind</code> <code>paused</code> and holds the layers the walk finished and the paused layer; the run appends the <code>conflict</code> record and then removes the marker and the ref. See <a href="#step-5-failure-and-conflict">Step 5</a>.</li>
+</ol>
+<p>Stale worktrees left by an interrupted run are removed by the stale-staging cleanup of <a href="../07-operational-quality/#atomic-staged-write-pattern">07 §Atomic Staged Write Pattern</a>.</p>
+<h4 id="undo">Undo</h4>
+<p>Undo restores every tracked file, in the working tree and the index, from the starting commit, and removes the untracked files that git does not ignore (<code>git clean -d -f</code>, without <code>-x</code>). It does not reverse files git ignores, anything inside <code>.git</code> (a commit a task made, a moved <code>HEAD</code>) or anything outside the project, so an effect a task has there stays. Task authors SHOULD keep tasks idempotent, so that running one again after an undo is safe (<a href="../adr-014-deferred-task-execution/#consequences">ADR-014</a>). <code>update</code> and <code>add</code> refuse to start while untracked files are present (<a href="#pre-flight-check">Pre-Flight Check</a>, check 4), so every untracked file the undo removes came from the run. Boilerplate lists the untracked files before it asks the user to keep or undo, and passes only the listed paths to <code>git clean</code>, so a file the user makes while that prompt waits is not removed. A copy back that fails is undone the same way, without a prompt.</p>
+<p>Before the tasks run, Boilerplate notes the entries git ignores in the checkout (<code>git ls-files --others --ignored --exclude-standard --directory</code>). After an undo that follows a task failure, it names the ignored entries that are new and never deletes them. The note lists an ignored folder that already existed, such as <code>.venv</code>, as one entry, so Boilerplate cannot see changes inside it, and the message says so. A rerun that finishes a run cut off during its tasks (<a href="#interrupted-copy-back">Interrupted copy back</a>, rule 5) takes the note when the rerun starts, so it does not name an ignored entry the cut-off run's tasks made.</p>
+<h3 id="merge-behavior-and-ordering">Merge behavior and ordering</h3>
+<p><strong>Per-file merge behavior</strong>: Per-file merge semantics (clean updates for unchanged files, conflict-marker insertion for text-file conflicts, binary-conflict reporting for binary files, modify/delete handling, etc.) are owned by Copier's <code>update</code> mechanism. Boilerplate does not specify or implement these semantics; they are documented in Copier's own update reference.</p>
+<p><strong>Cross-layer ordering</strong>: Per-layer Copier <code>update</code> invocations are always issued in lock order, which is topological as at creation: dependencies before dependents, so a migration that renames a question rewrites the ancestor's answers file before a descendant's update reads it (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>). A failure or conflict in any layer halts the walk; subsequent layers are not invoked.</p>
+<h3 id="step-5-failure-and-conflict">Step 5: Failure and conflict</h3>
+<p><strong>Failure.</strong> Any error, a cancelled prompt or a rejected answer before the copy back removes the staging worktree, writes no lock and appends no migration record, because the user's checkout never changed. The exit code is the error's own (<code>1</code> for an unexpected failure, <code>3</code> for a rejected answer, <code>130</code> for a cancelled prompt). A copy back that fails partway is undone and appends no record. A task failure after the copy back follows <a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>, for <code>update</code> and <code>add</code> alike: a terminal offers to keep the files or undo the run (<a href="#undo">Undo</a>), and keeping the files, which <code>--non-interactive</code> does, writes the lock, appends a <code>failed</code> record, names the failed task and how to rerun it, and exits <code>1</code>.</p>
+<p><strong>Conflict.</strong> When a layer's update returns conflicts, Boilerplate:</p>
+<ul>
+<li>stops the walk, so later layers are not invoked;</li>
+<li>brings back the layers finished so far into the user's checkout as uncommitted changes, with Copier's conflict markers in the conflicted files;</li>
+<li>reports each conflicted file path and the originating layer;</li>
+<li>appends a <code>conflict</code> record, exits with code <code>4</code> (<code>ACTION_REQUIRED</code>) with <code>BP_UPDATE_CONFLICT_PAUSED</code> and writes no lock;</li>
+<li>prints the remediation <code>"Resolve conflicts and commit, then run 'boilerplate update' again. 'git reset' and then 'git stash --include-untracked' set the partial update aside."</code></li>
+</ul>
+<p>The user resolves and commits as with plain Copier, then reruns <code>boilerplate update</code>. The rerun resumes from the <code>conflict</code> record (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>), which names each layer's target version and the layers the walk finished: it skips the finished layers, walks the remaining layers to the recorded targets, runs the accumulated task list once, writes the lock and records <code>success</code>. An explicit <code>--target-version</code> that differs from the record stops with <code>BP_UPDATE_TARGET_MISMATCH</code> until the user sets the partial update aside, after which the record no longer binds and <code>update</code> plans afresh. A rerun on an uncommitted tree stops at the <a href="#pre-flight-check">pre-flight check</a>, so the mismatch is reached only after the user commits, when <a href="#setting-a-partial-update-aside">Setting a partial update aside</a> applies. A run cut off before it appends its record is finished or set aside as <a href="#interrupted-copy-back">Interrupted copy back</a> describes.</p>
+<p>An update that fails before the copy back completes, or pauses on a conflict, leaves the previous lock in place; a task failure whose files are kept writes the lock.</p>
+<h3 id="interrupted-copy-back">Interrupted copy back</h3>
+<p>A run cut off while it copies its result back, or while it finishes afterwards, is completed by running the same command again, or set aside as <a href="#setting-a-partial-update-aside">Setting a partial update aside</a> describes. No flag is involved.</p>
+<p>The restore marker keeps the state of such a run in git. It is a JSON file at <code>git rev-parse --git-path boilerplate-restore.json</code>, paired with the ref <code>refs/worktree/boilerplate/restore</code>, which pins the copy back's source commit (<code>git update-ref</code>). The fields are in <a href="../02-data-models/#restoremarker">02 §RestoreMarker</a>. Boilerplate MUST write both after the checkout-unchanged and obstruction checks and before the copy back changes a file, for <code>update</code> and for <code>add</code>; advance the marker's <code>phase</code> as the run proceeds; and remove both, file and ref (<code>git update-ref -d</code>), after the run appends its record. It MUST pin the ref first and then write the marker, and remove the marker first and then the ref, so a crash between the two steps leaves at worst a ref without a marker, which the next run's pre-flight removes. It MUST write the marker, and rewrite it for each <code>phase</code>, with the single-file recipe of <a href="../07-operational-quality/#atomic-staged-write-pattern">07 §Atomic Staged Write Pattern</a> (a sibling temporary file, then an atomic rename), so a crash never leaves a truncated file. A marker that still does not parse as the <a href="../02-data-models/#restoremarker">RestoreMarker</a> stops the command with <code>BP_UPDATE_INTERRUPTED</code> naming the file; the remediation sets the partial update aside as below, and deleting the file and running <code>git update-ref -d refs/worktree/boilerplate/restore</code> discards the marker.</p>
+<ul>
+<li><code>kind</code> is <code>complete</code> for a walk that finished every layer, and <code>paused</code> for one a conflict paused, which runs no tasks and writes no lock.</li>
+<li><code>phase</code> is <code>copy_back</code> from the moment the marker is written until the copy back ends, <code>tasks</code> while a <code>complete</code> run's tasks run, and <code>recording</code> until the record is appended. <code>add</code> runs its tasks before the lock and the record (<a href="#adding-a-layer">Part 2.4</a>), so its marker passes the same phases and rules 4, 5 and 6 below apply to <code>add</code> unchanged.</li>
+<li><code>result_commit</code> is the staging worktree's last per-layer commit, the starting commit when no layer finished.</li>
+<li><code>finished</code> lists the layers whose steps the walk finished, in walk order, and <code>paused_layer</code> names the layer whose merge left conflict markers, which follows them. A <code>complete</code> run has an empty <code>finished</code> and no <code>paused_layer</code>.</li>
+</ul>
+<p>A copy back that fails is undone (<a href="#undo">Undo</a>), the staging worktree is kept and named in the error, the marker and the ref are removed and no record is appended.</p>
+<p>When <code>update</code> or <code>add</code> starts and the marker exists, Boilerplate MUST apply these rules in order, inside the operation lock and before any layer runs. The first rule that matches decides.</p>
+<ol>
+<li><strong>The run finished.</strong> The log's last record has a <code>timestamp</code> after the marker's <code>started_at</code> and matches its targets: a <code>conflict</code> record has the same <code>targets</code>, and any other record has a <code>to_version</code> equal to <code>&lt;name&gt;@&lt;version&gt;</code> for the entry of <code>targets</code> that belongs to the root template (for <code>add</code>, the added layer's entry), because an <code>update</code> record's <code>to_version</code> is the root template specifier (<a href="../02-data-models/">02 — Data Models</a>) and an added layer sits after the root in the walk's order. Remove the marker and the ref and continue as a fresh run.</li>
+<li><strong>The marker no longer binds.</strong> The working tree is clean, so the partial update was set aside or committed. Remove the marker and the ref, warn naming the marker's targets, and plan afresh. A committed partial update then meets the drift rules of <a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>.</li>
+<li><strong>The marker belongs to another run.</strong> The marker's <code>operation</code> differs from the command, or HEAD is not <code>start_commit</code>. Stop with <code>BP_UPDATE_INTERRUPTED</code>; for a different operation, the error names the command to rerun.</li>
+<li><strong>The copy back was cut off</strong> (<code>phase</code> is <code>copy_back</code>). When <code>kind</code> is <code>complete</code>, every path that differs from <code>start_commit</code> matches <code>result_commit</code>, modified, added and deleted alike, and every path the run adds that already exists in the checkout, one that git ignores included, matches <code>result_commit</code> too, repeat the copy back from <code>result_commit</code>, which writes the same files on every run. Then run the tasks, write the lock, append <code>success</code> and remove the marker and the ref. Otherwise stop with <code>BP_UPDATE_INTERRUPTED</code>: a <code>paused</code> copy back also applies the paused layer's changes and its unmerged index entries, which no commit holds, and a path that differs from <code>result_commit</code> is an edit since the interruption, a file the cut-off run left half written, or a file made since at a path the run adds, which the repeated copy back would overwrite. A path the cut-off run itself wrote matches <code>result_commit</code> and is repeated. The comparison goes through git, so line-ending and filter settings apply as they do to the copy back; a byte comparison against the blobs fails on every text file under Windows <code>core.autocrlf</code>. <code>git status --porcelain=v1 -z --untracked-files=all</code> lists the paths that differ from <code>start_commit</code>, <code>git diff --quiet &lt;result_commit&gt; -- &lt;path&gt;</code> decides each tracked path, and for an added path <code>git hash-object -- &lt;path&gt;</code> is compared with <code>git rev-parse &lt;result_commit&gt;:&lt;path&gt;</code>. The status listing omits ignored files, so the check on added paths does not rely on it: <code>git diff --no-renames --name-only --diff-filter=A -z &lt;start_commit&gt; &lt;result_commit&gt;</code> lists the paths the run adds, and each one that exists in the checkout, ignored or not, is compared the same way before the copy back repeats. A directory at an added path counts as differing.</li>
+<li><strong>The tasks were cut off</strong> (<code>phase</code> is <code>tasks</code>). Run the tasks again, as Copier runs a template's tasks on every update (<code>Worker.run_copy</code> runs <code>_execute_tasks</code> inside <code>Phase.use(Phase.TASKS)</code> unless <code>skip_tasks</code> is set, and <code>Worker._apply_update</code> reaches it through the in-place render's <code>run_copy</code>, read at Copier 9.18.1), then write the lock, append <code>success</code> and remove the marker and the ref. A secret a task uses is asked again, because secrets are never recorded.</li>
+<li><strong>The record was cut off</strong> (<code>phase</code> is <code>recording</code>). Write the lock if <code>kind</code> is <code>complete</code> and it is not already current, append the record (<code>success</code>, or <code>conflict</code> with exit code <code>4</code> for a <code>paused</code> run) and remove the marker and the ref. A <code>conflict</code> record takes its <code>targets</code> from the marker's <code>targets</code> and its <code>finished</code> from the marker's <code>finished</code> followed by its <code>paused_layer</code>; rule 6 does not read the answers files to build it.</li>
+</ol>
+<p>Rules 1 and 2 hand the command back to the pre-flight, which continues with the clean-tree check and plans a fresh run. Rules 4, 5 and 6 finish the cut-off run and the command then ends with that run's exit code, <code>0</code>, or <code>4</code> when rule 6 appends the <code>conflict</code> record of a <code>paused</code> run; they plan no fresh run, because the tree they leave holds the finished result and the clean-tree check would stop it. Rule 3 and every other stop exit with code <code>3</code>.</p>
+<p>Every stop names the interrupted run's targets and the remediation: set the partial update aside (<a href="#setting-a-partial-update-aside">Setting a partial update aside</a>), then run the command again, which meets rule 2. The cut-off run's staging worktree is not reused; the stale-staging cleanup removes it.</p>
+<p><strong>Why the marker lives in git.</strong></p>
+<ul>
+<li>git keeps the state of its own multi-step operations under the git directory, never in the working tree: <code>git cherry-pick --continue</code> reads <code>.git/sequencer</code> (<a href="https://git-scm.com/docs/git-cherry-pick">git-cherry-pick</a>).</li>
+<li><code>git rev-parse --git-path</code> resolves under the current worktree's git directory, so each worktree of the project has its own marker.</li>
+<li>A ref under <code>refs/worktree/</code> is not shared between worktrees (<a href="https://git-scm.com/docs/git-worktree">git-worktree</a>), keeps <code>result_commit</code> reachable after the stale-staging cleanup removes the staging folder, and is not pushed with the branches.</li>
+<li>A marker in the tracked tree could be committed and pushed.</li>
+</ul>
+<h4 id="setting-a-partial-update-aside">Setting a partial update aside</h4>
+<p>Before the partial update is committed, <code>git reset</code> and then <code>git stash --include-untracked</code> set it aside, modified and added files alike, and keep it recoverable. The reset comes first: a <code>paused</code> run leaves its conflicted files as unmerged index entries, which <code>git stash</code> refuses (<code>error: could not write index</code>), and <code>git reset</code> returns the index to <code>HEAD</code> and keeps the working tree. <code>git clean</code> is not the remedy, because it would also delete any file the user has created since. Once the partial update is committed, <code>git revert</code> of the commit that holds it sets it aside.</p>
+<h3 id="step-6-post-update-state">Step 6: Post-Update State</h3>
+<p>On successful update:</p>
+<ol>
+<li>Write new <code>boilerplate.lock</code> (same format as creation, updated <code>updated_at</code>)</li>
+<li>Append a migration record to <code>.boilerplate/migrations.yml</code></li>
+<li>Remove the restore marker and its ref (<a href="#interrupted-copy-back">Interrupted copy back</a>)</li>
+</ol>
+<h3 id="migration-records">Migration Records</h3>
+<p><code>.boilerplate/migrations.yml</code> is an append-only YAML file. Each entry records one finished operation.</p>
+<p>Each <code>MigrationRecord</code> tracks: <code>id</code> (sequential), <code>from_version</code>, <code>to_version</code>, <code>timestamp</code> (ISO 8601 UTC), <code>status</code> (full enumeration in <a href="../02-data-models/">02 — Data Models</a>: <code>success</code>, <code>failed</code>, <code>conflict</code>, <code>adopted</code>, <code>created</code>), <code>error</code>, and <code>classification</code> (<code>PATCH</code>/<code>MINOR</code>/<code>MAJOR</code>). See <a href="../02-data-models/">Data models</a> for the full schema.</p>
+<p><strong>Invariants</strong> (the status values are specified in <a href="../02-data-models/#migrationrecord">§02 MigrationRecord</a>; the project-specific timing below is owned here):</p>
+<ul>
+<li>Entries MUST be append-only. An existing entry MUST NOT be modified.</li>
+<li>A finished operation appends exactly one record: <code>success</code>, <code>conflict</code>, <code>failed</code>, <code>created</code> or <code>adopted</code>. There is no <code>in_progress</code> status. A run that leaves the checkout unchanged appends none: a failure before the copy back, or a copy back that fails and is undone. The state of a run cut off while it copies back is kept in the restore marker, not in the log (<a href="#interrupted-copy-back">Interrupted copy back</a>).</li>
+<li>A <code>conflict</code> record MUST be appended when a conflict pauses an update, and a <code>failed</code> record when a task fails after the copy back and the files are kept. When the update exits with code <code>4</code> (<code>ACTION_REQUIRED</code>) due to merge conflicts, a <code>conflict</code> record is appended that names each layer's target version and the layers the walk finished, as the restore marker holds them (<a href="../02-data-models/#migrationrecord">02 §MigrationRecord</a>). When a task fails after the copy back and the run exits with code <code>1</code>, a <code>failed</code> record is appended. The <code>status: success</code> value is written only when a run completes every layer.</li>
+<li>The file MUST be created with the initial <code>created</code> MigrationRecord on project creation (per Step 5 above), not as an empty file. The audit log is complete from inception.</li>
+<li>Writes to <code>migrations.yml</code> MUST follow the single-file tmp-then-rename recipe in <a href="../07-operational-quality/#atomic-staged-write-pattern">07 §Atomic Staged Write Pattern</a>; the temporary file is <code>migrations.tmp.{random_suffix}</code>.</li>
+<li>The record is appended once, when the operation ends, and the restore marker and its ref are removed only after that. Per-status timing:</li>
+<li><code>success</code> MUST be written AFTER the lock file has been successfully written. This ordering ensures the lock file is the authoritative source of truth for completed updates. On the rerun after a conflict, <code>success</code> is appended as a new record (per <a href="#step-5-failure-and-conflict">Step 5</a>) and the <code>conflict</code> record stays unmodified.</li>
+<li><code>conflict</code> is written at exit 4 (ACTION_REQUIRED) when merge conflicts are detected. No lock file is written on this path per <a href="#step-5-failure-and-conflict">Step 5</a> — conflict is a deliberate pause state, not a completed update, so the AFTER-lock-write rule does not apply to it.</li>
+<li><code>failed</code> is written when a task fails after the copy back of an <code>update</code> or an <code>add</code> and the files are kept: under <code>--non-interactive</code>, and when a terminal user chooses to keep them. The lock file is written on that path. A terminal user who undoes the run (<a href="#undo">Undo</a>) appends no record, and the marker and the ref are removed.</li>
+</ul>
+<p><strong>Known limitation</strong>: The lock file write and migration record append are two separate atomic operations with no transactional guarantee across both. The restore marker is removed only after the record, so a crash between the lock and the record leaves the marker at <code>phase</code> <code>recording</code>, and the rerun appends the record (<a href="#interrupted-copy-back">Interrupted copy back</a>); a crash between the record and the marker's removal leaves a marker that rule 1 removes. The migration log is advisory, not authoritative.</p>
+<p><strong>Migration invariants</strong>:</p>
+<ul>
+<li>Entries MUST be append-only and chronologically ordered by <code>timestamp</code>. Implementations MUST NOT reorder, delete, or rewrite prior entries.</li>
+<li>On the update path, <code>boilerplate.lock</code> MUST be regenerated only after a successful update operation; the lock is the authoritative source of completed-update truth.</li>
+<li>A failed update that stops before the copy back, or whose copy back fails and is undone, MUST leave the project in its pre-update state with no migration record. A <code>failed</code> MigrationRecord is written only when a task fails after the copy back, and it MUST itself be written atomically per §Atomic Staged Write Pattern.</li>
+</ul>
+<h3 id="corruption-recovery">Corruption recovery</h3>
+<p>If <code>migrations.yml</code> cannot be parsed (malformed YAML, truncated file), implementations MUST:</p>
+<ol>
+<li>Log a WARNING with the parse error details.</li>
+<li>Treat the migration history as empty (zero entries).</li>
+<li>Continue the operation — the lock file is the authoritative state; the migration log is advisory.</li>
+<li>On the next successful operation that writes a migration record, the corrupted file is replaced with a new file containing only the latest entry.</li>
+</ol>
+<p>Implementations MUST NOT abort an <code>update</code> operation solely because <code>migrations.yml</code> is corrupted.</p>
+<h3 id="acceptance-criteria_1">Acceptance Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--dry-run</code></td>
+<td>UpdatePlan printed, no files modified, exit <code>0</code></td>
+</tr>
+<tr>
+<td>PATCH update, no local changes</td>
+<td>Files updated, new lock written, migration recorded, exit <code>0</code></td>
+</tr>
+<tr>
+<td>MINOR update, local changes, no conflicts</td>
+<td>Local changes preserved, template deltas applied, exit <code>0</code></td>
+</tr>
+<tr>
+<td>MAJOR update</td>
+<td>UpdatePlan flags MAJOR, requires explicit confirmation</td>
+</tr>
+<tr>
+<td>Merge conflict detected</td>
+<td>Layers finished so far brought back as uncommitted changes with Copier's conflict markers, no new lock written, migration record with <code>conflict</code> status, exit <code>4</code></td>
+</tr>
+<tr>
+<td>Dirty working tree, untracked files included</td>
+<td>Error naming the uncommitted changes; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Project with submodules</td>
+<td><code>BP_UPDATE_SUBMODULES_UNSUPPORTED</code> naming the paths; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>User's checkout changed while the run worked in the staging worktree</td>
+<td>Worktree discarded, <code>BP_UPDATE_CHECKOUT_CHANGED</code>; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Task fails after the copy back (<code>--non-interactive</code>)</td>
+<td>Files kept, lock written, failed task named with how to rerun it, <code>failed</code> migration record, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Recorded answer rejected by the target view's question type or validator (non-interactive)</td>
+<td><code>BP_INPUT_ANSWER_REJECTED</code> naming the layer, question and recorded value; the update stops, no lock written, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Downgrade attempt</td>
+<td>Rejected before any layer changes, error names the layer, recorded version and target, exit <code>3</code></td>
+</tr>
+<tr>
+<td>A layer and one of its ancestors both disagree with <code>boilerplate.lock</code>, with no pending <code>conflict</code> record</td>
+<td><code>BP_UPDATE_LAYER_DRIFT</code> naming each layer's <code>_commit</code> and the lock's version, with the <code>git revert</code> remediation; no layer runs, no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>A question of a layer's scoped view at the recorded versions, neither secret nor hidden, has no answer in the layer's own answers file or its declaring layer's</td>
+<td><code>BP_UPDATE_ANSWERS_INCOMPLETE</code> naming the layer and the keys, with the <code>git revert</code> remediation; no layer runs, no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td><code>--target-version</code> differs from the targets of the pending <code>conflict</code> record</td>
+<td><code>BP_UPDATE_TARGET_MISMATCH</code> telling the user to set the partial update aside first; no layer runs, no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td><code>--target-version &lt;layer&gt;@&lt;version&gt;</code> names a layer the lock does not list</td>
+<td><code>BP_UPDATE_LAYER_UNKNOWN</code> naming each unknown layer and listing the project's layers; nothing staged, exit <code>3</code></td>
+</tr>
+<tr>
+<td><code>--target-version &lt;layer&gt;@&lt;version&gt;</code> names a version another lock layer's <code>extends</code> constraint excludes</td>
+<td><code>BP_UPDATE_TARGET_EXCLUDED</code> naming the layer, the version and the constraining layer; nothing staged, exit <code>3</code></td>
+</tr>
+<tr>
+<td>A layer <code>add</code> introduced, which the root's target version does not reach</td>
+<td>Stays in the lock, walks to its own target, is not reported as <code>REMOVED</code></td>
+</tr>
+<tr>
+<td>A layer <code>add</code> introduced, which the root's target version reaches through <code>extends</code></td>
+<td>Keeps <code>joined_via: add</code>, walks to its own target within the <code>extends</code> constraint, is not reported as <code>ADDED</code> or <code>REMOVED</code></td>
+</tr>
+<tr>
+<td>Failure mid-update</td>
+<td>Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Copy back fails partway</td>
+<td>Copy back undone (<a href="#undo">Undo</a>), worktree kept and named, marker and ref removed, no migration record, <code>BP_UPDATE_COPY_BACK_FAILED</code>, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Run cut off while copying back or finishing, working tree holds only what it wrote</td>
+<td>The same <code>update</code> again repeats the copy back, runs the tasks, writes the lock and appends <code>success</code>; exit <code>0</code></td>
+</tr>
+<tr>
+<td>Run cut off, working tree edited since (a file at a path the run adds included, even one git ignores), or the run was paused by a conflict</td>
+<td><code>BP_UPDATE_INTERRUPTED</code> naming the run's targets; nothing changed, exit <code>3</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="performance-contracts_1">Performance Contracts</h3>
+<p>See <a href="../07-operational-quality/">Operational quality</a> for all performance targets.</p>
+<hr />
+<h2 id="adding-a-layer">Part 2.4: Adding a layer</h2>
+<h3 id="overview_2">Overview</h3>
+<p>Adding a layer applies one more template to a project Boilerplate already manages and records it in <code>boilerplate.lock</code>. The result MUST equal what one more by-hand <code>copier copy</code> of the layer with its own answers file would produce: Copier's documented idiom for <a href="https://copier.readthedocs.io/en/stable/configuring/#applying-multiple-templates-to-the-same-subproject">applying multiple templates to the same subproject</a>, which is the reference point the composition answers to (<a href="../adr-015-idiomatic-artifacts/">ADR-015</a>). The CLI contract is in <a href="../05-cli-reference/#add">05-cli-reference.md §add</a>.</p>
+<h3 id="preconditions">Preconditions</h3>
+<p>The preconditions are the ones in <a href="../05-cli-reference/#add">05-cli-reference.md §add</a>, checked before any file changes, with the working tree check the same as the update <a href="#pre-flight-check">Pre-Flight Check</a>, whose operation lock and <a href="#interrupted-copy-back">restore-marker rules</a> run first. Each failure exits with code <code>3</code>.</p>
+<h3 id="add-pipeline">Add pipeline</h3>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>1. Resolve  →  Resolve the template and its extends
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2. Ask      →  Ask the new layer&#39;s own questions
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>3. Answers  →  Take answers to ancestors&#39; questions as update takes them
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>4. Render   →  Render the layer&#39;s scoped view with Copier&#39;s copy
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>5. Return   →  Bring the result back as uncommitted changes
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>6. Tasks    →  Run the new layer&#39;s tasks once
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>7. Lock     →  Write boilerplate.lock with the layer appended
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>8. Record   →  Append a migration record
+</code></pre></div>
+<ol>
+<li><strong>Resolve</strong> the template and its <code>extends</code>.</li>
+<li><strong>Ask</strong> only the new layer's own questions, with defaults from the merged template of the project's layers plus the new one.</li>
+<li><strong>Take answers</strong> to ancestors' questions the same way update takes them (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>).</li>
+<li><strong>Render</strong> the layer's scoped view with Copier's <code>copy</code>, using the same staging as update (<a href="#staging-worktree">Staging worktree</a>, <a href="#step-5-failure-and-conflict">Step 5: Failure and conflict</a>).</li>
+<li><strong>Bring the result back</strong> as uncommitted changes.</li>
+<li><strong>Run the new layer's tasks once</strong>, as at compose, against the finished project, before the lock and the record as <code>new</code> and <code>update</code> run theirs. A task that fails is handled as for <code>update</code> (<a href="../04-composition-engine/#safe-update">design 04 §Safe Update</a>): keeping the files writes the lock and appends a <code>failed</code> record, and undoing (<a href="#undo">Undo</a>) appends no record.</li>
+<li><strong>Write <code>boilerplate.lock</code></strong> with the new layer appended at the end of the lock's layer order and its <code>joined_via</code> set to <code>add</code>. A new layer has no descendants, so last is always valid.</li>
+<li><strong>Append a migration record</strong> to <code>.boilerplate/migrations.yml</code>. The record carries no classification, as for <code>created</code> and <code>adopted</code> records: no prior version of the layer exists to compare.</li>
+</ol>
+<p>The copy back, its failure handling and the restore marker are those of <code>update</code> (<a href="#staging-worktree">Staging worktree</a>, <a href="#interrupted-copy-back">Interrupted copy back</a>), with the marker's <code>operation</code> set to <code>add</code>. The marker passes <code>copy_back</code>, <code>tasks</code> and <code>recording</code> as an update's does, so recovery rules 4, 5 and 6 apply to <code>add</code> unchanged.</p>
+<h3 id="files">Files</h3>
+<p>The new layer renders into the existing tree as the by-hand copy would. The new layer's <code>_skip_if_exists</code> applies, because Copier checks it before <code>overwrite</code> (<code>Worker._solve_render_conflict</code>, read at Copier 9.18.1): a file it lists that already exists keeps its content, and any other file another layer already rendered is overwritten and shows in the uncommitted diff, where the user reviews it before committing. <code>new</code> with the layer and <code>add</code> of the layer later can therefore differ for the listed files, because a composed <code>new</code> render ignores every layer's <code>_skip_if_exists</code> (<a href="../04-composition-engine/#per-layer-render-loop">04 §Per-Layer Render Loop</a>) while in the <code>add</code> case the project already owns them. A template intended to be added later SHOULD render only files no other layer renders.</p>
+<h3 id="choices-inside-a-layer">Choices inside a layer</h3>
+<p>A layer that offers alternatives (CI providers, docs site generators) SHOULD ask one choice question and render conditional paths: Copier skips any path whose rendered name is empty, so the unchosen alternatives render nothing. Changing the choice later is an answer change on <code>update</code> (<code>--data</code>), merged by Copier's update.</p>
+<h3 id="acceptance-criteria_2">Acceptance Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer added to a managed project with a clean tree</td>
+<td>Layer rendered as uncommitted changes, its tasks run, lock written with the layer last and <code>joined_via: add</code>, migration recorded, exit <code>0</code></td>
+</tr>
+<tr>
+<td>Project not managed (<code>boilerplate.lock</code> missing)</td>
+<td>Error pointing to <code>boilerplate adopt</code>; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Dirty working tree</td>
+<td>Error naming the uncommitted changes; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Template already in the project</td>
+<td>Error pointing to <code>boilerplate update</code>; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>An ancestor the layer <code>extends</code> is not in the lock</td>
+<td>Error naming each missing layer with the remediation <code>boilerplate add &lt;ancestor&gt;</code> first; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>An ancestor's recorded version fails the layer's <code>extends</code> constraint</td>
+<td>Error naming the ancestor, its recorded version and the constraint, with the remediation <code>boilerplate update</code> first; no files modified, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Failure mid-add</td>
+<td>Staging worktree removed, checkout unchanged, no lock and no migration record, remediation guidance printed, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Task fails after the copy back (<code>--non-interactive</code>)</td>
+<td>Files kept, lock written with the layer, failed task named with how to rerun it, <code>failed</code> migration record, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Task fails after the copy back (terminal), user chooses to keep the files</td>
+<td>As under <code>--non-interactive</code>: lock written, <code>failed</code> record appended, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Task fails after the copy back (terminal), user chooses to undo</td>
+<td>Run undone (<a href="#undo">Undo</a>), no record; marker and ref removed</td>
+</tr>
+<tr>
+<td>Run cut off while copying back, running the tasks, writing the lock or recording, working tree holds only what it wrote</td>
+<td>The same <code>add</code> again finishes the run: the tasks run if they had not finished, lock written, <code>success</code> record appended; exit <code>0</code></td>
+</tr>
+<tr>
+<td>Run cut off, working tree edited since (a file at a path the layer adds included, even one git ignores)</td>
+<td><code>BP_UPDATE_INTERRUPTED</code> naming the layer; nothing changed, exit <code>3</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="part-25-project-adoption">Part 2.5: Project Adoption</h2>
+<h3 id="overview_3">Overview</h3>
+<p>Adoption bridges existing Copier-managed projects into Boilerplate lifecycle management. It creates the Boilerplate state files (<code>boilerplate.lock</code>, <code>.boilerplate/migrations.yml</code>) without modifying project files. After adoption, the project can use <code>status</code>, <code>lock verify</code>, and <code>update</code> as if it had been created with <code>boilerplate new</code>.</p>
+<h3 id="preconditions_1">Preconditions</h3>
+<p>Before adoption can proceed, all of the following MUST hold:</p>
+<ul>
+<li>At least one Copier answers file MUST exist in the project directory (confirms the project is Copier-managed). Adoption accepts both Copier's default singular <code>.copier-answers.yml</code> (legacy projects without <code>_answers_file:</code>) and per-layer <code>.copier-answers.&lt;layer&gt;.yml</code> files (projects scaffolded from Boilerplate-enabled templates).</li>
+<li><code>boilerplate.lock</code> MUST NOT exist (the project is not already managed by Boilerplate). If it exists, fail with exit code <code>3</code>: <code>"Project already managed by Boilerplate. Use 'boilerplate update' instead."</code></li>
+<li>The template referenced by the discovered answers file(s) MUST be resolvable in the catalog</li>
+</ul>
+<h3 id="adoption-pipeline">Adoption Pipeline</h3>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. Read     →  Parse each `.copier-answers.*.yml` (or the legacy singular `.copier-answers.yml`) for template source and answers
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2. Resolve  →  Resolve template in catalog; if boilerplate-enabled, resolve full extends chain
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. Checksum →  Compute template source checksums for each layer
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>4. Lock     →  Write boilerplate.lock (same schema as creation)
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>5. Init     →  Write .boilerplate/migrations.yml with initial &quot;adopted&quot; entry
+</code></pre></div>
+<p>Each pipeline step follows the same rules as creation: the per-layer <code>copier_answers_file_hashes</code> are computed the same way, checksums use the same algorithm, lock files use the same schema and <a href="../07-operational-quality/#atomic-staged-write-pattern">Atomic Staged Write Pattern</a>, and <code>created_at</code>/<code>updated_at</code> are both set to the current UTC timestamp. The migration record uses <code>adopted</code> (not <code>success</code>) as its status value, distinguishing adopted projects from created projects in the audit trail.</p>
+<h3 id="what-is-not-done">What Is NOT Done</h3>
+<p>Adoption is a metadata-only operation. The following actions are explicitly <strong>not</strong> performed:</p>
+<ul>
+<li>No files are rendered or written to the project directory (beyond the state files)</li>
+<li>No template tasks are executed</li>
+<li>No git operations are performed (no commits, no branching)</li>
+<li>No environment provisioning is triggered</li>
+<li>Copier answers files (whichever form the project uses — singular <code>.copier-answers.yml</code> or per-layer <code>.copier-answers.&lt;layer&gt;.yml</code>) are read but never modified</li>
+</ul>
+<p>The project's existing files remain exactly as they were before adoption.</p>
+<blockquote>
+<p><strong>Adopted projects MAY use Copier's default singular <code>.copier-answers.yml</code> file.</strong> Adopted projects scaffolded by plain Copier (or by Boilerplate before per-layer files were the default) lack the per-layer <code>_answers_file:</code> contract (see <a href="../04-composition-engine/#render-behavior">04 §Render Behavior</a>). The <code>boilerplate.lock.copier_answers_file_hashes</code> mapping for an adopted single-layer project carries one entry, with the layer's template name as the key and the singular file's hash as the value.</p>
+</blockquote>
+<h3 id="copier-only-templates">Copier-Only Templates</h3>
+<p>When the resolved template has no <code>boilerplate.yml</code>, it is a Copier-only template. Adoption still succeeds, but with reduced capabilities:</p>
+<ul>
+<li>A minimal lock file is written with a single layer and no composition metadata (no <code>extends</code> chain)</li>
+<li>The project can use <code>status</code> and <code>lock verify</code> to check template version and checksum integrity</li>
+<li>The project <strong>cannot</strong> use composition features (<code>compose</code>, <code>graph</code>) because there is no <code>boilerplate.yml</code> defining the composition</li>
+<li><code>update</code> delegates entirely to Copier's single-template update mechanism</li>
+</ul>
+<h3 id="acceptance-criteria_3">Acceptance Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Valid Copier project, template in catalog</td>
+<td><code>boilerplate.lock</code> and <code>.boilerplate/migrations.yml</code> written, exit <code>0</code></td>
+</tr>
+<tr>
+<td>Project already has <code>boilerplate.lock</code></td>
+<td>Rejected with <code>"Project already managed by Boilerplate"</code>, exit <code>3</code></td>
+</tr>
+<tr>
+<td>No Copier answers file found (neither singular <code>.copier-answers.yml</code> nor any <code>.copier-answers.&lt;layer&gt;.yml</code>)</td>
+<td>Rejected with <code>"No Copier answers file found"</code>, exit <code>3</code></td>
+</tr>
+<tr>
+<td>Template not found in catalog</td>
+<td><code>BP_RESOLVE_TEMPLATE_NOT_FOUND</code>, exit <code>1</code></td>
+</tr>
+<tr>
+<td>Copier-only template (no <code>boilerplate.yml</code>)</td>
+<td>Minimal lock file written (single layer, no composition), exit <code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="performance-contracts_2">Performance Contracts</h3>
+<p>See <a href="../07-operational-quality/">Operational quality</a> for all performance targets.</p>
+<p><strong>Cross-reference</strong>: See <a href="../05-cli-reference/">CLI reference</a> for the full <code>adopt</code> CLI specification.</p>
+<hr />
+<h2 id="part-26-project-ejection">Part 2.6: Project Ejection</h2>
+<h3 id="overview_4">Overview</h3>
+<p>Ejection is the exact inverse of <a href="#part-25-project-adoption">adoption</a>: it removes the Boilerplate-owned management state from a project, leaving every rendered file in place. After ejection, the directory is no longer Boilerplate-managed — <code>update</code>, <code>status</code>, and <code>lock verify</code> no longer apply — but it remains a usable plain Copier project (or plain files). Like adoption, ejection never modifies the project's rendered output.</p>
+<h3 id="what-is-removed">What Is Removed</h3>
+<p>Ejection deletes only Boilerplate-owned artifacts:</p>
+<ul>
+<li><code>boilerplate.lock</code> (if present).</li>
+<li>The entire <code>.boilerplate/</code> directory (project-domain <code>migrations.yml</code>, and the environment-domain <code>environment.yml</code> if present).</li>
+</ul>
+<h3 id="what-is-kept">What Is Kept</h3>
+<ul>
+<li>The Copier answers files — per-layer <code>.copier-answers.&lt;layer&gt;.yml</code>, or the legacy singular <code>.copier-answers.yml</code> — are <strong>Copier-owned</strong> and left untouched. An ejected project can still be managed directly with <code>copier update</code>.</li>
+<li>All rendered project files.</li>
+<li><code>.prototools</code> and any proto-installed tools. <strong>Ejection NEVER touches proto state.</strong> Tool teardown is proto's responsibility: the proto install store is shared across projects, so removing it on one project's behalf is unsafe. This mirrors the ownership boundary that adoption respects in the other direction — Boilerplate manages only the files it owns.</li>
+</ul>
+<h3 id="idempotency">Idempotency</h3>
+<p>Ejection is a no-op only when NEITHER <code>boilerplate.lock</code> NOR <code>.boilerplate/</code> is present: it warns and exits <code>0</code>. Otherwise it removes whichever of the two exist — <code>boilerplate.lock</code> (if present) and the entire <code>.boilerplate/</code> directory. The directory is checked independently because <code>env apply</code> can create <code>.boilerplate/environment.yml</code> with no lock present (an environment-only project); keying the no-op on <code>boilerplate.lock</code> alone would orphan that state. This makes ejection safe to run repeatedly and safe to script.</p>
+<h3 id="concurrency-and-locking">Concurrency and Locking</h3>
+<p>Ejection is a mutating operation and MUST acquire the standard advisory mutex on the project before removing state, under the universal rule in <a href="#concurrency">§Concurrency</a> (same as <code>new</code>, <code>update</code>, <code>add</code>, <code>adopt</code>, and <code>env apply</code>). The lock target is the existing-project target under <a href="#concurrency">§Concurrency</a>; for an environment-only project (no lock, only <code>.boilerplate/</code>) that is not a git repository, the mutex falls back to the <code>new</code>-style sentinel (<code>.boilerplate-lock-{destination_name}</code> in the project's parent directory).</p>
+<h3 id="no-recovery-needed">No Recovery Needed</h3>
+<p>Ejection is a delete, not a staged write: there is no staging directory, no intent journal, and no backup to roll back or resume. Consequently it reuses none of update's merge or staging-worktree machinery. A user who ejects by mistake can re-<code>adopt</code> the project — adoption regenerates <code>boilerplate.lock</code> and <code>.boilerplate/migrations.yml</code> from the existing Copier answers files (see <a href="#part-25-project-adoption">Part 2.5</a>).</p>
+<h3 id="acceptance-criteria_4">Acceptance Criteria</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Expected Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Managed project (<code>boilerplate.lock</code> present)</td>
+<td><code>boilerplate.lock</code> and <code>.boilerplate/</code> removed; rendered files and <code>.copier-answers.*</code> kept; exit <code>0</code></td>
+</tr>
+<tr>
+<td>Environment-only project (<code>.boilerplate/</code> present, no <code>boilerplate.lock</code>)</td>
+<td><code>.boilerplate/</code> removed; rendered files and <code>.copier-answers.*</code> kept; exit <code>0</code></td>
+</tr>
+<tr>
+<td>Neither <code>boilerplate.lock</code> nor <code>.boilerplate/</code> present</td>
+<td>No-op: warning emitted, nothing removed, exit <code>0</code></td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Removal list printed, nothing removed, exit <code>0</code></td>
+</tr>
+<tr>
+<td>Filesystem/permission failure during removal</td>
+<td><code>BP_FILESYSTEM_PERMISSION</code>, exit <code>1</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Cross-reference</strong>: See <a href="../05-cli-reference/">CLI reference</a> for the full <code>eject</code> CLI specification.</p>
+<hr />
+<h2 id="part-3-artifact-fetching">Part 3: Artifact Fetching</h2>
+<p>For remote templates (not local directories), the system MUST:</p>
+<ol>
+<li>Fetch template artifacts from remote git hosting services (e.g., GitHub, GitLab, Bitbucket)</li>
+<li>Cache fetched artifacts locally with SHA-256 integrity validation</li>
+<li>Initialize git submodules before any YAML parsing</li>
+<li>Retry transient network failures with exponential backoff (max 3 attempts by default)</li>
+<li>Detect and report missing or broken submodule references with recovery suggestions</li>
+</ol>
+<p><strong>Caching</strong>: Templates fetched from remote repositories MUST be cached by their <code>checksum</code>. Subsequent operations with the same checksum MUST use the cached artifact without re-fetching.</p>
+<p><strong>Retry policy</strong>: See <a href="../07-operational-quality/">Operational quality</a> for the full retry specification.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../05-cli-reference/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CLI Reference">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                CLI Reference
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../07-operational-quality/" class="md-footer__link md-footer__link--next" aria-label="Next: Operational Quality">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Operational Quality
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.indexes", "navigation.footer", "navigation.top", "navigation.path", "content.code.copy", "content.code.select", "content.tabs.link", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/mermaid-theme.js"></script>
+      
+        <script src="../../assets/scroll-region.js"></script>
+      
+        <script src="../../assets/javascripts/panzoom.min.js"></script>
+      
+        <script src="../../assets/javascripts/zoompan.js"></script>
+      
+    
+  
+
+  </body>
+</html>

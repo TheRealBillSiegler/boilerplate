@@ -1,0 +1,40 @@
+intention:
+  id: "INT-008"
+  product: "PROD-001"
+  statement: >
+    Scaffolded projects emit AI-agent configuration so AI-assisted
+    development works out of the box.
+  rationale: >
+    AI-agent configuration is a Boilerplate concern: templates emit it during
+    scaffolding so AI-assisted development is productive from the first
+    commit, rather than requiring users to manually configure AI coding
+    assistants (Copilot instructions, agent mode settings, CLAUDE.md, etc.)
+    after the fact.
+  priority: "medium"
+  dependencies:
+    - "INT-001"  # AI config is emitted during scaffolding
+    - "INT-006"   # Template authors need guidance on AI config patterns
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    Scaffolded projects include AI-agent configuration files tailored to the
+    project's toolchain and conventions. The configuration teaches agents
+    project-specific knowledge, not just generic instructions. The
+    configuration is opinionated but overridable, and subject to trust tier
+    restrictions (AI config is a trust surface).
+
+  acceptance_criteria:
+    # Behavior
+    - "AI config files emitted by a template are included in the INT-003 safe-update merge path"
+    - "AI config emitted by a template is subject to the trust-ceiling enforcement defined in INT-002 / §03 — Community-tier templates cannot emit AI config that exceeds Community's trust ceiling"
+    - "Multi-agent guidance documents how AI config is composable or non-contradictory across Copilot, Claude, and Cursor"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Runtime AI agent execution or orchestration"
+    - "AI-powered template generation or code synthesis"
+    - "Specific AI vendor lock-in (configuration is format-agnostic)"
+    - "Automation gates (moved to INT-003 as part of safe update)"
+    - "What AI config a template emits — that is a template-content concern owned by the template author, not by Boilerplate"

@@ -1,0 +1,3581 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.">
+      
+      
+      
+        <link rel="canonical" href="https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-017-build-backend/">
+      
+      
+        <link rel="prev" href="../adr-016-project-vocabulary/">
+      
+      
+        <link rel="next" href="../../contribute/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/boilerplate.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-017 Build Backend - Boilerplate</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  
+
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/panzoom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-017-build-backend-uv_build-by-default-hatchling-by-choice" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Boilerplate" class="md-header__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Boilerplate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-017 Build Backend
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../templates-hub/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Templates
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../environment/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contribute
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Boilerplate" class="md-nav__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    Boilerplate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Boilerplate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/streamlit/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streamlit template
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Streamlit template
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/streamlit/deployment/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/plain-copier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Copier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning and Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/migration-guide-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guide Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../environment/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/vscode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/merging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-data-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-template-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-composition-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-project-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-operational-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-environment-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-settings-and-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings & Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-environment-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Environment Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-build-vs-adopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Build vs Adopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-copier-internals-shim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Copier Internals Shim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-permissive-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Permissive Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-exit-code-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Exit Code Taxonomy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-005-integrity-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Integrity Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-006-template-distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006 Template Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-007-update-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-007 Update Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-008-distribution-name/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-008 Distribution Name
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-009-environment-provider-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-009 Environment Provider Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-010-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-011-structured-overlay-merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 Structured Overlay Merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-012-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 Positioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-013-interactivity-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013 Interactivity Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-014-deferred-task-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 Deferred Task Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-015-idiomatic-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 Idiomatic Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-016-project-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 Project Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-to-choose-which-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to choose which backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-2026-10-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification (2026-10-20)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification (2026-10-20)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-to-other-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to other ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/notices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-to-choose-which-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to choose which backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-2026-10-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification (2026-10-20)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification (2026-10-20)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationship-to-other-adrs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to other ADRs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Design
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../adr-001-build-vs-adopt/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Decisions
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="../../status/">the Status page</a> for what's built project-wide.</p>
+    </div>
+  
+  
+                  
+
+
+  
+  
+
+
+<h1 id="adr-017-build-backend-uv_build-by-default-hatchling-by-choice">ADR-017: Build backend — <code>uv_build</code> by default, <code>hatchling</code> by choice</h1>
+<p><strong>Status</strong>: Accepted</p>
+<blockquote>
+<p><strong>Scope note.</strong> This ADR fixes which build backends the <code>project</code> template offers, which one it renders by default, how the <code>uv_build</code> version bound stays current, and how an existing project keeps its backend through <code>copier update</code>. For what exists today, see <a href="../../status/">status.md</a>.</p>
+</blockquote>
+<h2 id="context">Context</h2>
+<p>The <code>project</code> template renders a pure-Python package with a static version and one <code>src/&lt;package_name&gt;</code> directory, and its toolchain is built on uv (<a href="../dev-environment-landscape/#how-boilerplate-maps-onto-the-landscape">dev-environment landscape</a>). The <code>streamlit</code> template extends <code>project</code>, so it renders the same <code>[build-system]</code> table. The build backend is the one slot of that toolchain that the mapping table leaves unfilled, and Boilerplate's rule for slots is one opinionated pick each, with a named override.</p>
+<p>Projects rendered before this decision declare <code>hatchling</code> with no version bound. Three facts bear on the pick:</p>
+<ul>
+<li><strong>uv ships its own backend.</strong> <code>uv_build</code> is the backend that plain <code>uv init</code> declares since uv 0.12.0, and uv's documentation calls it "a great choice for most Python projects" (<a href="https://docs.astral.sh/uv/concepts/build-backend/">uv build backend</a>). It builds pure Python only.</li>
+<li><strong>uv's own docs name the escape hatch.</strong> The documentation advises that "when build scripts or a more flexible project layout are required, consider using the hatchling build backend instead" (<a href="https://docs.astral.sh/uv/concepts/build-backend/">uv build backend</a>). <code>hatchling</code> runs build hooks and plugins, reads the version from git tags through <code>hatch-vcs</code>, and selects files with its own configuration.</li>
+<li><strong>A backend cap needs upkeep.</strong> uv bumps its minor version for breaking changes and its patch version for everything else (<a href="https://docs.astral.sh/uv/reference/policies/versioning/">uv versioning policy</a>), and its documentation tells <code>uv_build</code> users to cap the requirement at the next minor. uv released 0.12.0 on 2026-07-28 and 0.13.0 on 2026-10-09, so a cap of that kind needs a bump every few months.</li>
+</ul>
+<p>A render that picks a backend also decides what happens when <code>copier update</code> meets a project rendered earlier. A new question with a default is applied silently by <code>copier update --defaults</code>, so adding the question without a migration moves every existing <code>hatchling</code> project to <code>uv_build</code>. That move drops any <code>[tool.hatch]</code> configuration and any <code>dynamic = ["version"]</code> entry the project relies on, and narrows the sdist from every file git does not ignore to the package and its metadata. <a href="../../governance/versioning/#what-qualifies-as-breaking">Versioning § What qualifies as breaking</a> classes "changing the default value of an option incompatibly" as breaking.</p>
+<h2 id="decision">Decision</h2>
+<p><strong>The <code>project</code> template MUST ask a <code>build_backend</code> question with two choices, <code>uv_build</code> (the default) and <code>hatchling</code>, and MUST render the <code>[build-system]</code> table, plus the <code>[tool.hatch]</code> table for <code>hatchling</code>, from that answer.</strong> The <code>streamlit</code> template inherits the question from <code>project</code> and does not redeclare it.</p>
+<ol>
+<li><strong>The question.</strong> <code>build_backend</code> is a <code>str</code> question with <code>choices</code>, placed before <code>package_index_url</code> in the <code>project</code> template's <code>copier.yml</code>. Its choices are the two backend names, with no description on either; the project template guide says when to pick each.</li>
+<li><strong>The <code>uv_build</code> render.</strong> The template renders <code>requires = ["uv_build&gt;=0.13,&lt;0.14"]</code> and <code>build-backend = "uv_build"</code>, with no <code>[tool.hatch]</code> table. <code>uv_build</code> finds <code>src/&lt;package_name&gt;</code> without configuration.</li>
+<li><strong>The <code>hatchling</code> render.</strong> The template renders <code>requires = ["hatchling&gt;=1.27"]</code>, <code>build-backend = "hatchling.build"</code> and the <code>[tool.hatch.build.targets.wheel]</code> table with <code>packages = ["src/&lt;package_name&gt;"]</code>. Hatchling 1.27.0 is the first release that writes the PEP 639 license fields (<code>License-Expression</code>, <code>License-File</code>) by default; 1.26.x writes the old <code>License:</code> field. The requirement has no cap, the same as <code>hatch new</code> writes it.</li>
+<li><strong>The bound is a minor range.</strong> The <code>uv_build</code> requirement takes the current uv minor as its floor (<code>&gt;=0.13</code>, not <code>&gt;=0.13.3</code>), so every uv 0.13.x runs its bundled copy of the backend and fetches nothing from a package index. A private <code>package_index_url</code> therefore mirrors no build backend for a project inside the range.</li>
+<li><strong>The bound moves with the Docker tag.</strong> The <code>streamlit</code> template's Dockerfile installs uv from the image tag <code>ghcr.io/astral-sh/uv:&lt;minor&gt;</code>. For every uv minor, the <code>uv_build</code> range and that tag move together in one change, and a test renders <code>streamlit</code> and asserts that the range's minor equals the tag's minor. An image older than the range's floor fetches <code>uv-build</code> from the package index and fails offline with a cold cache, which is the reason for the pairing. The test catches drift between the two values and does not catch staleness, so the release checklist in <code>RELEASING.md</code> names the uv minor, and uv's own warning (point 6) tells a user that a generated project's cap is stale.</li>
+<li><strong>uv's behavior outside the range.</strong> uv uses its bundled backend only when <code>requires</code> is a single <code>uv_build</code> entry whose range contains uv's version. A uv newer than the cap (0.13.3 against <code>&lt;0.13</code>) builds with its bundled copy and warns on every <code>uv sync</code> and <code>uv build</code>. A uv older than the floor fetches <code>uv-build</code> from the index, as the documentation describes. The documentation's statement that an out-of-range uv "uses a compatible version of the <code>uv_build</code> package" describes only the second case.</li>
+<li><strong>A <code>before</code> migration keeps existing projects on <code>hatchling</code>.</strong> The <code>project</code> template's <code>copier.yml</code> declares its first <code>_migrations</code> entry with <code>when: "{{ _stage == 'before' }}"</code> and no <code>version</code> gate: bundled layers share the repository's tag stream, so a gate at the version that introduces the question would skip a project rendered at the tag just before it, and the key check below makes the entry a no-op once the answer exists. The migration runs the update's Python (<code>{{ _copier_python }}</code>) to append <code>build_backend: hatchling</code> to the layer's answers file (<code>.copier-answers.project.yml</code>, passed to the script as <code>{{ _copier_conf.answers_file }}</code>) when that file exists and holds no <code>build_backend</code> key. <code>copier update --defaults</code> then keeps a project rendered before the question existed on <code>hatchling</code>, and an explicit <code>--data build_backend=hatchling</code> keeps it as well. A project that has a <code>build_backend</code> answer is untouched.</li>
+<li><strong>Switching is a re-answer.</strong> A project that changes backend after generation re-answers the question with <code>copier update --data build_backend=&lt;choice&gt;</code>, which re-renders the <code>[build-system]</code> table and the <code>[tool.hatch]</code> table together.</li>
+</ol>
+<h3 id="when-to-choose-which-backend">When to choose which backend</h3>
+<p>The table covers the nine backends a Python project most often meets; the two the template offers come first. It leaves out <code>whey</code>, which had four sdists in the Quansight Labs sample, <code>py-build-cmake</code>, which has about 31 thousand downloads a month, and <code>enscons</code>, which has about 10 thousand downloads a month and little activity. A backend outside the first two is a hand edit of <code>[build-system]</code> in the generated project, and the template scaffolds no <code>Cargo.toml</code> or <code>CMakeLists.txt</code> for the compiled rows.</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Choose it when</th>
+<th>Avoid it when</th>
+<th>Notes: PEP 639, editable installs, version bounds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>uv_build</code></strong> (default)</td>
+<td>Pure Python; static version; one <code>src/&lt;package&gt;</code>; uv toolchain</td>
+<td>Version from git tags; build hooks; generated files that git ignores inside the package; several top-level packages</td>
+<td>PEP 639 output. PEP 660 editable hook. Bound <code>&gt;=0.13,&lt;0.14</code>; uv's documentation caps at the next minor</td>
+</tr>
+<tr>
+<td><strong><code>hatchling</code></strong></td>
+<td>Build hooks; version from git (<code>hatch-vcs</code>); custom file selection; plugins</td>
+<td>A build that must fetch no build requirement (<code>uv_build</code> runs from uv's bundled copy); native extensions without a custom hook</td>
+<td>PEP 639 output by default from 1.27.0 (1.26.x writes the old <code>License:</code> field). Editable installs through a <code>.pth</code> file. Floor <code>&gt;=1.27</code>, no cap</td>
+</tr>
+<tr>
+<td><strong><code>setuptools</code></strong></td>
+<td>Existing <code>setup.py</code> or <code>cmdclass</code>; small C extension through <code>ext_modules</code>; <code>setuptools-rust</code></td>
+<td>New pure-Python project; non-<code>.py</code> data without <code>package-data</code> (the wheel silently omits it)</td>
+<td>PEP 639 from 77.0.1, the first release on PyPI (77.0.0 was never published); the PyPA tutorial uses <code>&gt;=77.0.3</code>. Editable installs from 64.0.0; a binary extension is a snapshot</td>
+</tr>
+<tr>
+<td><strong><code>flit-core</code></strong></td>
+<td>Tiny module; <code>__version__</code> as the version; nothing else</td>
+<td>Hooks; git versioning; generated files</td>
+<td>PEP 639 from 3.11. Flit's documentation: <code>&gt;=3.11,&lt;5</code>; the PyPA tutorial tab: <code>&gt;=3.12.0,&lt;5</code></td>
+</tr>
+<tr>
+<td><strong><code>pdm-backend</code></strong></td>
+<td>The team runs PDM; built-in SCM version</td>
+<td>A uv-run project, where PDM's workflow owns the lock</td>
+<td>PEP 639 from 2.4.0. Editable installs through <code>path</code> or <code>editables</code>. PyPA tutorial: <code>&gt;=2.4.0</code></td>
+</tr>
+<tr>
+<td><strong><code>poetry-core</code></strong></td>
+<td>The team runs Poetry; no extension modules</td>
+<td>A uv-run project; extension modules (Poetry calls its build scripts "still considered unstable")</td>
+<td><code>[project]</code> table from 2.0.0; PEP 639 from 2.2.0. Poetry's documentation: <code>&gt;=2.0.0,&lt;3.0.0</code></td>
+</tr>
+<tr>
+<td><strong><code>maturin</code></strong></td>
+<td>Rust through PyO3, cffi or uniffi</td>
+<td>Code with no Rust</td>
+<td>PEP 639 in full from 1.9.0 and the <code>License-Expression</code> fix in 1.9.2. A Rust edit needs a rebuild. <code>uv init</code> scaffolds it and writes <code>cache-keys</code></td>
+</tr>
+<tr>
+<td><strong><code>scikit-build-core</code></strong></td>
+<td>C, C++, Fortran or Cython with CMake, pybind11 or nanobind</td>
+<td>A codebase with no CMake</td>
+<td>PEP 639 from 0.11.0. Editable redirect; rebuild-on-import is experimental. <code>uv init --build-backend scikit</code> scaffolds it</td>
+</tr>
+<tr>
+<td><strong><code>meson-python</code></strong></td>
+<td>A Meson codebase; the numerics stack (numpy and scipy build with it)</td>
+<td>A project that wants <code>uv init</code> scaffolding or automatic <code>cache-keys</code></td>
+<td>PEP 639 from 0.18.0. Editable rebuild-on-import needs <code>--no-build-isolation</code>. <code>uv init</code> rejects it</td>
+</tr>
+</tbody>
+</table>
+<h2 id="options-considered">Options considered</h2>
+<ul>
+<li><strong><code>uv_build</code> default, <code>hatchling</code> by choice (chosen).</strong> The default covers the template's shape (pure Python, static version, one <code>src/&lt;package_name&gt;</code>) and is the backend uv itself scaffolds. <code>hatchling</code> is the one other backend that does a job <code>uv_build</code> does not for this template: hooks, plugins, and a version from git. Each of the two has a stated trigger in the question's help strings.</li>
+<li><strong><code>hatchling</code> as the default (the runner-up).</strong> The PyPA packaging tutorial states "this tutorial uses Hatchling by default" (<a href="https://packaging.python.org/en/latest/tutorials/packaging-projects/">packaging projects</a>), and the Scientific Python Development Guide says "If you don't have an existing preference, hatchling is an excellent choice" (<a href="https://github.com/scientific-python/cookie/blob/main/docs/guides/packaging_simple.md">packaging simple</a>). <code>hatchling</code> needs no cap upkeep. PyPI recorded about 320 million <code>hatchling</code> downloads and about 15 million <code>uv-build</code> downloads in the month before 2026-10-19 (<a href="https://pypistats.org/api/packages/hatchling/recent">pypistats</a>); pip build isolation and CI inflate both counts, so they are not adoption shares. Rejected: the template's toolchain is uv, uv recommends <code>uv_build</code> for this project shape, and the cap has cost only bumps so far, because each uv release note states "no breaking changes to the configuration of the uv build backend" (<a href="https://github.com/astral-sh/uv/tree/main/changelogs">uv changelogs</a>). What would change the call: uv dropping or loosening its cap advice, or a usage census that shows <code>uv_build</code> adoption stalling.</li>
+<li><strong>A wider menu (setuptools, flit-core, pdm-backend, poetry-core and the compiled backends).</strong> Rejected, because a menu is not a pick and each extra choice has to do a job neither default nor override does for this template.<ul>
+<li><code>setuptools</code> adds extension and legacy-<code>setup.py</code> use, which the template does not scaffold, and its wheel omits non-<code>.py</code> data files without a <code>package-data</code> entry.</li>
+<li><code>flit-core</code> does less than <code>uv_build</code> for this shape.</li>
+<li><code>pdm-backend</code> and <code>poetry-core</code> belong to the PDM and Poetry workflows, whose tools own the lock; that contradicts the uv pick in the landscape mapping table.</li>
+<li>The compiled backends need source scaffolding (<code>Cargo.toml</code>, <code>CMakeLists.txt</code>), <code>cache-keys</code>, and a compiler stage in the <code>streamlit</code> Dockerfile.</li>
+</ul>
+</li>
+<li><strong>Derive the <code>uv_build</code> bound from the running uv at render time.</strong> Rejected. It matches what <code>uv init</code> does, and the <code>project</code> template has precedent: <code>_extensions/context.py</code> derives the Python version from the running interpreter. The render would then depend on the machine that runs it, and the bound would split from the static Docker image tag that point 5 pairs it with.</li>
+<li><strong>Choose the default by operation, so that <code>copier update</code> defaults to <code>hatchling</code> and <code>copy</code> defaults to <code>uv_build</code>.</strong> Rejected, because Copier exposes <code>_copier_operation</code> only in <code>exclude</code> and <code>_tasks</code>, not in a question's <code>default</code> (<a href="https://copier.readthedocs.io/en/stable/creating/">Copier: creating a template</a>). The before-stage migration of point 7 is the mechanism Copier documents for changing answers across versions.</li>
+</ul>
+<h2 id="consequences">Consequences</h2>
+<ul>
+<li><strong>The cap needs upkeep.</strong> The <code>uv_build</code> range and the <code>streamlit</code> Dockerfile tag move for every uv minor (point 5). Dependabot's <code>uv</code> and <code>github-actions</code> ecosystems update only this repository's own files, so no updater reaches a <code>.jinja</code> file, and the release checklist is the reminder.</li>
+<li><strong><code>uv_build</code> ships git-ignored files.</strong> It does not read <code>.gitignore</code>: a git-ignored file inside the package directory reaches both the wheel and the sdist. <code>hatchling</code> honors <code>.gitignore</code>. Nothing the template renders today sits in that position. A project that generates files into its package tree sets <code>source-exclude</code> and <code>wheel-exclude</code> under <code>[tool.uv.build-backend]</code>, or chooses <code>hatchling</code>.</li>
+<li><strong><code>uv_build</code> builds from static metadata.</strong> A non-empty <code>dynamic</code> list fails the build with "Dynamic metadata is not supported". A project that wants a version from git tags chooses <code>hatchling</code> and <code>hatch-vcs</code>.</li>
+<li><strong>The migration is one more reason <code>copier update</code> needs <code>--trust</code>, not a new requirement.</strong> The <code>project</code> layer already declares <code>_jinja_extensions</code>, including the file-path <code>_extensions/context.py</code>, and <code>_tasks</code>, so Copier's unsafe check refuses an update of it without <code>--trust</code>. <a href="../../templates-hub/versioning/">Versioning</a> also lists running <code>copier update</code> across any declared migration as a step that refuses to start without <code>--trust</code>. Layers that Boilerplate bundles are copy-only (<a href="../adr-015-idiomatic-artifacts/">ADR-015</a>), so only a project rendered from a git-backed <code>project</code> layer meets the migration.</li>
+<li><strong>The migration is the reason the change is not breaking.</strong> With it, adding <code>build_backend</code> is "adding a new template variable (with a sensible default)" under <a href="../../governance/versioning/#what-qualifies-as-breaking">Versioning</a>; without it, the change is the incompatible default change the Context describes. The migration reads and writes the answers file, which is Copier's file layout and not a Copier API, so the template version that ships it MUST pass a test that updates a <code>hatchling</code> project and asserts that its backend is unchanged.</li>
+<li><strong>Boilerplate's own <code>pyproject.toml</code> follows the same default.</strong> The repository is a pure-Python package with a static version and one <code>src/boilerplate</code>, the shape for which <code>uv_build</code> is the pick.</li>
+</ul>
+<h2 id="verification-2026-10-20">Verification (2026-10-20)</h2>
+<p>The sources below were read on 2026-10-19 and 2026-10-20, and the trials ran in scratch projects under uv 0.13.3 and Copier 9.18.1. Repository facts in the Context come from the files they name.</p>
+<ul>
+<li><strong>uv.</strong> Documentation: "a great choice for most Python projects", pure Python only, hatchling for build scripts, and the bound <code>&gt;=0.13.3,&lt;0.14</code> as the example (<a href="https://docs.astral.sh/uv/concepts/build-backend/">build backend</a>). <code>uv init</code> declares <code>uv_build</code> for plain apps since 0.12.0 (<a href="https://github.com/astral-sh/uv/blob/main/changelogs/0.12.x.md">changelog 0.12.x</a>); uv 0.13.3 writes <code>uv_build&gt;=0.13.3,&lt;0.14.0</code> into a new project. The minor-for-breaking policy is in <a href="https://docs.astral.sh/uv/reference/policies/versioning/">versioning</a>. <code>uv_build</code> rejects a non-empty <code>dynamic</code> list in <code>crates/uv-build-backend/src/metadata.rs</code> (<a href="https://github.com/astral-sh/uv/blob/main/crates/uv-build-backend/src/metadata.rs">source</a>), and a trial with uv 0.13.3 reproduced the message. The out-of-range behavior in point 6 comes from uv 0.13.3 against <code>&lt;0.13</code> (bundled copy, warning) and uv 0.12.15 against a floor above its version (index fetch).</li>
+<li><strong>File selection.</strong> In a trial with a git-ignored file inside the package and one in a generated subdirectory, <code>uv_build</code> shipped both and <code>hatchling</code> shipped neither.</li>
+<li><strong>hatchling.</strong> 1.27.0 is the first release that writes <code>License-Expression</code>; 1.26.3 writes Metadata 2.3 with the old <code>License:</code> field and no <code>License-Expression</code> (<a href="https://hatch.pypa.io/latest/history/hatchling/">hatchling history</a>; wheel inspected for both). The PyPA tutorial's <code>hatchling &gt;= 1.26</code> is therefore short of PEP 639 output by default.</li>
+<li><strong>PyPA tutorial tabs.</strong> <code>hatchling &gt;= 1.26</code>, <code>setuptools &gt;= 77.0.3</code>, <code>flit_core &gt;=3.12.0,&lt;5</code>, <code>pdm-backend &gt;= 2.4.0</code> (<a href="https://github.com/pypa/packaging.python.org/blob/main/source/shared/build-backend-tabs.rst">build-backend-tabs.rst</a>).</li>
+<li><strong>setuptools.</strong> PEP 639 in the 77.0.0 notes, and PyPI lists 77.0.1 and 77.0.3 but not 77.0.0; PEP 660 in 64.0.0 (<a href="https://github.com/pypa/setuptools/blob/main/NEWS.rst">NEWS</a>, <a href="https://pypi.org/pypi/setuptools/json">PyPI JSON</a>). A trial wheel omitted <code>.txt</code> and dotfile data that no <code>package-data</code> entry listed.</li>
+<li><strong>flit-core.</strong> <code>flit_core &gt;=3.11,&lt;5</code> and PEP 639 from 3.11 (<a href="https://flit.pypa.io/en/stable/pyproject_toml.html">pyproject.toml docs</a>).</li>
+<li><strong>pdm-backend.</strong> Version 2.4.0 writes <code>License-Expression</code> and <code>License-File</code>; 2.4.5 and 2.5.0 write them as well (wheels inspected). The 2.4.6 changelog entry "Add license file metadata" edits pdm-backend's own <code>pyproject.toml</code> and does not change the built metadata. The PDM documentation is at <a href="https://backend.pdm-project.org/">backend.pdm-project.org</a>.</li>
+<li><strong>poetry-core.</strong> <code>[project]</code> support in 2.0.0, PEP 639 in 2.2.0, <code>&gt;=2.0.0,&lt;3.0.0</code> in the docs, and build scripts "still considered unstable" (<a href="https://github.com/python-poetry/poetry-core/blob/main/CHANGELOG.md">CHANGELOG</a>, <a href="https://python-poetry.org/docs/building-extension-modules/">extension modules</a>).</li>
+<li><strong>Compiled backends.</strong> maturin: PEP 639 in 1.9.0 and the <code>License-Expression</code> fix in 1.9.2 (<a href="https://github.com/PyO3/maturin/blob/main/Changelog.md">Changelog</a>). scikit-build-core: PEP 639 in 0.11.0 (<a href="https://github.com/scikit-build/scikit-build-core/blob/main/docs/about/changelog.md">changelog</a>). meson-python: PEP 639 in 0.18.0 (<a href="https://github.com/mesonbuild/meson-python/blob/main/CHANGELOG.rst">CHANGELOG</a>). <code>uv init</code> offers maturin and scikit-build-core and rejects meson-python (<a href="https://docs.astral.sh/uv/concepts/projects/init/">uv init</a>). numpy and scipy build with meson-python, which their <code>pyproject.toml</code> files declare.</li>
+<li><strong>Bounds in each backend's own scaffold.</strong> <code>hatch new</code> writes an unbounded <code>hatchling</code>; <code>flit init</code> writes <code>flit_core &gt;=3.11,&lt;5</code>; <code>poetry new</code> writes a range from the installed <code>poetry-core</code>.</li>
+<li><strong>Render trial.</strong> A scratch copy of the <code>project</code> template was rendered with each choice. Each render passed validate-pyproject and ran <code>uv lock</code>, <code>uv sync</code>, pytest and <code>uv build</code> under uv 0.13.3. The <code>hatchling</code> render differs from the output of earlier template versions on the <code>requires</code> line only.</li>
+<li><strong>Update trial.</strong> On a toy template with a <code>build_backend</code> question added after the project's first render, <code>copier update --defaults</code> moved a <code>hatchling</code> project to <code>uv_build</code>; with the before-stage migration it stayed on <code>hatchling</code>, and <code>--data build_backend=hatchling</code> kept it as well.</li>
+<li><strong>Omitted backends.</strong> <code>whey</code> had four sdists in the Quansight Labs sample (<a href="https://labs.quansight.org/blog/pep-517-build-system-popularity">PEP 517 build system popularity</a>); <code>py-build-cmake</code> and <code>enscons</code> download figures come from pypistats, and their projects are <a href="https://github.com/tttapa/py-build-cmake">py-build-cmake</a> and <a href="https://github.com/dholth/enscons">enscons</a>.</li>
+<li><strong>Copier.</strong> <code>_copier_operation</code> is documented for <code>exclude</code> and <code>_tasks</code> only (<a href="https://copier.readthedocs.io/en/stable/creating/">creating a template</a>).</li>
+</ul>
+<h3 id="limits">Limits</h3>
+<ul>
+<li>The update trial used a toy template with the answers file <code>.copier-answers.yml</code>. The <code>project</code> template's own answers file, <code>.copier-answers.project.yml</code>, was not exercised, which is the reason point 7 requires an update test in the template's suite.</li>
+<li>No Docker image was built. The behavior of the <code>streamlit</code> image under the <code>uv:0.13</code> tag and the <code>&gt;=0.13,&lt;0.14</code> range follows from the uv documentation and the 0.12.15 trial.</li>
+<li>The editable and rebuild behavior of maturin, scikit-build-core and meson-python comes from their documentation; no compiler was available to run them.</li>
+<li>Whether Dependabot's <code>uv</code> ecosystem updates a <code>[build-system]</code> requirement in a generated project was not tested.</li>
+<li>The newest usage census (Quansight Labs, "PEP 517 build system popularity", published 2025-02-11) reports no <code>uv_build</code> count; it was read through its markdown source and its figures were not re-checked. The download counts in the options are monthly totals, and they serve for the order of magnitude only.</li>
+</ul>
+<h2 id="relationship-to-other-adrs">Relationship to other ADRs</h2>
+<ul>
+<li><a href="../adr-001-build-vs-adopt/">ADR-001</a> — uv's own backend and <code>hatchling</code> are adopted tools; Boilerplate adds only the choice between them.</li>
+<li><a href="../adr-003-permissive-execution/">ADR-003</a> and <a href="../adr-007-update-model/">ADR-007</a> — the <code>before</code> migration of point 7 is a first-party migration, the kind that ADR-007 makes the mechanism for structural change and that ADR-003 puts on the task and extension trust surface.</li>
+<li><a href="../adr-015-idiomatic-artifacts/">ADR-015</a> — the migration edits the per-layer answers file <code>.copier-answers.project.yml</code>, which that ADR makes the distribution contract, and Copier's own <code>_migrations</code> mechanism runs it.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../adr-016-project-vocabulary/" class="md-footer__link md-footer__link--prev" aria-label="Previous: ADR-016 Project Vocabulary">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                ADR-016 Project Vocabulary
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../contribute/" class="md-footer__link md-footer__link--next" aria-label="Next: Contribute">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Contribute
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.indexes", "navigation.footer", "navigation.top", "navigation.path", "content.code.copy", "content.code.select", "content.tabs.link", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/mermaid-theme.js"></script>
+      
+        <script src="../../assets/scroll-region.js"></script>
+      
+        <script src="../../assets/javascripts/panzoom.min.js"></script>
+      
+        <script src="../../assets/javascripts/zoompan.js"></script>
+      
+    
+  
+
+  </body>
+</html>

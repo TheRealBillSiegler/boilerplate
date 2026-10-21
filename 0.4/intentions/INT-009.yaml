@@ -1,0 +1,50 @@
+intention:
+  id: "INT-009"
+  product: "PROD-001"
+  statement: >
+    Boilerplate has a polished documentation site covering user guides,
+    API reference, and tutorials.
+  rationale: >
+    A scaffolding tool is unusable without navigable documentation.
+    Documentation is delivered incrementally and does not wait for all
+    features to be complete.
+  priority: "critical"
+  dependencies:
+    - "INT-001"  # Docs need to describe scaffolding
+    # Note: CLI reference (INT-005) and authoring guides (INT-006) are
+    # integrated into the docs site as those Intentions are completed.
+    # They are NOT hard dependencies — Phase 1 docs can be written first.
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    A published documentation site built with mkdocs-material provides
+    getting-started guides, conceptual documentation, and architecture
+    overview. CLI reference and template authoring guides are integrated
+    as those Intentions land. The site is searchable, versioned, and
+    maintained alongside the codebase.
+
+  delivery_phases:
+    phase_1_no_deps: >
+      Getting started, installation, concepts, architecture, trust model,
+      glossary. Can be written immediately.
+    phase_2_after_int_005: >
+      CLI command reference, workflow tutorials.
+    phase_3_after_int_006: >
+      Template authoring guide, composition patterns.
+
+  acceptance_criteria:
+    # Quality
+    - "The getting-started guide carries a scaffold-from-scratch walkthrough that runs end-to-end with the published commands"
+    - "Every CLI command appears in the docs site with at least one usage example"
+    - "The trust model is documented with at least one concrete example per tier"
+    - "The site exposes search and per-version navigation"
+    - "The published site contains no broken internal links and no `TODO`/placeholder pages"
+    - "Documentation prose is written for a public audience and contains no internal-onboarding language"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "In-app help beyond CLI --help text (covered by INT-005)"
+    - "Community forums or discussion platforms"
+    - "Video tutorials or screencasts"

@@ -1,0 +1,548 @@
+# Composition Engine
+
+## Purpose
+
+The composition engine takes a template reference, resolves its dependency graph, merges configuration from all layers, and produces a `CompositionArtifact` ready for rendering. The engine orchestrates Copier without replacing it — it resolves dependencies and merges configuration, then delegates actual file rendering to Copier.
+
+The engine is composed of four sequentially-invoked stages:
+
+```text
+Stage 1: Resolver
+Stage 2: Dependency Graph & Topological Sort
+Stage 3: Composer (uses CopierConfigMerger)
+Stage 4: RenderEngine
+```
+
+*The four-stage decomposition and the worker interfaces below are a reference implementation structure; a conforming implementation MAY organize this differently. The normative requirements are the MUST/MUST NOT statements.*
+
+______________________________________________________________________
+
+## Stage 1 — Resolver
+
+### Responsibility
+
+The Resolver takes a template reference and a populated catalog, performs a depth-first traversal of the `extends` chain, and returns a `Resolution` containing:
+
+- `deps`: a DependencyMap (specifier → list of direct dependency specifiers)
+- `templates`: a map from specifier string → `TemplateInfo`
+
+The Resolver does not detect or report cycles — that is the graph layer's responsibility. The `visited` set in the resolution algorithm prevents redundant traversal of diamond dependencies (e.g., `A → B, A → C, B → C` visits `C` only once) but preserves all dependency edges so the graph layer can detect cycles. The Resolver MUST NOT mutate any catalog state. It MUST be pure with respect to its inputs.
+
+### Template Reference Syntax
+
+A template reference is either `"name"` (resolves to latest) or `"name@version"` (exact). See [02-data-models.md §TemplateSpecifier](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/#templatespecifier).
+
+### Resolution Behavior
+
+The Resolver performs a depth-first traversal of the `extends` chain starting from the root template. For each template encountered, it records the template's information and its direct dependencies (as declared in `meta.extends`), then recurses into each dependency. A visited set prevents redundant traversal of shared dependencies (diamond patterns), but dependency edges are always recorded — even when the target has already been visited — so that the full edge set is available for cycle detection in the graph layer. After traversal completes, the Resolver checks for version conflicts: if the same template name appears at different versions anywhere in the graph, it raises `BP_RESOLVE_VERSION_CONFLICT`.
+
+**Key invariants**:
+
+- Each specifier is visited at most once, but all dependency edges are preserved.
+- Direct dependencies preserve the declaration order from `meta.extends`.
+- All referenced templates MUST exist in the catalog; if any are missing, raise `DependencyNotFoundError`.
+- Template references are resolved via the catalog: unversioned references (`name`) resolve to the latest version; versioned references (`name@version`) resolve to the exact version.
+
+### Version conflict resolution
+
+When the same template name is encountered at different versions during dependency traversal (diamond dependency with version disagreement), the Resolver MUST reject the composition with `BP_RESOLVE_VERSION_CONFLICT`:
+
+```text
+BP_RESOLVE_VERSION_CONFLICT
+What: Template 'base' required at version 1.0.0 (by 'layer-a') and 2.0.0 (by 'layer-b')
+Why: Diamond dependency with incompatible version constraints
+Remediation: Align all references to 'base' to a single version, or use version ranges that resolve to a common version
+Attribution: Template Author
+```
+
+The Resolver MUST NOT silently pick one version over another; version conflicts are always an error, because silent resolution could yield different results for different traversal orders.
+
+> **Future**: Version range specifiers (e.g., `name@>=1.0,<2.0`) are reserved for a future release. The current `extends` syntax accepts exact version pins and unversioned references only.
+
+### Graph size limits
+
+To prevent pathological compositions and protect against accidental infinite recursion:
+
+- Maximum dependency chain depth: **20 templates**. Exceeded → `BP_GRAPH_DEPTH_EXCEEDED`.
+- Maximum total nodes in the resolved graph: **50 templates**. Exceeded → `BP_GRAPH_SIZE_EXCEEDED`.
+
+The defaults MUST be enforced.
+
+### Errors
+
+| Error                           | Condition                                              |
+| ------------------------------- | ------------------------------------------------------ |
+| `DependencyNotFoundError`       | A template reference cannot be resolved in the catalog |
+| `InvalidTemplateSpecifierError` | A versioned reference fails specifier parsing          |
+
+______________________________________________________________________
+
+## Stage 2 — Dependency Graph and Topological Sort
+
+Between the Resolver output and the Composer, the dependency map is normalized and sorted.
+
+### Normalization
+
+Normalization prepares the raw dependency map for topological sorting. It deduplicates each node's dependency list while preserving declaration order from `extends`, ensures every referenced node appears as a key (with an empty list if it has no dependencies of its own), and detects self-cycles immediately (raising `DependencyCycleError`).
+
+### Topological Sort
+
+After normalization, the dependency map is sorted into a dependency-first ordered list. Any topological sort that produces a deterministic, dependency-first sequence satisfies the contract — the invariant is the ordering guarantee, not the specific algorithm. If a cycle is detected, `DependencyCycleError` is raised.
+
+**Invariant**: Given `A extends [B, C]`, `B` and `C` MUST appear before `A` in the sequence.
+
+**Tie-breaking rule**: When multiple nodes have zero in-degree simultaneously (independent subgraphs or branches), the sort MUST break ties by lexicographic ordering of the normalized template specifier string (name@version). This ensures deterministic output regardless of hash-map iteration order or platform differences. Lexicographic tie-breaking applies only across independent roots (nodes no other node depends on); within a root's reachable subgraph, `extends` declaration order governs (per the diamond dependencies rule below), and a dependency shared across roots is emitted at its first occurrence.
+
+**Example** (linear chain):
+
+```text
+Input:  { "A": ["B"], "B": ["C"], "C": [] }
+Output: ["C", "B", "A"]
+```
+
+**Diamond dependencies**: When a diamond dependency is detected, Boilerplate resolves file precedence by declaration order in the `extends` list. Dependencies declared later in `extends` are rendered later and their files take precedence. For example, given `extends: [base-lib, utility-lib]`, `utility-lib` is rendered after `base-lib` and its files win on conflict. This rule applies recursively: if both `base-lib` and `utility-lib` themselves extend a shared dependency, the shared dependency is rendered once, and the extending template that appears later in the original `extends` declaration takes precedence. Determinism is guaranteed by the normalization step, which preserves declaration order from `extends`.
+
+```text
+// Diamond: C extends [A, B], A extends [Base], B extends [Base]
+Input:  { "C": ["A", "B"], "A": ["Base"], "B": ["Base"], "Base": [] }
+Output: ["Base", "A", "B", "C"]  // B declared after A in extends; B's files override A's at same paths
+```
+
+File precedence follows the topological render order: templates rendered later overwrite files from templates rendered earlier at the same path. For direct children listed in `extends`, this means later-declared entries take precedence. For deeper dependency graphs, the topological sort determines the authoritative order — use `boilerplate graph` to verify the actual render sequence.
+
+**CLI visibility**: When `boilerplate graph` detects a diamond dependency pattern (a node reachable via two or more paths), the output MUST annotate affected nodes with a `[diamond]` indicator and note which parent's files take precedence. Example:
+
+```text
+#   Layer          Version   Path                      Notes
+1   base           1.0.0     /path/to/base
+2   parent-a       1.0.0     /path/to/parent-a
+3   parent-b       1.0.0     /path/to/parent-b         [diamond: files override parent-a]
+4   my-template    1.0.0     /path/to/my-template
+```
+
+**Errors**:
+
+| Error                  | Condition                                                  |
+| ---------------------- | ---------------------------------------------------------- |
+| `DependencyCycleError` | A cycle exists in the dependency graph (e.g., `A → B → A`) |
+
+______________________________________________________________________
+
+## Stage 3 — Composer
+
+### Responsibility
+
+The Composer takes a `Resolution` and produces an immutable `CompositionArtifact`. It:
+
+1. Extracts and merges Copier configuration from all template layers
+1. Builds the `CompositionGraph`
+1. Produces a `CompositionLayer` for each template in topological order
+1. Optionally computes per-layer states and deltas (for debugging and introspection)
+
+### Composition Behavior
+
+The Composer processes templates in topological order. For each template in the sequence, it reads the template's `copier.yml` configuration and builds a `CompositionLayer` containing the template's name, version, path, and user-facing question values (non-underscore keys). All layer configurations are then merged using the `CopierConfigMerger` to produce the final merged schema.
+
+When introspection is requested (`include_states` or `include_deltas`), the Composer additionally tracks the cumulative configuration state after each layer and/or the delta each layer contributes. These are attached to the corresponding `CompositionLayer` for use by inspection commands.
+
+The Composer also builds a `CompositionGraph` from the resolution data, recording each template as a graph node (with name, version, and path) and preserving the dependency edges in declaration order.
+
+The final output is a `CompositionArtifact` containing the graph (with its topological sequence), the per-layer details, and the fully merged configuration schema.
+
+______________________________________________________________________
+
+## Configuration Merger
+
+### Responsibility
+
+The `CopierConfigMerger` merges a list of `copier.yml` configuration dictionaries (one per layer, in topological order) into a single unified configuration.
+
+### Merge Rules
+
+The strategy applied to each key is determined by the following lookup, in priority order:
+
+| Key pattern                   | Strategy                              | Notes                                                                                                  |
+| ----------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `_min_copier_version`         | `intersect_versions`                  | Highest declared minimum version wins                                                                  |
+| `_tasks`                      | `accumulate`                          | All tasks from all layers concatenated                                                                 |
+| `_secret_questions`           | `accumulate`                          | All secret question names concatenated                                                                 |
+| `_jinja_extensions`           | `union`                               | Extensions deduplicated, first-seen order, joined within each [scoped view](#scoped-view)              |
+| Any key not starting with `_` | `merge_questions`                     | All user question keys                                                                                 |
+| Any other `_`-prefixed key    | **layer-local** (excluded from merge) | Last layer's value is used; not propagated. Examples: `_exclude`, `_templates_suffix`, `_subdirectory` |
+
+**Fallback rule**: any `_`-prefixed key not explicitly listed above is treated as layer-local and excluded from the merged output. This is a closed-world assumption: only the keys listed above participate in merging.
+
+### Merge Strategies
+
+The four merge strategies used by the configuration merger are defined below. Each strategy corresponds to one or more key patterns in the key-to-strategy mapping table above.
+
+#### `accumulate`
+
+Concatenates lists in order; wraps scalars in a single-element list.
+
+```text
+accumulate([["task_a"], ["task_b", "task_c"]]) → ["task_a", "task_b", "task_c"]
+```
+
+Used for: `_tasks`, `_secret_questions`.
+
+#### `union`
+
+Concatenates lists preserving first-seen order, removing duplicates.
+
+```text
+union([["ext_a", "ext_b"], ["ext_b", "ext_c"]]) → ["ext_a", "ext_b", "ext_c"]
+```
+
+Used for: `_jinja_extensions`.
+
+#### `intersect_versions` (highest wins)
+
+Given a list of PEP 440 version strings, returns the maximum.
+
+```text
+intersect_versions(["1.0", "2.0", "1.5"]) → "2.0"
+```
+
+Used for: `_min_copier_version`.
+
+#### `merge_questions`
+
+Merges user question values:
+
+- **Dict + Dict** → shallow merge (later layer's keys override earlier; only the top level is merged, nested dicts are replaced wholesale)
+- **List + List** → deduplicated concatenation (items from earlier layers first, then later layers; items compared by value equality; insertion order of first appearance is preserved)
+- **Scalar + Scalar (same type)** → override (later value wins)
+- **Type mismatch** → raise `MergeConflictError`
+
+> **Detection timing**: Type mismatches MUST be detected during the `compose` stage (when configurations are merged), not during the `render` stage (when the end user runs the template). This ensures template authors catch conflicts during `boilerplate compose` or `boilerplate validate`, not end users during `boilerplate new`. Implementations MUST invoke the merger during validation when `extends` dependencies are resolvable.
+
+```text
+merge_questions([{"type": "str", "default": "a"}, {"default": "b"}])
+→ {"type": "str", "default": "b"}
+```
+
+**Nested structure behavior**:
+
+```text
+// Base layer:  {db: {host: "localhost", port: 5432}}
+// Derived layer: {db: {host: "prod.example.com"}}
+// Result:      {db: {host: "prod.example.com"}}
+// Note: 'port' is GONE — the entire nested dict was replaced, not merged.
+```
+
+Template authors who need to preserve base keys in nested structures should use flat question keys (`db_host`, `db_port`) instead of nested defaults.
+
+Used for: all user questions (non-`_` keys).
+
+**Template authoring note**: Because `merge_questions` uses shallow merge (nested dicts are replaced wholesale by the later layer), a derived template that needs to add one key to a base template's nested default must redeclare the entire nested structure. To minimize maintenance burden when base templates evolve:
+
+- Prefer flat question keys over deeply nested defaults (e.g., `db_host`, `db_port` instead of `db: {host: ..., port: ...}`)
+- When nesting is necessary, keep nested structures small and document them as extension points in the base template
+- Use Jinja2 defaults in template files rather than question defaults for values that derived templates commonly override
+
+### Key ordering
+
+The merged output preserves the order keys were first encountered across all configurations (left-to-right across layers).
+
+### Scoped view
+
+The merger runs over two layer sets. Over every layer of the composition it produces the **full merged schema**, which the questionnaire asks once ([Render Behavior](#render-behavior)). Over one layer and its ancestors, an ancestor being any layer the layer's `extends` chain reaches, directly or transitively, taken in topological order, it produces that layer's **scoped view**: the merged questions, the accumulated `_secret_questions` and the merged `_jinja_extensions` of those layers only, which is the flattened template the layer and its ancestors would make if merged by hand, and the Composer's output with that layer as the root. Every render of a layer, at compose and at update, renders under the layer's scoped view. Copier records in a layer's answers file the answers to the questions its template declares ([Copier: the answers file](https://copier.readthedocs.io/en/stable/configuring/#the-copier-answersyml-file)), so a layer's answers file records its own and its ancestors' answers and nothing of a sibling or a descendant. A layer's files and questions MAY use only questions its own layer or an ancestor declares. A question's declaring layer is the first layer of the view, in topological order, to hold it; a later layer that only overrides the question does not become its declaring layer.
+
+No render of a layer sees a descendant's or a sibling's questions or extensions, because a descendant's context hook or same-named filter in an ancestor's render would change the ancestor's files ([ADR-015 §Verification (2026-10-06)](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-10-06)).
+
+An update step takes each question's definition from the full merged schema, so an ancestor's step can receive a descendant's override of the ancestor's question. The override's `default`, `when`, `validator` and `choices` expressions MUST reference only questions in the scoped view of the layer that declares the overridden question, because a question only the descendant declares is undefined in the ancestor's step. `boilerplate validate` MUST check this ([05 §`validate`](https://therealbillsiegler.github.io/boilerplate/0.4/design/05-cli-reference/#validate), check `V16`).
+
+______________________________________________________________________
+
+## Stage 4 — RenderEngine
+
+### Responsibility
+
+The RenderEngine takes a `CompositionArtifact` and an `ExecutionContext` and orchestrates the actual file generation for each layer using Copier.
+
+### Copier Worker Interface
+
+The RenderEngine delegates actual file generation to Copier via the `run_worker` call. This interface abstracts Copier's internal API behind a stable contract owned by Boilerplate. Implementations MUST isolate all Copier API usage behind this interface so that Copier version upgrades require changes only in the worker implementation, not in the composition engine. The supported Copier version range MUST be declared in Boilerplate's package metadata and validated at startup; incompatible versions MUST fail with `BP_COPIER_COMPAT_FAILED` before any rendering begins.
+
+**One `Worker` subclass serves compose and update.** The worker implementation MUST hand Copier the layer's [scoped view](#scoped-view) through a `Worker` subclass that holds, in its dataclass fields, two scoped views of the layer for each update step, each with its questions and its `_jinja_extensions` union: the view joined from the versions recorded for the layer and its ancestors, which the old copy renders under, and the view joined from their target versions, which the in-place render and the new copy render under. The subclass builds `template` from the view that matches the render Copier is making, together with the `src_path`: the old copy renders the layer's recorded source at its recorded `_commit` under the recorded-versions view, and the in-place render and the new copy render under the target-versions view. The subclass MUST tell the old copy from the other two renders by the render's destination and never by `vcs_ref`, because the three renders can carry one ref: when only an ancestor moves, as with `project` v1 to v2 under `streamlit` v1 to v1, the old copy, the new copy and the in-place worker, which keeps the walk's ref, all carry `v1`, yet the recorded-versions view (`streamlit@v1` joined with `project@v1`) and the target-versions view (`streamlit@v1` joined with `project@v2`) differ. Copier creates the old copy's and the new copy's destinations under temporary directories with their own name prefixes, and the in-place render's destination is the project. Reading that prefix is a dependency on Copier's internals that [ADR-002](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-002-copier-internals-shim/#decision) lists among the audited internals. Compose renders every layer through that subclass, and the update walk ([Safe Update](#safe-update)) runs Copier's update for every layer through it, so every worker Copier builds from it with `dataclasses.replace` (the old copy, the in-place render and the new copy of an update included) exposes both scoped views of the layer.
+
+**`run_worker(source_path, destination_path, scoped_view, answers, overwrite, interactive, unsafe, run_tasks)` → `WorkerResult`**
+
+| Parameter          | Type              | Description                                                                                                                                                                                                                                                                                    |
+| ------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source_path`      | path              | Path to the template directory being rendered                                                                                                                                                                                                                                                  |
+| `destination_path` | path              | Path to the destination project directory                                                                                                                                                                                                                                                      |
+| `scoped_view`      | map[string, JSON] | The layer's [scoped view](#scoped-view): the merged question schema of the layer and its ancestors                                                                                                                                                                                             |
+| `answers`          | map[string, JSON] | Pre-seeded answers; these override defaults and suppress prompts for matched keys                                                                                                                                                                                                              |
+| `overwrite`        | boolean           | Whether to overwrite existing files in the destination                                                                                                                                                                                                                                         |
+| `interactive`      | boolean           | Whether to prompt the user for unanswered questions                                                                                                                                                                                                                                            |
+| `unsafe`           | boolean           | Whether to allow Jinja2 extensions and task execution (required when the `_jinja_extensions` union of the layer's scoped view is non-empty, or when the operation runs the layer's tasks or migrations; an `update` step needs it when either the recorded or the target scoped view needs it) |
+| `run_tasks`        | boolean           | Whether to execute `_tasks` after rendering                                                                                                                                                                                                                                                    |
+
+**`WorkerResult`** contains:
+
+| Field              | Type              | Description                                                       |
+| ------------------ | ----------------- | ----------------------------------------------------------------- |
+| `user_answers`     | map[string, JSON] | Answers explicitly provided by the user or resolved from defaults |
+| `metadata_answers` | map[string, JSON] | Copier-internal values (e.g., tool version, internal counters)    |
+
+**Behavioral contracts**:
+
+- When `interactive=false`, the worker MUST NOT prompt; it MUST use `answers` or question defaults for all values.
+- When `run_tasks=false`, the worker MUST skip task execution.
+- When `unsafe=true`, Copier permits Jinja2 extensions and task execution. Because a layer's Worker holds the `_jinja_extensions` union of its scoped view (see [merge strategies](#merge-strategies)), Boilerplate MUST set `unsafe=true` on a layer's Worker whenever that union is non-empty, and additionally on a layer whose tasks or migrations the operation runs ([ADR-003](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-003-permissive-execution/index.md) records this permissive posture). An `update` step reads two scoped views, the recorded release's and the target's, and MUST set the flag when either view's union is non-empty. A layer whose scoped view declares no extension keeps `unsafe=false` when the operation runs none of its tasks or migrations.
+- The worker MUST NOT modify `source_path` in any way.
+
+**Assumed Copier behavior**: The `run_worker` contract assumes Copier operates synchronously and single-threaded — it blocks until rendering is complete and does not spawn background processes. If Copier's concurrency model changes in a future version, the worker interface MUST serialize invocations to preserve the sequential layer-rendering guarantee. Copier is also assumed to be non-interactive when `interactive=false` — it MUST NOT prompt on stdin.
+
+### ExecutionContext
+
+| Field          | Type             | Default | Notes                                                  |
+| -------------- | ---------------- | ------- | ------------------------------------------------------ |
+| `destination`  | path             | —       | Target directory for the rendered project (required)   |
+| `context_data` | map[string, any] | `{}`    | Pre-seeded answers passed to the first worker          |
+| `overwrite`    | boolean          | `false` | Whether to overwrite existing files in the destination |
+| `interactive`  | boolean          | `true`  | Whether to prompt the user for answers                 |
+
+### Render Behavior
+
+The RenderEngine asks the questions of the full merged schema (no underscore-prefixed keys) once, across all layers, so the user is prompted only once, and then renders each layer under its [scoped view](#scoped-view) via its own Copier `Worker` invocation against the same destination directory; per-layer rendering consumes the resolved answers without re-prompting.
+
+**Why per-layer rendering**: A single Copier invocation for a multi-template composition breaks `copier update`, which assumes "1 template = 1 Git repository". Boilerplate invokes Copier once per layer and lets each layer own its own answers file, preserving Copier's three-way update flow per layer.
+
+**Per-layer rendering and file overlay**:
+
+- Each layer is rendered via its own Copier `Worker` invocation against the same destination directory; the RenderEngine loops in topological order.
+- Each layer produces its own `.copier-answers.<layer>.yml` — Copier renders the template's answers-file stub at the path its `_answers_file:` directive names, and both halves are required (the contract is specified at [Per-Layer Render Loop](#per-layer-render-loop) below). Each layer's answers file records the answers to its scoped view's questions, which the layer's later `copier update` starts from (see [Safe Update](#safe-update) and [06-project-lifecycle.md §Step 4: Three-Way Merge](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#step-4-three-way-merge)).
+- Layer N+1 overwrites Layer N's file collisions at the same path (file-level composition; see [Composition is file-level, not content-level](#managing-shared-files-across-layers)).
+- Layer-local directives (e.g., `_exclude`, `_skip_if_exists`, `_subdirectory`) are applied per-layer from each layer's own `copier.yml`; they do not propagate across layers. One exception: `_jinja_extensions` merges by union within each scoped view (see [merge strategies](#merge-strategies) above), so a layer's declared extensions reach its own Worker and every descendant's Worker, and no ancestor's or sibling's. For the rule on `_skip_if_exists`, see [Per-Layer Render Loop](#per-layer-render-loop) below.
+- The `unsafe=true` flag is passed to a layer's worker whenever the `_jinja_extensions` union of its scoped view is non-empty, and additionally to a layer whose tasks or migrations the operation runs; an `update` step passes it when either the recorded or the target scoped view needs it (see [Copier Worker Interface](#copier-worker-interface)).
+- The render operation MUST be aborted with `BP_RENDER_TIMEOUT` if the wall-clock time exceeds the configured `render_timeout` setting (default: 300 seconds). See [09-settings-and-configuration.md §Settings](https://therealbillsiegler.github.io/boilerplate/0.4/design/09-settings-and-configuration/#settings) for the `BOILERPLATE_RENDER_TIMEOUT` environment variable.
+
+**Single-prompt answer reuse**:
+
+- The full merged schema is computed **once** from all layers' configurations before rendering begins. All questions from all layers are collected into a single questionnaire, ordered by first appearance in topological order.
+- If interactive mode is enabled, the user is prompted for all questions from the full merged schema in a single interactive session. Conditional visibility (`when` expressions) is evaluated during prompting. If non-interactive, defaults and pre-seeded answers are used.
+- Each layer's Copier `Worker` invocation then receives as pre-seeded answers the resolved answers to its scoped view's questions; subsequent layers do NOT re-prompt for previously-answered questions.
+- **Tasks** are deferred: the accumulated list, in topological order, runs once after the last layer renders (see [Task Execution Order](#task-execution-order)).
+- **Overwrite**: The `overwrite` flag is passed from the `ExecutionContext`. When rendering into an empty staging directory (the standard creation path), `overwrite` does not trigger conflicts because no files pre-exist. When `--force` is active, files are overwritten freely, including any a layer lists in its own `_skip_if_exists` ([Per-Layer Render Loop](#per-layer-render-loop)). The "full-file replacement" overlay semantics described in [Project lifecycle](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/index.md) are achieved naturally by per-layer rendering in topological order: later layers' files replace earlier layers' files at the same path.
+
+**Composition is file-level, not content-level.** When two layers contribute a file at the same path, the later layer's file completely replaces the earlier layer's. There is no line-by-line or AST-level merge of file contents across layers. Template authors building layered compositions should structure templates to avoid file conflicts — for example, by organizing layer-specific content into separate files, by designating a single layer as the owner of a shared file, or by using post-render `_tasks` to merge content programmatically when the format supports it.
+
+### Managing Shared Files Across Layers
+
+When multiple layers need to contribute to the same file (e.g., `pyproject.toml`), full-file replacement means only the last layer's version survives. Template authors SHOULD use one of these patterns:
+
+1. **Single-owner pattern** (recommended): Designate one layer as the owner of the shared file. That layer's template renders the complete file under its [scoped view](#scoped-view), so the file MAY use any question its own layer or an ancestor declares; other layers contribute their values via questions with `merge_questions` but do not include the shared file in their own template content. The owning layer MUST be, or descend from, every layer that declares a question the shared file uses; the last layer of the composition, the root template, always qualifies, because its `extends` chain reaches every other layer.
+1. **Post-render task**: Use a `_tasks` entry in the final layer to programmatically merge content (e.g., merge TOML sections). This approach is flexible but couples the template to specific tooling. The task runs once against the finished project with the merged answers in scope ([ADR-014](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-014-deferred-task-execution/index.md)).
+
+Boilerplate does not perform content-level merging of individual files. This is a deliberate design choice: content merge semantics are format-dependent and would introduce significant complexity.
+
+> **Note on Jinja2 cross-layer inheritance**: Because each layer is rendered by its own Copier invocation (see [Render Behavior](#render-behavior)), `{% extends %}` directives within a derived layer's templates cannot reach into a different layer's template directory. Cross-layer template inheritance via Jinja2 is NOT supported by the per-layer rendering shape; use the single-owner or post-render-task pattern instead.
+
+### Per-Layer Render Loop
+
+The RenderEngine iterates layers in topological order. For each layer:
+
+1. Resolve the layer's source path (filesystem directory, or a Git working tree — the published first-party repository, an org-local clone or mirror, or, once the deferred seed cache exists, a wheel-bundle cache directory). A cache path MUST NEVER be recorded as `_src_path` in the answers file: Copier records the source it actually used, and masking a local cache path behind a canonical URL would mean rewriting Copier's own answers file, which [ADR-015](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/index.md) forbids ([ADR-006](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-006-template-distribution/index.md)).
+1. Invoke `run_worker` against the destination directory through the `Worker` subclass of the [Copier Worker Interface](#copier-worker-interface), with the layer's scoped view as the questionnaire, the resolved answers to that view's questions as pre-seeded answers, and the layer's own `copier.yml` as the source of its layer-local directives.
+1. Copier writes the rendered files into the destination directory and produces the layer's `.copier-answers.<layer>.yml` (by rendering the layer's answers-file stub at the path named by its `_answers_file:` directive).
+
+The source template directories on disk are never modified. The destination directory is the same across all layer invocations — file collisions are resolved by overwrite (later layers win), implementing file-level composition.
+
+Compose asks the merged questionnaire once and every layer renders with the same answers, each under its own scoped view, so a layer's answers file records the questions of that view and nothing more. In a composition of `project` and `streamlit`, `streamlit` extends `project`:
+
+```
+flowchart LR
+    accTitle: Merged questionnaire to per-layer answers files
+    accDescr: The merged questionnaire is asked once and yields the resolved answers, which feed two renders, project under its own scoped view and streamlit under the project plus streamlit scoped view. The project render writes the project answers file with the project's questions, and the streamlit render writes the streamlit answers file with the project's and streamlit's questions.
+    Q["Merged questionnaire<br>asked once"] --> A["Resolved answers"]
+    A --> P["Render project<br>scoped view: project"]
+    A --> S["Render streamlit<br>scoped view: project + streamlit"]
+    P --> PF[".copier-answers.project.yml<br>project's questions"]
+    S --> SF[".copier-answers.streamlit.yml<br>project's and streamlit's questions"]
+```
+
+Hold "Alt" / "Option" to enable pan & zoom
+
+**Layer-local Copier directives** — `_exclude`, `_skip_if_exists`, `_subdirectory`, `_templates_suffix`, `_envops` — are scoped to the layer that declares them in its own `copier.yml`. They do NOT propagate across layers; each layer's invocation reads them only from its own `copier.yml`. `_jinja_extensions` is merged instead — see the [merge strategies table](#merge-strategies) — so every layer's Worker receives the union of the extensions its own layer and its ancestors declare.
+
+**`_skip_if_exists` applies to a layer rendered on its own (update, add), not to a composed render.** In a composed render no layer's `_skip_if_exists` applies: `new` writes every layer's files, and a later layer overlays this render's own output regardless of what it declares ([Composition is file-level, not content-level](#managing-shared-files-across-layers)). A layer rendered on its own applies its own declared list to the files already in the project, because Copier checks `_skip_if_exists` before `overwrite`: that is the layer's `copier update` and the render of a layer `add` writes into an existing tree ([06 §Adding a layer](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#adding-a-layer)). In the layer's `copier update` it is Copier's own directive: it stops a merge into a listed file that already exists, and Copier still recreates a listed file the project deleted.
+
+**Extensions follow the scoped view.** A layer's render receives the `_jinja_extensions` its own layer and its ancestors declare, and a layer's files and questions MAY use only extensions its own layer or an ancestor declares. When two layers in one scoped view define the same filter or extension name, the later layer in topological order wins; the render MUST warn when a later layer's extension replaces a filter, test or global an earlier layer's extension already registered in the same view, and `validate` warns on the static case ([05 §`validate`](https://therealbillsiegler.github.io/boilerplate/0.4/design/05-cli-reference/#validate), check `V15`). An extension declared as a file path inside a template, in the [`copier-templates-extensions`](https://github.com/copier-org/copier-templates-extensions#usage) syntax that resolves the path against the template root, MUST be registered by Boilerplate as an importable module loaded from the declaring layer's source at the version the render's scoped view joins, under a module name unique to that layer and version, and handed to the renders that need it. Boilerplate MUST NOT register such an extension once, from one source at the target versions, for every render, because the old copy then renders with the target version's code and the update silently keeps the old output ([ADR-015 §Verification (2026-10-06)](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-10-06)).
+
+**`_answers_file:` directive and answers-file stub (both mandatory for first-party layers)**: Each first-party template's `copier.yml` MUST declare `_answers_file: .copier-answers.<layer>.yml`, **and** the template MUST ship an answers-file stub — a template file literally named `{{ _copier_conf.answers_file }}.jinja` rendering `_copier_answers` (the `project` template's stub is the reference pattern). The directive alone is inert: Copier writes an answers file only by rendering the stub; a template lacking one composes cleanly but silently produces no answers file, exit 0, no warning — verified against Copier 9.15.0 ([ADR-015 §Verification](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-07-28)). Together they are the contract that makes per-layer `copier update -a .copier-answers.<layer>.yml` work at update time (see [06-project-lifecycle.md §Step 4: Three-Way Merge](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#step-4-three-way-merge)). `validate` SHOULD warn when a template declares `extends` or is offered for composition without a stub, since such a layer is copy-only.
+
+Implementations MUST:
+
+1. Isolate all Copier API usage behind the [Copier Worker Interface](#copier-worker-interface).
+1. Include integration tests that verify the per-layer render loop produces the correct destination tree against the declared Copier version.
+1. Treat Copier version upgrades as requiring explicit validation, not automatic adoption.
+
+### Error Handling
+
+If staging directory creation fails, Boilerplate MUST emit `BP_RENDER_STAGING_FAILED` with the specific error. If a per-layer Copier invocation fails, Boilerplate MUST emit `BP_RENDER_TEMPLATE_FAILURE` with the specific error and the layer name. The `doctor` command SHOULD verify that the process has write access to the system temp directory before rendering is attempted.
+
+The supported Copier version range MUST be declared in Boilerplate's package metadata and documented in the CLI `--version` output.
+
+### Task Execution Order
+
+> **See also**: [03-template-system.md §Task Execution Safety](https://therealbillsiegler.github.io/boilerplate/0.4/design/03-template-system/#task-execution-safety) for trust-level controls and confirmation behavior.
+
+Task execution is deferred: every layer renders with task execution suppressed, and the full accumulated task list runs exactly once, as part of the final layer's `Worker` invocation, after the composed project's files are complete ([ADR-014](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-014-deferred-task-execution/index.md)). At update, the walk runs the same list once after the last layer's update ([Safe Update](#safe-update)). Deferral preserves Copier's contract — tasks run against a generated project — when the project is the composed whole; running a base layer's tasks mid-composition would execute them against files later layers have not finished writing. The accumulated list preserves **topological order** across layers (dependencies first, root template last) and declaration order within each layer, so the effective order is the same one per-layer execution would produce. Entries keep Copier's native shapes end-to-end (string = shell, argv list = no shell, mapping = `command` with optional `when`/`working_directory`); conditions evaluate against the merged answers in the final layer's context.
+
+**Example**: Given `app` extends `[base, middleware]`:
+
+```text
+base/copier.yml:        _tasks: ["echo base-setup"]
+middleware/copier.yml:   _tasks: ["echo middleware-init", "echo middleware-check"]
+app/copier.yml:          _tasks: ["echo app-finalize"]
+
+Execution order:
+1. echo base-setup          (from base)
+2. echo middleware-init      (from middleware)
+3. echo middleware-check     (from middleware)
+4. echo app-finalize         (from app)
+```
+
+This ordering guarantees that infrastructure tasks (base) run before application tasks (derived), which is the natural dependency order.
+
+### Return value
+
+After all layers complete, return a `TemplateInfo` describing the final layer (the root template). If the final layer's metadata cannot be loaded, Boilerplate MUST fail with `BP_RENDER_METADATA_FAILED` — a synthetic `"0.0.0"` version MUST NOT be silently coined.
+
+______________________________________________________________________
+
+## Safe Update
+
+The `boilerplate update` pipeline does not re-render the old composition itself. Three-way merge for each layer is performed by Copier's per-template `update` mechanism, which reconstructs that layer's base internally from the template's Git history. Boilerplate's role is to orchestrate Copier's `update` per layer in lock order and to own the staging worktree the walk runs in and the copy back of its result ([06 §Staging worktree](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#staging-worktree)). `copier update -a .copier-answers.<layer>.yml` names that per-layer operation throughout the design docs; the walk performs it through the same `Worker` subclass compose uses ([Copier Worker Interface](#copier-worker-interface); [ADR-002](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-002-copier-internals-shim/#decision)) so the layer's [scoped view](#scoped-view) reaches every render, and a hand-run invocation of that command is the escape hatch ([ADR-015](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#decision)).
+
+**Each layer's old copy uses the versions the descendant was last rendered against.** The old copy of a layer's step renders the layer's own template at the `_commit` its own answers file records and each ancestor at the version `boilerplate.lock` records for it. The lock records the last complete update, so its versions match what the layer's files were last rendered against, which an ancestor's own `_commit` no longer does once the ancestor has updated ahead of its descendant.
+
+**The walk covers every layer the lock lists, in lock order.** The lock lists the root's `extends` closure in topological order, followed by each layer `add` introduced, in the order it was added, so every layer follows its ancestors. Each lock entry records how the layer joined the project (`LockLayer.joined_via`, [02 §BoilerplateLock](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/#boilerplatelock)). Each layer resolves its own target. How targets are named and resolved is [06 §Step 2](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#step-2-resolve-target), and which layers the plan reports as `ADDED` or `REMOVED` is [06 §Step 3](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#step-3-build-updateplan).
+
+**A paused update resumes from its own record.** When the last record in `.boilerplate/migrations.yml` is a `conflict` MigrationRecord ([02 §MigrationRecord](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/#migrationrecord)), `update` MUST resume that update, not plan a new one. The record names each layer's target version (`targets`) and the layers the paused walk finished (`finished`), the layer whose merge left conflict markers among them. The resumed walk skips the finished layers and runs the remaining layers to the recorded targets, never to the latest release, so a release an unpinned ancestor publishes after the pause does not move the targets. Comparing versions cannot tell a finished layer from an unfinished one: with `project` v1 to v2, `streamlit` v1 to v1 and `app` v1 to v2, `streamlit` has run under `project` v2 in the paused walk, but its own `_commit` equals the lock, so a version comparison would run it again with an old copy at `project` v1 from the lock, a stale base. A remaining layer's old copy uses its own `_commit` and the lock's ancestor versions, as in any update. An explicit target (`--target-version`, bare or `<layer>@<version>`) that differs from the recorded targets MUST be refused with `BP_UPDATE_TARGET_MISMATCH` ([07 §Error Code Registry](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/#error-code-registry)), whose message tells the user to set the partial update aside first. A `conflict` record binds only while the finished layers' answers files still record the recorded targets; once the partial update is set aside, the record no longer binds and `update` plans afresh.
+
+**Without a pending conflict record, drift rules apply.** Each layer's old copy uses its own `_commit` and the lock's ancestor versions, and every layer runs, so a changed answer reaches a layer that is already at its target version. When a layer and one of its ancestors both disagree with the lock, as after a hand-run update of each, the update MUST stop before any layer runs with `BP_UPDATE_LAYER_DRIFT` ([07 §Error Code Registry](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/#error-code-registry)), naming each layer's `_commit` and the lock's version and the remediation: undo the hand-run updates with `git revert` of the commits that hold them, then run `update` again. Any other disagreement, such as a hand-run update of one layer, MUST warn and proceed, and `boilerplate doctor` MUST report every disagreement.
+
+**A layer's own answers come from its own answers file, and its ancestors' answers arrive as data.** Copier reads a layer's own questions from that layer's answers file, after the layer's before-migrations run and Copier clears its cache and re-reads the file ([Copier: updating a project](https://copier.readthedocs.io/en/stable/updating/)), so Boilerplate MUST NOT pass a layer's own recorded answers as data: data outranks the answers file in Copier's answer precedence (`AnswersMap.combined`), so a recorded value passed before the migrations ran would override what the migrations wrote. For each question an ancestor declares, Boilerplate MUST pass as data, for the in-place render and the new copy, the answer recorded in that declaring ancestor's answers file, read when the layer's step starts. Ancestors update first, so their migrations have run by then. Passed data outranks the layer's own copy of those answers, and Copier rewrites that copy from the layer's target view when the step finishes ([Copier: configuration sources](https://copier.readthedocs.io/en/stable/configuring/#configuration-sources)). A later layer overrides an earlier one only in the merged template, meaning question definitions and defaults, at compose and at update; it never overrides recorded answers, because a descendant's stale copy of an ancestor's answer would otherwise shadow the ancestor's migrated value.
+
+**Prompting happens inside each layer's step, after its migrations.** Update prompting is Copier's own: each layer asks its own questions with the recorded answer as the default, as `copier update` does; `update --skip-answered` asks only the questions no answers file records; and `--non-interactive` takes every default, as Copier's `defaults` does. Prompting is TTY-gated per [ADR-013](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-013-interactivity-contract/index.md). Each question's definition and default come from the full merged schema at the target versions, while the set of questions a layer asks follows the layer's scoped view, so a descendant's override sets the default of a new ancestor question when the ancestor's step asks it. An ancestor's questions arrive as data in a descendant's step and are not asked again, so each question is asked once, in the layer that declares it. A secret question is asked at the first layer whose scoped view holds it, held in memory for the rest of the update and never recorded, and MUST declare a default, or no render of its layer can run non-interactively. A hidden question is one whose `when` evaluates false under the layer's own answers file plus, for each question an ancestor declares, the answer recorded in that declaring ancestor's answers file, the same data the walk passes at each step, read in the scoped view at the recorded versions, the literal `when: false` derived questions among them; a `when` that reads a key no file records leaves the question not hidden, so the completeness check reports that question's key; Boilerplate computes hidden questions per scoped view and no answers file records them. Compose keeps its single unified pass over the full merged schema ([Per-Layer Render Loop](#per-layer-render-loop)), because nothing is recorded and no migration runs at compose.
+
+Each render Copier makes during a layer's update renders under the layer's scoped view at the versions it renders: the old copy renders under the scoped view joined from the recorded versions of the layer and its ancestors, and the in-place render that writes the layer's files and its answers file and the new copy render under the scoped view joined from their target versions. This matches Copier's own single-template behavior that the old copy renders exactly as it did when it was last rendered, which Copier's documentation does not state and [ADR-015's 2026-10-06 verification](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/index.md) observed, so a target version MAY add a question without a default or retype a question, as with vanilla Copier, subject to the recorded-answer check below. A question the target version removes is still a question in the scoped view at the recorded versions, and its answer comes from the layer's own answers file, so the old copy renders the same as it did when the answer was recorded. A renamed question is a removal plus an addition; carrying the recorded value to the new name is the template's own job, through Copier `_migrations`. A layer's answers file therefore records, after every update, the answers to the questions of its scoped view at the target versions: its own and its ancestors' answers, and nothing of a sibling or a descendant. The copies exist because Copier builds a layer's merge base, the old copy, from that one file, and a hand-run `copier update` of the layer reads it too; plain Copier also records a shared question in every template that asks it. Each update rewrites the copy from the declaring layer.
+
+**The old copy reads the layer's own answers file, and the walk fills the keys it lacks.** Copier builds the old copy with `data=self.subproject.last_answers` (the old copy's `replace` call in `Worker._apply_update`, read at Copier 9.18.1), so the old copy reads the layer's own answers file, and data the walk passes for the update, meaning supplied values and the ancestors' answers read when the step starts, never reaches it. For a question of the scoped view at the recorded versions that the layer's own file does not record, the `Worker` subclass MUST supply the answer the question's declaring layer recorded when the walk began, before any layer's step ran. A key the layer's own file records keeps its own value. Compose gives every layer the same values and each update rewrites the copy from the declaring layer, so the declaring layer's record at the start of the walk is what the layer was last rendered with; reading it when the walk begins, not when the step starts, keeps a change an ancestor's step makes in the same walk out of the merge base, so the change reaches the layer's files.
+
+In two cases the merge base renders an ancestor's new value, so the layer's lines that use it keep their old rendering, as under plain Copier:
+
+- **Hand-run update.** An inherited answer was changed outside Boilerplate after the layer's last render, such as a hand-run update of the ancestor with new data at the same version.
+- **Rerun after a conflict.** The walk resumes with the finished ancestors already updated, so "when the walk began" means when the rerun begins, and for a layer whose own file is trimmed the fill reads the ancestor's post-update record.
+
+A layer whose own file records its keys, as every file the walk's Copier writes does, is unaffected.
+
+For the in-place render and the new copy, the walk passes as data the answer each question's declaring ancestor recorded, read when the step starts. The diagram follows one step, `streamlit` over `project`, and shows which file feeds each of the three renders:
+
+```
+flowchart LR
+    accTitle: Files that feed each render of one layer update
+    accDescr: Streamlit's own file feeds the old copy with its own keys and feeds the in-place render with its own questions, read after migrations, while the project file as read when the walk began feeds the old copy only with the keys streamlit's file lacks. The project file as read when the step starts feeds the in-place render and the new copy as data, the in-place render writes streamlit's files and answers file, and the old copy and the new copy both go into the three-way merge.
+    SF["streamlit's own file"]
+    PW["project's file<br>as read when the walk began"]
+    PS["project's file<br>as read when the step starts"]
+    OLD["Old copy"]
+    INP["In-place render"]
+    NEW["New copy"]
+    OUT["streamlit's files<br>and answers file"]
+    MERGE["Three-way merge"]
+    SF -->|"own keys"| OLD
+    PW -->|"only keys streamlit's file lacks"| OLD
+    SF -->|"own questions, read after migrations"| INP
+    PS -->|"as data"| INP
+    PS -->|"as data"| NEW
+    INP --> OUT
+    OLD --> MERGE
+    NEW --> MERGE
+```
+
+Hold "Alt" / "Option" to enable pan & zoom
+
+**A trimmed answers file is filled for the old copy, and the in-place render records it again.** Without the fill, the old copy reads only the layer's own answers file, so a file that lacks an ancestor's answers renders the ancestor's questions at their defaults, which for `project_name` (default `{{ _folder_name }}`) is the old copy's temporary-directory name (`_folder_name` in `Worker._render_context`, read at Copier 9.18.1), or fails with `Question "x" is required` where the question has no default (the `ValueError` in `Worker._ask`). A hand-run vanilla update of a child layer trims the file to the layer's own keys ([ADR-015](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#decision)). The walk fills a trimmed file's keys for the old copy as above, and the in-place render records the full scoped view's answers again, so Copier restores the file; Boilerplate MUST NOT write it ([ADR-015](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#decision)). Before any layer runs, `update` MUST check that every question of each layer's scoped view at the recorded versions that is neither secret nor hidden, has an answer in the layer's own file or in its declaring layer's file. Where neither records one, `update` MUST stop with `BP_UPDATE_ANSWERS_INCOMPLETE` ([07 §Error Code Registry](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/#error-code-registry)), whose message names the layer and the keys and the remediation: undo the hand-run update that trimmed the file, with `git revert` of the commit that holds it, then run `boilerplate update` again. `boilerplate doctor` MUST report a trimmed file and any key no layer records.
+
+**The walk runs ancestors first.** The walk MUST always run the layers' updates in the order `boilerplate.lock` lists, which is topological because the lock lists the root's closure in topological order and `add` appends a layer only after its ancestors, so every ancestor updates before its descendants. A layer's migration that renames a question therefore rewrites that layer's answers file before any descendant's update reads the file as data; a descendant updated first, shipping no migration of its own, finds the question under neither name and records its default with no error ([ADR-015 §Verification (2026-10-06)](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-10-06)). The walk MUST warn when a layer declares a question that was an ancestor's question in the recorded-version view and is no ancestor's in the target-version view, an orphaned override: a renamed or removed ancestor question leaves the override as a stray question of the layer's own.
+
+**Changed questions fail closed.** The walk checks each recorded answer against the layer's target view inside the layer's step:
+
+- **When it runs:** after the layer's migrations and Copier's re-read of the answers file, and before the in-place render, so a migration that repairs a recorded answer clears it before the check sees it.
+- **What it rejects:** a recorded answer the target view rejects, by type, choices or validator. The update MUST stop with `BP_INPUT_ANSWER_REJECTED` ([07 §Error Code Registry](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/#error-code-registry)), and the error names the layer, the question, the recorded value and the remediation `--data <question>=<value>`. A recorded answer the target's type casts, such as the string `"8080"` under an `int` question, passes.
+- **How a supplied value replaces it:** a value for that question supplied by `--data` or `--data-file` replaces the recorded answer, and Copier validates the supplied value instead, so the check applies only to a recorded answer nothing replaces. A supplied value is user input, not a recorded answer, so it does not contradict the rule that a layer's own recorded answers are never passed as data.
+- **In a terminal:** that question's prompt shows why the recorded answer is rejected and asks for a valid one.
+- **Why the check exists:** Copier's own update path drops a recorded answer the target rejects and, when the new default passes, records the new default with no warning ([ADR-015 §Verification (2026-10-06)](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-10-06)).
+
+**Tasks run once, after the walk.** The walk MUST skip tasks in every render Copier makes during a layer's update; Copier otherwise runs the layer's own `_tasks` in its old-copy temporary directory, in place and in its new-copy temporary directory ([ADR-015 §Verification (2026-10-06)](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/#verification-2026-10-06)). After the last layer's update completes, including the rerun that finishes an update paused on a conflict, the walk MUST run once, against the finished project, the merged task list of every layer the lock lists, in lock order, the way compose runs the merged list of all its layers ([Task Execution Order](#task-execution-order); [ADR-014](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-014-deferred-task-execution/index.md)); `--no-tasks` skips that run. Skipping tasks leaves a layer's `_migrations` running in that layer's own update ([ADR-007](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-007-update-model/index.md)). The run goes through the same `Worker` subclass, at the target versions with each layer's recorded answers after its update, under Copier's `update` operation, so a task's `when:` sees `_copier_operation == "update"` and a template MAY guard a creation-only task. `_copier_operation` comes from Copier's private `_operation` ContextVar (`copier._main._operation`, read at Copier 9.18.1), which only `run_copy`, `run_recopy` and `run_update` set (through the `as_operation` decorator; `Worker._execute_tasks` reads it), so the post-walk run MUST set that ContextVar to `"update"` around the task run through the shim, and [ADR-002](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-002-copier-internals-shim/#decision) lists it among the audited internals. If a task fails after the files are copied back, a terminal offers to keep the files or undo the run. Keeping the files, whether the terminal user chooses it or `--non-interactive` does, MUST write the lock, append a `failed` record, name the failed task and how to rerun it, and exit with `1`; undoing the run, as [06 §Undo](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#undo) defines it, appends no record. `add` handles a failed task the same way ([06 §Adding a layer](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/#adding-a-layer)) (`FAILURE`, [ADR-004](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-004-exit-code-taxonomy/index.md)); exit `4` stays the conflict pause.
+
+See [Project lifecycle](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/index.md) for the full update workflow, including Copier version management and non-git source fallback.
+
+______________________________________________________________________
+
+## Composition Inspection
+
+The `CompositionArtifact` supports several inspection operations for the CLI `compose` command.
+
+### Sections
+
+| Section  | Content                                                                                                                                             |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `final`  | The fully merged Copier configuration (questions + directives)                                                                                      |
+| `layers` | Per-layer question values (contributions only, not cumulative)                                                                                      |
+| `states` | Per-layer cumulative state (requires `include_states=true` at compose time)                                                                         |
+| `deltas` | Per-layer delta from previous state (requires `include_deltas=true`)                                                                                |
+| `stats`  | Aggregate statistics (see `CompositionStats` in [Data models](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/index.md)) |
+
+**Question provenance**: When `--questions` mode is active, each question in the output SHOULD include a `source` field indicating which template layer originally declared it and whether it was overridden by a later layer. This enables template authors to trace question origins and identify unintentional overrides.
+
+Example (`--questions --format json`):
+
+```json
+{
+  "questions": [
+    {
+      "name": "project_name",
+      "type": "str",
+      "default": null,
+      "source": "project@2.1.0",
+      "overridden_by": null
+    },
+    {
+      "name": "dependencies",
+      "type": "json",
+      "default": ["streamlit", "pydantic>=2"],
+      "source": "project@2.1.0",
+      "overridden_by": "streamlit@1.0.0"
+    }
+  ]
+}
+```
+
+**Question ordering in `--questions` mode**: The question table MUST be output in the same order as the interactive prompting sequence — topological order (base templates first, root template last), preserving declaration order within each template. This ensures that an answer preset file built from `--questions` output maps directly to the prompting experience.
+
+Both YAML and JSON export formats are supported. When `--output <dir>` is specified, sections are written to the directory; otherwise they are rendered to stdout. File naming within the output directory is implementation-defined.
+
+______________________________________________________________________
+
+## Error Reference
+
+Composition-related errors use the `BP_RESOLVE_*`, `BP_GRAPH_*`, `BP_RENDER_*`, and `BP_LOCK_*` code families. See [Operational quality](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/index.md) for the authoritative error code registry and [02-data-models.md §Error Hierarchy](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/#error-hierarchy) for the exception class hierarchy.
+
+______________________________________________________________________
+
+## Invariants
+
+1. Every specifier in `sequence` MUST appear in `nodes`, `edges`, and `layers`.
+1. `sequence` MUST be in dependency-first order: for any edge `A → B`, `B` MUST appear before `A`.
+1. `final` MUST be the result of merging ALL layer configurations; no layer is skipped.
+1. `merged_questions_schema` MUST contain no underscore-prefixed keys.
+1. The accumulated `_tasks` list MUST run exactly once, as part of the final layer's Copier invocation, after all layers' files are rendered; non-final layers MUST render with task execution suppressed. At update, every render of the walk MUST suppress task execution, and the merged list of every layer the lock lists MUST run exactly once after the last layer's update, in lock order. The list preserves topological order across layers and declaration order within each layer (see [ADR-014](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-014-deferred-task-execution/index.md)).
+1. All questions from all layers MUST be collected into a single questionnaire and prompted once; no re-prompting occurs across per-layer Copier invocations.
+1. Version resolution MUST be deterministic: identical inputs (catalog state, version constraints, source `priority` ordering) MUST produce identical resolved versions. The resolver MUST NOT consult the system clock, random number generators, or environment variables that vary between invocations.
+1. Once `DependencyGraphBuilder` returns a graph, its `nodes`, `edges`, and `sequence` MUST NOT be mutated. Stages downstream of the resolver consume the graph as a read-only structure; this guarantees the resolution space is reproducible.

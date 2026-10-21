@@ -1,0 +1,97 @@
+# Boilerplate
+
+> Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.
+
+Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. Each pick is the most modern and lightweight option for its job. These pages describe the tool at its current version. The status page maps what is implemented; the design section describes the target state, not what exists.
+
+## Get started
+
+- [Python projects from templates](https://therealbillsiegler.github.io/boilerplate/0.4/index.md): What Boilerplate is, with a recorded demo
+- [Why Boilerplate](https://therealbillsiegler.github.io/boilerplate/0.4/why/index.md): The problem it removes and how it relates to Copier
+- [Install](https://therealbillsiegler.github.io/boilerplate/0.4/install/index.md): Installing the toolchain and the CLI
+- [Quickstart](https://therealbillsiegler.github.io/boilerplate/0.4/quickstart/index.md): Scaffold a project and run its checks
+- [Status](https://therealbillsiegler.github.io/boilerplate/0.4/status/index.md): What is implemented, partial, and planned
+
+## Templates
+
+- [Templates hub](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/index.md)
+- [Template Authoring](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/authoring/index.md)
+- [Template Composition](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/composition/index.md)
+- [Migration Guide Template](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/migration-guide-template/index.md)
+- [Plain Copier](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/plain-copier/index.md)
+- [Project template](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/project/index.md)
+- [Versioning and Migration](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/versioning/index.md)
+- [Streamlit template](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/streamlit/index.md)
+- [Container deployment](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/streamlit/deployment/containers/index.md)
+- [Building container images](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/streamlit/deployment/containers/building-container-images/index.md)
+- [Environment setup](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/streamlit/deployment/containers/environment-setup/index.md)
+- [Pushing container images](https://therealbillsiegler.github.io/boilerplate/0.4/templates-hub/streamlit/deployment/containers/pushing-container-images/index.md)
+
+## CLI
+
+- [CLI](https://therealbillsiegler.github.io/boilerplate/0.4/cli-overview/index.md): The command set
+- [Examples](https://therealbillsiegler.github.io/boilerplate/0.4/cli-examples/index.md): Worked commands
+- [Customization](https://therealbillsiegler.github.io/boilerplate/0.4/customization/index.md): Profiles and other overrides
+- [Commands](https://therealbillsiegler.github.io/boilerplate/0.4/cli/index.md): Command reference
+
+## Environment
+
+- [Development environment](https://therealbillsiegler.github.io/boilerplate/0.4/environment/index.md)
+- [VS Code](https://therealbillsiegler.github.io/boilerplate/0.4/environment/vscode/index.md)
+
+## Reference
+
+- [Reference](https://therealbillsiegler.github.io/boilerplate/0.4/reference/index.md)
+- [API](https://therealbillsiegler.github.io/boilerplate/0.4/reference/api/index.md)
+- [Merging](https://therealbillsiegler.github.io/boilerplate/0.4/reference/merging/index.md)
+- [Platform](https://therealbillsiegler.github.io/boilerplate/0.4/reference/platform/index.md)
+
+## Help
+
+- [Help](https://therealbillsiegler.github.io/boilerplate/0.4/help/index.md)
+- [Troubleshooting](https://therealbillsiegler.github.io/boilerplate/0.4/troubleshooting/index.md): Fixes by symptom and by error code
+- [FAQ](https://therealbillsiegler.github.io/boilerplate/0.4/faq/index.md)
+
+## Contribute
+
+- [Contribute](https://therealbillsiegler.github.io/boilerplate/0.4/contribute/index.md)
+- [Contributing](https://therealbillsiegler.github.io/boilerplate/0.4/governance/contributing/index.md): How to contribute
+- [CI Pipeline](https://therealbillsiegler.github.io/boilerplate/0.4/governance/ci/index.md): The CI pipeline
+- [Versioning & Compatibility](https://therealbillsiegler.github.io/boilerplate/0.4/governance/versioning/index.md): Versioning and compatibility
+- [Security Policy](https://therealbillsiegler.github.io/boilerplate/0.4/governance/security/index.md): Security policy
+- [Roadmap](https://therealbillsiegler.github.io/boilerplate/0.4/roadmap/index.md): Sequencing of planned work
+- [License](https://therealbillsiegler.github.io/boilerplate/0.4/about/license/index.md)
+- [Notices](https://therealbillsiegler.github.io/boilerplate/0.4/about/notices/index.md)
+
+## Optional
+
+- [Design Specifications](https://therealbillsiegler.github.io/boilerplate/0.4/design/index.md): Target-state design, not implementation status
+- [Overview](https://therealbillsiegler.github.io/boilerplate/0.4/design/01-overview/index.md): Target-state design, not implementation status
+- [Data Models](https://therealbillsiegler.github.io/boilerplate/0.4/design/02-data-models/index.md): Target-state design, not implementation status
+- [Template System](https://therealbillsiegler.github.io/boilerplate/0.4/design/03-template-system/index.md): Target-state design, not implementation status
+- [Composition Engine](https://therealbillsiegler.github.io/boilerplate/0.4/design/04-composition-engine/index.md): Target-state design, not implementation status
+- [CLI Reference](https://therealbillsiegler.github.io/boilerplate/0.4/design/05-cli-reference/index.md): Target-state design, not implementation status
+- [Project Lifecycle](https://therealbillsiegler.github.io/boilerplate/0.4/design/06-project-lifecycle/index.md): Target-state design, not implementation status
+- [Operational Quality](https://therealbillsiegler.github.io/boilerplate/0.4/design/07-operational-quality/index.md): Target-state design, not implementation status
+- [Environment Provisioning](https://therealbillsiegler.github.io/boilerplate/0.4/design/08-environment-provisioning/index.md): Target-state design, not implementation status
+- [Settings & Configuration](https://therealbillsiegler.github.io/boilerplate/0.4/design/09-settings-and-configuration/index.md): Target-state design, not implementation status
+- [Security](https://therealbillsiegler.github.io/boilerplate/0.4/design/10-security/index.md): Target-state design, not implementation status
+- [ADR-001 Build vs Adopt](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-001-build-vs-adopt/index.md): Target-state design, not implementation status
+- [ADR-002 Copier Internals Shim](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-002-copier-internals-shim/index.md): Target-state design, not implementation status
+- [ADR-003 Permissive Execution](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-003-permissive-execution/index.md): Target-state design, not implementation status
+- [ADR-004 Exit Code Taxonomy](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-004-exit-code-taxonomy/index.md): Target-state design, not implementation status
+- [ADR-005 Integrity Model](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-005-integrity-model/index.md): Target-state design, not implementation status
+- [ADR-006 Template Distribution](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-006-template-distribution/index.md): Target-state design, not implementation status
+- [ADR-007 Update Model](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-007-update-model/index.md): Target-state design, not implementation status
+- [ADR-008 Distribution Name](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-008-distribution-name/index.md): Target-state design, not implementation status
+- [ADR-009 Environment Provider Protocol](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-009-environment-provider-protocol/index.md): Target-state design, not implementation status
+- [ADR-010 Profile](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-010-profile/index.md): Target-state design, not implementation status
+- [ADR-011 Structured Overlay Merge](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-011-structured-overlay-merge/index.md): Target-state design, not implementation status
+- [ADR-012 Positioning](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-012-positioning/index.md): Target-state design, not implementation status
+- [ADR-013 Interactivity Contract](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-013-interactivity-contract/index.md): Target-state design, not implementation status
+- [ADR-014 Deferred Task Execution](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-014-deferred-task-execution/index.md): Target-state design, not implementation status
+- [ADR-015 Idiomatic Artifacts](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-015-idiomatic-artifacts/index.md): Target-state design, not implementation status
+- [ADR-016 Project Vocabulary](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-016-project-vocabulary/index.md): Target-state design, not implementation status
+- [ADR-017 Build Backend](https://therealbillsiegler.github.io/boilerplate/0.4/design/adr-017-build-backend/index.md): Target-state design, not implementation status
+- [Development Environment Landscape](https://therealbillsiegler.github.io/boilerplate/0.4/design/dev-environment-landscape/index.md): Target-state design, not implementation status
+

@@ -1,0 +1,327 @@
+# Notices
+
+The site and its offline bundle carry files from other projects: tool logos, icons, fonts, scripts and stylesheets. `NOTICE` credits each file and names its license; the license texts ship beside the files, most of them under `assets/licenses/`.
+
+```text
+Boilerplate
+Copyright 2026 Bill Siegler
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE),
+except the files under src/boilerplate/templates/, which are licensed under
+the MIT No Attribution License (MIT-0; see src/boilerplate/templates/LICENSE).
+A project rendered from those templates owes no attribution or notice for
+them. The project template's .gitignore is adapted from GitHub's
+Python.gitignore (https://github.com/github/gitignore), CC0 1.0 Universal.
+
+Boilerplate's runtime dependencies are declared in pyproject.toml and are
+distributed separately, each under its own license. No third-party source code
+is vendored into the distributed Python package.
+
+The repository vendors third-party files, serving the documentation site and
+its downloadable offline bundle:
+
+  docs/assets/mermaid.min.js — the pre-built browser distribution of Mermaid
+  10.9.1 (https://github.com/mermaid-js/mermaid), MIT License, redistributed
+  byte-for-byte as published by the Mermaid project, so the documentation
+  renders diagrams with no external fetch at view time and the offline bundle
+  works with no network at all.
+
+Mermaid's LICENSE file, copied verbatim from the pinned upstream tag, ships
+beside the bundle as docs/assets/mermaid.LICENSE. The bundle embeds further
+components, at the versions that Mermaid's pnpm-lock.yaml pins at that tag
+(https://github.com/mermaid-js/mermaid/blob/v10.9.1/pnpm-lock.yaml). The file
+itself states Mermaid 10.9.1, Cytoscape.js 3.28.1, KaTeX 0.16.9, DOMPurify
+3.0.9 and js-yaml 4.1.0. Six components keep an upstream license banner inside
+the file, and those banners must never be stripped: DOMPurify, js-yaml and,
+inside Cytoscape.js, the Thenable promise library, jQuery-derived event code,
+a Bezier easing function and a Runge-Kutta spring function. The other
+components carry no banner. The license text of each component below ships in
+docs/assets/licenses/, which the build copies to assets/licenses/, except
+elkjs (described last) and where an entry says its banner is the only text.
+The build drops the parts of a library that Mermaid never calls, so the file
+can carry less than a whole library.
+
+  Cytoscape.js 3.28.1 (https://github.com/cytoscape/cytoscape.js), MIT License,
+  Copyright (c) 2016-2023 The Cytoscape Consortium. License text:
+  cytoscape.LICENSE. Four components inside it carry their own banners, all
+  naming the MIT License. For three, the banner is the only license text
+  shipped: Thenable (Copyright (c) 2013-2014 Ralf S. Engelschall), event code
+  derived from jQuery, and a Runge-Kutta spring function adapted from
+  Framer.js (Copyright Koen Bok). The fourth, a Bezier easing function
+  (Copyright Gaetan Renaudeau), has its author's MIT License text in
+  bezier-easing.LICENSE. Cytoscape.js also bundles heap 0.2.7
+  (https://github.com/qiao/heap.js, MIT License; heap.LICENSE) and lodash
+  4.17.21 (https://github.com/lodash/lodash, MIT License, Copyright OpenJS
+  Foundation and other contributors; lodash.LICENSE).
+
+  cytoscape-cose-bilkent 4.1.0
+  (https://github.com/cytoscape/cytoscape.js-cose-bilkent), MIT License,
+  Copyright (c) 2016-2018 The Cytoscape Consortium
+  (cytoscape-cose-bilkent.LICENSE), with cose-base 1.0.3
+  (https://github.com/iVis-at-Bilkent/cose-base), MIT License, Copyright (c)
+  2019 - present, iVis@Bilkent (cose-base.LICENSE), and layout-base 1.0.2
+  (https://github.com/iVis-at-Bilkent/layout-base), MIT License, Copyright (c)
+  2019 iVis@Bilkent (layout-base.LICENSE).
+
+  D3 7.8.5 (https://github.com/d3/d3), ISC License, Copyright 2010-2023 Mike
+  Bostock, with its d3-array 3.2.4 (d3.LICENSE). D3 is a set of modules, all by
+  Mike Bostock, and Mermaid's imports reach these: d3-selection 3.0.0, d3-axis
+  3.0.0, d3-interpolate 3.0.1, d3-scale 4.0.2, d3-format 3.1.0, d3-time-format
+  4.1.0, d3-zoom 3.0.0, d3-drag 3.0.0, d3-transition 3.0.1, d3-timer 3.0.1 and
+  d3-dispatch 3.0.1 (ISC License, Copyright 2010-2021; d3-selection.LICENSE);
+  d3-shape 3.2.0, d3-color 3.1.0 and d3-time 3.1.0 (ISC License, Copyright
+  2010-2022; d3-shape.LICENSE); d3-path 3.1.0 (ISC License, Copyright
+  2015-2022; d3-path.LICENSE); internmap 2.0.3 and 1.0.1 (ISC License,
+  Copyright 2021; internmap.LICENSE); d3-scale-chromatic 3.0.0 (ISC License,
+  Copyright 2010-2021; d3-scale-chromatic.LICENSE, which also holds the
+  ColorBrewer notice for the package's palettes, of which the file uses only
+  Tableau10); and d3-ease 3.0.1 (BSD-3-Clause, Copyright 2010-2021 Mike Bostock
+  and 2001 Robert Penner; d3-ease.LICENSE).
+
+  d3-sankey 0.12.3 (https://github.com/d3/d3-sankey), BSD-3-Clause, Copyright
+  2015, Mike Bostock (d3-sankey.LICENSE), with its d3-array 2.12.1
+  (BSD-3-Clause, Copyright 2010-2020 Mike Bostock; d3-array-v2.LICENSE),
+  d3-shape 1.3.7 (BSD-3-Clause, Copyright 2010-2015 Mike Bostock;
+  d3-shape-v1.LICENSE) and d3-path 1.0.9 (BSD-3-Clause, Copyright 2015-2016
+  Mike Bostock; d3-path-v1.LICENSE).
+
+  dagre-d3-es 7.0.10 (https://github.com/tbo47/dagre-es), MIT License as its
+  package.json declares. The 7.0.10 package and tag carry no license text; the
+  repository's later LICENSE.md names its authors: Copyright (c) 2022-2024
+  Thibaut Lassalle, David Newell, Alois Klink, Sidharth Vinod and dagre-es
+  contributors (dagre-es.LICENSE). It derives from dagre and graphlib
+  (https://github.com/dagrejs/dagre), MIT License,
+  Copyright (c) 2012-2014 Chris Pettitt (dagre.LICENSE, the text graphlib
+  shares), and from dagre-d3 (https://github.com/dagrejs/dagre-d3), MIT
+  License, Copyright (c) 2013 Chris Pettitt (dagre-d3.LICENSE).
+
+  dayjs 1.11.10 (https://github.com/iamkun/dayjs), MIT License, Copyright (c)
+  2018-present, iamkun (dayjs.LICENSE).
+
+  DOMPurify 3.0.9 (https://github.com/cure53/DOMPurify), Apache License 2.0 or
+  Mozilla Public License 2.0, Copyright 2023 Dr.-Ing. Mario Heiderich, Cure53
+  (dompurify.LICENSE, which holds both texts).
+
+  js-yaml 4.1.0 (https://github.com/nodeca/js-yaml), MIT License, Copyright (C)
+  2011-2015 by Vitaly Puzrin (js-yaml.LICENSE).
+
+  KaTeX 0.16.9 (https://github.com/KaTeX/KaTeX), MIT License, Copyright (c)
+  2013-2020 Khan Academy and other contributors (katex.LICENSE).
+
+  khroma 2.1.0 (https://github.com/fabiospampinato/khroma), MIT License,
+  Copyright (c) 2019-present Fabio Spampinato, Andrew Maney (khroma.LICENSE).
+
+  lodash-es 4.17.21 (https://github.com/lodash/lodash), MIT License, Copyright
+  OpenJS Foundation and other contributors (lodash.LICENSE, shared with the
+  lodash above).
+
+  mdast-util-from-markdown 1.3.1
+  (https://github.com/syntax-tree/mdast-util-from-markdown), with micromark
+  3.2.0 and the micromark-* packages it uses
+  (https://github.com/micromark/micromark), MIT License, Copyright (c) 2020
+  Titus Wormer (mdast-util-from-markdown.LICENSE, the text micromark shares);
+  mdast-util-to-string 3.2.0 and character-entities 2.0.2, Copyright (c) 2015
+  (mdast-util-to-string.LICENSE); unist-util-stringify-position 3.0.3,
+  Copyright (c) 2016 (unist-util-stringify-position.LICENSE); and
+  decode-named-character-reference 1.0.2, Copyright (c) 2021
+  (decode-named-character-reference.LICENSE); each of these is MIT License,
+  by Titus Wormer.
+
+  @braintree/sanitize-url 6.0.4 (https://github.com/braintree/sanitize-url),
+  MIT License, Copyright (c) 2017 Braintree (sanitize-url.LICENSE).
+
+  stylis 4.3.1 (https://github.com/thysultan/stylis), MIT License, Copyright
+  (c) 2016-present Sultan Tarimo (stylis.LICENSE).
+
+  ts-dedent 2.2.0 (https://github.com/tamino-martinius/node-ts-dedent), MIT
+  License, Copyright (c) 2018 Tamino Martinius (ts-dedent.LICENSE).
+
+  uuid 9.0.1 (https://github.com/uuidjs/uuid), MIT License, Copyright (c)
+  2010-2020 Robert Kieffer and other contributors (uuid.LICENSE).
+
+  elkjs 0.9.2 (https://github.com/kieler/elkjs), under the Eclipse Public
+  License 2.0 (https://www.eclipse.org/legal/epl-2.0/), carries no banner: its
+  Source Code is available under that license from
+  https://github.com/kieler/elkjs, which builds it from the Eclipse Layout
+  Kernel's Java source at https://github.com/eclipse-elk/elk. The prebuilt
+  elk.bundled.js of elkjs also holds the browser stub of web-worker
+  (https://github.com/developit/web-worker), Apache License 2.0, whose text is
+  this repository's LICENSE.
+
+The Mermaid project publishes Mermaid's own source at
+https://github.com/mermaid-js/mermaid. Boilerplate makes no modifications.
+
+The repository also vendors four woff2 font files serving the documentation
+site's self-hosted type, so the site fetches no font from Google at view time
+and the offline bundle keeps working from file://:
+
+  docs/assets/fonts/ibm-plex-sans-latin-400-normal.woff2
+  docs/assets/fonts/ibm-plex-sans-latin-400-italic.woff2
+  docs/assets/fonts/ibm-plex-sans-latin-600-normal.woff2 — IBM Plex Sans,
+  SIL Open Font License 1.1, from the @fontsource/ibm-plex-sans npm package
+  (https://github.com/fontsource/fontsource), redistributed byte-for-byte as
+  published. License text: docs/assets/fonts/ibm-plex-sans.LICENSE.
+
+  docs/assets/fonts/jetbrains-mono-latin-400-normal.woff2 — JetBrains Mono,
+  SIL Open Font License 1.1, from the @fontsource/jetbrains-mono npm package
+  (https://github.com/fontsource/fontsource), redistributed byte-for-byte as
+  published. License text: docs/assets/fonts/jetbrains-mono.LICENSE.
+
+Boilerplate makes no modifications to either font.
+
+The repository also vendors two files serving the home page's
+terminal-recording demo, so it plays with no external fetch at view time and
+the offline bundle keeps working:
+
+  docs/assets/asciinema/asciinema-player.min.js
+  docs/assets/asciinema/asciinema-player.css — asciinema-player 3.17.0
+  (https://github.com/asciinema/asciinema-player), Apache License 2.0,
+  redistributed byte-for-byte as published on npm. License text:
+  docs/assets/asciinema/asciinema-player.LICENSE. Boilerplate makes no
+  modifications.
+
+The documentation shows third-party logos to identify the tools it describes:
+
+  docs/assets/git.svg — the Git Logo by Jason Long
+  (https://git-scm.com/community/logos), licensed under the Creative Commons
+  Attribution 3.0 Unported License
+  (https://creativecommons.org/licenses/by/3.0/).
+
+  docs/assets/ruff_bolt.svg — the Ruff logo, docs/assets/bolt.svg from Ruff
+  (https://github.com/astral-sh/ruff), MIT License, Copyright (c) 2022 Charles
+  Marsh, redistributed byte-for-byte. License text:
+  docs/assets/licenses/ruff.LICENSE.
+
+  docs/assets/pytest.png — the pytest logo, doc/en/img/favicon.png from pytest
+  (https://github.com/pytest-dev/pytest), MIT License, Copyright (c) 2004
+  Holger Krekel and others, redistributed byte-for-byte. License text:
+  docs/assets/licenses/pytest.LICENSE.
+
+  docs/assets/uv.svg — the uv logo, docs/assets/logo-letter.svg from uv
+  (https://github.com/astral-sh/uv), redistributed byte-for-byte under the
+  Apache License, Version 2.0 (uv is licensed MIT or Apache-2.0); its text is
+  this repository's LICENSE.
+
+  docs/assets/vscode.svg — the Visual Studio Code icon, used in documentation
+  as Microsoft's brand guidelines allow (https://code.visualstudio.com/brand).
+
+The documentation build (MkDocs with Material for MkDocs and its plugins) adds
+third-party files to the published site and the offline bundle. They are not
+in the repository; their license texts are in docs/assets/licenses/, which the
+build copies to assets/licenses/:
+
+  assets/javascripts/bundle.*.min.js,
+  assets/javascripts/workers/search.*.min.js,
+  assets/stylesheets/main.*.min.css and assets/stylesheets/palette.*.min.css,
+  the .map file beside each of them, and assets/images/favicon.png — Material
+  for MkDocs
+  (https://github.com/squidfunk/mkdocs-material), MIT License, Copyright (c)
+  2016-2025 Martin Donath. License text: mkdocs-material.LICENSE. The theme
+  script includes the focus-visible polyfill
+  (https://github.com/WICG/focus-visible), under the W3C Software and Document
+  License. License text: focus-visible.LICENSE. The theme script also includes
+  RxJS (https://github.com/ReactiveX/rxjs), Apache License 2.0, Copyright (c)
+  2015-2018 Google, Inc., Netflix, Inc., Microsoft Corp. and contributors, whose
+  license text is this repository's LICENSE, and tslib
+  (https://github.com/microsoft/tslib), BSD Zero Clause License, Copyright (c)
+  Microsoft Corporation; minification strips both banners. escape-html and, in
+  the search worker, lunr carry their license banners in the files. The theme
+  script also includes clipboard.js 2.0.11
+  (https://github.com/zenorocha/clipboard.js), MIT License, Copyright (c) Zeno
+  Rocha, whose banner stays in the file, and the four packages it bundles,
+  which carry no banner: good-listener 1.2.2
+  (https://github.com/zenorocha/good-listener), delegate 3.2.0, a dependency
+  of good-listener (https://github.com/zenorocha/delegate), and select 1.1.2
+  (https://github.com/zenorocha/select), each MIT License by Zeno Rocha, and
+  tiny-emitter 2.1.0 (https://github.com/scottcorgan/tiny-emitter), MIT
+  License, Copyright (c) 2017 Scott Corgan. License texts: clipboard.LICENSE,
+  which also stands for good-listener, delegate and select because their
+  repositories ship no license file and name Zeno Rocha as their MIT licensor,
+  and tiny-emitter.LICENSE. The .map files embed the original sources of all
+  of these.
+
+  The theme inlines icons into each page and into main.*.min.css: Material
+  Design Icons by Pictogrammers (https://github.com/Templarian/MaterialDesign),
+  Pictogrammers Free License, its icons under the Apache License 2.0 (license
+  text: material-design-icons.LICENSE), and Octicons
+  (https://github.com/primer/octicons), MIT License, Copyright (c) 2025 GitHub
+  Inc. (license text: octicons.LICENSE). Each inlined Font Awesome icon carries
+  its own attribution comment.
+
+  assets/javascripts/panzoom.min.js — panzoom
+  (https://github.com/anvaka/panzoom), MIT License, Copyright (c) 2016 - 2024
+  Andrei Kashcha. It bundles amator 1.1.0 (MIT, Copyright (c) 2016 Andrei
+  Kashcha), the JavaScript package wheel (https://github.com/anvaka/wheel, MIT,
+  Copyright (c) 2014-2023 Andrei Kashcha), bezier-easing
+  (MIT, Copyright (c) 2014 Gaëtan Renaudeau) and ngraph.events 1.2.2
+  (BSD-3-Clause, Copyright (c) 2013-2022 Andrei Kashcha). License texts:
+  panzoom.LICENSE, amator.LICENSE, anvaka-wheel.LICENSE, bezier-easing.LICENSE,
+  ngraph.events.LICENSE.
+
+  assets/javascripts/zoompan.js and assets/stylesheets/panzoom.css —
+  mkdocs-panzoom-plugin (https://github.com/PLAYG0N/mkdocs-panzoom), MIT
+  License, Copyright (c) 2024 PLAYG0N. License text: mkdocs-panzoom.LICENSE.
+
+  The plugin inlines four icons into every page that has a diagram, for the
+  diagram's zoom buttons: circle-question (regular style), arrow-rotate-left,
+  expand and compress (solid style) from Font Awesome Free
+  (https://fontawesome.com), identical to the icons of release 6.7.2. Font
+  Awesome Free by @fontawesome, Copyright 2024 Fonticons, Inc.; the icons are
+  licensed under the Creative Commons Attribution 4.0 International License
+  (https://creativecommons.org/licenses/by/4.0/). The plugin drops the
+  attribution comment each icon file carries. It leaves the icon shapes
+  unchanged, wrapping each in its own svg element that the plugin's stylesheet
+  fills with the theme's colors. License text: font-awesome.LICENSE.
+
+  assets/_mkdocstrings.css — mkdocstrings-python
+  (https://github.com/mkdocstrings/python), ISC License, Copyright (c) 2021,
+  Timothée Mazzucotelli. License text: mkdocstrings-python.LICENSE.
+
+The build drops the theme's search language packs (assets/javascripts/lunr/):
+the site's search is English-only and never loads them.
+
+Any future vendored asset must be added to this file, with its upstream
+license, in the same change that vendors it.
+
+Third-party tool names referenced in the documentation (Copier, Git, pytest,
+Ruff, uv, Pyright, Visual Studio Code, and others) are trademarks or registered
+trademarks of their respective owners. Git and the Git logo are either
+registered trademarks or trademarks of Software Freedom Conservancy, Inc.,
+corporate home of the Git Project, in the United States and/or other
+countries. Visual Studio Code, VS Code, and the Visual Studio Code icon are
+trademarks of Microsoft Corporation. The names identify the tools the
+documentation describes, and each logo is credited above; their use does not
+imply any affiliation with, sponsorship by, or endorsement from those projects
+or their owners.
+```
+
+## Projects Boilerplate builds on
+
+Boilerplate renders templates with Copier, configures generated projects for uv, Ruff, Pyright, pytest, VS Code and Git, and builds this site with MkDocs and the other projects below. Each project keeps its own license.
+
+| Project                                                                                                                                                                                                                                                                        | Boilerplate's use                                                           | License                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [Copier](https://github.com/copier-org/copier)                                                                                                                                                                                                                                 | Renders every template layer                                                | MIT                                                                                |
+| [uv](https://github.com/astral-sh/uv)                                                                                                                                                                                                                                          | Installs the CLI, and each generated project's Python and dependencies      | MIT or Apache-2.0                                                                  |
+| [Ruff](https://github.com/astral-sh/ruff)                                                                                                                                                                                                                                      | Lints and formats generated projects                                        | MIT                                                                                |
+| [Pyright](https://github.com/microsoft/pyright)                                                                                                                                                                                                                                | Type-checks generated projects in strict mode                               | MIT                                                                                |
+| [pytest](https://github.com/pytest-dev/pytest)                                                                                                                                                                                                                                 | Runs generated projects' tests                                              | MIT                                                                                |
+| [Visual Studio Code](https://github.com/microsoft/vscode)                                                                                                                                                                                                                      | The editor each project's settings and extension list target                | MIT (source code)                                                                  |
+| [Git](https://github.com/git/git)                                                                                                                                                                                                                                              | Version control for every generated project                                 | GPL-2.0-only                                                                       |
+| [Streamlit](https://github.com/streamlit/streamlit)                                                                                                                                                                                                                            | The `streamlit` template's app framework                                    | Apache-2.0                                                                         |
+| [PowerShell](https://github.com/PowerShell/PowerShell)                                                                                                                                                                                                                         | Runs the Windows installer script                                           | MIT                                                                                |
+| [MkDocs](https://github.com/mkdocs/mkdocs)                                                                                                                                                                                                                                     | Builds this site                                                            | BSD-2-Clause                                                                       |
+| [Material for MkDocs](https://github.com/squidfunk/mkdocs-material)                                                                                                                                                                                                            | The site's theme                                                            | MIT                                                                                |
+| [mkdocstrings](https://github.com/mkdocstrings/mkdocstrings)                                                                                                                                                                                                                   | The API reference pages                                                     | ISC                                                                                |
+| [mkdocs-typer](https://github.com/bruce-szalwinski/mkdocs-typer)                                                                                                                                                                                                               | The CLI reference page                                                      | Apache-2.0                                                                         |
+| [Mermaid](https://github.com/mermaid-js/mermaid)                                                                                                                                                                                                                               | The site's diagrams                                                         | MIT                                                                                |
+| [D3](https://github.com/d3/d3), [Cytoscape.js](https://github.com/cytoscape/cytoscape.js), [KaTeX](https://github.com/KaTeX/KaTeX), [DOMPurify](https://github.com/cure53/DOMPurify), [elkjs](https://github.com/kieler/elkjs) and the other libraries inside Mermaid's script | Layout, math, sanitizing and dates inside the diagrams                      | MIT, ISC, BSD-3-Clause, EPL-2.0, Apache-2.0, and Apache-2.0 or MPL-2.0 (DOMPurify) |
+| [Font Awesome Free](https://github.com/FortAwesome/Font-Awesome)                                                                                                                                                                                                               | The GitHub icon in the header, and four icons on the diagrams' zoom buttons | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)                          |
+| [asciinema player](https://github.com/asciinema/asciinema-player)                                                                                                                                                                                                              | Plays the home page's terminal demo                                         | Apache-2.0                                                                         |
+| [IBM Plex Sans](https://github.com/IBM/plex) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono)                                                                                                                                                                  | The site's type                                                             | OFL-1.1                                                                            |
+| [FIGlet](https://github.com/cmatsuoka/figlet), via [pyfiglet](https://github.com/pwaller/pyfiglet)                                                                                                                                                                             | The CLI banner's lettering, in FIGlet's `standard` font                     | BSD-3-Clause (FIGlet), MIT (pyfiglet)                                              |
+| [github/gitignore](https://github.com/github/gitignore)                                                                                                                                                                                                                        | The project template's `.gitignore`                                         | CC0-1.0                                                                            |
+
+______________________________________________________________________
+
+Back to [Contribute](https://therealbillsiegler.github.io/boilerplate/0.4/contribute/index.md), read the [License](https://therealbillsiegler.github.io/boilerplate/0.4/about/license/index.md), or start over at [Get Started](https://therealbillsiegler.github.io/boilerplate/0.4/index.md).

@@ -1,0 +1,36 @@
+intention:
+  id: "INT-007"
+  product: "PROD-001"
+  statement: >
+    A contributor with no organization access can install Boilerplate from
+    public sources and run its full test suite.
+  rationale: >
+    Boilerplate began as an internal tool. Every organization-specific
+    reference — package feeds, registries, hostnames, identifiers — must be
+    gone from the shipped tree, or the first outside user hits a wall the
+    maintainers cannot see. This Intention is the portability outcome only:
+    the one-time launch checklist (legal files, repository hygiene, community
+    scaffolding) lives in RELEASING.md and the roadmap's Phase 0, and
+    per-template publishing is ADR-006's concern.
+  priority: "critical"
+  dependencies: []
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    On a clean machine with no organization credentials, a contributor
+    installs Boilerplate, every dependency resolves from a public index, and
+    the full test suite passes on Ubuntu, macOS, and Windows.
+
+  acceptance_criteria:
+    - "Every declared dependency resolves from a public package index; uv.lock references no non-public index"
+    - "Code, configuration, and documentation contain no organization-specific URLs, package-feed references, or identifiers"
+    - "Boilerplate installed from a public source on a machine with no organization access passes the full test suite"
+    - "The documented development workflow (clone, install, test) succeeds on Ubuntu, macOS, and Windows"
+
+  not_included:
+    - "Legal compliance, repository hygiene, and community readiness for the public launch (RELEASING.md and the roadmap's Phase 0 own that checklist)"
+    - "Per-template repository extraction and publishing (ADR-006 and the release workstream)"
+    - "Organization-specific template content (lives in separate repos)"
+    - "Internal CI/CD pipeline configurations"
+    - "Enterprise authentication or identity provider integrations"

@@ -1,0 +1,4662 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Boilerplate pairs a Python development environment, one tool for each job, with templates that build on one another to stamp out projects. It takes care of the parts around writing code (a working toolchain and a configured project), so you start at the work.">
+      
+      
+      
+        <link rel="canonical" href="https://therealbillsiegler.github.io/boilerplate/0.4/design/01-overview/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../02-data-models/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/boilerplate.svg">
+      <meta name="generator" content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Overview - Boilerplate</title>
+      
+    
+    
+  
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+  
+
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/panzoom.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#boilerplate-product-overview" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Boilerplate" class="md-header__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Boilerplate
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Overview
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../templates-hub/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Templates
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../environment/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Environment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Help
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contribute/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Contribute
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Boilerplate" class="md-nav__button md-logo" aria-label="Boilerplate" data-md-component="logo">
+      
+  <img src="../../assets/boilerplate.svg" alt="logo">
+
+    </a>
+    Boilerplate
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TheRealBillSiegler/boilerplate" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    boilerplate
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../why/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Why Boilerplate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Templates
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/project/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../templates-hub/streamlit/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streamlit template
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Streamlit template
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/streamlit/deployment/containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Container deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/authoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Authoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/composition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template Composition
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/plain-copier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plain Copier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning and Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../templates-hub/migration-guide-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guide Template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../environment/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Environment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../environment/vscode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VS Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/merging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-boilerplate-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Boilerplate solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-boilerplate-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Boilerplate is
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Boilerplate is">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use-copier-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to use Copier directly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Principles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reproducibility-is-mandatory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility is mandatory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#templates-and-environments-are-both-first-class-surfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Templates and environments are both first-class surfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety-first-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety-first operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-staged-write-pattern-and-lock-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Staged Write Pattern and lock ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-lifecycle-is-managed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment lifecycle is managed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrate-tools-do-not-replace-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orchestrate tools, do not replace them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#versioning-and-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning and compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standards-compliance-in-first-party-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standards compliance in first-party templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-gated-catalog-federation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust-gated catalog federation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-and-privacy-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security and privacy defaults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platform-portability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Portability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-boundaries-and-external-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Boundaries and External Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-slices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Slices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature Slices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High-Level Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-configuration-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration (Settings)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Glossary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        customization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trust
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-data-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-template-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Template System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-composition-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Composition Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-project-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-operational-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operational Quality
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-environment-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-settings-and-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Settings & Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev-environment-landscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Environment Landscape
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-build-vs-adopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Build vs Adopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-copier-internals-shim/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Copier Internals Shim
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-permissive-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Permissive Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-exit-code-taxonomy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Exit Code Taxonomy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-005-integrity-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Integrity Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-006-template-distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-006 Template Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-007-update-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-007 Update Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-008-distribution-name/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-008 Distribution Name
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-009-environment-provider-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-009 Environment Provider Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-010-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-010 Profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-011-structured-overlay-merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-011 Structured Overlay Merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-012-positioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-012 Positioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-013-interactivity-contract/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-013 Interactivity Contract
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-014-deferred-task-execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-014 Deferred Task Execution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-015-idiomatic-artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-015 Idiomatic Artifacts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-016-project-vocabulary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-016 Project Vocabulary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-017-build-backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-017 Build Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contribute
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/ci/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/versioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Versioning & Compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../governance/security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../about/notices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-boilerplate-solves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Boilerplate solves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-boilerplate-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Boilerplate is
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What Boilerplate is">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#when-to-use-copier-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to use Copier directly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Principles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reproducibility-is-mandatory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility is mandatory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#templates-and-environments-are-both-first-class-surfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Templates and environments are both first-class surfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#safety-first-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safety-first operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-staged-write-pattern-and-lock-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Staged Write Pattern and lock ownership
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-lifecycle-is-managed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment lifecycle is managed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrate-tools-do-not-replace-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orchestrate tools, do not replace them
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#versioning-and-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioning and compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standards-compliance-in-first-party-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standards compliance in first-party templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-gated-catalog-federation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust-gated catalog federation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-and-privacy-defaults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security and privacy defaults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platform-portability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Portability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#system-boundaries-and-external-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Boundaries and External Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-slices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Slices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feature Slices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#environment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-level-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Level Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High-Level Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-responsibilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer responsibilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-configuration-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Configuration (Settings)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Glossary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        customization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        trust
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Design
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Specifications
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+  
+    <div class="admonition info">
+      <p class="admonition-title">Design specification</p>
+      <p>This page is part of Boilerplate's design record: the numbered specs describe target architecture throughout, while an ADR carries its own Status line — read it to see whether the decision it records has shipped. See <a href="../../status/">the Status page</a> for what's built project-wide.</p>
+    </div>
+  
+  
+                  
+
+
+  
+  
+
+
+<h1 id="boilerplate-product-overview">Boilerplate: Product Overview</h1>
+<h2 id="what-boilerplate-solves">What Boilerplate solves</h2>
+<p>Python projects accumulate friction at four points:</p>
+<ul>
+<li><strong>Environment drift</strong> — tools, versions, and configurations diverge across machines and contributors.</li>
+<li><strong>Configuration sprawl</strong> — every new project re-discovers and re-wires linter, formatter, type-checker, and test-runner settings.</li>
+<li><strong>Onboarding friction</strong> — new contributors spend hours on setup before their first commit.</li>
+<li><strong>Inconsistent toolchains</strong> — no team-level authority decides which tools and versions win.</li>
+</ul>
+<p>These problems compound at organizational scale, where dozens of repositories each accumulate their own configuration debt.</p>
+<h2 id="what-boilerplate-is">What Boilerplate is</h2>
+<p>A catalog of golden paths, Python first. Each derived template is one kind of project done the textbook way — a Typer CLI, a Streamlit or React web app, an MCP server — on a base layer its ecosystem shares, which carries the common standards. A template brings the toolchain its kind of project needs, secondary ones included (a containerized app declares Docker); patterns with a marked place for your code; and its ecosystem's published standards, the PEPs for Python. The environment installs and verifies what the template declares, so a secondary toolchain needs no setup script of its own. Templates compose by <code>extends</code>, and a project created from them updates layer by layer as the templates move.</p>
+<blockquote>
+<p><strong>Start fast. Stay consistent. Reproduce anywhere.</strong></p>
+</blockquote>
+<p>Boilerplate has two surfaces:</p>
+<ul>
+<li><strong>Managed development environment</strong> — the toolchain each template's profile declares (for Python: <code>uv</code>, <code>ruff</code>, <code>pyright</code>, <code>pytest</code>, and VS Code workspace settings), installed and version-pinned via <code>boilerplate env apply</code>.</li>
+<li><strong>CLI and template system</strong> — <code>boilerplate new</code> scaffolds a project from a curated template; <code>boilerplate update</code> applies upstream template changes to existing projects safely; <code>boilerplate list</code> and <code>boilerplate compose</code> make the catalog navigable.</li>
+</ul>
+<p><strong>The slot model.</strong> A development environment decomposes into recurring roles — <a href="#term-slot">slots</a> — catalogued in <a href="../dev-environment-landscape/">The Development Environment Landscape</a>. Each first-party template declares, through its required profile, the slots its kind of project needs, with one opinionated, preconfigured tool per slot:</p>
+<ul>
+<li><strong>Declared slots</strong> — the slots its ecosystem's dev loop uses, plus any secondary toolchain.</li>
+<li><strong>Slots within those slots</strong> — the template pre-wires each tool's per-project configuration (rule sets, strictness, markers, workspace settings).</li>
+</ul>
+<p>The environment installs and verifies what the profile declares. Slots no first-party template requires are out of scope; the <a href="../dev-environment-landscape/#how-boilerplate-maps-onto-the-landscape">landscape page</a> states the rule.</p>
+<p>Principle enforcement spans two substrates: Boilerplate's runtime <em>enforces</em> its own invariants, and the artifacts it ships <em>preconfigure</em> principles as machine-checkable defaults. Per-layer assignments are specified in PROD-001 <code>enforcement_layers</code>; shipped vs planned gating content lives in PROD-001 <code>shipped_gating_scaffolding</code>.</p>
+<p><strong>Python first, with an extensible template system.</strong> The reference implementation is written in Python; most of the first-party catalog is Python, and first-party templates for other ecosystems (a React web app) follow their own ecosystem's standards the way the Python ones follow PEPs. The template system, composition engine, and CLI impose no language requirements on template content. Teams may author templates for any language or framework. PEP 440 is the default versioning standard; SemVer-compatible versions (e.g., <code>1.2.3</code>) are valid PEP 440 and work without modification.</p>
+<h3 id="when-to-use-copier-directly">When to use Copier directly</h3>
+<p>Boilerplate orchestrates Copier — it does not replace it. For some use cases, Copier alone is the right choice:</p>
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>Recommended tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single template, no composition</td>
+<td>Copier</td>
+</tr>
+<tr>
+<td>Single-template projects — <code>copier update</code> covers their updates</td>
+<td>Copier</td>
+</tr>
+<tr>
+<td>Layered templates with <code>extends</code> chains</td>
+<td>Boilerplate</td>
+</tr>
+<tr>
+<td>Reproducible project creation with lock files</td>
+<td>Boilerplate</td>
+</tr>
+<tr>
+<td>Multi-layer template updates with three-way merge</td>
+<td>Boilerplate</td>
+</tr>
+<tr>
+<td>CI/CD drift detection (<code>lock verify</code>)</td>
+<td>Boilerplate</td>
+</tr>
+<tr>
+<td>Environment provisioning (<code>env apply</code>)</td>
+<td>Boilerplate</td>
+</tr>
+</tbody>
+</table>
+<p>Existing Copier templates work with <code>boilerplate new</code> without modification — Boilerplate adds a <code>boilerplate.yml</code> metadata file alongside <code>copier.yml</code> but does not modify or replace it. The <code>boilerplate.lock</code> file is informational; if you stop using Boilerplate, your projects and their Copier answers files are untouched.</p>
+<h2 id="core-principles">Core Principles</h2>
+<p>These principles are non-negotiable. Every implementation decision MUST honor them.</p>
+<h3 id="reproducibility-is-mandatory">Reproducibility is mandatory</h3>
+<p>Every created or managed project MUST be reproducible across machines and time. Lock files, pinned tool versions, and deterministic configuration are required at every stage. Changes that reduce determinism MUST be rejected.</p>
+<blockquote>
+<p><strong>Scope</strong>: Reproducibility is guaranteed at the <em>project</em> level via lock files — a locked project can be reconstructed identically. At the <em>template declaration</em> level, unversioned <code>extends</code> references (e.g., <code>extends: [project]</code>) resolve to the latest available version at resolution time, which may differ across invocations. The lock file captures the exact resolution, ensuring reproducibility from the point of creation forward.</p>
+</blockquote>
+<h3 id="templates-and-environments-are-both-first-class-surfaces">Templates and environments are both first-class surfaces</h3>
+<p>The template system is the primary surface; the managed development environment is a real companion surface, scoped to installing and verifying what templates declare. A change to one MUST keep the other aligned: a new CLI behavior that affects scaffolding MUST be reflected in template guidance; a new toolchain capability MUST be reflected in environment profiles; documentation MUST update alongside both.</p>
+<blockquote>
+<p><em>In practice:</em> <code>boilerplate new</code> and <code>boilerplate env apply</code> are independent operations, not phases of one workflow. Templates declare what gets rendered; profiles declare what tools render and run it. The first-party <code>project</code> template ships with both a <code>boilerplate.yml</code> (template surface) and a corresponding <code>boilerplate-env.yml</code> (environment surface).</p>
+</blockquote>
+<h3 id="safety-first-operations">Safety-first operations</h3>
+<p>Operations that modify or remove existing managed state (<code>update</code>, <code>add</code>, <code>env apply</code>, <code>eject</code>) MUST preview the planned changes and require explicit user confirmation before applying. Operations that create or advance managed state MUST record provenance: project operations write a <code>MigrationRecord</code>, and <code>env apply</code> writes the <code>EnvironmentProvisionRecord</code>. <code>eject</code> removes that managed state and records nothing; recovery is to re-<code>adopt</code>.</p>
+<p><strong>Forward-looking (no current referent):</strong> Bulk operations MUST require confirmation.</p>
+<blockquote>
+<p><em>In practice:</em> <code>boilerplate update</code>, <code>boilerplate add</code> and <code>boilerplate env apply</code> display a plan and prompt for confirmation before applying changes. <code>boilerplate new</code> writes directly because creating a project into a new directory is not destructive. Provenance is recorded across two domains: <code>MigrationRecord</code> entries in <code>.boilerplate/migrations.yml</code> cover project-domain operations (create / update / add / adopt), and the <code>EnvironmentProvisionRecord</code> in <code>.boilerplate/environment.yml</code> records the last applied environment state (<code>env apply</code>).</p>
+</blockquote>
+<h3 id="atomic-staged-write-pattern-and-lock-ownership">Atomic Staged Write Pattern and lock ownership</h3>
+<p>Template rendering MUST follow the <a href="../07-operational-quality/#atomic-staged-write-pattern">Atomic Staged Write Pattern</a>: render to a staging area, validate, then commit with no partial state left behind. On failure, the staging area MUST be cleaned up and the destination MUST remain untouched. The <code>boilerplate.lock</code> file is owned by Boilerplate and MUST be written only after a successful commit.</p>
+<blockquote>
+<p><strong>Platform caveat</strong>: Windows directory rename is not atomic; Boilerplate provides best-effort crash recovery (see <a href="../06-project-lifecycle/">06-project-lifecycle.md</a>).</p>
+</blockquote>
+<h3 id="environment-lifecycle-is-managed">Environment lifecycle is managed</h3>
+<p>Boilerplate manages the toolchain across its full lifecycle — installation, version verification, updates, and cleanup — not just initial scaffolding. Environment setup operations MUST be idempotent (safe to re-run) and fail-fast (halt with diagnostic on error before partial work persists). Tools MUST be verified to exist and meet declared version requirements before any operation that depends on them proceeds.</p>
+<blockquote>
+<p><em>In practice:</em> <code>boilerplate env apply</code> re-runs deterministically — applying the same profile twice produces the same <code>.protolock</code> state. Tool-version checks happen before invocation, not lazily during; missing or mismatched tools fail with <code>BP_ENV_*</code> codes and remediation guidance, not with downstream subprocess errors.</p>
+</blockquote>
+<h3 id="orchestrate-tools-do-not-replace-them">Orchestrate tools, do not replace them</h3>
+<p>Boilerplate MUST orchestrate established external tools (Copier, package managers, version checkers) instead of reimplementing their responsibilities. Ownership boundaries between Boilerplate and integrated tools MUST be explicit in every operation.</p>
+<p>Boilerplate MUST use all of its underlying technologies idiomatically, as each technology's own documentation describes, and set the example of doing so. Where the design departs from a technology's idiom, it MUST name the departure and the reason. <a href="../adr-015-idiomatic-artifacts/">ADR-015</a> is the principle's worked instance.</p>
+<h3 id="versioning-and-compatibility">Versioning and compatibility</h3>
+<p>The Boilerplate tool itself follows Semantic Versioning 2.0.0. Breaking changes MUST be accompanied by a major version bump and documented migration path. Templates use PEP 440 — a SemVer-compatible superset that PEP 440 itself endorses for the <code>MAJOR.MINOR.PATCH</code> (clauses 1-8) public-version part. Templates carry versions in this scheme and declare their compatibility constraints.</p>
+<blockquote>
+<p><em>In practice:</em> PEP 440 is the wire format (see §02 Version). Plain <code>X.Y.Z</code> versions are valid in both grammars and order identically; PEP 440 adds Python-ecosystem-specific syntax for pre-release (<code>1.0a1</code>), post-release (<code>1.0.post1</code>), dev (<code>1.0.dev1</code>), and epoch (<code>1!2.0</code>) identifiers — those identifiers MUST be expressed in PEP 440 form (not SemVer's <code>1.0.0-alpha.1</code> / <code>1.0.0+abc</code> forms) because the two grammars order incompatibly outside the X.Y.Z subset. Lock files record exact resolved versions so updates are explicit, never silent.</p>
+</blockquote>
+<h3 id="standards-compliance-in-first-party-templates">Standards compliance in first-party templates</h3>
+<p>First-party (official) Python templates MUST conform to the relevant Python Enhancement Proposals for every pattern they implement. This includes but is not limited to: PEP 440 (versioning), PEP 508 (dependency specifiers), PEP 517/518 (build system), PEP 621 (project metadata in <code>pyproject.toml</code>), PEP 660 (editable installs), and PEP 723 (inline script metadata). When a PEP defines the canonical way to do something, the template MUST use it — no custom conventions that duplicate or contradict a PEP. A first-party template for another ecosystem MUST conform to that ecosystem's published standards and MUST name them in its template guide. Third-party templates are not bound by this requirement, though they are encouraged to follow it.</p>
+<h3 id="trust-gated-catalog-federation">Trust-gated catalog federation</h3>
+<p>Templates are sourced from a federated catalog. Trust is binary — a source is either <em>trusted</em> or <em>untrusted</em> — and behavioral, not cosmetic: it gates what a template MAY do (execute tasks, load Jinja2 extensions, install plugins), default-deny for untrusted code. Untrusted code requires explicit per-operation consent. The full model — the trusted/untrusted boundary, default-deny task gating, and consent gates — is specified in <a href="../03-template-system/#trust-and-verification-levels">03-template-system.md §Trust and Verification Levels</a>.</p>
+<h3 id="security-and-privacy-defaults">Security and privacy defaults</h3>
+<ul>
+<li>No secrets in code, configuration, or logs. Use environment variables or a vault.</li>
+<li>Validate and sanitize all external inputs at trust boundaries.</li>
+<li>Redact personal data in logs.</li>
+<li>Fail closed: errors MUST not leak sensitive internal details to the user.</li>
+</ul>
+<p>See <a href="../10-security/">10-security.md</a> for the full security specification.</p>
+<hr />
+<h2 id="platform-portability">Platform Portability</h2>
+<p>Boilerplate supports Windows, macOS, and Linux. See <a href="../07-operational-quality/#platform-portability">07-operational-quality.md §Platform Portability</a> for platform-specific rules and constraints.</p>
+<hr />
+<blockquote>
+<p><strong>Precedence policies</strong>: Boilerplate uses two distinct precedence rules in different contexts. <em>Catalog registration</em> uses first-wins: the first source to register a template name+version owns it — see <a href="../02-data-models/#templatecatalog">02-data-models.md §TemplateCatalog</a>. <em>Composition merging</em> uses last-wins: later layers override earlier layers' values — see <a href="../04-composition-engine/#merge-rules">04-composition-engine.md §Merge Rules</a>.</p>
+</blockquote>
+<p>Persisted artifacts (data models, the lock schema, merge and checksum semantics) are specified most carefully because they outlive any single implementation.</p>
+<h2 id="system-boundaries-and-external-dependencies">System Boundaries and External Dependencies</h2>
+<p>This table covers cross-system boundaries — which tool owns which concern across Boilerplate's external integrations. For per-domain state-file inventories, see <a href="../06-project-lifecycle/#project-state-files">06 §Project State Files</a> (project domain) and <a href="../08-environment-provisioning/#state-files">08 §State Files</a> (environment domain).</p>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Owner</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Template file rendering</td>
+<td>Copier</td>
+<td>Boilerplate orchestrates; Copier renders. See <a href="../04-composition-engine/">04-composition-engine.md</a>.</td>
+</tr>
+<tr>
+<td>Answer collection</td>
+<td>Copier</td>
+<td>Interactive or defaults mode</td>
+</tr>
+<tr>
+<td>Copier answers files (per-layer <code>.copier-answers.&lt;layer&gt;.yml</code>; singular <code>.copier-answers.yml</code> for legacy projects)</td>
+<td>Copier</td>
+<td>Boilerplate MUST NOT write or mutate these files</td>
+</tr>
+<tr>
+<td><code>boilerplate.lock</code></td>
+<td>Boilerplate</td>
+<td>Written after successful render commit</td>
+</tr>
+<tr>
+<td>Git submodule initialization</td>
+<td>Boilerplate</td>
+<td>Initialized recursively before Copier invocation</td>
+</tr>
+<tr>
+<td>Package / dependency resolution</td>
+<td>External package manager</td>
+<td>Out of scope for the core tool</td>
+</tr>
+<tr>
+<td>Environment toolchain management</td>
+<td>proto</td>
+<td>Boilerplate orchestrates; proto installs tools. See <a href="../adr-001-build-vs-adopt/">ADR-001</a>.</td>
+</tr>
+<tr>
+<td><code>.prototools</code></td>
+<td>proto</td>
+<td>proto's native toolchain declaration; Boilerplate generates from merged profiles</td>
+</tr>
+<tr>
+<td><code>.protolock</code></td>
+<td>proto</td>
+<td>proto's native lock file recording exact tool versions and checksums; enabled by Boilerplate</td>
+</tr>
+<tr>
+<td><code>.boilerplate/environment.yml</code></td>
+<td>Boilerplate</td>
+<td>Records which profile was applied and the resolved <code>extends</code> chain</td>
+</tr>
+<tr>
+<td>Git initialization</td>
+<td>Git</td>
+<td>Boilerplate MAY invoke; does not own</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="feature-slices">Feature Slices</h2>
+<p>The product is organized into five vertical slices, each independently deliverable.</p>
+<table>
+<thead>
+<tr>
+<th>Slice</th>
+<th>Name</th>
+<th>Acceptance Criteria</th>
+<th>CLI Commands</th>
+<th>Design Docs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>001</td>
+<td>Template Discovery</td>
+<td><code>list</code>, <code>graph</code>, <code>validate</code> return correct results for first-party and filesystem templates</td>
+<td><code>list</code>, <code>graph</code>, <code>validate</code>, <code>test</code>, <code>cache warm</code></td>
+<td><a href="../03-template-system/">03</a>, <a href="../05-cli-reference/">05</a></td>
+</tr>
+<tr>
+<td>002</td>
+<td>Project Creation</td>
+<td><code>new</code> renders multi-layer compositions atomically with lock file generation</td>
+<td><code>new</code>, <code>compose</code>, <code>init-template</code></td>
+<td><a href="../02-data-models/">02</a>, <a href="../03-template-system/">03</a>, <a href="../04-composition-engine/">04</a>, <a href="../05-cli-reference/">05</a>, <a href="../06-project-lifecycle/">06</a></td>
+</tr>
+<tr>
+<td>003</td>
+<td>Project Update &amp; Adoption</td>
+<td><code>update</code> performs three-way merge; <code>add</code> applies one more template layer to a managed project; <code>adopt</code> imports Copier-only projects; <code>eject</code> stops Boilerplate management (inverse of <code>adopt</code>)</td>
+<td><code>update</code>, <code>add</code>, <code>adopt</code>, <code>eject</code>, <code>status</code>, <code>lock verify</code></td>
+<td><a href="../05-cli-reference/">05</a>, <a href="../06-project-lifecycle/">06</a></td>
+</tr>
+<tr>
+<td>004</td>
+<td>Environment Profiles</td>
+<td><code>env apply</code> provisions tools via proto and records the applied state; re-running <code>env apply</code> is the recovery path</td>
+<td><code>env apply</code>, <code>env status</code></td>
+<td><a href="../08-environment-provisioning/">08</a></td>
+</tr>
+<tr>
+<td>005</td>
+<td>Operational Quality</td>
+<td><code>doctor</code> validates system health; structured logging and error codes operational</td>
+<td><code>doctor</code></td>
+<td><a href="../07-operational-quality/">07</a></td>
+</tr>
+<tr>
+<td>—</td>
+<td>Developer Experience</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../05-cli-reference/">05</a></td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../status/">Implementation Status</a>.</p>
+<h3 id="environment-profiles">Environment Profiles</h3>
+<p>Declarative profiles (<code>boilerplate-env.yml</code>) pin the development toolchain per project and compose via <code>extends</code>. Boilerplate resolves the chain and writes <code>.prototools</code> (proto's native input); proto installs tools and writes <code>.protolock</code> (exact versions + checksums). Boilerplate writes <code>.boilerplate/environment.yml</code> for profile provenance. Same "orchestrate, don't replace" pattern as Copier — see <a href="../adr-001-build-vs-adopt/">ADR-001</a>. Operational contract: <a href="../08-environment-provisioning/">§08 Environment Provisioning</a>.</p>
+<hr />
+<h2 id="high-level-architecture">High-Level Architecture</h2>
+<div class="language-text highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────────────────────────────────────────────────────────────────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                                CLI                                   │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  Project:  new | update | add | status | adopt | eject               │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  Template: list | compose | graph | validate | test | init-template  │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  System:   doctor | env | lock | cache                               │
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>└───────────────────────────────┬──────────────────────────────────────┘
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                │ commands invoke
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>               ┌────────────────▼────────────────┐
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>               │        Application Layer         │
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>               │  Resolver  Composer  Render       │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>               │  Updater   Profiler               │
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>               └───────┬────────────────┬─────────┘
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                       │                │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>          Templates                Environment Provisioning
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                       │                │
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    ┌──────────────────▼───────┐  ┌─────▼──────────────────┐
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    │      Template Catalog    │  │    ProfileCatalog       │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    │  TemplateCatalog         │  │  (profile index)        │
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    │  (in-memory index)       │  └─────┬──────────────────┘
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    └──────────────────┬───────┘        │ delegates to
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                       │          ┌─────▼──────────────────┐
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                       │          │      ProtoWorker        │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>         populated by  │          │  (orchestrates proto)   │
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                       │          └─────┬──────────────────┘
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    ┌──────────────────▼───────┐        │ invokes
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    │    Template Repository   │  ┌─────▼──────────────────┐
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    │  DirectoryTemplateRepository │  │    proto (external)     │
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    │  RemoteSource            │  │  tool install &amp; manage  │
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    └──────────────────┬───────┘  └────────────────────────┘
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                       │ reads
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>    ┌──────────────────▼───────┐
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    │   Template Files on Disk │
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    │  boilerplate.yml         │
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    │  copier.yml | src        │
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    └──────────────────────────┘
+</code></pre></div>
+<h3 id="layer-responsibilities">Layer responsibilities</h3>
+<p><strong>CLI</strong> — Parses user input, bootstraps the runtime context (settings, logging, display), dispatches to application services, and renders output. The CLI MUST NOT contain business logic.</p>
+<p><strong>Application Layer</strong> — Contains all domain logic: resolving dependency graphs, merging configurations, orchestrating renders, computing update plans, and managing profiles.</p>
+<p><strong>Template Catalog</strong> — An in-memory index populated at startup from one or more repositories. Provides lookup by canonical tag (<code>name@version</code>) and by name (resolves to latest).</p>
+<p><strong>Template Repository</strong> — Discovers and loads templates from a source (local directory, remote registry). Produces <code>TemplateInfo</code> records for catalog registration.</p>
+<p><strong>Template Files</strong> — The on-disk artifacts. Each template MUST contain a <code>boilerplate.yml</code> (Boilerplate metadata) and a <code>copier.yml</code> (Copier questionnaire). Templates MAY extend other templates via <code>boilerplate.yml</code>.</p>
+<hr />
+<h2 id="runtime-configuration-settings">Runtime Configuration (Settings)</h2>
+<p>The runtime is configured by a <code>Settings</code> object loaded from environment variables and an optional <code>.env</code> file. See <a href="../09-settings-and-configuration/">09-settings-and-configuration.md</a> for the complete Settings specification, including all fields, env var names, types, and defaults, and for the <code>boilerplate-sources.yml</code> configuration file.</p>
+<hr />
+<h2 id="glossary">Glossary</h2>
+<p>Core terms used throughout this document suite. For data model details see <a href="../02-data-models/">02-data-models.md</a>; for composition details see <a href="../04-composition-engine/">04-composition-engine.md</a>. Canonical definitions live in <code>CONTEXT.md</code> at the repository root.</p>
+<div class="admonition note">
+<p class="admonition-title">Target-state vocabulary</p>
+<p>These definitions describe the design. <a href="../../status/">Implementation status</a> records which parts exist today.</p>
+</div>
+<h3 id="core"><code>core</code></h3>
+<p>Concepts every module uses.</p>
+<p><a id="term-copier"></a><strong>Copier</strong> · <code>core:Copier</code><br />
+The external tool (<a href="https://copier.readthedocs.io/">Copier</a>) responsible for file rendering, answer collection, and task execution. Boilerplate orchestrates Copier without replacing it.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Template</code>, <code>core:Question</code>, <code>composition:AnswersFile</code>, <code>composition:RenderEngine</code>, <code>customization:Task</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/integrations/copier_types.py</code> (the single audited import point for the Copier internals Boilerplate uses)</li>
+<li><strong>See:</strong> <code>docs/design/adr-001-build-vs-adopt.md</code>; <code>docs/design/adr-002-copier-internals-shim.md</code></li>
+</ul>
+<p><a id="term-template"></a><a id="term-boilerplate-yml"></a><a id="term-copier-yml"></a><strong>Template</strong> · <code>core:Template</code><br />
+A directory containing <code>boilerplate.yml</code> (name, version, <code>extends</code>) and <code>copier.yml</code> that boilerplate renders into a project — a Copier scaffold. Its filesystem location is the <strong>template root</strong>.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>core:Question</code>, <code>core:TemplateSpecifier</code>, <code>composition:Layer</code>, <code>customization:Task</code>, <code>model:StarterTemplates</code>, <code>model:GoldenPath</code></li>
+<li><strong>Stored in:</strong> <code>boilerplate.yml</code>, Boilerplate-specific metadata (name, version, and dependencies through <code>extends</code>), and <code>copier.yml</code>, Copier's questionnaire (questions and tasks), both at the template root, for example <code>src/boilerplate/templates/project/boilerplate.yml</code> and <code>src/boilerplate/templates/project/copier.yml</code>. Copier owns <code>copier.yml</code>; Boilerplate reads it and MUST NOT write to it.</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/models/template_meta.py</code> (<code>TemplateMeta</code>, the <code>boilerplate.yml</code> schema), <code>src/boilerplate/models/template_info.py</code></li>
+<li><strong>See:</strong> design 02 §TemplateMeta; design 03 §<code>boilerplate.yml</code> Schema</li>
+<li><strong>Avoid:</strong> generator, skeleton, blueprint</li>
+<li><strong>Carve-out:</strong> "template skeleton" names the <code>init-template</code> command's scaffold output, not this term.</li>
+<li><strong>Matches:</strong> template, in Copier's documentation (close: Copier's template is a directory, usually a Git repository's root, with an optional <code>copier.yml</code>; a Template here also carries <code>boilerplate.yml</code>)</li>
+</ul>
+<p><a id="term-first-party-templates"></a><strong>first-party templates</strong> · <code>core:FirstPartyTemplates</code><br />
+Templates Boilerplate publishes as their own git repositories, extracted from the authoring monorepo at release time — the canonical first-party distribution channel (versus user-provided or third-party templates).</p>
+<ul>
+<li><strong>Kind of:</strong> <code>core:Template</code></li>
+<li><strong>Related:</strong> <code>model:StarterTemplates</code>, <code>trust:TrustLevel</code>, <code>trust:FirstPartyGatingScaffolding</code>, <code>trust:PEPDiscipline</code>, <code>core:PEP</code></li>
+<li><strong>Stored in:</strong> <code>src/boilerplate/templates/</code> (the authoring monorepo's copies)</li>
+<li><strong>See:</strong> <code>docs/design/adr-006-template-distribution.md</code>; design 03 §First-Party Templates</li>
+</ul>
+<p><a id="term-template-specifier"></a><strong>Template Specifier</strong> · <code>core:TemplateSpecifier</code><br />
+A <code>name@version</code> string uniquely identifying a template — the resolved form.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Template</code>, <code>composition:DependencyGraph</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:TemplateReference</code> (the unresolved input form, which may omit the version)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/types/template_specifier.py</code></li>
+<li><strong>See:</strong> design 02 §TemplateSpecifier</li>
+</ul>
+<p><a id="term-question"></a><strong>Question</strong> · <code>core:Question</code><br />
+A Copier-declared input on a Template, whose answer fills the rendered output; a Template declares zero or more in <code>copier.yml</code>.</p>
+<ul>
+<li><strong>Part of:</strong> <code>core:Template</code></li>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>composition:AnswersFile</code>, <code>composition:HiddenQuestion</code>, <code>composition:ScopedView</code>, <code>composition:FullMergedSchema</code>, <code>customization:Profile</code>, <code>customization:AnswerPreset</code></li>
+<li><strong>Stored in:</strong> the declaring template's <code>copier.yml</code> (owned by Copier; Boilerplate reads it and MUST NOT write to it)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/integrations/copier_types.py</code> (Copier's <code>Question</code>, imported), <code>src/boilerplate/composition/merging/strategies.py</code> (<code>merge_questions</code>)</li>
+<li><strong>Avoid:</strong> variable, prompt, field</li>
+<li><strong>Matches:</strong> question, in Copier's documentation (exact)</li>
+</ul>
+<p><a id="term-schema-v1"></a><strong>schema v1</strong> · <code>core:SchemaV1</code><br />
+The first generation of this design suite's on-disk contracts (<code>schema_version</code> major <code>1</code>, e.g. <code>"1"</code> / <code>"boilerplate/lock@1"</code>). Independent of the tool's release version (SemVer <code>0.x</code> until the first stable <code>1.0</code>), which tracks implementation maturity, not contract generation.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Template</code>, <code>composition:LockFile</code></li>
+<li><strong>Stored in:</strong> the <code>schema_version</code> field of <code>boilerplate.yml</code> and of <code>boilerplate.lock</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/models/template_meta.py</code>, <code>src/boilerplate/models/boilerplate_lock.py</code></li>
+<li><strong>See:</strong> design 03 §Schema Evolution</li>
+</ul>
+<p><a id="term-pep"></a><strong>PEP</strong> · <code>core:PEP</code><br />
+Python Enhancement Proposal — the standards process for the Python language. Referenced PEPs: 440 (versioning), 508 (dependency specifiers), 517/518 (build system), 621 (project metadata), 660 (editable installs), 723 (inline script metadata).</p>
+<ul>
+<li><strong>Related:</strong> <code>trust:PEPDiscipline</code>, <code>core:FirstPartyTemplates</code></li>
+<li><strong>See:</strong> design 01 §Standards compliance in first-party templates</li>
+</ul>
+<p><a id="term-atomic-staged-write-pattern"></a><strong>Atomic Staged Write Pattern</strong> · <code>core:AtomicStagedWritePattern</code><br />
+Boilerplate's stage-then-rename file-emission discipline: stage in an isolated directory, validate, then atomically move into place.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:SafeUpdate</code>, <code>provisioning:EnvironmentProvisioning</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/project_state/atomic_write.py</code>, <code>src/boilerplate/composition/staging/staging_worktree.py</code>, <code>src/boilerplate/composition/staging/intent_journal.py</code>, <code>src/boilerplate/composition/staging/stale_cleanup.py</code></li>
+<li><strong>See:</strong> design 07 §Atomic Staged Write Pattern (canonical definition)</li>
+</ul>
+<p><a id="term-settings"></a><strong>Settings</strong> · <code>core:Settings</code><br />
+Boilerplate's own runtime configuration: one immutable object, loaded once at CLI startup and passed to every application service.</p>
+<ul>
+<li><strong>Related:</strong> <code>customization:Profile</code></li>
+<li><strong>Not to be confused with:</strong> <code>model:Configuration</code> (the Toolchain's settings in a generated project, not Boilerplate's own)</li>
+<li><strong>Stored in:</strong> compiled-in defaults, overridden by a <code>.env</code> file in the current directory, then by <code>BOILERPLATE_*</code> environment variables</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/settings/settings.py</code></li>
+<li><strong>See:</strong> design 09 §Settings</li>
+</ul>
+<h3 id="model"><code>model</code></h3>
+<p>The reference model: what Boilerplate is.</p>
+<p><a id="term-reference-model"></a><strong>Reference model</strong> · <code>model:ReferenceModel</code><br />
+The model of what Boilerplate is: <strong>Curation</strong> picks the <strong>Toolchain</strong> from the <strong>Tool landscape</strong>; the <strong>Toolchain</strong> is a part of the <strong>Development Environment</strong>, and the <strong>Starter templates</strong> carry it too; <strong>golden paths</strong> run on it; <strong>Guardrails</strong> check the work. Every other statement of what Boilerplate is derives from it.</p>
+<ul>
+<li><strong>Related:</strong> <code>model:Curation</code></li>
+<li><strong>See:</strong> Developer platform architecture §The model (<code>docs/reference/platform/index.md</code>), which owns it</li>
+</ul>
+<p><a id="term-environment"></a><strong>Environment</strong> · <code>model:Environment</code><br />
+The problem domain — a developer's setup and its tendency to diverge across machines and time ("environment drift") — and the umbrella over the <strong>Development Environment</strong> (the thing) and <strong>Environment Provisioning</strong> (the subsystem). In prose, avoid the bare word where one specific sense is meant.</p>
+<ul>
+<li><strong>Related:</strong> <code>model:DevelopmentEnvironment</code>, <code>provisioning:EnvironmentProvisioning</code></li>
+</ul>
+<p><a id="term-tool-landscape"></a><strong>Tool landscape</strong> · <code>model:ToolLandscape</code><br />
+The descriptive catalog of the tools, technologies and practices available in a domain, organized by <strong>slot</strong>, answering <em>what exists?</em>; the <strong>Toolchain</strong> is curated from it. Boilerplate keeps it as the Development Environment Landscape guide.</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:ReferenceModel</code></li>
+<li><strong>Related:</strong> <code>model:Slot</code>, <code>model:Curation</code>, <code>model:Toolchain</code></li>
+<li><strong>Stored in:</strong> <code>docs/design/dev-environment-landscape.md</code></li>
+<li><strong>See:</strong> Developer platform architecture §The tool landscape (<code>docs/reference/platform/index.md</code>)</li>
+</ul>
+<p><a id="term-slot"></a><strong>slot</strong> · <code>model:Slot</code><br />
+One recurring role in a development environment (linter, type checker, test runner, …). Each first-party template fills the slots its ecosystem's <strong>dev loop</strong> uses with one opinionated tool each; the template then fills slots <em>within</em> those slots (each tool's per-project configuration).</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:ToolLandscape</code></li>
+<li><strong>Related:</strong> <code>model:Toolchain</code>, <code>model:Configuration</code>, <code>model:DevLoop</code>, <code>core:FirstPartyTemplates</code></li>
+<li><strong>See:</strong> design 01 §What Boilerplate is (the slot model); <code>docs/design/dev-environment-landscape.md</code>, which catalogues the slots</li>
+</ul>
+<p><a id="term-curation"></a><strong>Curation</strong> · <code>model:Curation</code><br />
+Choosing the <strong>Toolchain</strong>'s picks from the <strong>Tool landscape</strong> as a set, each for how it works with the others, then configuring them together and maintaining them together. It joins the <strong>Development Environment</strong> and the <strong>Starter templates</strong>, which carry the same picks.</p>
+<ul>
+<li><strong>Related:</strong> <code>model:ReferenceModel</code>, <code>model:ToolLandscape</code>, <code>model:Toolchain</code>, <code>model:DevelopmentEnvironment</code>, <code>model:StarterTemplates</code></li>
+</ul>
+<p><a id="term-toolchain"></a><strong>Toolchain</strong> · <code>model:Toolchain</code><br />
+The development tools Boilerplate picks and sets up, one per <strong>slot</strong> (uv, Ruff, Pyright, pytest, …), chosen by <strong>Curation</strong> from the <strong>Tool landscape</strong>, whether or not their versions are pinned; it answers <em>what do we use?</em> and is not an application's own framework stack. <strong>Environment Provisioning</strong> pins the tools through an <strong>EnvironmentProfile</strong>, and not every pick is pinned (the editor and git are not).</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:DevelopmentEnvironment</code></li>
+<li><strong>Related:</strong> <code>model:Slot</code>, <code>model:Curation</code>, <code>model:ToolLandscape</code>, <code>model:Configuration</code>, <code>model:StarterTemplates</code>, <code>provisioning:EnvironmentProvisioning</code>, <code>provisioning:EnvironmentProfile</code></li>
+<li><strong>Not to be confused with:</strong> <code>model:DevelopmentEnvironment</code> (which contains the Toolchain; not a synonym)</li>
+<li><strong>See:</strong> Developer platform architecture §The toolchain (<code>docs/reference/platform/index.md</code>)</li>
+<li><strong>Avoid:</strong> curated stack, dev stack, tech stack</li>
+<li><strong>Carve-out:</strong> the slogan "Less Yak. More Stack." puns on the toolchain handed to you and templates stacking; outside it, a template <strong>layers</strong> on another. The reference model page names "curated stack" once, as something the toolchain is sometimes called.</li>
+<li><strong>Matches:</strong> curated stack, in platform engineering per <code>docs/reference/platform/index.md</code> (close)</li>
+</ul>
+<p><a id="term-development-environment"></a><strong>Development Environment</strong> · <code>model:DevelopmentEnvironment</code><br />
+The setup a developer works in, on the machine, in the project and in the editor: the <strong>Toolchain</strong>, its <strong>Configuration</strong> (<code>pyproject.toml</code>, <code>.vscode/</code>), the <strong>Project Layout</strong>, and the <strong>dev loop</strong>. In the reference model the <strong>Toolchain</strong> is a part of it, and the <strong>Starter templates</strong> sit beside it.</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:ReferenceModel</code></li>
+<li><strong>Related:</strong> <code>model:Environment</code>, <code>model:StarterTemplates</code>, <code>model:Configuration</code>, <code>model:ProjectLayout</code>, <code>model:DevLoop</code></li>
+<li><strong>Not to be confused with:</strong> <code>model:Toolchain</code> (one of its parts, not a synonym), <code>provisioning:EnvironmentProvisioning</code> (the subsystem that installs it and pins the Toolchain's versions)</li>
+<li><strong>See:</strong> the Development Environment guide (<code>docs/environment/index.md</code>)</li>
+</ul>
+<p><a id="term-configuration"></a><strong>Configuration</strong> · <code>model:Configuration</code><br />
+The settings that wire the <strong>Toolchain</strong> into a project — <code>pyproject.toml</code> and <code>.vscode/</code>.</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:DevelopmentEnvironment</code></li>
+<li><strong>Related:</strong> <code>model:Toolchain</code>, <code>model:Slot</code>, <code>provisioning:EnvironmentProfile</code></li>
+<li><strong>Not to be confused with:</strong> <code>core:Settings</code> (Boilerplate's own runtime configuration, not a generated project's)</li>
+<li><strong>Stored in:</strong> a generated project's <code>pyproject.toml</code> and <code>.vscode/</code>, rendered from <code>src/boilerplate/templates/project/pyproject.toml.jinja</code> and <code>src/boilerplate/templates/project/.vscode/</code></li>
+<li><strong>See:</strong> the Development Environment guide §Configuration (<code>docs/environment/index.md</code>)</li>
+</ul>
+<p><a id="term-project-layout"></a><strong>Project Layout</strong> · <code>model:ProjectLayout</code><br />
+The standard project structure — <code>src/</code>, <code>tests/</code>, and their conventions.</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:DevelopmentEnvironment</code></li>
+<li><strong>Stored in:</strong> <code>src/boilerplate/templates/project/</code> (its <code>src/</code> and <code>tests/</code> scaffold)</li>
+<li><strong>See:</strong> the Development Environment guide §Project layout (<code>docs/environment/index.md</code>)</li>
+</ul>
+<p><a id="term-workflow"></a><strong>workflow</strong> · <code>model:Workflow</code><br />
+The steps taken to get a job done. GitHub Actions workflow files keep their own name.</p>
+<ul>
+<li><strong>Related:</strong> <code>model:GoldenPath</code></li>
+</ul>
+<p><a id="term-golden-path"></a><strong>golden path</strong> · <code>model:GoldenPath</code><br />
+A <strong>workflow</strong> whose decisions are already thought out for you: the supported, opinionated route through one job, answering <em>how do we work?</em> Golden paths nest: each template is a golden path to a starting point, solving the plumbing so a project starts ready for work, and the <strong>dev loop</strong> is the golden path for the everyday work that follows.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>model:Workflow</code></li>
+<li><strong>Part of:</strong> <code>model:ReferenceModel</code></li>
+<li><strong>Related:</strong> <code>model:DevLoop</code>, <code>model:StarterTemplates</code>, <code>core:Template</code></li>
+<li><strong>See:</strong> Developer platform architecture §The golden path (<code>docs/reference/platform/index.md</code>)</li>
+<li><strong>Avoid:</strong> paved road, paved path</li>
+<li><strong>Matches:</strong> paved road, in Netflix's vocabulary per <code>docs/reference/platform/index.md</code> (exact)</li>
+</ul>
+<p><a id="term-dev-loop"></a><strong>dev loop</strong> · <code>model:DevLoop</code><br />
+The cycle you repeat inside a project, which is test-driven development's red-green-refactor: write a failing test (red), make it pass with the least code (green), refactor with the tests still green, then run the checks and commit. Many turns make one pull request, and a release gathers many pull requests.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>model:GoldenPath</code></li>
+<li><strong>Part of:</strong> <code>model:DevelopmentEnvironment</code></li>
+<li><strong>Related:</strong> <code>model:Slot</code></li>
+<li><strong>Avoid:</strong> inner loop, developer workflow, development workflow</li>
+</ul>
+<p><a id="term-starter-templates"></a><strong>Starter templates</strong> · <code>model:StarterTemplates</code><br />
+The <strong>Templates</strong>, answering <em>how do we start?</em>: each a <strong>golden path</strong> to a starting point that carries the <strong>Toolchain</strong>'s project and editor picks. Outside the reference model, say <strong>Template</strong>.</p>
+<ul>
+<li><strong>Part of:</strong> <code>model:ReferenceModel</code></li>
+<li><strong>Related:</strong> <code>core:Template</code>, <code>core:FirstPartyTemplates</code>, <code>model:GoldenPath</code>, <code>model:Toolchain</code>, <code>model:DevelopmentEnvironment</code>, <code>model:Curation</code></li>
+<li><strong>See:</strong> Developer platform architecture §Starter templates (<code>docs/reference/platform/index.md</code>)</li>
+</ul>
+<p><a id="term-guardrails"></a><strong>Guardrails</strong> · <code>model:Guardrails</code><br />
+The automated checks that verify a project against the standards its templates configure — dev-time in a <strong>Development Environment</strong> (format-on-save, live type-checking) and in CI — answering <em>how do we comply?</em></p>
+<ul>
+<li><strong>Part of:</strong> <code>model:ReferenceModel</code></li>
+<li><strong>Related:</strong> <code>model:DevelopmentEnvironment</code>, <code>trust:FirstPartyGatingScaffolding</code>, <code>trust:PostRenderValidation</code>, <code>trust:PreconfiguredSubstrate</code></li>
+<li><strong>See:</strong> Developer platform architecture §Guardrails (<code>docs/reference/platform/index.md</code>)</li>
+</ul>
+<h3 id="composition"><code>composition</code></h3>
+<p>How templates layer into one project, and the lock, answers and update mechanics.</p>
+<p><a id="term-extends-based-composition"></a><strong>extends-based composition</strong> · <code>composition:ExtendsBasedComposition</code><br />
+The static <code>extends:</code> mechanism in template metadata that drives composition. Not a runtime feature; resolved at composition time.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:Layer</code>, <code>composition:DependencyGraph</code>, <code>core:Template</code></li>
+<li><strong>Stored in:</strong> the <code>extends</code> field of <code>boilerplate.yml</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/models/template_meta.py</code>, <code>src/boilerplate/composition/resolution/resolver.py</code></li>
+<li><strong>See:</strong> design 03 §<code>extends</code> syntax; design 04 §Stage 1 — Resolver</li>
+</ul>
+<p><a id="term-layer"></a><strong>Layer</strong> · <code>composition:Layer</code><br />
+One template rendered at a node of the <strong>Dependency Graph</strong>, each with its own <strong>Answers File</strong>; a derived Layer (also "derived template" in prose) <code>extends</code> another Template to add or override its files. As a verb, a template <em>layers</em> on the template it <code>extends</code>; in plain prose, templates build on one another.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>core:Template</code></li>
+<li><strong>Part of:</strong> <code>composition:DependencyGraph</code></li>
+<li><strong>Related:</strong> <code>composition:ExtendsBasedComposition</code>, <code>composition:AnswersFile</code>, <code>composition:ScopedView</code>, <code>customization:Profile</code>, <code>customization:Task</code></li>
+<li><strong>Not to be confused with:</strong> <code>trust:Substrate</code> (an enforcement area's mode; PROD-001's <code>enforcement_layers</code> key is not a composition Layer)</li>
+<li><strong>Stored in:</strong> its <code>LockLayer</code> record in <code>boilerplate.lock</code> and its own <code>.copier-answers.&lt;layer&gt;.yml</code>, both in the generated project</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/models/composition_layer.py</code>, <code>src/boilerplate/models/lock_layer.py</code></li>
+<li><strong>Avoid:</strong> plugin, overlay, mixin</li>
+<li><strong>Carve-out:</strong> "overlay merge" names ADR-011's deep-merge strategy for downstream structured-file customization, not this term.</li>
+</ul>
+<p><a id="term-non-git-layer"></a><strong>Non-git layer</strong> · <code>composition:NonGitLayer</code><br />
+A composition layer whose template source has no git history (a plain filesystem directory or an archive). It records <code>commit: null</code> in the lock; <code>update</code> skips it with a warning — Copier has no built-in fallback merge for it — and <code>copier recopy</code> is the manual refresh.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>composition:Layer</code></li>
+<li><strong>Related:</strong> <code>composition:LockFile</code>, <code>composition:SafeUpdate</code>, <code>core:Copier</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/project_state/lock_builder.py</code> (records no commit for a folder layer)</li>
+<li><strong>See:</strong> design 06 §Step 4: Three-Way Merge</li>
+</ul>
+<p><a id="term-dependency-graph"></a><a id="term-dag-dependency-graph"></a><strong>Dependency Graph</strong> · <code>composition:DependencyGraph</code><br />
+The directed acyclic graph (DAG) of template specifiers, derived from <code>extends</code> chains.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:TemplateSpecifier</code>, <code>composition:ExtendsBasedComposition</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/models/graph.py</code> (<code>CompositionGraph</code>), <code>src/boilerplate/composition/graph/topology.py</code>, <code>src/boilerplate/composition/resolution/resolver.py</code></li>
+<li><strong>See:</strong> design 04 §Stage 2 — Dependency Graph and Topological Sort</li>
+</ul>
+<p><a id="term-template-reference"></a><strong>Template Reference</strong> · <code>composition:TemplateReference</code><br />
+The input form of a <strong>Template Specifier</strong> — <code>name</code> or <code>name@version</code> — before resolution.</p>
+<ul>
+<li><strong>Not to be confused with:</strong> <code>core:TemplateSpecifier</code> (the resolved form, always <code>name@version</code>)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/resolution/resolver.py</code> (the resolver takes it as <code>template_ref</code>)</li>
+<li><strong>See:</strong> design 04 §Template Reference Syntax</li>
+</ul>
+<p><a id="term-scoped-view"></a><strong>Scoped View</strong> · <code>composition:ScopedView</code><br />
+A Layer's merged questions, secret-question list and Jinja extensions over itself and its ancestors; every render of that Layer, at compose and at update, uses it.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:Layer</code>, <code>composition:HiddenQuestion</code>, <code>core:Question</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:FullMergedSchema</code> (every Layer's questions joined, not one Layer and its ancestors)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/views/layer_view.py</code>, <code>src/boilerplate/composition/views/layer_view_builder.py</code>, <code>src/boilerplate/composition/views/scope_composition.py</code></li>
+<li><strong>See:</strong> design 04 §Scoped view</li>
+</ul>
+<p><a id="term-full-merged-schema"></a><strong>Full Merged Schema</strong> · <code>composition:FullMergedSchema</code><br />
+Every Layer's questions joined; the questionnaire at compose uses it, and an update step takes each question's definition and default from it.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Question</code>, <code>composition:SafeUpdate</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:ScopedView</code> (one Layer and its ancestors only)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/merging/merger.py</code>, <code>src/boilerplate/composition/rendering/questionnaire.py</code></li>
+<li><strong>See:</strong> design 04 §Scoped view and §Safe Update</li>
+</ul>
+<p><a id="term-hidden-question"></a><strong>Hidden Question</strong> · <code>composition:HiddenQuestion</code><br />
+A Question whose <code>when</code> evaluates false under the recorded answers, the literal <code>when: false</code> derived questions among them; no Answers File records it.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>core:Question</code></li>
+<li><strong>Related:</strong> <code>composition:AnswersFile</code>, <code>composition:ScopedView</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/rendering/hidden_questions.py</code></li>
+<li><strong>See:</strong> design 04 §Safe Update</li>
+</ul>
+<p><a id="term-renderengine"></a><strong>RenderEngine</strong> · <code>composition:RenderEngine</code><br />
+The proper-noun class that orchestrates Copier across composition layers.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>composition:Layer</code>, <code>composition:ScopedView</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/rendering/engine.py</code></li>
+<li><strong>See:</strong> design 04 §Stage 4 — RenderEngine</li>
+</ul>
+<p><a id="term-plural-shape-architecture"></a><strong>plural-shape architecture</strong> · <code>composition:PluralShapeArchitecture</code><br />
+Authoring shape that admits future siblings (e.g., <code>ci-azure-pipelines</code> today, <code>ci-github-actions</code> later) by extending the answer-value enum, not by introducing a breaking schema change.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Question</code>, <code>core:FirstPartyTemplates</code>, <code>composition:Layer</code></li>
+<li><strong>See:</strong> <code>docs/intentions/INT-006.yaml</code></li>
+</ul>
+<p><a id="term-answers-file"></a><a id="term-copier-answers-layer-yml"></a><strong>Answers File</strong> · <code>composition:AnswersFile</code><br />
+Records answers given during render, one file per composition layer. Owned by Copier; Boilerplate MUST NOT write to it.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>core:Question</code>, <code>composition:Layer</code>, <code>composition:HiddenQuestion</code>, <code>composition:UnmanagedProject</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:LockFile</code> (<code>boilerplate.lock</code>, owned by Boilerplate), <code>customization:AnswerPreset</code> (a YAML file of answers passed into a render, not Copier's record of one)</li>
+<li><strong>Stored in:</strong> <code>.copier-answers.&lt;layer&gt;.yml</code> in the generated project, where <code>&lt;layer&gt;</code> is the layer's invariant name (matches <code>LockLayer.name</code>)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/project_state/answers_file.py</code></li>
+<li><strong>See:</strong> design 04 §Per-Layer Render Loop (the per-layer <code>_answers_file:</code> contract) and §Render Behavior</li>
+<li><strong>Matches:</strong> answers file, in Copier's documentation (exact)</li>
+</ul>
+<p><a id="term-lock-file"></a><a id="term-lock-file-boilerplate-lock"></a><strong>Lock File</strong> · <code>composition:LockFile</code><br />
+Records exact versions, commit hashes, and checksums used. Owned by Boilerplate.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:ManagedProject</code>, <code>composition:Layer</code>, <code>composition:NonGitLayer</code>, <code>trust:TOFU</code>, <code>trust:TrustLevel</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:AnswersFile</code> (owned by Copier; records answers, not versions)</li>
+<li><strong>Stored in:</strong> <code>boilerplate.lock</code> in a managed project</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/models/boilerplate_lock.py</code>, <code>src/boilerplate/models/lock_layer.py</code>, <code>src/boilerplate/project_state/lock_file.py</code>, <code>src/boilerplate/project_state/lock_builder.py</code></li>
+<li><strong>See:</strong> design 02 §Lock File Model; design 06 §Step 4: Lock File Generation</li>
+</ul>
+<p><a id="term-managed-project"></a><strong>Managed project</strong> · <code>composition:ManagedProject</code><br />
+A project Boilerplate tracks and can update: it has a <code>boilerplate.lock</code>. <code>adopt</code> transitions an unmanaged project to managed.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:LockFile</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:UnmanagedProject</code> (Copier answers files but no <code>boilerplate.lock</code>)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/adding/layer_adder.py</code> (the lock-present precondition), <code>src/boilerplate/common/exceptions.py</code> (<code>ProjectNotManagedError</code>)</li>
+<li><strong>See:</strong> design 06 §Part 2.5: Project Adoption</li>
+</ul>
+<p><a id="term-unmanaged-project"></a><strong>Unmanaged project</strong> · <code>composition:UnmanagedProject</code><br />
+A project with Copier answers file(s) (<code>.copier-answers.*</code>) but no <code>boilerplate.lock</code> — e.g. a plain <code>copier copy</code> project, or one after <code>eject</code>. <code>adopt</code> transitions it to managed.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:AnswersFile</code>, <code>composition:LockFile</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:ManagedProject</code> (has a <code>boilerplate.lock</code>; Boilerplate tracks and can update it)</li>
+<li><strong>See:</strong> design 06 §Part 2.5: Project Adoption and §Part 2.6: Project Ejection</li>
+</ul>
+<p><a id="term-safe-update"></a><strong>safe update</strong> · <code>composition:SafeUpdate</code><br />
+The conflict-detected update workflow Boilerplate provides over Copier's per-layer merge: it runs in a <strong>Staging worktree</strong> and pauses on conflict.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>composition:FullMergedSchema</code>, <code>composition:HiddenQuestion</code>, <code>composition:CopyBack</code>, <code>composition:RestoreMarker</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/updating/updater.py</code>, <code>src/boilerplate/composition/staging/staging_worktree.py</code></li>
+<li><strong>See:</strong> design 04 §Safe Update for the implementation</li>
+</ul>
+<p><a id="term-staging-worktree"></a><strong>Staging worktree</strong> · <code>composition:StagingWorktree</code><br />
+The detached git worktree of the project in which <code>update</code> and <code>add</code> run their per-layer walk, so the user's checkout changes only at the <strong>Copy back</strong>.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:SafeUpdate</code>, <code>composition:CopyBack</code>, <code>composition:RestoreMarker</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/staging/staging_worktree.py</code></li>
+<li><strong>See:</strong> design 06 §Staging worktree</li>
+</ul>
+<p><a id="term-copy-back"></a><strong>Copy back</strong> · <code>composition:CopyBack</code><br />
+The step of <code>update</code> and <code>add</code> that reproduces the <strong>Staging worktree</strong>'s result in the user's checkout as uncommitted changes: <code>git restore --source=&lt;commit&gt; --worktree -- :/</code> from the worktree's last per-layer commit.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:SafeUpdate</code>, <code>composition:RestoreMarker</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/staging/copy_back.py</code></li>
+<li><strong>See:</strong> design 06 §Staging worktree</li>
+</ul>
+<p><a id="term-restore-marker"></a><strong>Restore marker</strong> · <code>composition:RestoreMarker</code><br />
+The file under the project's git directory, paired with the ref <code>refs/worktree/boilerplate/restore</code>, that keeps the state of a copy back cut off midway so a rerun can finish it or the user can set it aside.</p>
+<ul>
+<li><strong>Related:</strong> <code>composition:CopyBack</code>, <code>composition:SafeUpdate</code></li>
+<li><strong>Stored in:</strong> <code>boilerplate-restore.json</code> in the project's git directory, with the ref <code>refs/worktree/boilerplate/restore</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/staging/restore_marker_file.py</code>, <code>src/boilerplate/models/restore_marker.py</code></li>
+<li><strong>See:</strong> design 06 §Interrupted copy back and §Setting a partial update aside</li>
+</ul>
+<h3 id="customization"><code>customization</code></h3>
+<p>How a user changes what templates produce.</p>
+<p><a id="term-profile"></a><strong>Profile</strong> · <code>customization:Profile</code><br />
+A user's default answers for Template Questions, read from <code>profile.toml</code> and merged into the render — global <code>[defaults]</code> plus per-Template <code>[templates.&lt;name&gt;]</code>.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Question</code>, <code>core:Template</code></li>
+<li><strong>Not to be confused with:</strong> <code>provisioning:EnvironmentProfile</code> (<code>boilerplate-env.yml</code>, pinned tool versions; unrelated despite the shared word), <code>customization:AnswerPreset</code> (a YAML file of answers passed to one render, not a user's standing defaults)</li>
+<li><strong>Stored in:</strong> <code>profile.toml</code> at the Boilerplate config root</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/settings/profile.py</code>, <code>src/boilerplate/settings/paths.py</code></li>
+<li><strong>See:</strong> <code>docs/design/adr-010-profile.md</code></li>
+<li><strong>Avoid:</strong> typed Profile model, org profile, config</li>
+</ul>
+<p><a id="term-answer-preset"></a><strong>Answer Preset</strong> · <code>customization:AnswerPreset</code><br />
+A YAML file of answers passed with <code>--data-file</code> to <code>new</code>, <code>update</code> or <code>add</code>, which forces those answers for one run — for CI/CD use or to repeat a project.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:Question</code></li>
+<li><strong>Not to be confused with:</strong> <code>customization:Profile</code> (a user's standing defaults in <code>profile.toml</code>, not a file passed to one render), <code>composition:AnswersFile</code> (Copier's per-layer record of answers already given; the template's answers file from a finished <code>new</code> can be passed as a preset)</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/cli/commands/new.py</code> (loads a YAML mapping of answers from <code>--data-file</code>)</li>
+<li><strong>See:</strong> design 05 §Answer Presets; design 10 §Answer Preset Safety</li>
+</ul>
+<p><a id="term-task"></a><strong>Task</strong> · <code>customization:Task</code><br />
+A command declared in a Template's <code>_tasks</code> that runs after rendering — the escape hatch for arbitrary edits.</p>
+<ul>
+<li><strong>Part of:</strong> <code>core:Template</code></li>
+<li><strong>Related:</strong> <code>core:Copier</code>, <code>composition:Layer</code></li>
+<li><strong>Stored in:</strong> <code>_tasks</code> in the declaring template's <code>copier.yml</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/composition/tasks.py</code></li>
+<li><strong>See:</strong> design 04 §Task Execution Order; <code>docs/design/adr-014-deferred-task-execution.md</code></li>
+<li><strong>Avoid:</strong> hook, script, post-gen step</li>
+<li><strong>Matches:</strong> task, in Copier's documentation (exact)</li>
+</ul>
+<h3 id="provisioning"><code>provisioning</code></h3>
+<p>Installing and pinning the Toolchain.</p>
+<p><a id="term-environment-provisioning"></a><strong>Environment Provisioning</strong> · <code>provisioning:EnvironmentProvisioning</code><br />
+The subsystem that installs and version-pins a <strong>Development Environment</strong> — the <code>env apply</code> flow, providers, and the <strong>EnvironmentProfile</strong>.</p>
+<ul>
+<li><strong>Related:</strong> <code>provisioning:EnvironmentProfile</code>, <code>provisioning:EnvironmentProvisionRecord</code>, <code>provisioning:WASM</code>, <code>model:Environment</code>, <code>model:Toolchain</code>, <code>core:AtomicStagedWritePattern</code></li>
+<li><strong>Not to be confused with:</strong> <code>model:DevelopmentEnvironment</code> (the setup itself, which this subsystem installs)</li>
+<li><strong>See:</strong> design 08</li>
+<li><strong>Avoid:</strong> Environment Pillar, Environments Pillar</li>
+</ul>
+<p><a id="term-environmentprofile"></a><strong>EnvironmentProfile</strong> · <code>provisioning:EnvironmentProfile</code><br />
+The declarative input to <strong>Environment Provisioning</strong>: tool versions and configuration.</p>
+<ul>
+<li><strong>Related:</strong> <code>provisioning:EnvironmentProvisioning</code>, <code>provisioning:EnvironmentProvisionRecord</code>, <code>model:Toolchain</code>, <code>core:Template</code></li>
+<li><strong>Not to be confused with:</strong> <code>customization:Profile</code> (<code>profile.toml</code>, a user's default answers to template questions, see ADR-010; the two are unrelated despite the shared word)</li>
+<li><strong>Stored in:</strong> <code>boilerplate-env.yml</code></li>
+<li><strong>See:</strong> design 02 §EnvironmentProfile; design 08</li>
+</ul>
+<p><a id="term-environmentprovisionrecord"></a><a id="term-boilerplate-environment-yml"></a><strong><code>EnvironmentProvisionRecord</code></strong> · <code>provisioning:EnvironmentProvisionRecord</code><br />
+The schema for the env-state record that <strong>Environment Provisioning</strong> writes. Use this name when discussing structure, and <code>.boilerplate/environment.yml</code> when discussing the file.</p>
+<ul>
+<li><strong>Related:</strong> <code>provisioning:EnvironmentProvisioning</code>, <code>provisioning:EnvironmentProfile</code></li>
+<li><strong>Stored in:</strong> <code>.boilerplate/environment.yml</code> in the project</li>
+<li><strong>See:</strong> design 02 §EnvironmentProvisionRecord; design 08 §State Files</li>
+</ul>
+<p><a id="term-wasm"></a><strong>WASM</strong> · <code>provisioning:WASM</code><br />
+WebAssembly — the plugin architecture used by proto for cross-platform tool installation.</p>
+<ul>
+<li><strong>Related:</strong> <code>provisioning:EnvironmentProvisioning</code></li>
+<li><strong>See:</strong> <code>docs/design/adr-001-build-vs-adopt.md</code>; design 10 §Trust Boundaries</li>
+</ul>
+<h3 id="trust"><code>trust</code></h3>
+<p>What Boilerplate enforces and what it trusts.</p>
+<p><a id="term-substrate"></a><strong>substrate</strong> · <code>trust:Substrate</code><br />
+The enforcement mode PROD-001 assigns to each area of the product it lists under <code>enforcement_layers</code> (the runtime, templates, tool configurations, environments, scaffolded projects) — <code>enforced</code> (Boilerplate's own runtime gates and rejects on violation, with no opt-out) or <code>preconfigured</code> (defaults are shipped; user-runnable <strong>first-party gating scaffolding</strong> executes the check in third-party venues; the user MAY opt out).</p>
+<ul>
+<li><strong>Related:</strong> <code>trust:PostRenderValidation</code>, <code>trust:PEPDiscipline</code></li>
+<li><strong>Not to be confused with:</strong> <code>composition:Layer</code> (a rendered template; PROD-001's <code>enforcement_layers</code> key uses the word for an enforcement area, not a template)</li>
+<li><strong>Stored in:</strong> <code>docs/products/PROD-001.yaml</code> (the <code>substrate</code> key of each <code>enforcement_layers</code> entry)</li>
+<li><strong>See:</strong> design 01 §What Boilerplate is</li>
+</ul>
+<p><a id="term-enforced-substrate"></a><strong>enforced substrate</strong> · <code>trust:EnforcedSubstrate</code><br />
+The <code>enforced</code> value of <strong>substrate</strong>: coerce-at-touch-points within Boilerplate's own runtime — schema/parse validation, path-safety (TOCTOU) re-validation, consent/task gating, and lock/checksum verification. Boilerplate rejects on violation with a <code>BP_*</code> code; there is no opt-out.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>trust:Substrate</code></li>
+<li><strong>Related:</strong> <code>trust:TrustLevel</code>, <code>trust:FirstPartyGatingScaffolding</code>, <code>composition:LockFile</code></li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/common/exceptions.py</code> (<code>BP_*</code> codes), <code>src/boilerplate/models/boilerplate_lock.py</code> (lock <code>schema_version</code> validation), <code>src/boilerplate/repository/template_checksum.py</code> (computes the checksum the lock records)</li>
+<li><strong>See:</strong> <code>docs/products/PROD-001.yaml</code> <code>enforcement_layers.product</code></li>
+</ul>
+<p><a id="term-preconfigured-substrate"></a><strong>preconfigured substrate</strong> · <code>trust:PreconfiguredSubstrate</code><br />
+The <code>preconfigured</code> value of <strong>substrate</strong>: Boilerplate ships the defaults, and user-runnable <strong>first-party gating scaffolding</strong> executes the check in third-party tools' native venues (CI runners, hook runners); the user MAY opt out.</p>
+<ul>
+<li><strong>Kind of:</strong> <code>trust:Substrate</code></li>
+<li><strong>Related:</strong> <code>trust:FirstPartyGatingScaffolding</code>, <code>model:Guardrails</code>, <code>trust:PostRenderValidation</code></li>
+<li><strong>See:</strong> <code>docs/products/PROD-001.yaml</code> <code>enforcement_layers.templates</code> and <code>enforcement_layers.tool_configurations</code></li>
+</ul>
+<p><a id="term-first-party-gating-scaffolding"></a><a id="term-gating-scaffolding"></a><strong>first-party gating scaffolding</strong> · <code>trust:FirstPartyGatingScaffolding</code><br />
+The CI pipelines, lint configs, and bundled <strong>EnvironmentProfile</strong> files shipped beside templates as user-runnable parts of the <strong>preconfigured substrate</strong>. The user opts in; gates execute in third-party tools' native venues (CI runners, hook runners).</p>
+<ul>
+<li><strong>Part of:</strong> <code>trust:PreconfiguredSubstrate</code></li>
+<li><strong>Related:</strong> <code>core:FirstPartyTemplates</code>, <code>model:Guardrails</code>, <code>trust:EnforcedSubstrate</code>, <code>provisioning:EnvironmentProfile</code></li>
+<li><strong>See:</strong> <code>docs/products/PROD-001.yaml</code> <code>shipped_gating_scaffolding</code></li>
+</ul>
+<p><a id="term-post-render-validation"></a><strong>post-render validation</strong> · <code>trust:PostRenderValidation</code><br />
+Out-of-scope content verdicts performed against generated projects after Boilerplate hands off (detecting drift between shipped defaults and user-edited config). Not enforced; structurally outside Boilerplate's reach.</p>
+<ul>
+<li><strong>Related:</strong> <code>trust:Substrate</code>, <code>model:Guardrails</code></li>
+<li><strong>See:</strong> <code>docs/products/PROD-001.yaml</code> <code>enforcement_layers.tool_configurations</code>; <code>docs/intentions/INT-006.yaml</code> (<code>not_included</code>)</li>
+</ul>
+<p><a id="term-pep-discipline"></a><strong>PEP discipline</strong> · <code>trust:PEPDiscipline</code><br />
+The convention that when a <strong>PEP</strong> defines the canonical way, first-party templates use it — no custom conventions that duplicate or contradict a PEP.</p>
+<ul>
+<li><strong>Related:</strong> <code>core:PEP</code>, <code>core:FirstPartyTemplates</code>, <code>trust:Substrate</code></li>
+<li><strong>See:</strong> design 01 §Standards compliance in first-party templates; <code>docs/products/PROD-001.yaml</code> <code>enforcement_layers.templates</code></li>
+</ul>
+<p><a id="term-trust-level"></a><strong>Trust Level</strong> · <code>trust:TrustLevel</code><br />
+Binary classification for a template's origin: <em>trusted</em> or <em>untrusted</em>. Untrusted code is default-deny and requires explicit consent.</p>
+<ul>
+<li><strong>Related:</strong> <code>trust:TOFU</code>, <code>core:FirstPartyTemplates</code>, <code>customization:Task</code>, <code>composition:LockFile</code></li>
+<li><strong>Stored in:</strong> the <code>trust_level</code> field of each source entry in <code>boilerplate-sources.yml</code> in the user's data directory (the implicit first-party source is <code>trusted</code>); each lock layer's optional free-form <code>trust_tier</code> is a separate field, reserved for richer tiers</li>
+<li><strong>Defined in:</strong> <code>src/boilerplate/models/lock_layer.py</code> (the <code>trust_tier</code> field)</li>
+<li><strong>See:</strong> design 03 §Trust and Verification Levels; design 09 §Catalog Source Configuration File</li>
+</ul>
+<p><a id="term-tofu"></a><strong>TOFU</strong> · <code>trust:TOFU</code><br />
+Trust-on-first-use — a security model where the first interaction with a remote source is trusted, and subsequent interactions are verified against the initial state.</p>
+<ul>
+<li><strong>Related:</strong> <code>trust:TrustLevel</code>, <code>composition:LockFile</code></li>
+<li><strong>Stored in:</strong> <code>boilerplate.lock</code> (the commit hash and checksum captured after the first fetch); the optional pin <code>expected_commit</code> on a source entry in <code>boilerplate-sources.yml</code></li>
+<li><strong>See:</strong> design 03 §Git Source; design 02 §CatalogSource (<code>expected_commit</code>)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Design Specifications">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Design Specifications
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../02-data-models/" class="md-footer__link md-footer__link--next" aria-label="Next: Data Models">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Data Models
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tracking", "navigation.sections", "navigation.indexes", "navigation.footer", "navigation.top", "navigation.path", "content.code.copy", "content.code.select", "content.tabs.link", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "default": "latest", "provider": "mike"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../assets/mermaid-theme.js"></script>
+      
+        <script src="../../assets/scroll-region.js"></script>
+      
+        <script src="../../assets/javascripts/panzoom.min.js"></script>
+      
+        <script src="../../assets/javascripts/zoompan.js"></script>
+      
+    
+  
+
+  </body>
+</html>

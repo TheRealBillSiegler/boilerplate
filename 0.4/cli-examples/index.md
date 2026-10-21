@@ -1,0 +1,121 @@
+# CLI examples
+
+A few common tasks with concise, copy-pastable commands.
+
+## Discover templates
+
+- List the templates you can create a project from:
+
+```powershell
+boilerplate list
+```
+
+```text
+  Name        Version   Description
+ ───────────────────────────────────────────────────────
+  project     0.3.0     A general-purpose Python project, with its tools configured.
+  streamlit   0.2.0     A Streamlit app, built on the general-purpose template.
+```
+
+## Create a new project
+
+- Latest project template into a new folder:
+
+```powershell
+boilerplate new project my_app
+```
+
+- Non-interactive with defaults, overwrite a non-empty destination:
+
+```powershell
+boilerplate new project --non-interactive -f my_app
+```
+
+## Inspect a template graph
+
+- Text tree format (the `streamlit` template extends `project`, so its graph shows the chain):
+
+```powershell
+boilerplate graph streamlit --format tree
+```
+
+```text
+- streamlit@0.2.0
+  - project@0.3.0
+```
+
+- JSON written to file:
+
+```powershell
+boilerplate graph streamlit --format json -o graph.json
+```
+
+The JSON payload's shape (the `streamlit` template extends `project`, so its graph has two layers):
+
+```json
+{
+  "sequence": [
+    "project@0.3.0",
+    "streamlit@0.2.0"
+  ],
+  "layers": [
+    {
+      "specifier": "project@0.3.0",
+      "name": "project",
+      "version": "0.3.0",
+      "path": ".../templates/project",
+      "deps": []
+    },
+    {
+      "specifier": "streamlit@0.2.0",
+      "name": "streamlit",
+      "version": "0.2.0",
+      "path": ".../templates/streamlit",
+      "deps": ["project@0.3.0"]
+    }
+  ]
+}
+```
+
+## Compose a template
+
+- Show final merged questions and the per-layer contributions:
+
+```powershell
+boilerplate compose project --sections final,layers
+```
+
+- Export all major sections to a directory and stay quiet:
+
+```powershell
+boilerplate compose project --all -o out --quiet
+```
+
+- Quick shape check with the stats section:
+
+```powershell
+boilerplate compose project --sections stats
+```
+
+```text
+Layers: project@0.3.0
+STATS
+layers: 1
+layers_count: 1
+total_keys: 41
+total_scalars: 37
+top_level_fields: 10
+directives:
+  - _jinja_extensions
+  - _secret_questions
+  - _tasks
+tasks: 1
+max_depth: 3
+delta_keys: null
+delta_scalars: null
+```
+
+## Where next
+
+- [Commands](https://therealbillsiegler.github.io/boilerplate/0.4/cli/index.md) — the full reference for every flag shown here.
+- [Customization](https://therealbillsiegler.github.io/boilerplate/0.4/customization/index.md) — make these defaults yours.

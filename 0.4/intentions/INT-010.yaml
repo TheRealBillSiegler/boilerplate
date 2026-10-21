@@ -1,0 +1,40 @@
+intention:
+  id: "INT-010"
+  product: "PROD-001"
+  statement: >
+    Boilerplate packages are publishable via CI with branch-based
+    development and release workflows.
+  rationale: >
+    An open-source project needs reliable, automated publishing. Users
+    install from PyPI; contributors need CI that validates PRs, runs tests,
+    and produces release artifacts. Branch-based workflows (develop, release
+    branches, tags) ensure quality gates are enforced before packages reach
+    users. This Intention enables the "adoption velocity" success metric
+    by making Boilerplate reliably available.
+  priority: "high"
+  dependencies:
+    - "INT-007"  # Must be free of org-specific deps before publishing
+  owner: "Bill Siegler"
+  status: "defined"
+
+  outcome: >
+    CI pipelines validate code quality (ruff, pyright, pytest) on every PR.
+    Releases are triggered by tags or release branches and publish to PyPI
+    using OIDC-based trusted publishers (no personal API tokens). Development
+    builds are available from test indexes for pre-release validation. The
+    workflow supports conventional commits, changelog generation, and SemVer
+    commitments.
+
+  acceptance_criteria:
+    - "The CI matrix runs the full test suite on Ubuntu, macOS, and Windows"
+    - "PyPI publishing is configured to use OIDC trusted publishers; no personal API token is referenced in CI config"
+    - "The SemVer commitment and the documented release-cadence expectations are published in the project docs"
+    - "Conventional commits are enforced by a commit-lint check; the changelog is generated from commit history"
+    - "Pre-release builds are published to a test index for validation before promotion to PyPI"
+    # Org-independence (release gate)
+    - "Satisfies org-independence gate: no org-specific URLs, package feeds, or infrastructure dependencies (see INT-007)"
+
+  not_included:
+    - "Template publishing or registry hosting (template-dependent concern)"
+    - "Organization-specific artifact feeds (see INT-007 scope boundary)"
+    - "CD or deployment of hosted services"
