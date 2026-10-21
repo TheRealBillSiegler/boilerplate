@@ -18,7 +18,7 @@ Boilerplate fills each slot the dev loop uses with one preconfigured, overridabl
 
 **Linter & formatter.** One fast tool (also Rust) for both jobs — enforces PEP 8, docstrings, and naming, auto-fixes what it can, and formats on save, so style stays out of your way. [Official docs](https://docs.astral.sh/ruff/)
 
-### Pyright
+### ![Pyright Logo](../assets/pyright.png){ style="height: 1em; vertical-align: middle;" } Pyright
 
 **Type checker.** Catches type errors as you type — live in VS Code via Pylance — so mistakes surface early instead of at runtime. [On GitHub](https://github.com/microsoft/pyright)
 
