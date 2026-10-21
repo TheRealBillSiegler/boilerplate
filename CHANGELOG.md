@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 From 0.4.0 on, [release-please](https://github.com/googleapis/release-please) writes each entry from [Conventional Commits](https://www.conventionalcommits.org/), breaking changes first, then Features, Bug Fixes and Performance Improvements; the 0.3.0 entry predates it and follows [Keep a Changelog](https://keepachangelog.com/). This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0](https://github.com/TheRealBillSiegler/boilerplate/compare/v0.3.0...v0.4.0) (2026-10-21)
+
+
+### Features
+
+* **templates:** add a build_backend choice to project ([0968864](https://github.com/TheRealBillSiegler/boilerplate/commit/09688647d6421e13c155d19bafebf3924ccebf57))
+
+
+### Continuous Integration
+
+* **release:** cut each release by merging the release PR ([1b3d038](https://github.com/TheRealBillSiegler/boilerplate/commit/1b3d0387e06a62936f5afd8e674fbd780172e206))
+
 ## [0.3.0] - 2026-09-04
 
 ### Added

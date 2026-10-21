@@ -83,7 +83,7 @@ The [Quickstart](quickstart.md) shows the same steps in text.
 
     ```powershell
     # Install (-ExecutionPolicy Bypass is per-process only)
-    powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1 | iex"
+    powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.4.0/scripts/install.ps1 | iex"
     # Scaffold
     boilerplate new project my-first-project
     ```
@@ -97,7 +97,7 @@ The [Quickstart](quickstart.md) shows the same steps in text.
     <!-- x-release-please-start-version -->
 
     ```bash
-    uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0
+    uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.4.0
     boilerplate new project my-first-project
     ```
 

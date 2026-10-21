@@ -40,7 +40,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     else {
         # Piped via iex: there is no script file on disk to relaunch, so
         # re-fetch this release's copy by its tag.
-        & $pwsh -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.3.0/scripts/install.ps1' | iex" # x-release-please-version
+        & $pwsh -ExecutionPolicy Bypass -Command "irm 'https://raw.githubusercontent.com/TheRealBillSiegler/boilerplate/v0.4.0/scripts/install.ps1' | iex" # x-release-please-version
     }
     exit $LASTEXITCODE
 }
@@ -331,7 +331,7 @@ try {
     #    pinned to the release this script belongs to; each release PR rewrites the pin.
     Write-Host "Installing boilerplate..." -ForegroundColor Cyan
     try {
-        uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.3.0 # x-release-please-version
+        uv tool install git+https://github.com/TheRealBillSiegler/boilerplate.git@v0.4.0 # x-release-please-version
         Write-Host "Boilerplate installed." -ForegroundColor Green
     }
     catch {
