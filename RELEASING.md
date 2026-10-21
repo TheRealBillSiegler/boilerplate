@@ -102,7 +102,7 @@ The three jobs are independent, so one failing leaves the others to finish. Reru
 
 Each rebuild of the release PR reads every commit since the last release, at about one API request per commit, against the workflow token's limit of 1,000 requests an hour per repository. `release-please-config.json` sets `commit-search-depth` to 2000, past release-please's default of 500: a read that reaches its depth before the last release stops there, and the version and changelog leave out every older commit with only a warning in the log.
 
-The nearly 1,000 commits between `v0.3.0` and `0.4.0` would cost about that limit on every rebuild, so for that one release the config also sets `last-release-sha` to the commit before the newest feature, and the read stops there. The breaking changes before that commit fall outside the read, so a `Release-As: 0.4.0` footer on the commit that sets `last-release-sha` fixes the version, and the release PR's notes are written by hand. Once `v0.4.0` is tagged, every read stops at that release first, and `last-release-sha` comes out of the config.
+The nearly 1,000 rebase-merged commits between `v0.3.0` and `v0.4.0` would have cost about that limit on every rebuild, so the `0.4.0` release PR was built with a temporary `last-release-sha` (a top-level config key that ends the read at a given commit) and a `Release-As: 0.4.0` footer, with its notes written by hand. Pull requests squash-merge now, so a read costs about one request per merged PR.
 
 Milestone versions such as `1.0.0` are never chosen mechanically — the pre-major flags map `feat:` to patch and nothing reaches `1.0.0` on its own. Force one with a `Release-As: 1.0.0` line in the body of any commit that lands on `develop`.
 
