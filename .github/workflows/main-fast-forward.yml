@@ -82,6 +82,14 @@ jobs:
         run: |
           git merge-base --is-ancestor "refs/tags/${TAG}^{commit}" HEAD \
             || { echo "$TAG is not on develop; main moves only to a release on develop" >&2; exit 1; }
+      # The tag ruleset has no creation rule, so a hand-made vX.Y.Z tag on
+      # develop passes the check above. Only a published release moves main.
+      - name: Check the tag has a published release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" == false ]] \
+            || { echo "$TAG has no published release; main moves only to a release" >&2; exit 1; }
       - name: Fast-forward main to the tag
         # No --force: the push is refused if main holds a commit the tag lacks.
         env:
