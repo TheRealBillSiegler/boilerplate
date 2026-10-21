@@ -68,7 +68,7 @@ Decision authority rests with the project's maintainer, listed in [CODEOWNERS](C
 ## Pull request process
 
 1. **Create a feature branch** from `develop`.
-2. **Use conventional commits** for commit messages. See [AGENTS.md § Commits](AGENTS.md#commits) for the format and type list.
+2. **Use conventional commits** for commit messages and for the PR title, which becomes the subject of the squash commit on `develop`. See [AGENTS.md § Commits](AGENTS.md#commits) for the format and type list.
 3. **Include tests** for new functionality. Tests should document behavior, not implementation.
 4. **Ensure CI passes** -- all linting, type checking, and tests must be green. Run the same checks locally first with `uv run python scripts/check.py`; the pipeline itself is documented in [docs/governance/ci.md](docs/governance/ci.md).
 5. **Keep PRs focused** -- one feature or fix per PR.

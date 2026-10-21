@@ -9,7 +9,7 @@ A change moves from local checks to a draft pull request, then to one billed run
 ```mermaid
 flowchart TD
     accTitle: How a change travels from local development to develop
-    accDescr: Local development, where scripts/check.py mirrors the check job, leads to a draft pull request on which every job skips, and gh pr ready starts one billed run. In that run the changes job sends a docs-only change to skipped code jobs, a code change to the lint, shellcheck, typecheck, package, test and tests-go-red jobs, and a composition-path change to the scenarios job, while the docs build always runs and commit-lint runs on pull_request events only. All of these feed the check job, the single pass/fail signal, and once check is green and the PR is rebase merged, the push to develop re-runs the same workflow with the push matrix.
+    accDescr: Local development, where scripts/check.py mirrors the check job, leads to a draft pull request on which every job skips, and gh pr ready starts one billed run. In that run the changes job sends a docs-only change to skipped code jobs, a code change to the lint, shellcheck, typecheck, package, test and tests-go-red jobs, and a composition-path change to the scenarios job, while the docs build always runs and commit-lint runs on pull_request events only. All of these feed the check job, the single pass/fail signal, and once check is green and the PR is squash merged, the push to develop re-runs the same workflow with the push matrix.
     dev["Local development<br>scripts/check.py mirrors the check job"] --> draft["Draft PR<br>every job skips: free iteration"]
     draft -- "gh pr ready" --> run
     subgraph run["One billed run per event"]
@@ -26,7 +26,7 @@ flowchart TD
         skip --> gate
         docsjob --> gate
     end
-    run -- "check green, rebase merge" --> push["Push to develop<br>same workflow re-runs with the push matrix"]
+    run -- "check green, squash merge" --> push["Push to develop<br>same workflow re-runs with the push matrix"]
     push -.-> free["Public repo: Actions minutes free"]
 ```
 
@@ -80,7 +80,9 @@ A PR that changes `src/` and adds tests must show at least one added test failin
 
 ## Commit messages
 
-Every commit in a PR must be a conventional commit whose first line is at most 72 characters, because rebase merges land each one on `develop` and release-please reads each one. The `commit-lint` job checks the whole PR range and is a need of `check`, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; `check` treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
+Pull requests squash-merge, so the PR title becomes the subject of the one commit that lands on `develop`, and release-please reads that subject. [`.github/workflows/pr-title.yml`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/.github/workflows/pr-title.yml) checks the title with `scripts/commit_lint.py --message` on every push and every edit to the PR, drafts included. It runs apart from this workflow, so editing a title or description never starts a billed CI run, and the `develop` ruleset requires its `PR title` check beside `check`.
+
+Each commit on the branch must also be a conventional commit whose first line is at most 72 characters, so the history a reviewer reads follows the same rules. The `commit-lint` job checks the whole PR range and is a need of `check`, so a bad message blocks the merge. It runs on `pull_request` events only (a push has no PR range) and skips on drafts; `check` treats that skip as a pass. Script: [`scripts/commit_lint.py`](https://github.com/TheRealBillSiegler/boilerplate/blob/develop/scripts/commit_lint.py).
 
 ## The docs job
 
@@ -88,7 +90,7 @@ The strict docs build (both the online config and the `DOCS_OFFLINE` release-bun
 
 ## The `check` job
 
-`check` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter, or by event (`commit-lint` and `tests-go-red` on pushes), don't break it. Configure required checks against `check` alone, never against individual jobs.
+`check` is the one status check that matters: it passes when no needed job failed or was cancelled, so jobs skipped by the path filter, or by event (`commit-lint` and `tests-go-red` on pushes), don't break it. Configure required checks against `check` alone, never against individual jobs. The one other required check is `PR title`, from its own workflow (see [Commit messages](#commit-messages)).
 
 ## Timeouts
 
